@@ -18,11 +18,11 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | WelcomeBack | S3 | 🟩 | `WelcomeBack.spec` | buffers join WelcomeItems, ≥ 5 min away summary, claim ×1 / ×2 (ad); holds Auto-Collect until claimed |
 | Expeditions | S4 | 🟩 | `Expeditions.spec`, `BattleSim.spec` | stage fights (`Logic/BattleSim`), timed runs + offline finish (`Logic/Loot`), caravans; optional Monetization (explorer, stageRetry ad), Weather (night) |
 | Boss | S4 | 🟩 | `Boss.spec` | Stampede schedule, cheer (≤ `Boss.MaxTapsPerSecond`), rewards; needs Expeditions; optional Weather (bossDamage) |
-| Breeding | S5 | ⬜ | | |
-| Weather | S5 | ⬜ | | |
-| Social | S5 | ⬜ | | |
-| Trade | S5 | ⬜ | | |
-| Plots | S5 | ⬜ | | |
+| Breeding | S5 | 🟩 | `Breeding.spec` | pods (+pass), daily limits, seeded roll via `Logic/Breeding`, offline WelcomeItem, hybrid discovery → `Bred` |
+| Weather | S5 | 🟩 | `Weather.spec` | clock-aligned rolls + day/night (`Logic/WeatherRoll`), pen mutations, totems (queued behind running weather), heatwave egg speed, tutorial guarantee |
+| Social | S5 | 🟩 | `Social.spec` | friend boost (`friends` rate modifier), pets/likes, server + global broadcasts (MessagingService) |
+| Trade | S5 | 🟩 | `Trade.spec` | request → offer → ready → confirm countdown; atomic swap with capacity/egg caps, rollback, private log |
+| Plots | S5 | 🟩 | `Plots.spec` | 6 public plots, lowest free on PlayerReady, throttled rebuilds (≤ 1 / 2 s) |
 | Monetization | S6 | 🟩 | `Monetization.spec` | pass cache on join + live/RefreshPasses, idempotent ProcessReceipt (private `receipts`, newest 200), `RegisterProduct` handlers, oncePerAccount, capped rewarded ads (UTC-day reset), paid-random policy (fails closed) |
 | Quests | S6 | 🟩 | `Quests.spec` | tutorial state machine + onboarding funnel + scripted rain (optional Weather), deterministic dailies, achievements, codes (expiry, group), Ranch Pass (season window, `Quests.RanchPass` product) |
 | HallOfFame | S6 | 🟩 | `HallOfFame.spec` | retire → statue, legacy (capped per element), Stardust + Star Shards, upgrades; providers for Ranch, Eggs, Monsters, Boss, Breeding, Expeditions |

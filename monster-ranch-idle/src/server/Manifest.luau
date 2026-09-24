@@ -24,6 +24,12 @@ return {
 		-- S4 · Adventure
 		"Expeditions",
 		"Boss",
+		-- S5 · Social & world
+		"Breeding",
+		"Weather",
+		"Social",
+		"Trade",
+		"Plots",
 		-- S6 · Live-ops & money
 		"Monetization",
 		"Quests",

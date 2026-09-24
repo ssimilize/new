@@ -609,7 +609,7 @@ function MonsterDetail.Build(ctx)
 			costLabel.Text = if stage < 3 then "Grow it up to raise the level cap" else "Add stars to raise the level cap"
 		end
 		lvOne:SetDisabled(oneN <= 0 or not StoreKit.canAfford(store, oneCost))
-		lvTen:SetDisabled(tenN <= 1 or not StoreKit.canAfford(store, levelCost(m, 2)))
+		lvTen:SetDisabled(tenN <= 1 or not StoreKit.canAfford(store, (levelCost(m, 2))))
 
 		-- Grow
 		if stopGrow then

@@ -152,14 +152,7 @@ end
 local function syncTrade(trade)
 	for _, player in { trade.a, trade.b } do
 		local other = partnerOf(trade, player)
-		writeSession(
-			player,
-			trade.status,
-			other,
-			sideView(player, trade.sides[player]),
-			sideView(other, trade.sides[other]),
-			trade.endsAt
-		)
+		writeSession(player, trade.status, other, sideView(player, trade.sides[player]), sideView(other, trade.sides[other]), trade.endsAt)
 	end
 end
 

@@ -285,11 +285,7 @@ function Weather.Start()
 			if isActive() then
 				-- Never cut short weather someone else is enjoying (or an Aurora): wait for it.
 				table.insert(queue, { id = id, source = player.Name })
-				ctx:Notify(
-					player,
-					string.format("Your %s will start after the current %s", def(id).name, def(g.id).name),
-					"success"
-				)
+				ctx:Notify(player, string.format("Your %s will start after the current %s", def(id).name, def(g.id).name), "success")
 				return true
 			end
 			return Weather:Trigger(id, player.Name)
