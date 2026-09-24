@@ -16,6 +16,11 @@ return {
 		"Settings",
 		-- S2 · Monsters
 		"Monsters",
+		-- S3 · Ranch & eggs
+		"Eggs",
+		"Shop",
+		"Ranch",
+		"WelcomeBack",
 		-- S4 · Adventure
 		"Expeditions",
 		"Boss",

@@ -236,19 +236,19 @@ return function(t)
 
 	local SYSTEMS = { "Currency", "Progression", "Rewards", "Monsters", "Social", "Breeding" }
 
-	-- Monsters capacity providers are module-level and outlive a TestKernel; this one only
-	-- answers for players created by this spec, so each test can pin their capacity.
-	local capacity = {}
-	local providerRegistered = false
-	local function setCapacity(M, p, n)
-		if not providerRegistered then
-			providerRegistered = true
+	-- Pins a player's monster capacity with one provider per kernel (Monsters keeps providers in
+	-- module state, so a provider must never answer for another test's players).
+	local function setCapacity(h, p, n)
+		local M = h:System("Monsters")
+		if not h.s5Capacity then
+			local cap = {}
+			h.s5Capacity = cap
 			M:RegisterCapacityProvider(function(player)
-				return capacity[player.UserId] or 0
+				return cap[player.UserId] or 0
 			end)
 		end
-		capacity[p.UserId] = 0
-		capacity[p.UserId] = n - M:Capacity(p)
+		h.s5Capacity[p.UserId] = 0
+		h.s5Capacity[p.UserId] = n - M:Capacity(p)
 	end
 
 	local function levelTo(h, p, level)
@@ -273,7 +273,7 @@ return function(t)
 		local p = h:Join()
 		levelTo(h, p, opts.level or 12)
 		local M = h:System("Monsters")
-		setCapacity(M, p, 100)
+		setCapacity(h, p, 100)
 		h:System("Currency"):Add(p, "coins", 1e9, "test")
 		return h, p, M
 	end
@@ -419,11 +419,11 @@ return function(t)
 			local seed = h:Section(p, "Breeding").pods[1].seed
 			local expected = Logic.Roll(Rng.new(seed), a, b)
 			h:Advance(Config.Breeding.Seconds[2])
-			setCapacity(M, p, M:Count(p))
+			setCapacity(h, p, M:Count(p))
 			expect(h:Reject(p, "Breeding.Claim", { pod = 1 })).toContain("full")
 			expect(a.busy).toBe("breeding")
 			expect(h:Section(p, "Breeding").pods[1].state).toBe("running")
-			setCapacity(M, p, 100)
+			setCapacity(h, p, 100)
 			h:Advance(1)
 			local baby = h:Call(p, "Breeding.Claim", { pod = 1 }).monster
 			expect(baby.line).toBe(expected.line)
@@ -450,7 +450,7 @@ return function(t)
 			-- a second rancher breeding the same hybrid here is not a server discovery
 			local q = h:Join()
 			levelTo(h, q, 12)
-			setCapacity(M, q, 100)
+			setCapacity(h, q, 100)
 			h:System("Currency"):Add(q, "coins", 1e9, "test")
 			local c, d = adult(M, q, { line = "cindlet" }), adult(M, q, { line = "bubblin" })
 			h:Call(q, "Breeding.Start", { pod = 1, a = c.id, b = d.id })
@@ -475,7 +475,7 @@ return function(t)
 			end
 			expect(#items).toBe(1)
 			expect(items[1].player).toBe(p2)
-			setCapacity(M, p2, 100)
+			setCapacity(h, p2, 100)
 			expect(M:Get(p2, a.id).busy).toBe("breeding")
 			h:Call(p2, "Breeding.Claim", { pod = 1 })
 			expect(M:Get(p2, a.id).busy).toBe(false)

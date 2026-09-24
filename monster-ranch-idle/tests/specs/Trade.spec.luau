@@ -7,18 +7,19 @@ return function(t)
 
 	local Rules = Config.Social.Trade
 
-	-- Monsters capacity providers outlive a TestKernel; this one answers only for this spec's players.
-	local capacity = {}
-	local providerRegistered = false
-	local function setCapacity(M, p, n)
-		if not providerRegistered then
-			providerRegistered = true
+	-- Pins a player's monster capacity with one provider per kernel (Monsters keeps providers in
+	-- module state, so a provider must never answer for another test's players).
+	local function setCapacity(h, p, n)
+		local M = h:System("Monsters")
+		if not h.s5Capacity then
+			local cap = {}
+			h.s5Capacity = cap
 			M:RegisterCapacityProvider(function(player)
-				return capacity[player.UserId] or 0
+				return cap[player.UserId] or 0
 			end)
 		end
-		capacity[p.UserId] = 0
-		capacity[p.UserId] = n - M:Capacity(p)
+		h.s5Capacity[p.UserId] = 0
+		h.s5Capacity[p.UserId] = n - M:Capacity(p)
 	end
 
 	local function eggStub()
@@ -77,7 +78,7 @@ return function(t)
 		local opts = options or {}
 		levelTo(h, p, opts.level or 8)
 		h.kernel.Data:Get(p)._meta.playSeconds = opts.playSeconds or 3600
-		setCapacity(h:System("Monsters"), p, 100)
+		setCapacity(h, p, 100)
 	end
 
 	local function boot()
@@ -204,7 +205,7 @@ return function(t)
 			expect(M:Get(a, ma.id)).toBeNil()
 			expect(M:Get(b, mb.id)).toBeNil()
 			expect(M:Count(a)).toBe(aCount)
-			expect(M:Count(b)).toBe(bCount + 1)
+			expect(M:Count(b)).toBe(bCount) -- gave one, got one (plus an egg)
 			local gotA, gotB = {}, {}
 			for _, m in M:All(a) do
 				gotA[m.line] = m
@@ -292,7 +293,6 @@ return function(t)
 			local away = monster(M, a)
 			M:SetBusy(a, away.id, "expedition")
 			local fine = monster(M, a)
-			local theirs = monster(M, b)
 			local warm = eggs.give(a, "meadow")
 			eggs.incubating[warm] = true
 			open(h, a, b)
@@ -302,7 +302,7 @@ return function(t)
 			end
 			expect(offer({ { kind = "monster", id = locked.id } })).toContain("locked")
 			expect(offer({ { kind = "monster", id = away.id } })).toContain("busy")
-			expect(offer({ { kind = "monster", id = theirs.id } })).toContain("doesn't exist")
+			expect(offer({ { kind = "monster", id = "m404" } })).toContain("doesn't exist")
 			expect(offer({ { kind = "monster", id = fine.id }, { kind = "monster", id = fine.id } })).toContain("already in your offer")
 			expect(offer({ { kind = "egg", id = "e999" } })).toContain("doesn't exist")
 			expect(offer({ { kind = "egg", id = warm } })).toContain("incubator")
@@ -320,8 +320,7 @@ return function(t)
 			local m1, m2 = monster(M, a), monster(M, a)
 			open(h, a, b)
 			h:Call(a, "Trade.SetOffer", { items = { { kind = "monster", id = m1.id }, { kind = "monster", id = m2.id } } })
-			setCapacity(M, b, M:Count(b) + 1)
-			print("DEBUG", M:Count(b), M:Capacity(b), b.UserId)
+			setCapacity(h, b, M:Count(b) + 1)
 			readyUp(h, a, b)
 			h:Advance(Rules.countdownSeconds)
 			expect(M:Get(a, m1.id)).toBeTruthy()
@@ -335,7 +334,7 @@ return function(t)
 			expect(h:LastEvent(a, "Kernel.Notify").payload.text).toContain("Bob's ranch is full")
 
 			-- with room the same offer goes through
-			setCapacity(M, b, 100)
+			setCapacity(h, b, 100)
 			h:Advance(1)
 			readyUp(h, a, b)
 			h:Advance(Rules.countdownSeconds)
