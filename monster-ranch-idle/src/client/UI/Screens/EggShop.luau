@@ -123,7 +123,8 @@ function EggShop.Build(ctx)
 		Parent = odds,
 	}, 8, Enum.HorizontalAlignment.Center)
 	local buyIcon = Tiles.frame({ Size = UDim2.fromOffset(24, 24) })
-	local buyOne = Button.new({ Text = "Buy", Color = C.Green, Size = UDim2.fromOffset(150, 52), Icon = buyIcon, LayoutOrder = 1, Parent = buyRow })
+	local buyOne =
+		Button.new({ Text = "Buy", Color = C.Green, Size = UDim2.fromOffset(150, 52), Icon = buyIcon, LayoutOrder = 1, Parent = buyRow })
 	local buyMax = Button.new({ Text = "×Max", Color = C.Orange, Size = UDim2.fromOffset(124, 52), LayoutOrder = 2, Parent = buyRow })
 
 	-- State -------------------------------------------------------------------------
@@ -143,7 +144,10 @@ function EggShop.Build(ctx)
 		if egg.event and egg.event ~= Config.Flags.ActiveEvent then
 			return false
 		end
-		if (egg.paidRandom or Config.Monetization.PaidRandomEggs[egg.id]) and store:Get("session.Monetization.paidRandomAllowed") == false then
+		if
+			(egg.paidRandom or Config.Monetization.PaidRandomEggs[egg.id])
+			and store:Get("session.Monetization.paidRandomAllowed") == false
+		then
 			return false
 		end
 		return true
@@ -333,7 +337,10 @@ function EggShop.Build(ctx)
 		if egg.pity then
 			table.insert(notes, string.format("A %s or better within %d eggs", Theme.RarityName(egg.pity.minRarity), egg.pity.count))
 		elseif egg.luckyMeter then
-			table.insert(notes, string.format("Every %dth hatch is %s or better", egg.luckyMeter.every, Theme.RarityName(egg.luckyMeter.minRarity)))
+			table.insert(
+				notes,
+				string.format("Every %dth hatch is %s or better", egg.luckyMeter.every, Theme.RarityName(egg.luckyMeter.minRarity))
+			)
 		end
 		Tiles.label({
 			Text = table.concat(notes, "\n"),
@@ -384,7 +391,8 @@ function EggShop.Build(ctx)
 			buyMax:SetText(string.format("×%d", math.max(max, 1)))
 		end
 		local canBuy = not locked and left > 0 and max >= 1
-		buyOne:SetDisabled(not canBuy)
+		-- Stays tappable so a tap can explain why the egg can't be bought.
+		buyOne:SetColor(if canBuy then C.Green else C.Gray)
 		buyMax:SetDisabled(not canBuy or max < 2)
 		buyOne:SetOnClick(function()
 			if locked then
@@ -478,16 +486,21 @@ function EggShop.Build(ctx)
 			if stopCountdown then
 				stopCountdown()
 			end
-			stopCountdown = Widgets.Countdown(restock, function()
-				local endsAt = tonumber(store:Get("global.Shop.endsAt"))
-				if endsAt and endsAt > ctx:Now() then
-					return endsAt
+			stopCountdown = Widgets.Countdown(
+				restock,
+				function()
+					local endsAt = tonumber(store:Get("global.Shop.endsAt"))
+					if endsAt and endsAt > ctx:Now() then
+						return endsAt
+					end
+					-- Restocks run on a fixed global clock; show the next one until the Shop replicates.
+					return math.ceil(ctx:Now() / Config.Eggs.RestockSeconds) * Config.Eggs.RestockSeconds
+				end,
+				Format.clock,
+				function()
+					task.delay(1, watch.Refresh)
 				end
-				-- Restocks run on a fixed global clock; show the next one until the Shop replicates.
-				return math.ceil(ctx:Now() / Config.Eggs.RestockSeconds) * Config.Eggs.RestockSeconds
-			end, Format.clock, function()
-				task.delay(1, watch.Refresh)
-			end)
+			)
 		end,
 		Close = function()
 			watch.Stop()

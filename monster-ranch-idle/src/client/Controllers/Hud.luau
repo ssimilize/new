@@ -75,7 +75,16 @@ end
 
 -- Builders --------------------------------------------------------------------------
 
-local function sideButton(parent: Instance, name: string, text: string, color: Color3, icon: GuiObject, order: number, action: () -> (), lockKey: string?)
+local function sideButton(
+	parent: Instance,
+	name: string,
+	text: string,
+	color: Color3,
+	icon: GuiObject,
+	order: number,
+	action: () -> (),
+	lockKey: string?
+)
 	local entry = { lockKey = lockKey }
 	local b = Button.new({
 		Name = name,
@@ -200,7 +209,12 @@ local function refreshWeather()
 			local el = Config.Elements.ById[def.element]
 			table.insert(
 				parts,
-				string.format("%s chance ×%d for %s", mut.name, math.floor(def.matchChance / def.chance + 0.5), if el then el.name else def.element)
+				string.format(
+					"%s chance ×%d for %s",
+					mut.name,
+					math.floor(def.matchChance / def.chance + 0.5),
+					if el then el.name else def.element
+				)
 			)
 		else
 			table.insert(parts, mut.name .. " chance")
@@ -402,11 +416,16 @@ local function build()
 		LayoutOrder = 2,
 		Parent = banner,
 	})
-	Widgets.Countdown(weather.time, function()
-		return tonumber(StoreKit.tbl(ctx.Store, "global.Weather").endsAt)
-	end, Format.clock, function()
-		refreshWeather()
-	end)
+	Widgets.Countdown(
+		weather.time,
+		function()
+			return tonumber(StoreKit.tbl(ctx.Store, "global.Weather").endsAt)
+		end,
+		Format.clock,
+		function()
+			refreshWeather()
+		end
+	)
 	targets.weather = banner
 
 	-- Left stack
@@ -439,7 +458,8 @@ local function build()
 	}, 10, Enum.HorizontalAlignment.Right)
 	sideButton(right, "Expeditions", "Expeditions", C.Green, previewIcon("bubblin", 30), 1, function()
 		openScreen("Expeditions")
-	end, "expeditions").button.Label.TextSize = Theme.TextSize.Small + 1
+	end, "expeditions").button.Label.TextSize = Theme.TextSize.Small
+		+ 1
 
 	-- Stampede card
 	local card = New("TextButton", {
@@ -501,7 +521,8 @@ local function build()
 	end, Config.Breeding.Unlock)
 	sideButton(right, "HallOfFame", "Hall of Fame", C.Gold, Icon.new("stardust", 28), 5, function()
 		openScreen("HallOfFame")
-	end, Config.HallOfFame.Unlock).button.Label.TextSize = Theme.TextSize.Small
+	end, Config.HallOfFame.Unlock).button.Label.TextSize =
+		Theme.TextSize.Small
 
 	-- Bottom-centre
 	local bottom = Tiles.row({

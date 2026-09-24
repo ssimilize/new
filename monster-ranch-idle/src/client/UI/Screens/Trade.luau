@@ -528,6 +528,10 @@ return {
 					{ TextColor3 = C.TextMuted }
 				)
 			end
+			local oldLock = playersCard:FindFirstChild("Lock")
+			if oldLock then
+				oldLock:Destroy()
+			end
 			if not Util.unlocked(ctx, TradeConfig.unlock) then
 				Util.lockOverlay(playersCard, Util.unlockText(TradeConfig.unlock))
 			end

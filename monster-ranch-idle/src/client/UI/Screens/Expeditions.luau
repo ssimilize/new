@@ -569,7 +569,6 @@ return {
 				}, {
 					Create.Round(),
 					Create.Stroke(if s == sel then 4 else 2.5, if s == sel then C.Gold else C.Ink),
-					Create.TextStroke(1.5),
 				})
 				node.Activated:Connect(function()
 					if not unlocked then

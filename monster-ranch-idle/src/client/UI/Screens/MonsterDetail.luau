@@ -96,14 +96,29 @@ function MonsterDetail.Build(ctx)
 			ctx.Router:Close("MonsterDetail")
 		end,
 	})
-	local headerChips = Tiles.row({ AutomaticSize = Enum.AutomaticSize.X, Size = UDim2.fromOffset(0, 44), LayoutOrder = 1, Parent = panel.HeaderRight }, 6)
-	local renameButton = Button.new({ Text = "✎", Color = C.Blue, Size = UDim2.fromOffset(44, 44), TextSize = 22, LayoutOrder = 2, Parent = panel.HeaderRight })
-	local lockButton = Button.new({ Text = "Lock", Color = C.Gray, Size = UDim2.fromOffset(84, 44), TextSize = 18, LayoutOrder = 3, Parent = panel.HeaderRight })
+	local headerChips =
+		Tiles.row({ AutomaticSize = Enum.AutomaticSize.X, Size = UDim2.fromOffset(0, 44), LayoutOrder = 1, Parent = panel.HeaderRight }, 6)
+	local renameButton = Button.new({
+		Text = "✎",
+		Color = C.Blue,
+		Size = UDim2.fromOffset(44, 44),
+		TextSize = 22,
+		LayoutOrder = 2,
+		Parent = panel.HeaderRight,
+	})
+	local lockButton = Button.new({
+		Text = "Lock",
+		Color = C.Gray,
+		Size = UDim2.fromOffset(84, 44),
+		TextSize = 18,
+		LayoutOrder = 3,
+		Parent = panel.HeaderRight,
+	})
 
 	-- Left: portrait ----------------------------------------------------------------
 	local portrait = New("Frame", {
 		Name = "Portrait",
-		BackgroundColor3 = Color3.fromHex("#F7D489"),
+		BackgroundColor3 = C.White, -- tinted by the element gradient below
 		Size = UDim2.fromOffset(290, 300),
 		ClipsDescendants = true,
 		Parent = panel.Body,
@@ -111,8 +126,15 @@ function MonsterDetail.Build(ctx)
 	local portraitGradient = Instance.new("UIGradient")
 	portraitGradient.Rotation = 90
 	portraitGradient.Parent = portrait
-	local vm = ViewportMonster.new({ Size = UDim2.new(1, 0, 1, -30), Position = UDim2.fromOffset(0, 16), Spin = 0.5, ZIndex = 2, Parent = portrait })
-	local portraitChips = Tiles.row({ Position = UDim2.fromOffset(8, 8), Size = UDim2.new(1, -16, 0, 26), ZIndex = 5, Parent = portrait }, 6)
+	local vm = ViewportMonster.new({
+		Size = UDim2.new(1, 0, 1, -30),
+		Position = UDim2.fromOffset(0, 16),
+		Spin = 0.5,
+		ZIndex = 2,
+		Parent = portrait,
+	})
+	local portraitChips =
+		Tiles.row({ Position = UDim2.fromOffset(8, 8), Size = UDim2.new(1, -16, 0, 26), ZIndex = 5, Parent = portrait }, 6)
 	local portraitFoot = Tiles.label({
 		Text = "",
 		TextSize = Theme.TextSize.Small + 1,
@@ -133,8 +155,10 @@ function MonsterDetail.Build(ctx)
 		Parent = portrait,
 	})
 	local leftInfo = Tiles.col({ Position = UDim2.fromOffset(4, 308), Size = UDim2.fromOffset(282, 92), Parent = panel.Body }, 2)
-	local rateLabel = Tiles.label({ Text = "", TextSize = Theme.TextSize.Body, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 1, Parent = leftInfo })
-	local powerLabel = Tiles.label({ Text = "", TextSize = Theme.TextSize.Body, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 2, Parent = leftInfo })
+	local rateLabel =
+		Tiles.label({ Text = "", TextSize = Theme.TextSize.Body, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 1, Parent = leftInfo })
+	local powerLabel =
+		Tiles.label({ Text = "", TextSize = Theme.TextSize.Body, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 2, Parent = leftInfo })
 	local busyLabel = Tiles.label({
 		Text = "",
 		TextSize = Theme.TextSize.Body,
@@ -161,15 +185,39 @@ function MonsterDetail.Build(ctx)
 	local levelBar = Widgets.Bar({ Color = C.Blue, Size = UDim2.new(1, 0, 0, 16), LayoutOrder = 2, Parent = middle })
 	local statRows = {}
 	for i, s in STATS do
-		statRows[s.key] = StatBar.new({ Label = s.label, Color = s.color, LabelWidth = 48, ValueWidth = 64, Height = 24, LayoutOrder = 2 + i, Parent = middle })
+		statRows[s.key] = StatBar.new({
+			Label = s.label,
+			Color = s.color,
+			LabelWidth = 48,
+			ValueWidth = 64,
+			Height = 24,
+			LayoutOrder = 2 + i,
+			Parent = middle,
+		})
 	end
 	local traitsRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 10, Parent = middle }, 6)
 	local actionRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 54), LayoutOrder = 11, Parent = middle }, 8)
-	local feedButton = Button.new({ Text = "Feed", Color = C.Orange, Size = UDim2.fromOffset(96, 52), Icon = Icon.new("food", 22), LayoutOrder = 1, Parent = actionRow })
+	local feedButton = Button.new({
+		Text = "Feed",
+		Color = C.Orange,
+		Size = UDim2.fromOffset(96, 52),
+		Icon = Icon.new("food", 22),
+		LayoutOrder = 1,
+		Parent = actionRow,
+	})
 	local lvOneCost = Tiles.frame({ AutomaticSize = Enum.AutomaticSize.X, Size = UDim2.fromOffset(0, 24) })
-	local lvOne = Button.new({ Text = "Lv up", Color = C.Green, Size = UDim2.fromOffset(136, 52), TextSize = 18, Icon = lvOneCost, LayoutOrder = 2, Parent = actionRow })
+	local lvOne = Button.new({
+		Text = "Lv up",
+		Color = C.Green,
+		Size = UDim2.fromOffset(136, 52),
+		TextSize = 18,
+		Icon = lvOneCost,
+		LayoutOrder = 2,
+		Parent = actionRow,
+	})
 	lvOneCost.LayoutOrder = 3
-	local lvTen = Button.new({ Text = "×10", Color = C.Green, Size = UDim2.fromOffset(92, 52), TextSize = 18, LayoutOrder = 3, Parent = actionRow })
+	local lvTen =
+		Button.new({ Text = "×10", Color = C.Green, Size = UDim2.fromOffset(92, 52), TextSize = 18, LayoutOrder = 3, Parent = actionRow })
 	local costLabel = Tiles.label({
 		Text = "",
 		TextSize = Theme.TextSize.Small,
@@ -179,7 +227,8 @@ function MonsterDetail.Build(ctx)
 		Parent = middle,
 	})
 	local growRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 52), LayoutOrder = 13, Parent = middle }, 8)
-	local growButton = Button.new({ Text = "Grow up!", Color = C.Blue, Size = UDim2.fromOffset(170, 50), LayoutOrder = 1, Parent = growRow })
+	local growButton =
+		Button.new({ Text = "Grow up!", Color = C.Blue, Size = UDim2.fromOffset(170, 50), LayoutOrder = 1, Parent = growRow })
 	local growReason = Tiles.label({
 		Text = "",
 		TextSize = Theme.TextSize.Small,
@@ -192,7 +241,13 @@ function MonsterDetail.Build(ctx)
 	-- Right: diet + evolution ----------------------------------------------------------
 	local right = Tiles.card({ Position = UDim2.fromOffset(662, 0), Size = UDim2.fromOffset(282, 400), Parent = panel.Body })
 	local rightCol = Tiles.col({ Position = UDim2.fromOffset(10, 8), Size = UDim2.new(1, -20, 1, -74), Parent = right }, 4)
-	local dietTitle = Tiles.label({ Text = "Diet this stage", TextSize = Theme.TextSize.Body, Size = UDim2.new(1, 0, 0, 22), LayoutOrder = 1, Parent = rightCol })
+	local dietTitle = Tiles.label({
+		Text = "Diet this stage",
+		TextSize = Theme.TextSize.Body,
+		Size = UDim2.new(1, 0, 0, 22),
+		LayoutOrder = 1,
+		Parent = rightCol,
+	})
 	local dietRows = {}
 	for i, flavor in Config.Food.List do
 		dietRows[flavor.id] = StatBar.new({
@@ -205,7 +260,13 @@ function MonsterDetail.Build(ctx)
 			Parent = rightCol,
 		})
 	end
-	Tiles.label({ Text = "Evolution path", TextSize = Theme.TextSize.Body, Size = UDim2.new(1, 0, 0, 22), LayoutOrder = 10, Parent = rightCol })
+	Tiles.label({
+		Text = "Evolution path",
+		TextSize = Theme.TextSize.Body,
+		Size = UDim2.new(1, 0, 0, 22),
+		LayoutOrder = 10,
+		Parent = rightCol,
+	})
 	local evoFrame = Tiles.frame({ Size = UDim2.new(1, 0, 0, 122), LayoutOrder = 11, Parent = rightCol })
 	local evoText = Tiles.label({
 		Text = "",
@@ -221,8 +282,22 @@ function MonsterDetail.Build(ctx)
 		Size = UDim2.new(1, -16, 0, 52),
 		Parent = right,
 	}, 8, Enum.HorizontalAlignment.Center)
-	local starButton = Button.new({ Text = "★ Star up", Color = C.Gold, TextSize = 18, Size = UDim2.fromOffset(140, 50), LayoutOrder = 1, Parent = rightButtons })
-	local sellButton = Button.new({ Text = "Sell", Color = C.Red, TextSize = 18, Size = UDim2.fromOffset(110, 50), LayoutOrder = 2, Parent = rightButtons })
+	local starButton = Button.new({
+		Text = "★ Star up",
+		Color = C.Gold,
+		TextSize = 18,
+		Size = UDim2.fromOffset(140, 50),
+		LayoutOrder = 1,
+		Parent = rightButtons,
+	})
+	local sellButton = Button.new({
+		Text = "Sell",
+		Color = C.Red,
+		TextSize = 18,
+		Size = UDim2.fromOffset(110, 50),
+		LayoutOrder = 2,
+		Parent = rightButtons,
+	})
 
 	local popup = InsetPopup.new({ Parent = panel.Card, Title = "", Size = UDim2.fromOffset(460, 330) })
 
@@ -323,7 +398,11 @@ function MonsterDetail.Build(ctx)
 			Size = UDim2.new(1, 0, 0, 90),
 			Parent = popup.Body,
 		})
-		local row = Tiles.row({ Position = UDim2.fromOffset(0, 110), Size = UDim2.new(1, 0, 0, 56), Parent = popup.Body }, 12, Enum.HorizontalAlignment.Center)
+		local row = Tiles.row(
+			{ Position = UDim2.fromOffset(0, 110), Size = UDim2.new(1, 0, 0, 56), Parent = popup.Body },
+			12,
+			Enum.HorizontalAlignment.Center
+		)
 		Button.new({
 			Text = "Cancel",
 			Color = C.Gray,
@@ -420,7 +499,10 @@ function MonsterDetail.Build(ctx)
 						function()
 							local ok, res = StoreKit.request(ctx, "Monsters.StarUp", { id = id, fodder = ids[1] })
 							if ok then
-								ctx:Toast(string.format("%s is now ★%d!", name, type(res) == "table" and tonumber(res.stars) or 0), "success")
+								ctx:Toast(
+									string.format("%s is now ★%d!", name, type(res) == "table" and tonumber(res.stars) or 0),
+									"success"
+								)
 							end
 						end
 					)
@@ -447,10 +529,10 @@ function MonsterDetail.Build(ctx)
 				Parent = evoFrame,
 			}, {
 				Create.Corner(10),
-				Create.Stroke(if current or (predicted and predicted.id == form.id) then 3 else 1.5, if current
-					then C.Gold
-					elseif predicted and predicted.id == form.id then C.Green
-					else C.Line),
+				Create.Stroke(
+					if current or (predicted and predicted.id == form.id) then 3 else 1.5,
+					if current then C.Gold elseif predicted and predicted.id == form.id then C.Green else C.Line
+				),
 			})
 			local ap = Appearance.Preview(m.line, stage, form.id, m.rarity, m.variant)
 			local icon = if seen then MonsterIcon.new(ap, size - 8) else silhouetteOf(ap, size - 8)
@@ -461,7 +543,13 @@ function MonsterDetail.Build(ctx)
 			end
 		end
 		local function arrow(x: number, y: number)
-			Tiles.label({ Text = "›", TextSize = 26, Position = UDim2.fromOffset(x, y), Size = UDim2.fromOffset(16, 30), Parent = evoFrame })
+			Tiles.label({
+				Text = "›",
+				TextSize = 26,
+				Position = UDim2.fromOffset(x, y),
+				Size = UDim2.fromOffset(16, 30),
+				Parent = evoFrame,
+			})
 		end
 		node(1, def.forms[1], 0, 34, 56)
 		arrow(58, 46)
@@ -546,7 +634,9 @@ function MonsterDetail.Build(ctx)
 		local stats = Formulas.Stats(m)
 		local power = Formulas.Power(stats)
 		powerLabel.Text = string.format("Power %s · Sells for %s", Format.commas(power), Format.short(Formulas.SellPrice(m)))
-		busyLabel.Text = if m.busy then (BUSY_TEXT[m.busy] or "Busy") else (if m.loc == "pen" then "Working in Pen " .. tostring(m.pen or "?") else "Resting in the barn")
+		busyLabel.Text = if m.busy
+			then (BUSY_TEXT[m.busy] or "Busy")
+			else (if m.loc == "pen" then "Working in Pen " .. tostring(m.pen or "?") else "Resting in the barn")
 		busyLabel.TextColor3 = if m.busy then C.Red else C.TextMuted
 
 		-- Level + stats
@@ -568,7 +658,8 @@ function MonsterDetail.Build(ctx)
 		for i, tid in StoreKit.asTable(m.traits) do
 			local t = Config.Traits.ById[tid]
 			if t then
-				local chip = Widgets.Chip({ Text = t.name, Color = C.Blue, TextSize = Theme.TextSize.Small, LayoutOrder = i, Parent = traitsRow })
+				local chip =
+					Widgets.Chip({ Text = t.name, Color = C.Blue, TextSize = Theme.TextSize.Small, LayoutOrder = i, Parent = traitsRow })
 				Tiles.tap(chip, function()
 					ctx:Toast(t.name .. ": " .. t.desc, "info")
 				end)
@@ -576,12 +667,24 @@ function MonsterDetail.Build(ctx)
 		end
 		local hidden = Config.Traits.ById[m.hidden or 0]
 		if stage >= 3 and hidden then
-			local chip = Widgets.Chip({ Text = "Hidden · " .. hidden.name, Color = C.Purple, TextSize = Theme.TextSize.Small, LayoutOrder = 9, Parent = traitsRow })
+			local chip = Widgets.Chip({
+				Text = "Hidden · " .. hidden.name,
+				Color = C.Purple,
+				TextSize = Theme.TextSize.Small,
+				LayoutOrder = 9,
+				Parent = traitsRow,
+			})
 			Tiles.tap(chip, function()
 				ctx:Toast(hidden.name .. ": " .. hidden.desc, "info")
 			end)
 		else
-			local chip = Widgets.Chip({ Text = "Hidden · ???", Color = C.Gray, TextSize = Theme.TextSize.Small, LayoutOrder = 9, Parent = traitsRow })
+			local chip = Widgets.Chip({
+				Text = "Hidden · ???",
+				Color = C.Gray,
+				TextSize = Theme.TextSize.Small,
+				LayoutOrder = 9,
+				Parent = traitsRow,
+			})
 			Tiles.tap(chip, function()
 				ctx:Toast("The hidden trait shows when it grows into an Adult", "info")
 			end)
@@ -641,7 +744,9 @@ function MonsterDetail.Build(ctx)
 		-- Diet
 		local needed = Formulas.MealsNeeded(stage)
 		local eaten = Formulas.MealsEaten(m)
-		dietTitle.Text = if needed then string.format("Diet this stage · %d / %d meals", math.min(eaten, needed), needed) else "Diet · meals lift Mood"
+		dietTitle.Text = if needed
+			then string.format("Diet this stage · %d / %d meals", math.min(eaten, needed), needed)
+			else "Diet · meals lift Mood"
 		for _, flavor in Config.Food.List do
 			local n = tonumber(StoreKit.asTable(m.meals)[flavor.id]) or 0
 			dietRows[flavor.id]:Set(if needed then n / math.max(1, needed) else 0, tostring(n))
@@ -690,13 +795,23 @@ function MonsterDetail.Build(ctx)
 		end
 		local any = false
 		for oid, other in StoreKit.monsters(store) do
-			if oid ~= currentId and type(other) == "table" and other.line == m.line and other.rarity == m.rarity and not other.busy and not other.locked then
+			if
+				oid ~= currentId
+				and type(other) == "table"
+				and other.line == m.line
+				and other.rarity == m.rarity
+				and not other.busy
+				and not other.locked
+			then
 				any = true
 				break
 			end
 		end
 		if not any then
-			ctx:Toast(string.format("You need another %s %s to fuse", Theme.RarityName(m.rarity), Formulas.FormName({ line = m.line, stage = 1 })), "info")
+			ctx:Toast(
+				string.format("You need another %s %s to fuse", Theme.RarityName(m.rarity), Formulas.FormName({ line = m.line, stage = 1 })),
+				"info"
+			)
 			return
 		end
 		startStarUp()

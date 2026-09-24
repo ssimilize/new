@@ -10,6 +10,20 @@ return {
 		"World",
 		"Weather",
 		"Interaction",
+		-- C3 · Adventure & social
+		"Tutorial",
+		"Broadcasts",
+		"TradeRequests",
 	},
-	Screens = {},
+	Screens = {
+		-- C3 · Adventure & social
+		"Expeditions",
+		"Breeding",
+		"Trade",
+		"Boss",
+		"HallOfFame",
+		"Quests",
+		"Store",
+		"Settings",
+	},
 }

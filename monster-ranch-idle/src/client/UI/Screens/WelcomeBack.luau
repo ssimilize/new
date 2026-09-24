@@ -93,7 +93,13 @@ function WelcomeBack.Build(ctx)
 	local coinIcon = Icon.new("coin", 52)
 	coinIcon.Position = UDim2.fromOffset(14, 13)
 	coinIcon.Parent = coinCard
-	local coinText = Tiles.label({ Text = "", TextSize = Theme.TextSize.Title, Position = UDim2.fromOffset(80, 6), Size = UDim2.new(1, -90, 0, 38), Parent = coinCard })
+	local coinText = Tiles.label({
+		Text = "",
+		TextSize = Theme.TextSize.Title,
+		Position = UDim2.fromOffset(80, 6),
+		Size = UDim2.new(1, -90, 0, 38),
+		Parent = coinCard,
+	})
 	local coinSub = Tiles.label({
 		Text = "",
 		TextSize = Theme.TextSize.Small,
@@ -108,9 +114,26 @@ function WelcomeBack.Build(ctx)
 		Size = UDim2.new(1, 0, 0, 146),
 		Parent = panel.Body,
 	}, { Create.Grid(Vector2.new(192, 68), 8) })
-	local buttons = Tiles.row({ Position = UDim2.fromOffset(0, 276), Size = UDim2.new(1, 0, 0, 62), Parent = panel.Body }, 14, Enum.HorizontalAlignment.Center)
-	local collect = Button.new({ Text = "Collect", Color = C.Green, Size = UDim2.fromOffset(200, 58), TextSize = Theme.TextSize.Button + 2, LayoutOrder = 1, Parent = buttons })
-	local double = Button.new({ Text = "▶ Watch ad · ×2 coins", Color = C.Orange, Size = UDim2.fromOffset(300, 58), LayoutOrder = 2, Parent = buttons })
+	local buttons = Tiles.row(
+		{ Position = UDim2.fromOffset(0, 276), Size = UDim2.new(1, 0, 0, 62), Parent = panel.Body },
+		14,
+		Enum.HorizontalAlignment.Center
+	)
+	local collect = Button.new({
+		Text = "Collect",
+		Color = C.Green,
+		Size = UDim2.fromOffset(200, 58),
+		TextSize = Theme.TextSize.Button + 2,
+		LayoutOrder = 1,
+		Parent = buttons,
+	})
+	local double = Button.new({
+		Text = "▶ Watch ad · ×2 coins",
+		Color = C.Orange,
+		Size = UDim2.fromOffset(300, 58),
+		LayoutOrder = 2,
+		Parent = buttons,
+	})
 	local footer = Tiles.label({
 		Text = "",
 		TextSize = Theme.TextSize.Small + 1,

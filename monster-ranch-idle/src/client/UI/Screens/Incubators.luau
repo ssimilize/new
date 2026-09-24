@@ -54,8 +54,10 @@ function Incubators.Build(ctx)
 			ctx.Router:Close("Incubators")
 		end,
 	})
-	local fill = Button.new({ Text = "Fill slots", Color = C.Blue, Size = UDim2.fromOffset(140, 44), LayoutOrder = 1, Parent = panel.HeaderRight })
-	local hatchAll = Button.new({ Text = "Hatch all", Color = C.Green, Size = UDim2.fromOffset(150, 44), LayoutOrder = 2, Parent = panel.HeaderRight })
+	local fill =
+		Button.new({ Text = "Fill slots", Color = C.Blue, Size = UDim2.fromOffset(140, 44), LayoutOrder = 1, Parent = panel.HeaderRight })
+	local hatchAll =
+		Button.new({ Text = "Hatch all", Color = C.Green, Size = UDim2.fromOffset(150, 44), LayoutOrder = 2, Parent = panel.HeaderRight })
 
 	local slotsRow = Tiles.row({ Size = UDim2.new(1, 0, 0, SLOT_H), Parent = panel.Body }, 16, Enum.HorizontalAlignment.Center)
 	local infoLabel = Tiles.label({

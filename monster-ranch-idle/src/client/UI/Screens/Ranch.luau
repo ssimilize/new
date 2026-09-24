@@ -72,7 +72,8 @@ function Ranch.Build(ctx)
 		Parent = panel.HeaderRight,
 	})
 	local nav = Widgets.List({ Size = UDim2.fromOffset(176, 400), Padding = 8, Parent = panel.Body })
-	local content = Widgets.List({ Position = UDim2.fromOffset(186, 0), Size = UDim2.new(1, -186, 1, 0), Padding = 10, Parent = panel.Body })
+	local content =
+		Widgets.List({ Position = UDim2.fromOffset(186, 0), Size = UDim2.new(1, -186, 1, 0), Padding = 10, Parent = panel.Body })
 	local watch
 	local popup = InsetPopup.new({
 		Parent = panel.Card,
@@ -93,13 +94,33 @@ function Ranch.Build(ctx)
 	end
 
 	local function sectionTitle(text: string, order: number)
-		return Tiles.label({ Text = text, TextSize = Theme.TextSize.Header - 2, Size = UDim2.new(1, -10, 0, 30), LayoutOrder = order, Parent = content })
+		return Tiles.label({
+			Text = text,
+			TextSize = Theme.TextSize.Header - 2,
+			Size = UDim2.new(1, -10, 0, 30),
+			LayoutOrder = order,
+			Parent = content,
+		})
 	end
 
 	-- A card with a title, a description and an action button on the right.
-	local function actionCard(order: number, title: string, desc: string, buttonText: string, color: Color3, enabled: boolean, onClick: () -> ())
+	local function actionCard(
+		order: number,
+		title: string,
+		desc: string,
+		buttonText: string,
+		color: Color3,
+		enabled: boolean,
+		onClick: () -> ()
+	)
 		local card = Tiles.card({ Size = UDim2.new(1, -12, 0, 76), LayoutOrder = order, Parent = content })
-		Tiles.label({ Text = title, TextSize = Theme.TextSize.Body + 1, Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -230, 0, 26), Parent = card })
+		Tiles.label({
+			Text = title,
+			TextSize = Theme.TextSize.Body + 1,
+			Position = UDim2.fromOffset(14, 8),
+			Size = UDim2.new(1, -230, 0, 26),
+			Parent = card,
+		})
 		Tiles.label({
 			Text = desc,
 			TextSize = Theme.TextSize.Small,
@@ -148,7 +169,13 @@ function Ranch.Build(ctx)
 					Create.Corner(8),
 					Create.Stroke(4, Color3.fromHex(theme.fence)),
 				})
-				Tiles.label({ Text = theme.name, TextSize = Theme.TextSize.Body, Position = UDim2.fromOffset(60, 0), Size = UDim2.new(1, -220, 1, 0), Parent = row })
+				Tiles.label({
+					Text = theme.name,
+					TextSize = Theme.TextSize.Body,
+					Position = UDim2.fromOffset(60, 0),
+					Size = UDim2.new(1, -220, 1, 0),
+					Parent = row,
+				})
 				local inUse = (pen.theme or "wood") == theme.id
 				Button.new({
 					Text = if inUse then "In use" elseif has then "Use" else "Get in Store",
@@ -319,7 +346,12 @@ function Ranch.Build(ctx)
 			Size = UDim2.new(1, -250, 0, 20),
 			Parent = jarCard,
 		})
-		rateLabel.Text = string.format("%s coins/s · jar holds %s · %s", Format.short(math.floor(rate * 10) / 10), hoursText(capSeconds), if themeDef then themeDef.name else "Wooden Fence")
+		rateLabel.Text = string.format(
+			"%s coins/s · jar holds %s · %s",
+			Format.short(math.floor(rate * 10) / 10),
+			hoursText(capSeconds),
+			if themeDef then themeDef.name else "Wooden Fence"
+		)
 		local jarBar = Widgets.Bar({
 			Color = C.Coin,
 			Value = if full > 0 then jar / full else 0,
@@ -452,7 +484,9 @@ function Ranch.Build(ctx)
 		local nextJar = Economy.JarTiers[jarTier + 1]
 		actionCard(
 			6,
-			if nextJar then string.format("Coin jar %s → %s", hoursText(Economy.JarTiers[jarTier].seconds), hoursText(nextJar.seconds)) else "Coin jar · max",
+			if nextJar
+				then string.format("Coin jar %s → %s", hoursText(Economy.JarTiers[jarTier].seconds), hoursText(nextJar.seconds))
+				else "Coin jar · max",
 			"A bigger jar keeps filling longer while you're away.",
 			if nextJar then Format.short(nextJar.cost) .. " coins" else "Maxed",
 			C.Green,
@@ -469,7 +503,12 @@ function Ranch.Build(ctx)
 		for slot = 1, Config.Decor.PerPen do
 			local decorId = placed[slot]
 			local def = decorId and Config.Decor.ById[decorId]
-			local tile = Tiles.card({ Size = UDim2.fromOffset(150, 92), LayoutOrder = slot, Parent = decorRow, Color = if def then C.Card else C.PanelDeep })
+			local tile = Tiles.card({
+				Size = UDim2.fromOffset(150, 92),
+				LayoutOrder = slot,
+				Parent = decorRow,
+				Color = if def then C.Card else C.PanelDeep,
+			})
 			if def then
 				New("Frame", {
 					BackgroundColor3 = Color3.fromHex(def.color),
@@ -490,7 +529,14 @@ function Ranch.Build(ctx)
 					StoreKit.request(ctx, "Ranch.PlaceDecor", { decor = decorId, pen = 0 })
 				end)
 			else
-				Create.Text({ Text = "+", TextSize = 40, TextColor3 = C.Orange, Stroke = true, Size = UDim2.new(1, 0, 0, 56), Parent = tile })
+				Create.Text({
+					Text = "+",
+					TextSize = 40,
+					TextColor3 = C.Orange,
+					Stroke = true,
+					Size = UDim2.new(1, 0, 0, 56),
+					Parent = tile,
+				})
 				Tiles.label({
 					Text = "Place decor",
 					TextSize = Theme.TextSize.Small,
@@ -588,7 +634,10 @@ function Ranch.Build(ctx)
 		actionCard(
 			5,
 			string.format("Feed Garden · %d plots", Economy.Garden.plots[gardenTier] or 0),
-			if not gardenOpen then StoreKit.lockText(Economy.Garden.unlock) elseif nextPlots then string.format("Upgrade to %d plots.", nextPlots) else "Fully upgraded.",
+			if not gardenOpen
+				then StoreKit.lockText(Economy.Garden.unlock)
+				elseif nextPlots then string.format("Upgrade to %d plots.", nextPlots)
+				else "Fully upgraded.",
 			if nextPlots then Format.short(gardenCost or 0) .. " coins" else "Maxed",
 			C.Green,
 			gardenOpen and nextPlots ~= nil and StoreKit.canAfford(store, { coins = gardenCost or 0 }),
@@ -727,9 +776,17 @@ function Ranch.Build(ctx)
 		local nextPlots = Economy.Garden.plots[tierOf(garden.tier) + 1]
 		if nextPlots then
 			local cost = Economy.Garden.cost[tierOf(garden.tier) + 1] or 0
-			actionCard(3, string.format("More plots (%d → %d)", count, nextPlots), "More plots, more food.", Format.short(cost) .. " coins", C.Green, StoreKit.canAfford(store, { coins = cost }), function()
-				StoreKit.request(ctx, "Ranch.Upgrade", { target = "garden" })
-			end)
+			actionCard(
+				3,
+				string.format("More plots (%d → %d)", count, nextPlots),
+				"More plots, more food.",
+				Format.short(cost) .. " coins",
+				C.Green,
+				StoreKit.canAfford(store, { coins = cost }),
+				function()
+					StoreKit.request(ctx, "Ranch.Upgrade", { target = "garden" })
+				end
+			)
 		end
 	end
 

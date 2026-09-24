@@ -171,7 +171,8 @@ local function build()
 		Parent = info,
 	})
 	ui.chips = Tiles.row({ Size = UDim2.new(1, 0, 0, 28), LayoutOrder = 2, ZIndex = 56, Parent = info }, 8, Enum.HorizontalAlignment.Center)
-	ui.traits = Tiles.row({ Size = UDim2.new(1, 0, 0, 28), LayoutOrder = 3, ZIndex = 56, Parent = info }, 8, Enum.HorizontalAlignment.Center)
+	ui.traits =
+		Tiles.row({ Size = UDim2.new(1, 0, 0, 28), LayoutOrder = 3, ZIndex = 56, Parent = info }, 8, Enum.HorizontalAlignment.Center)
 	ui.details = Create.Text({
 		Text = "",
 		TextSize = Theme.TextSize.Body,
@@ -181,7 +182,8 @@ local function build()
 		Parent = info,
 	})
 	-- Naming row (first starter only).
-	ui.nameRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 50), LayoutOrder = 5, Visible = false, Parent = info }, 10, Enum.HorizontalAlignment.Center)
+	ui.nameRow =
+		Tiles.row({ Size = UDim2.new(1, 0, 0, 50), LayoutOrder = 5, Visible = false, Parent = info }, 10, Enum.HorizontalAlignment.Center)
 	ui.nameBox = New("TextBox", {
 		Name = "NameBox",
 		Text = "",
@@ -359,7 +361,10 @@ local function setupButtons(entry)
 	-- The starter is the first monster ever (its egg type is "starter").
 	local unnamed = m.name == nil or m.name == ""
 	local isStarter = unnamed
-		and (entry.egg == "starter" or (StoreKit.num(ctx.Store, "profile.Monsters.nextId") <= 2 and entry.egg ~= nil and not Config.Eggs.ById[entry.egg]))
+		and (
+			entry.egg == "starter"
+			or (StoreKit.num(ctx.Store, "profile.Monsters.nextId") <= 2 and entry.egg ~= nil and not Config.Eggs.ById[entry.egg])
+		)
 	ui.nameIt:SetVisible(isStarter)
 	ui.nameRow.Visible = false
 	ui.skipAll:SetVisible(#queue > 0)

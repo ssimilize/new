@@ -37,10 +37,10 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Visuals: MonsterModel, EggModel | K | 🟩 | procedural placeholders |
 | Visuals: MonsterAnimator | C1 | 🟩 | one shared RenderStepped; idle/walk/happy/eat/attack/hurt/sleep + egg `wobble`; distance pause > 250 studs; rainbow/prismatic hue cycling |
 | Controllers: World, Weather, Interaction | C1 | 🟩 | not yet in Manifest; need Workspace.World (server `World` system) |
-| Controllers: Hud, Notifications, Hatchery | C2 | ⬜ | |
-| Screens: EggShop, Incubators, Monsters, MonsterDetail, Ranch, WelcomeBack, Codex | C2 | ⬜ | |
-| Controllers: Tutorial, Broadcasts, TradeRequests | C3 | ⬜ | |
-| Screens: Expeditions, Breeding, Trade, Boss, HallOfFame, Quests, Store, Settings | C3 | ⬜ | |
+| Controllers: Hud, Notifications, Hatchery | C2 | 🟩 | lint/selene/rojo clean; not in Manifest yet. `Hud:GetTarget(name)`, `Hud:Flash(name)`, bus `Hud.Flash`; Notifications auto-opens WelcomeBack; `Hatchery:IsShowing()` |
+| Screens: EggShop, Incubators, Monsters, MonsterDetail, Ranch, WelcomeBack, Codex | C2 | 🟩 | lint/selene/rojo clean; not in Manifest yet. Monsters pick mode per §5 (returnTo opens before `onPick`; cancel returns without it). New C2 components: `StoreKit`, `Tiles`, `InsetPopup`, `StatBar`, `ViewportMonster` |
+| Controllers: Tutorial, Broadcasts, TradeRequests | C3 | 🟩 | lint/selene/rojo clean; not in Manifest yet. Broadcasts also shows the `Boss.Result` popup and maps `Settings.lowGraphics` → `Anim.enabled` |
+| Screens: Expeditions, Breeding, Trade, Boss, HallOfFame, Quests, Store, Settings | C3 | 🟩 | helpers in `UI/Screens/Parts/` (Util, Dialog, BattleReplay); needs C2 `Monsters` pick mode; lazy `Logic/BattleSim` + `Logic/Breeding` with local fallbacks |
 
 ## Launch checklist
 

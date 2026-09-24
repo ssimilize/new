@@ -87,8 +87,10 @@ function Monsters.Build(ctx)
 			ctx.Router:Close("Monsters")
 		end,
 	})
-	local sortButton = Button.new({ Text = "Sort: Rarity", Color = C.Blue, Size = UDim2.fromOffset(170, 44), LayoutOrder = 1, Parent = panel.HeaderRight })
-	local sellButton = Button.new({ Text = "Sell", Color = C.Red, Size = UDim2.fromOffset(110, 44), LayoutOrder = 2, Parent = panel.HeaderRight })
+	local sortButton =
+		Button.new({ Text = "Sort: Rarity", Color = C.Blue, Size = UDim2.fromOffset(170, 44), LayoutOrder = 1, Parent = panel.HeaderRight })
+	local sellButton =
+		Button.new({ Text = "Sell", Color = C.Red, Size = UDim2.fromOffset(110, 44), LayoutOrder = 2, Parent = panel.HeaderRight })
 
 	local refresh
 	local tabs = Widgets.Tabs({
@@ -126,7 +128,12 @@ function Monsters.Build(ctx)
 	})
 
 	-- Bottom action bar
-	local bar = Tiles.frame({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 56), Parent = panel.Body })
+	local bar = Tiles.frame({
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.fromScale(0, 1),
+		Size = UDim2.new(1, 0, 0, 56),
+		Parent = panel.Body,
+	})
 	local barLabel = Tiles.label({ Text = "", TextSize = Theme.TextSize.Body, Size = UDim2.new(1, -420, 1, 0), Parent = bar })
 	local barButtons = Tiles.row({
 		AnchorPoint = Vector2.new(1, 0),
@@ -134,8 +141,10 @@ function Monsters.Build(ctx)
 		Size = UDim2.new(0, 420, 1, 0),
 		Parent = bar,
 	}, 10, Enum.HorizontalAlignment.Right)
-	local clearButton = Button.new({ Text = "Clear", Color = C.Gray, Size = UDim2.fromOffset(110, 50), LayoutOrder = 1, Parent = barButtons })
-	local actionButton = Button.new({ Text = "Sell", Color = C.Red, Size = UDim2.fromOffset(240, 52), LayoutOrder = 2, Parent = barButtons })
+	local clearButton =
+		Button.new({ Text = "Clear", Color = C.Gray, Size = UDim2.fromOffset(110, 50), LayoutOrder = 1, Parent = barButtons })
+	local actionButton =
+		Button.new({ Text = "Sell", Color = C.Red, Size = UDim2.fromOffset(240, 52), LayoutOrder = 2, Parent = barButtons })
 
 	-- Data --------------------------------------------------------------------------
 
