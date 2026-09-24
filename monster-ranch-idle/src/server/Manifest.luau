@@ -16,5 +16,8 @@ return {
 		"Settings",
 		-- S2 · Monsters
 		"Monsters",
+		-- S4 · Adventure
+		"Expeditions",
+		"Boss",
 	},
 }

@@ -134,4 +134,7 @@ Regions.Caravan = {
 	chest = { { kind = "egg", id = "grove", amount = 1 } },
 }
 
+-- Expedition loot bonuses (S4): Lucky Paw traits count for at most this many squad members.
+Regions.LuckyPawMax = 3
+
 return Regions

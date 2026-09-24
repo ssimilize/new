@@ -330,6 +330,9 @@ end
 
 function Monsters.Init(context)
 	ctx = context
+	table.clear(capacityProviders)
+	table.clear(moodFloorProviders)
+	table.clear(growing)
 	Config = ctx.Config
 	Currency = ctx:GetSystem("Currency")
 

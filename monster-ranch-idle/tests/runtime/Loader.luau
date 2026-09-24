@@ -223,6 +223,19 @@ function Loader.require(proxy)
 	return result
 end
 
+-- Drops cached modules whose source path starts with `prefix` (relative to the root, e.g.
+-- "src/server/Systems"). TestKernel calls this so every test kernel gets fresh system
+-- modules: systems keep module-level state (ctx, provider lists) that must not leak
+-- between tests. Shared config/logic and the kernel stay cached.
+function Loader.reset(prefix: string)
+	local full = ROOT .. "/" .. prefix
+	for path in moduleCache do
+		if string.sub(path, 1, #full) == full then
+			moduleCache[path] = nil
+		end
+	end
+end
+
 -- Extra globals (e.g. warn capture) injected into every loaded module.
 function Loader.setGlobal(name: string, value: any)
 	environmentExtras[name] = value

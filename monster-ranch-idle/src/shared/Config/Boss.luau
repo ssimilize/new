@@ -40,4 +40,7 @@ Boss.Rewards = {
 	minDamageShare = 0.001, -- below this you only get participation if you cheered
 }
 
+-- Cheer taps accepted per second per player (server-side cap on top of the request rate limit).
+Boss.MaxTapsPerSecond = 15
+
 return Boss

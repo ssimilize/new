@@ -54,6 +54,7 @@ end
 	}
 ]]
 function TestKernel.new(options)
+	Loader.reset("src/server/Systems")
 	local Kernel = Loader.get("Server.Kernel.Kernel")
 	local adapters = MockAdapters.new({ startTime = options.startTime })
 	local kernel = Kernel.new({ adapters = adapters, verbose = options.verbose })
