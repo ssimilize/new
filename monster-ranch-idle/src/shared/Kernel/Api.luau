@@ -83,6 +83,7 @@ Api.Actions = {
 	},
 	["Shop.BuyFood"] = { schema = T.struct({ flavor = flavor, amount = T.integer(1, 100) }), rate = 4, returns = "nil" },
 	["Shop.BuyDecor"] = { schema = T.struct({ decor = T.key(Config.Decor.ById) }), rate = 2, returns = "nil" },
+	["Shop.BuyTheme"] = { schema = T.struct({ theme = T.key(Config.Decor.PenThemeById) }), rate = 2, returns = "nil" },
 	["Shop.ClaimFreeEgg"] = { schema = T.none, rate = 1, returns = "{ egg: string }  -- rewarded ad" },
 
 	-- Ranch (S3) --------------------------------------------------------------------
@@ -176,6 +177,11 @@ Api.Actions = {
 	["Quests.ClaimDaily"] = { schema = T.struct({ index = T.integer(1, 5) }), rate = 2, returns = "{ rewards: { Reward } }" },
 	["Quests.ClaimAchievement"] = { schema = T.struct({ id = id }), rate = 2, returns = "{ rewards: { Reward } }" },
 	["Quests.Ack"] = { schema = T.struct({ step = id }), rate = 2, returns = "nil  -- acknowledges an `ack` tutorial step" },
+	["Quests.ClaimPass"] = {
+		schema = T.struct({ tier = T.integer(1, 100), track = T.enum({ "free", "premium" }) }),
+		rate = 3,
+		returns = "{ rewards: { Reward } }",
+	},
 	["Quests.Redeem"] = { schema = T.struct({ code = T.string(30, 1) }), rate = 1, returns = "{ rewards: { Reward } }" },
 
 	-- Monetization (S6) ------------------------------------------------------------
@@ -231,6 +237,9 @@ Api.State = {
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true } }",
 	},
 	session = {
+		Eggs = "{ slotCount, speed }",
+		Ranch = "{ income, rates = { [pen]: coinsPerSec }, caps = { [pen]: seconds }, capacity, used }",
+		Breeding = "{ podCount, breedsPerDay }",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
 		WelcomeBack = "{ pending: boolean, awaySeconds, coins, items = { { kind, text, icon? } } }",

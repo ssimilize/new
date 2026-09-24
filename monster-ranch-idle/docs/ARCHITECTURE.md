@@ -227,3 +227,117 @@ Client bus topics (free-form, client only): `"Tutorial.Arrow"` `(target: string?
 - `Visuals/MonsterModel.Build(appearance, opts) -> Model` (contract in the file header).
 - `Visuals/EggModel.Build(eggType, opts) -> Model`.
 - `Visuals/MonsterAnimator.new(model) -> animator` with `:Play(state)` (`idle|walk|happy|eat|attack|hurt|sleep`), `:SetBase(cframe)`, `:Destroy()`. One shared RenderStepped loop drives every animator. Owned by C1.
+
+## 6. State shapes (binding)
+
+These are the exact replicated shapes. Server systems must produce them; client screens read them. Arrays have fixed lengths where noted, and use `false` for empty values.
+
+```lua
+profile.Currency   = { coins, gems, stardust, friendship, treats, tokens = { [eventId] = n }, food = { sweet, spicy, savory, sour } }
+profile.Progression = { level, xp }                     -- xp toward next level: Config.Unlocks.XPToNext(level)
+profile.Settings   = { music, sfx, lowGraphics, hideBroadcasts }
+profile.Monsters   = { list = { [id] = Monster }, codex = { [lineId] = { forms = { [formId] = true }, variants = { normal|golden|rainbow = true }, count } }, nextId, grown }
+
+profile.Eggs = {
+  list = { [eggId] = { type = eggType, source = string, t = unix } },   -- eggId = "e<n>"
+  slots = { [1..4] = { egg = eggId|false, type = eggType|"starter"|false, startedAt, endsAt } }, -- always 4 entries
+  nextId, pity = { starlit, royal }, hatched,
+}
+session.Eggs = { slotCount, speed }                     -- usable slots (1..4); total speed-up fraction
+
+profile.Shop  = { window, bought = { [eggType] = n }, decor = { [decorId] = n }, themes = { [themeId] = true }, freeEggDay }
+global.Shop   = { window, endsAt, stock = { [eggType] = n } } -- n = -1 means unlimited; only eggs purchasable now
+
+profile.Ranch = {
+  pens = { [1..owned] = { capacity, jarTier, jar, jarAt, monsters = { id }, decor = { decorId }, theme } },
+  incubatorTier, barnTier,
+  garden = { tier, plots = { [1..n] = { flavor = string|false, readyAt } } },
+}
+session.Ranch = { income, rates = { [pen] = coinsPerSec }, caps = { [pen] = seconds }, capacity, used }
+-- client shows a live jar: min(jar + rate × (now − jarAt), rate × cap)
+
+session.WelcomeBack = { pending, awaySeconds, coins, items = { { kind, text } } }
+
+profile.Expeditions = {
+  cleared = { [regionId] = highestStage },
+  slots = { [1..4] = { state = "idle"|"running", region = string|false, stage, squad = { id }, startedAt, endsAt, duration, seed, caravan = string|false } },
+  squad = { id },                                      -- the default squad (also used by the Stampede)
+}
+session.Expeditions = { slotCount, squadSize, caravan = CaravanLobby|false }
+global.Expeditions  = { caravans = { [caravanId] = { id, host, hostName, region, stage, duration, members = { { userId, name, slot, power } }, expiresAt } } }
+
+global.Boss  = { state = "idle"|"lobby"|"active", bossId, startsAt, endsAt, hp, maxHp, participants, board = { { userId, name, damage } } }  -- board: top 10
+session.Boss = { joined, damage, cheer }                 -- cheer 0..1
+
+profile.Breeding = { pods = { [1..2] = { state = "idle"|"running", a = id|false, b = id|false, startedAt, endsAt, seed } }, daily = { day, counts = { [monsterId] = n } }, discovered = { [lineId] = true } }
+session.Breeding = { podCount, breedsPerDay }
+
+global.Weather = { id, startedAt, endsAt, nextRollAt, night, phaseEndsAt, summonedBy = string|false }
+
+profile.Social = { day, petsGiven, likesGiven = { ["u" .. userId] = true }, likes }
+session.Social = { friendBoost, friendsHere }
+
+global.Plots = { [1..6] = {                              -- always 6 entries; empty plot has userId = 0
+  userId, name, level, likes,
+  pens = { { theme, decor = { decorId }, monsters = { { id, appearance } } } },
+  statues = { Appearance },
+  incubators = { { type, endsAt } },
+} }
+
+session.Trade = {
+  status = "none"|"outgoing"|"incoming"|"open"|"countdown",
+  partner = { userId, name }|false,
+  mine   = { items = { { kind, id, appearance = Appearance|false, egg = eggType|false } }, ready, confirmed },
+  theirs = { items = …same…, ready, confirmed },
+  endsAt,
+}
+
+profile.Quests = {
+  tutorial = { step, progress },                         -- step indexes Config.Quests.Tutorial; step > #Tutorial = done
+  daily = { day, list = { { id, progress, claimed } } },
+  achievements = { [id] = { progress, claimed } },
+  codes = { [CODE] = true },
+  pass = { season, xp, premium, claimed = { free = { [tier] = true }, premium = { [tier] = true } } },
+}
+
+profile.Monetization = { ads = { day, counts = { [placement] = n } }, once = { [productKey] = true } }   -- receipts: private
+session.Monetization = { passes = { [passKey] = boolean }, paidRandomAllowed }
+
+profile.HallOfFame = { entries = { { appearance, retiredAt, rarity, element } }, legacy = { [element] = pct }, upgrades = { [upgradeId] = level } }  -- newest first, ≤ 100
+```
+
+## 7. Shared formats fixed ahead of parallel work
+
+### BattleReplay (produced by `Logic/BattleSim`, returned by `Expeditions.Fight`, drawn by the Expeditions screen)
+```lua
+BattleReplay = {
+  win = boolean, turns = number, seed = number,
+  units = { {                                   -- allies first, then enemies
+    key = "a1".."a4" | "e1".."e5", side = "ally"|"enemy", slot = number,
+    name = string, appearance = Appearance, maxHp = number, boss = boolean,
+  } },
+  events = { {                                  -- in order; at most 400
+    turn = number, actor = key, target = key | false,
+    kind = "hit"|"crit"|"special"|"heal"|"shield"|"stun"|"stunned"|"faint"|"reflect"|"regen"|"miss",
+    amount = number, hp = number,               -- target HP after the event (actor HP for regen)
+    mult = number?,                             -- element multiplier when not 1 (1.5 / 0.7)
+    skill = string?,                            -- Species.Skills id for "special"
+  } },
+}
+```
+
+### Breeding preview (`Logic/Breeding.Outcomes(a, b)`, pure, used by the Breeding screen)
+```lua
+{ species = { { line, pct, hybrid = boolean } }, rarity = { { rarity, pct } },
+  mutationChance = number, seconds = number, fee = number, rainbowChance = number, goldenChance = number }
+```
+`Logic/Breeding.Roll(rng, a, b) -> MonsterGen spec` makes the actual roll.
+
+### Extra public methods (added for the client-facing Plots view)
+- `Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id } } }`
+- `Eggs:PublicSlots(player) -> { { type, endsAt } }` (only filled slots)
+- `Social:GetLikes(player) -> number`
+- Client: the `Hud` controller exposes `Hud:GetTarget(name) -> GuiObject?` for the Tutorial arrow (`incubator`, `jar`, `shop`, `monster`, `expeditions`, `weather`, `quests`).
+
+### Season pass
+`Config.Quests.Pass = { season, startsAt, endsAt, xpPerTier, xpPerDaily, xpPerAchievement, tiers = { { free = { Reward }, premium = { Reward } } } }`. Claim with `Quests.ClaimPass { tier, track }`. Tier `n` needs pass XP ≥ `n × xpPerTier`.

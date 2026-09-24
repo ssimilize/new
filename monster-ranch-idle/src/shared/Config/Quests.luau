@@ -181,6 +181,37 @@ Quests.Achievements = {
 	},
 }
 
+-- Ranch Pass (6-week season). Pass XP comes from dailies and achievements.
+-- premium rewards need the Ranch Pass product for the current season.
+local function tier(free, premium)
+	return { free = free, premium = premium }
+end
+Quests.Pass = {
+	season = 1,
+	startsAt = 1797292800, -- 2026-12-15 00:00 UTC
+	endsAt = 1800921600, -- 2027-01-26 00:00 UTC
+	xpPerTier = 300,
+	xpPerDaily = 100,
+	xpPerAchievement = 200,
+	tiers = {
+		tier({ { kind = "coins", amount = 2000 } }, { { kind = "gems", amount = 30 } }),
+		tier({ { kind = "food", id = "random", amount = 10 } }, { { kind = "egg", id = "grove", amount = 2 } }),
+		tier({ { kind = "treats", amount = 10 } }, { { kind = "decor", id = "flower_bed", amount = 1 } }),
+		tier({ { kind = "egg", id = "grove", amount = 1 } }, { { kind = "gems", amount = 40 } }),
+		tier({ { kind = "gems", amount = 15 } }, { { kind = "egg", id = "crystal", amount = 1 } }),
+		tier({ { kind = "coins", amount = 20000 } }, { { kind = "treats", amount = 30 } }),
+		tier({ { kind = "friendship", amount = 30 } }, { { kind = "decor", id = "lantern", amount = 1 } }),
+		tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 60 } }),
+		tier({ { kind = "treats", amount = 20 } }, { { kind = "egg", id = "crystal", amount = 2 } }),
+		tier({ { kind = "gems", amount = 25 } }, { { kind = "egg", id = "royal", amount = 1 } }),
+		tier({ { kind = "coins", amount = 150000 } }, { { kind = "decor", id = "rainbow_arch", amount = 1 } }),
+		tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 80 } }),
+		tier({ { kind = "food", id = "random", amount = 30 } }, { { kind = "egg", id = "stampede", amount = 1 } }),
+		tier({ { kind = "gems", amount = 30 } }, { { kind = "stardust", amount = 100 } }),
+		tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "monster", id = "snowmitt", rarity = 5, amount = 1 } }),
+	},
+}
+
 -- Codes (case-insensitive). `expires` is a Unix time or nil.
 Quests.Codes = {
 	RANCH = { reward = { { kind = "gems", amount = 50 } } },
