@@ -27,4 +27,10 @@ Social.Trade = {
 	maxLogEntries = 50,
 }
 
+-- Added by S5 (Systems/Social, Systems/Plots) -------------------------------------------
+Social.GlobalBroadcastsPerMinute = 20 -- MessagingService budget guard for this server
+Social.BroadcastTextMax = 200
+Social.PlotRefreshSeconds = 2 -- global.Plots rebuilds at most this often per player
+Social.PlotMaxStatues = 12
+
 return Social

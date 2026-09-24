@@ -100,4 +100,10 @@ Economy.OfflineMaxSeconds = 7 * 24 * 3600
 -- Storage ------------------------------------------------------------------------
 Economy.MaxEggs = 200
 
+-- Ranch & eggs runtime (S3) --------------------------------------------------------
+Economy.RanchTickSeconds = 10 -- jar settle, auto-collect (pass) and rain garden tick
+Economy.IncubatorSpeedCap = 0.75 -- total hatch-time reduction from every source
+Economy.WelcomeBackMinSeconds = 300 -- shorter absences skip the Welcome Back screen
+Economy.StartTheme = "wood" -- pen theme of a new pen (free, always owned)
+
 return Economy

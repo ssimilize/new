@@ -94,4 +94,7 @@ Monetization.Ads = {
 -- Gems → Starlit eggs count as paid random items where restricted.
 Monetization.PaidRandomEggs = { starlit = true }
 
+-- Developer product receipts kept per player for idempotent ProcessReceipt (newest kept).
+Monetization.ReceiptHistory = 200
+
 return Monetization

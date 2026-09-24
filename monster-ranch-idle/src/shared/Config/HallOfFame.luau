@@ -10,6 +10,7 @@ HallOfFame.Unlock = "hall_of_fame"
 HallOfFame.LegacyCapPerElement = 0.60
 HallOfFame.StarShardsPerRetire = { 1, 1, 2, 2, 3, 4 } -- by rarity index
 HallOfFame.MaxStatues = 12 -- statues shown on the ranch (newest first)
+HallOfFame.MaxEntries = 100 -- retired monsters kept in the save (newest first)
 
 HallOfFame.Upgrades = {
 	{

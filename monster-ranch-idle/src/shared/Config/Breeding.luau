@@ -34,4 +34,11 @@ function Breeding.HybridFor(elementA: string, elementB: string): string?
 	return Breeding.Hybrids[pair[1] .. "+" .. pair[2]]
 end
 
+-- Added by S5 (Logic/Breeding, Systems/Breeding) -------------------------------------
+-- Fertile parents stack (two Fertile parents = 50% faster), capped here.
+Breeding.MaxBreedSpeed = 0.5
+-- Offspring weight is kept as a multiple of its species' average weight (so crossing a
+-- tiny and a huge species stays sensible); breeding toward Huge is capped at this range.
+Breeding.WeightRatioRange = { 0.5, 2.5 }
+
 return Breeding
