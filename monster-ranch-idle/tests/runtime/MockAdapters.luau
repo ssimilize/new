@@ -193,19 +193,16 @@ function MockAdapters.new(options: { startTime: number? }?)
 			table.insert(a.log.analytics, { kind = "custom", player = player, name = name, value = value, fields = fields })
 		end,
 		Economy = function(player, isSource, currency, amount, balance, transactionType, sku)
-			table.insert(
-				a.log.analytics,
-				{
-					kind = "economy",
-					player = player,
-					isSource = isSource,
-					currency = currency,
-					amount = amount,
-					balance = balance,
-					transactionType = transactionType,
-					sku = sku,
-				}
-			)
+			table.insert(a.log.analytics, {
+				kind = "economy",
+				player = player,
+				isSource = isSource,
+				currency = currency,
+				amount = amount,
+				balance = balance,
+				transactionType = transactionType,
+				sku = sku,
+			})
 		end,
 		Onboarding = function(player, step, stepName)
 			table.insert(a.log.analytics, { kind = "onboarding", player = player, step = step, name = stepName })

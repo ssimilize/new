@@ -165,8 +165,9 @@ function Tutorial.Init(context)
 		BackgroundColor3 = C.Dark,
 		BackgroundTransparency = 0.12,
 		AnchorPoint = Vector2.new(0, 1),
+		-- Bottom-left, narrow enough to clear the HUD bottom bar (x ≥ 230 at design size).
 		Position = UDim2.new(0, 16, 1, -16),
-		Size = UDim2.fromOffset(380, 0),
+		Size = UDim2.fromOffset(210, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		Visible = false,
 		Parent = overlay,

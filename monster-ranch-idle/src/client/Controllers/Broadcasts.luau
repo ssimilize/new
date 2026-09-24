@@ -224,7 +224,9 @@ function Broadcasts.Init(context)
 		Name = "Broadcasts",
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 8),
+		-- Top centre is shared: HUD weather banner (y 12–52), then broadcasts, while
+		-- toasts live above the bottom bar (see Components/Toasts).
+		Position = UDim2.new(0.5, 0, 0, 60),
 		Size = UDim2.fromOffset(560, MAX_BANNERS * 48),
 		Parent = ctx.UI.Overlay,
 	}, { Create.List("y", 4, Enum.HorizontalAlignment.Center) })

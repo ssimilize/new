@@ -13,6 +13,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
+local Jar = require(ReplicatedStorage.Shared.Logic.Jar)
 
 local StoreKit = {}
 
@@ -142,7 +143,8 @@ function StoreKit.pens(store): { any }
 	return StoreKit.tbl(store, "profile.Ranch.pens")
 end
 
--- Live jar for one pen (ARCHITECTURE §6): min(jar + rate × (now − jarAt), rate × cap).
+-- Live jar for one pen, using the same rule as the server (Logic/Jar.Value): coins already
+-- in the jar are never lost when the pen's rate drops.
 function StoreKit.jar(store, pen: number, now: number): (number, number, number)
 	local p = StoreKit.pens(store)[pen]
 	if type(p) ~= "table" then
@@ -158,8 +160,8 @@ function StoreKit.jar(store, pen: number, now: number): (number, number, number)
 	local full = rate * capSeconds
 	local jar = tonumber(p.jar) or 0
 	local jarAt = tonumber(p.jarAt) or now
-	local value = math.min(jar + rate * math.max(0, now - jarAt), full)
-	return math.max(0, value), full, rate
+	local value = Jar.Value(jar, rate, jarAt, now, capSeconds)
+	return math.max(0, value), math.max(full, jar), rate
 end
 
 function StoreKit.jarTotal(store, now: number): number

@@ -192,16 +192,13 @@ function MonsterIcon.egg(eggType: string, size: number?): Frame
 	}, { Create.Corner(UDim.new(0.5, 0)), Create.Stroke(2.5) })
 	local pattern = def and def.pattern or "spots"
 	if pattern == "band" then
-		New(
-			"Frame",
-			{
-				BackgroundColor3 = spots,
-				Position = UDim2.fromScale(0, 0.55),
-				Size = UDim2.fromScale(1, 0.12),
-				BorderSizePixel = 0,
-				Parent = egg,
-			}
-		)
+		New("Frame", {
+			BackgroundColor3 = spots,
+			Position = UDim2.fromScale(0, 0.55),
+			Size = UDim2.fromScale(1, 0.12),
+			BorderSizePixel = 0,
+			Parent = egg,
+		})
 	elseif pattern == "stars" then
 		for _, p in { Vector2.new(0.35, 0.35), Vector2.new(0.65, 0.6), Vector2.new(0.45, 0.78) } do
 			Create.Text({
@@ -228,18 +225,15 @@ function MonsterIcon.egg(eggType: string, size: number?): Frame
 		})
 	elseif pattern == "facets" then
 		for _, p in { Vector2.new(0.35, 0.35), Vector2.new(0.62, 0.62) } do
-			New(
-				"Frame",
-				{
-					BackgroundColor3 = spots,
-					BackgroundTransparency = 0.2,
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					Position = UDim2.fromScale(p.X, p.Y),
-					Size = UDim2.fromScale(0.18, 0.24),
-					Rotation = 30,
-					Parent = egg,
-				}
-			)
+			New("Frame", {
+				BackgroundColor3 = spots,
+				BackgroundTransparency = 0.2,
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(p.X, p.Y),
+				Size = UDim2.fromScale(0.18, 0.24),
+				Rotation = 30,
+				Parent = egg,
+			})
 		end
 	else
 		for _, p in { Vector2.new(0.35, 0.38), Vector2.new(0.66, 0.6), Vector2.new(0.4, 0.76), Vector2.new(0.64, 0.28) } do

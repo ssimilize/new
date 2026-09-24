@@ -25,11 +25,12 @@ function Toasts.init(layer: Instance)
 	container = New("Frame", {
 		Name = "Toasts",
 		BackgroundTransparency = 1,
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 70),
-		Size = UDim2.fromOffset(560, 300),
+		-- Just above the HUD bottom bar; the top centre belongs to weather and broadcasts.
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -92),
+		Size = UDim2.fromOffset(560, 240),
 		Parent = layer,
-	}, { Create.List("y", 8, Enum.HorizontalAlignment.Center) })
+	}, { Create.List("y", 8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Bottom) })
 end
 
 function Toasts.show(text: string, kind: string?, duration: number?)
