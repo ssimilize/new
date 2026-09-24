@@ -6,6 +6,7 @@
 	  t.Shared(path)          require a shared module ("Logic.Rng")
 	  t.Server(path)          require a server module ("Kernel.Kernel")
 	  t.TestKernel            boot the kernel with chosen systems (see runtime/TestKernel)
+	  t.ClientHarness         run the real client against a TestKernel (see runtime/ClientHarness)
 ]]
 
 local fs = require("@lune/fs")
@@ -34,6 +35,8 @@ end)
 local expect = require("@self/runtime/Expect")
 local TestKernel = require("@self/runtime/TestKernel")
 local MockAdapters = require("@self/runtime/MockAdapters")
+local ClientHarness = require("@self/runtime/ClientHarness")
+ClientHarness.init(ROOT)
 
 local filter = process.args[1]
 
@@ -47,6 +50,8 @@ local function runSpec(file: string)
 	t.expect = expect
 	t.TestKernel = TestKernel
 	t.MockAdapters = MockAdapters
+	t.ClientHarness = ClientHarness
+	t.Roblox = require("@lune/roblox")
 	t.Loader = Loader
 	t.Shared = function(path: string)
 		return Loader.get("Shared." .. path)

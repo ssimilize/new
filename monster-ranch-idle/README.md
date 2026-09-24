@@ -13,7 +13,7 @@ Idle RPG creature ranch: hatch monsters, raise them, send them on expeditions wh
 
 ```bash
 rokit install          # rojo, lune, stylua, selene
-lune run tests         # all tests, no Studio needed
+lune run tests         # all tests, no Studio needed (includes the real client in a mock Roblox runtime)
 rojo serve             # then connect from the Rojo Studio plugin
 ```
 

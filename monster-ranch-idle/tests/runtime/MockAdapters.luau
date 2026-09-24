@@ -39,7 +39,13 @@ function MockAdapters.new(options: { startTime: number? }?)
 		Precise = function()
 			return precise
 		end,
+		-- Unfloored unix time; the client harness uses it as workspace:GetServerTimeNow().
+		Unix = function()
+			return now
+		end,
 	}
+	-- Client harnesses register here to receive events and state as they are sent.
+	a.clients = {}
 	function a.advance(seconds: number)
 		now += seconds
 		precise += seconds
@@ -104,6 +110,10 @@ function MockAdapters.new(options: { startTime: number? }?)
 				a.log.events[player] = list
 			end
 			table.insert(list, { name = name, payload = deepCopy(payload) })
+			local client = a.clients[player]
+			if client then
+				client("event", name, deepCopy(payload))
+			end
 		end,
 		SendState = function(_, player, message)
 			local list = a.log.states[player]
@@ -112,6 +122,10 @@ function MockAdapters.new(options: { startTime: number? }?)
 				a.log.states[player] = list
 			end
 			table.insert(list, deepCopy(message))
+			local client = a.clients[player]
+			if client then
+				client("state", deepCopy(message))
+			end
 		end,
 	}
 

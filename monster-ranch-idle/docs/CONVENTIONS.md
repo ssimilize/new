@@ -6,6 +6,7 @@
 rokit install                 # installs rojo, lune, stylua, selene (versions in rokit.toml)
 lune run tests                # unit + system tests (Lune, no Studio needed)
 lune run tests Economy        # only specs whose file/name matches "Economy"
+lune run tests Client         # the real client (every controller and screen) against the full server
 lune run tests/lint           # syntax-check every .luau file (client code too)
 selene src tests              # lint (std = roblox_min; use `std = "roblox"` if you generated it)
 stylua src tests              # format
@@ -37,6 +38,7 @@ rojo build -o build.rbxl      # build a place file
 - [ ] Pure rules live in `src/shared/Logic` with unit tests.
 - [ ] A system spec (`tests/specs/<Name>.spec.luau`) boots the system with `TestKernel`, covering the happy path, each failure message, offline or rejoin behaviour where relevant, and the exploit cases (not owned, busy, locked, can't afford, too fast).
 - [ ] `lune run tests`, `lune run tests/lint` and `selene src tests` are clean.
+- [ ] Client work: `tests/specs/Client.spec.luau` stays clean. It boots the real client in `tests/runtime/RobloxMock` (checked against Roblox's API database: unknown members, wrong types, read-only writes and bad enums all fail), opens every screen, clicks every button as a veteran player, runs a 600-click random walk and checks every screen fits a 568×320 phone. Add a scripted flow test for any new screen.
 - [ ] No Roblox service calls outside `ctx.Services` (server).
 - [ ] Row updated in `SYSTEMS.md`.
 

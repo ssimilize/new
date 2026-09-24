@@ -44,7 +44,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 
 ## Studio test pass (not yet done)
 
-Client code and the World system pass syntax, lint and the Rojo build, but have not run in Studio. First pass:
+Client code and the World geometry run in Lune through `tests/runtime/RobloxMock` (see `Client.spec.luau`): every controller boots, every screen opens, every button is clicked, and every Instance property set is checked against Roblox's API database. What the mock cannot show is rendering, physics, input feel and real networking, so Studio still needs a first pass:
 
 - [ ] Join: starter egg in slot 1, hatch reveal, starter walks into pen 1, character spawns on its own plot
 - [ ] HUD on a phone-sized emulator (tap targets, safe area, overlays not colliding)
