@@ -21,8 +21,11 @@ function EggModel.Build(eggType: string, opts: { anchored: boolean?, size: numbe
 
 	local shell = Instance.new("Part")
 	shell.Name = "Root"
-	shell.Shape = Enum.PartType.Ball
+	-- Block + sphere mesh: a Ball part cannot be stretched into an egg shape.
 	shell.Size = Vector3.new(size, size * 1.3, size)
+	local shellMesh = Instance.new("SpecialMesh")
+	shellMesh.MeshType = Enum.MeshType.Sphere
+	shellMesh.Parent = shell
 	shell.Color = shellColor
 	shell.Material = if def and def.pattern == "facets" then Enum.Material.Glass else Enum.Material.SmoothPlastic
 	shell.Anchored = options.anchored ~= false
@@ -44,8 +47,10 @@ function EggModel.Build(eggType: string, opts: { anchored: boolean?, size: numbe
 		local surface = Vector3.new(unit.X * size / 2, unit.Y * size * 0.65, unit.Z * size / 2)
 		local spot = Instance.new("Part")
 		spot.Name = "Spot" .. i
-		spot.Shape = Enum.PartType.Ball
 		spot.Size = Vector3.new(size * 0.3, size * 0.3, size * 0.1)
+		local spotMesh = Instance.new("SpecialMesh")
+		spotMesh.MeshType = Enum.MeshType.Sphere
+		spotMesh.Parent = spot
 		spot.Color = spotColor
 		spot.Material = if def and def.pattern == "stars" then Enum.Material.Neon else Enum.Material.SmoothPlastic
 		spot.CanCollide, spot.CanQuery, spot.CanTouch, spot.Anchored = false, false, false, false

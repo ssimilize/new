@@ -14,7 +14,8 @@
 local Layers = {}
 
 Layers.DESIGN_SIZE = Vector2.new(1100, 560)
-Layers.MIN_SCALE = 0.55
+-- 0.5 keeps the widest (1060) panels inside a 568×320 phone.
+Layers.MIN_SCALE = 0.5
 Layers.MAX_SCALE = 1.6
 
 function Layers.scaleFor(viewport: Vector2): number

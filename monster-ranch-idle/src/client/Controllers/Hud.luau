@@ -66,7 +66,12 @@ local function openScreen(name: string, params: any?)
 		ctx:Toast("Coming soon", "info")
 		return
 	end
-	ctx.Router:Toggle(name, params)
+	-- Shortcuts with params (e.g. a Store tab) switch the open screen instead of closing it.
+	if params ~= nil then
+		ctx.Router:Open(name, params)
+	else
+		ctx.Router:Toggle(name, params)
+	end
 end
 
 local function isLocked(entry): boolean
@@ -432,7 +437,7 @@ local function build()
 	local left = Tiles.col({
 		Name = "LeftStack",
 		Position = UDim2.fromOffset(16, 72),
-		Size = UDim2.fromOffset(150, 300),
+		Size = UDim2.fromOffset(150, 370),
 		Parent = root,
 	}, 10)
 	sideButton(left, "Shop", "Shop", C.Orange, Icon.new("coin", 28), 1, function()
@@ -446,6 +451,9 @@ local function build()
 	end)
 	sideButton(left, "Codex", "Codex", C.Blue, previewIcon("zappip", 32), 4, function()
 		openScreen("Codex")
+	end)
+	sideButton(left, "Settings", "Settings", C.Gray, Icon.new("star", 26), 5, function()
+		openScreen("Settings")
 	end)
 
 	-- Right stack

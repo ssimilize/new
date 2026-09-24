@@ -20,7 +20,8 @@
 	graphics) update at a reduced rate. The model is moved with model:PivotTo(base * offset).
 	Rainbow models (attribute Rainbow) and prismatic ones (attribute Prismatic, set by the
 	caller) cycle their "Body" part colour through a precomputed hue table.
-	Near animators also squash and stretch the "Body" part (size only, never welds).
+	Near animators also squash and stretch the "Body" part: through its SpecialMesh Scale when
+	it has one (cheap, no physics update), otherwise through its Size (never welds).
 ]]
 
 local RunService = game:GetService("RunService")
@@ -84,6 +85,7 @@ function MonsterAnimator.new(model: Model)
 		model = model,
 		_body = if body and body:IsA("BasePart") then body else nil,
 		_bodySize = if body and body:IsA("BasePart") then body.Size else nil,
+		_bodyMesh = if body then body:FindFirstChildOfClass("SpecialMesh") else nil,
 		_squashed = false,
 		_size = if type(height) == "number" then math.max(1, height) else (if root then root.Size.Y else 2),
 		_halfHeight = if root then root.Size.Y / 2 else 1,
@@ -194,7 +196,11 @@ end
 
 function MonsterAnimator:_restoreBody()
 	if self._squashed and self._body and self._bodySize then
-		self._body.Size = self._bodySize
+		if self._bodyMesh then
+			self._bodyMesh.Scale = Vector3.new(1, 1, 1)
+		else
+			self._body.Size = self._bodySize
+		end
 		self._squashed = false
 	end
 end
@@ -208,7 +214,12 @@ function MonsterAnimator:_squash(amount: number, near: boolean)
 		self:_restoreBody()
 		return
 	end
-	body.Size = Vector3.new(size.X * (1 + amount * 0.5), size.Y * (1 - amount), size.Z * (1 + amount * 0.5))
+	local scale = Vector3.new(1 + amount * 0.5, 1 - amount, 1 + amount * 0.5)
+	if self._bodyMesh then
+		self._bodyMesh.Scale = scale
+	else
+		body.Size = size * scale
+	end
 	self._squashed = true
 end
 

@@ -264,10 +264,26 @@ return {
 			end
 		end
 
+		local squadKey = nil
 		local function drawSquad()
-			Util.clear(squadRow)
 			local ids = ctx.Store:Get("profile.Expeditions.squad") or {}
 			local list = Util.monsters(ctx)
+			-- Boss state patches arrive every second; only rebuild the icons when the squad
+			-- (or one of its monsters' looks) actually changed.
+			local parts = {}
+			for _, id in ids do
+				local m = list[id]
+				table.insert(
+					parts,
+					tostring(id) .. ":" .. (if type(m) == "table" then tostring(m.line) .. tostring(m.stage) .. tostring(m.form) else "-")
+				)
+			end
+			local key = table.concat(parts, ",")
+			if key == squadKey then
+				return
+			end
+			squadKey = key
+			Util.clear(squadRow)
 			for i, id in ids do
 				local ap = Util.appearance(list[id])
 				if ap then

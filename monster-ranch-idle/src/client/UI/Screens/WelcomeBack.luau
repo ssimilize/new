@@ -183,8 +183,11 @@ function WelcomeBack.Build(ctx)
 		double:SetText(if adsLeft > 0 then "▶ Watch ad · ×2 coins" else "No ads left today")
 	end
 
+	local claiming = false
 	local function claim(isDouble: boolean)
+		claiming = true
 		local ok, res = StoreKit.request(ctx, "WelcomeBack.Claim", { double = isDouble })
+		claiming = false
 		if ok then
 			local coins = type(res) == "table" and tonumber(res.coins) or 0
 			ctx:Sound("CoinCollect")
@@ -224,6 +227,11 @@ function WelcomeBack.Build(ctx)
 		end,
 		Close = function()
 			watch.Stop()
+			-- Closing without claiming still collects (no double): the notice only opens
+			-- when pending turns true, and the server holds Auto-Collect until it is claimed.
+			if not claiming and store:Get("session.WelcomeBack.pending") == true then
+				task.spawn(claim, false)
+			end
 			if stopFooter then
 				stopFooter()
 				stopFooter = nil

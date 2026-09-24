@@ -301,4 +301,23 @@ function StoreKit.request(ctx, action: string, payload: any?): (boolean, any)
 	return ok, res
 end
 
+-- Cuts text to at most maxBytes bytes (the server's limit) on a UTF-8 character boundary,
+-- so an emoji or accented letter is never split in half.
+function StoreKit.clip(text: string, maxBytes: number): string
+	if #text <= maxBytes then
+		return text
+	end
+	local cut = 0
+	local ok = pcall(function()
+		for pos in utf8.codes(text) do
+			local nextPos = utf8.offset(text, 2, pos) or #text + 1
+			if nextPos - 1 > maxBytes then
+				break
+			end
+			cut = nextPos - 1
+		end
+	end)
+	return string.sub(text, 1, if ok then cut else maxBytes)
+end
+
 return StoreKit

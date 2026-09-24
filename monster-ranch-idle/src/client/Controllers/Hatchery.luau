@@ -201,7 +201,7 @@ local function build()
 	}, { Create.Corner(Theme.Radius.Button), Create.Stroke(Theme.Stroke.Button) })
 	ui.nameBox:GetPropertyChangedSignal("Text"):Connect(function()
 		if #ui.nameBox.Text > 20 then
-			ui.nameBox.Text = string.sub(ui.nameBox.Text, 1, 20)
+			ui.nameBox.Text = StoreKit.clip(ui.nameBox.Text, 20)
 		end
 	end)
 	ui.saveName = Button.new({

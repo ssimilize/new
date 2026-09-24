@@ -449,7 +449,7 @@ function MonsterDetail.Build(ctx)
 		}, { Create.Corner(Theme.Radius.Button), Create.Stroke(Theme.Stroke.Button) })
 		box:GetPropertyChangedSignal("Text"):Connect(function()
 			if #box.Text > 20 then
-				box.Text = string.sub(box.Text, 1, 20)
+				box.Text = StoreKit.clip(box.Text, 20)
 			end
 		end)
 		Button.new({

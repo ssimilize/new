@@ -34,8 +34,17 @@ local function part(
 )
 	local p = Instance.new("Part")
 	p.Name = name
-	p.Shape = shape
 	p.Size = size
+	if shape == Enum.PartType.Ball then
+		-- Ball parts are always perfectly round; a sphere mesh on a block stretches to the
+		-- part's size (eyes, wings, bellies) and lets the animator squash it via Scale.
+		p.Shape = Enum.PartType.Block
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = p
+	else
+		p.Shape = shape
+	end
 	p.Color = color
 	p.Material = material or Enum.Material.SmoothPlastic
 	p.CanCollide = false

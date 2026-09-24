@@ -96,6 +96,11 @@ function Router:Open(name: string, params: any?)
 		self._current = name
 		self._dim.Visible = true
 	end
+	-- Re-opening a visible screen (e.g. a world prompt while its menu is up) closes it
+	-- first so its Open-time timers and watchers are not started twice.
+	if screen.Root.Visible and screen.Close then
+		screen.Close()
+	end
 	screen.Root.Visible = true
 	Anim.popIn(screen.Root)
 	if screen.Open then
