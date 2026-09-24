@@ -1,33 +1,17 @@
-# Simple Calculator
+# Monster Ranch Idle
 
-A minimal Android calculator app built with Kotlin and View Binding.
+An idle RPG creature ranch for Roblox. Hatch monsters, raise them, send them on expeditions while you're away, breed hybrids, catch weather mutations and trade with friends.
 
-## Features
+## What's here
 
-- Addition, subtraction, multiplication, division
-- Percent (%) and sign toggle (+/-)
-- Chained operations (e.g. `12 + 8 ×`)
-- Clear (AC)
-- Division-by-zero shown as `Error`
+- [`monster-ranch-idle/`](monster-ranch-idle/): the game (Rojo + Luau). Start with its [README](monster-ranch-idle/README.md) for setup, tests and how the code fits together.
+- [`docs/roblox-game-concepts/`](docs/roblox-game-concepts/): the research behind the game, other genre concepts, and the full [game design document](docs/roblox-game-concepts/monster-ranch-idle.html) with UI mockups.
 
-## Project structure
-
-- `app/src/main/java/com/example/simplecalculator/MainActivity.kt` — calculator logic and UI wiring
-- `app/src/main/res/layout/activity_main.xml` — display + button grid layout
-- `app/src/main/res/values/` — colors, strings, button styles/theme
-
-## Requirements
-
-- Android Studio (Koala or newer recommended)
-- JDK 17
-- Android SDK 34 (compile/target), min SDK 24
-
-## Build & run
-
-Open the project root in Android Studio and let it sync, or from the command line:
+## Quick start
 
 ```bash
-./gradlew assembleDebug
+cd monster-ranch-idle
+rokit install   # rojo, lune, stylua, selene
+lune run tests  # runs the whole test suite without Studio
+rojo serve      # then connect from the Rojo plugin in Roblox Studio
 ```
-
-The debug APK will be at `app/build/outputs/apk/debug/app-debug.apk`.

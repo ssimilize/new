@@ -1,0 +1,37 @@
+# Minimal Roblox globals for Selene when the full `roblox` std cannot be generated
+# (e.g. offline CI). Prefer `std = "roblox"` locally: `selene generate-roblox-std`.
+base: luau
+globals:
+  game: { any: true }
+  workspace: { any: true }
+  script: { any: true }
+  plugin: { any: true }
+  shared: { any: true }
+  Instance: { any: true }
+  Enum: { any: true }
+  Color3: { any: true }
+  ColorSequence: { any: true }
+  ColorSequenceKeypoint: { any: true }
+  NumberSequence: { any: true }
+  NumberSequenceKeypoint: { any: true }
+  NumberRange: { any: true }
+  Vector2: { any: true }
+  Vector3: { any: true }
+  CFrame: { any: true }
+  UDim: { any: true }
+  UDim2: { any: true }
+  Rect: { any: true }
+  Ray: { any: true }
+  RaycastParams: { any: true }
+  OverlapParams: { any: true }
+  TweenInfo: { any: true }
+  BrickColor: { any: true }
+  Font: { any: true }
+  PhysicalProperties: { any: true }
+  DateTime: { any: true }
+  Random: { any: true }
+  task: { any: true }
+  warn: { any: true }
+  tick: { any: true }
+  typeof: { any: true }
+  buffer: { any: true }

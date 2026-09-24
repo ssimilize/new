@@ -1,0 +1,1500 @@
+<title>Monster Ranch Idle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#F1F5EE; --surface:#FFFFFF; --surface-2:#E6EEE2; --ink:#17231C; --muted:#56665B; --line:#D2DCCD;
+  --accent:#2A7A4A; --accent-ink:#FFFFFF; --hay:#D99A12; --hay-soft:#FBEFD0; --code-bg:#E8EFE4;
+  --ember:#E85F33; --tide:#2F8EE0; --sprout:#3FA23A; --spark:#E5B316; --stone:#94775A; --gloom:#8656C6;
+  --r-common:#7F8B82; --r-uncommon:#3FA23A; --r-rare:#2F8EE0; --r-epic:#9D52DD; --r-legendary:#DD8E0A; --r-mythic:#E23F6C;
+  --display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F1612; --surface:#161F1A; --surface-2:#1D2922; --ink:#E4ECE5; --muted:#97A89C; --line:#2A382F;
+    --accent:#5CC98A; --accent-ink:#0F1612; --hay:#F2C14E; --hay-soft:#3A311C; --code-bg:#1A241E;
+    --r-common:#A3ADA5;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1612; --surface:#161F1A; --surface-2:#1D2922; --ink:#E4ECE5; --muted:#97A89C; --line:#2A382F;
+  --accent:#5CC98A; --accent-ink:#0F1612; --hay:#F2C14E; --hay-soft:#3A311C; --code-bg:#1A241E;
+  --r-common:#A3ADA5;
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.62;margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--hay);outline-offset:2px;border-radius:4px}
+
+.wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:28px 96px;display:grid;grid-template-columns:210px minmax(0,1fr);gap:56px}
+main{min-width:0}
+
+/* ---------- nav ---------- */
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;max-height:calc(100vh - 48px);overflow:auto;font-size:14px}
+nav.toc .toc-title{font-family:var(--display);font-weight:600;font-size:15px;margin:0 0 10px;color:var(--ink)}
+nav.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;counter-reset:toc}
+nav.toc li{counter-increment:toc}
+nav.toc a{display:flex;gap:8px;padding:4px 8px;border-radius:8px;color:var(--muted);text-decoration:none}
+nav.toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--mono);font-size:11px;padding-top:3px;color:var(--muted);opacity:.7}
+nav.toc a:hover{background:var(--surface-2);color:var(--ink)}
+@media (max-width:920px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0}
+  nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);max-height:none;overflow-x:auto;white-space:nowrap;border-bottom:1px solid var(--line);margin-inline:-20px;padding:10px 20px}
+  nav.toc .toc-title{display:none}
+  nav.toc ol{flex-direction:row;gap:4px}
+}
+
+/* ---------- type ---------- */
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(40px,7vw,76px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(28px,3.6vw,38px);font-weight:600;margin-bottom:14px}
+h3{font-size:22px;font-weight:600;margin-top:34px;margin-bottom:10px}
+h4{font-size:17px;font-weight:600;margin-bottom:6px}
+p{margin:0 0 14px;max-width:68ch}
+ul,ol{margin:0 0 14px;padding-left:22px;max-width:68ch}
+li{margin-bottom:5px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.lede{font-size:clamp(19px,2.2vw,23px);line-height:1.45;max-width:40ch;color:var(--ink)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.88em}
+code{background:var(--code-bg);padding:1px 5px;border-radius:5px}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.55;margin:0 0 18px}
+pre code{background:none;padding:0}
+strong{font-weight:700}
+
+section{padding-top:64px;scroll-margin-top:70px}
+section > .sec-num{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.08em;margin-bottom:6px}
+
+/* ---------- hero ---------- */
+header.hero{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;padding-top:8px}
+.grid2>*,.grid3>*,.road>*{min-width:0}
+.hero-top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px}
+.hero h1 span{color:var(--accent)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.facts div{background:var(--surface);padding:12px 14px}
+.facts dt{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:2px 0 0;font-weight:700;font-size:15px}
+
+/* ---------- blocks ---------- */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:18px 0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:18px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card p:last-child,.card ul:last-child{margin-bottom:0}
+.card h4{display:flex;align-items:center;gap:8px}
+.pillar-n{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.callout{border-left:4px solid var(--hay);background:var(--hay-soft);padding:14px 18px;border-radius:0 12px 12px 0;margin:18px 0;max-width:72ch}
+.callout p:last-child{margin:0}
+.decision{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);padding:2px 8px;border-radius:99px;margin-right:6px;vertical-align:2px}
+
+.tbl{overflow-x:auto;margin:14px 0 20px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.nowrap{white-space:nowrap}
+
+.tag{display:inline-block;font-size:12.5px;font-weight:700;line-height:1;padding:4px 8px;border-radius:99px;color:#fff;white-space:nowrap}
+.t-ember{background:var(--ember)} .t-tide{background:var(--tide)} .t-sprout{background:var(--sprout)} .t-spark{background:var(--spark);color:#2A2208} .t-stone{background:var(--stone)} .t-gloom{background:var(--gloom)}
+.r-c{background:var(--r-common)} .r-u{background:var(--r-uncommon)} .r-r{background:var(--r-rare)} .r-e{background:var(--r-epic)} .r-l{background:var(--r-legendary)} .r-m{background:var(--r-mythic)}
+.t-hyb{background:linear-gradient(90deg,var(--ember),var(--tide))}
+
+/* odds bars in doc */
+.odds{display:flex;height:12px;border-radius:99px;overflow:hidden;min-width:160px;background:var(--surface-2)}
+.odds span{display:block;height:100%}
+
+/* ---------- loop diagram ---------- */
+.diagram{overflow-x:auto;margin:18px 0 8px}
+.diagram svg{display:block;width:100%;min-width:560px;max-width:760px;height:auto;margin:0 auto}
+.loop .ring{fill:none;stroke:var(--line);stroke-width:2.5;stroke-dasharray:6 7}
+.loop .arrow{fill:var(--accent)}
+.loop .node rect{fill:var(--surface);stroke:var(--accent);stroke-width:2}
+.loop .node text{fill:var(--ink);font-family:var(--display);font-weight:600;font-size:17px}
+.loop .node text.sub{fill:var(--muted);font-family:var(--body);font-weight:400;font-size:12px}
+.loop .center-t{fill:var(--accent);font-family:var(--display);font-weight:700;font-size:26px}
+.loop .center-s{fill:var(--muted);font-family:var(--body);font-size:13px}
+
+/* ---------- timeline / roadmap ---------- */
+.timeline{list-style:none;padding:0;margin:18px 0;max-width:none;display:grid;gap:0}
+.timeline li{display:grid;grid-template-columns:86px minmax(0,1fr);gap:16px;padding:12px 0;border-top:1px solid var(--line);margin:0}
+.timeline .when{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600;padding-top:2px}
+.timeline p{margin:0}
+.road{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0}
+.road .card{display:flex;flex-direction:column;gap:6px}
+.road .when{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.road h4{margin:0}
+.road ul{margin:4px 0 0;font-size:14.5px}
+.road .card.launch{border:2px solid var(--accent)}
+.phase-label{font-family:var(--display);font-weight:600;font-size:18px;margin:26px 0 4px;color:var(--ink)}
+
+/* ================= MOCKUPS (single game look, not themed) ================= */
+figure.mock{margin:26px 0 30px}
+figure.mock figcaption{font-size:14px;color:var(--muted);margin-top:10px;max-width:72ch}
+figure.mock figcaption b{color:var(--ink)}
+.mock-scroll{overflow-x:auto;padding-bottom:6px}
+.phone{container-type:inline-size;min-width:600px;width:100%}
+.screen{position:relative;aspect-ratio:2.1/1;border:1.1cqw solid #0C0F0D;border-radius:3.6cqw;overflow:hidden;font-family:var(--display);color:#fff;font-weight:600;line-height:1.1;background:#7CC456;box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.18)}
+.screen *{box-sizing:border-box}
+.screen .abs{position:absolute}
+.st{text-shadow:0 .17cqw 0 #1b1b1b,.17cqw 0 0 #1b1b1b,-.17cqw 0 0 #1b1b1b,0 -.17cqw 0 #1b1b1b,.12cqw .12cqw 0 #1b1b1b,-.12cqw -.12cqw 0 #1b1b1b,.12cqw -.12cqw 0 #1b1b1b,-.12cqw .12cqw 0 #1b1b1b,0 .45cqw 0 rgba(0,0,0,.28)}
+.mon,.egg{display:block;position:absolute}
+.mon svg,.egg svg{display:block;width:100%;height:auto;overflow:visible}
+.inl{position:relative;display:inline-block}
+
+.pill{display:flex;align-items:center;gap:.6cqw;background:rgba(18,28,22,.55);border:.25cqw solid rgba(255,255,255,.9);border-radius:99px;padding:.35cqw 1.3cqw .35cqw .45cqw;font-size:1.8cqw}
+.ico{display:inline-block;width:2.4cqw;height:2.4cqw;border-radius:50%;border:.22cqw solid #1b1b1b;flex:none;vertical-align:middle}
+.ico.coin{background:radial-gradient(circle at 35% 32%,#FFF0B0,#F2B01E 58%,#C58508)}
+.ico.gem{border-radius:.45cqw;transform:rotate(45deg) scale(.82);background:linear-gradient(135deg,#FFB2DA,#E8436F)}
+.ico.food{background:radial-gradient(circle at 35% 32%,#FFC1B2,#E5484D 62%,#B22A30)}
+.ico.treat{border-radius:.6cqw;background:linear-gradient(135deg,#FFE3A3,#E7A33B)}
+.ico.dust{background:radial-gradient(circle at 40% 35%,#FFFFFF,#B7A6FF 55%,#6C4FD8)}
+.ico.sm{width:1.8cqw;height:1.8cqw;border-width:.18cqw}
+
+.gbtn{display:inline-flex;align-items:center;justify-content:center;gap:.6cqw;background:var(--c,#43B649);border:.3cqw solid #1b1b1b;border-radius:1.4cqw;box-shadow:inset 0 -.6cqw 0 rgba(0,0,0,.22),inset 0 .35cqw 0 rgba(255,255,255,.35),0 .4cqw 0 rgba(0,0,0,.35);color:#fff;font-weight:700;font-size:1.8cqw;padding:.8cqw 1.8cqw;white-space:nowrap}
+.gbtn.big{font-size:2.3cqw;padding:1cqw 2.4cqw;border-radius:1.8cqw}
+.gbtn.sm{font-size:1.4cqw;padding:.5cqw 1.1cqw;border-radius:1cqw}
+.gbtn.off{--c:#9AA39C;filter:saturate(.3)}
+.play{width:0;height:0;border-left:1.3cqw solid #fff;border-top:.8cqw solid transparent;border-bottom:.8cqw solid transparent;display:inline-block}
+
+.panel{position:absolute;background:#FFF7E3;border:.35cqw solid #1b1b1b;border-radius:2cqw;box-shadow:0 .8cqw 0 rgba(0,0,0,.35);color:#2A2419;overflow:hidden}
+.panel-head{background:var(--c,#F2A93B);border-bottom:.35cqw solid #1b1b1b;padding:.9cqw 1.6cqw;display:flex;align-items:center;justify-content:space-between;gap:1cqw;font-size:2.4cqw;font-weight:700;color:#fff}
+.xbtn{width:3.4cqw;height:3.4cqw;border-radius:.9cqw;background:#E5484D;border:.3cqw solid #1b1b1b;display:grid;place-items:center;font-size:2cqw;box-shadow:inset 0 -.4cqw 0 rgba(0,0,0,.2)}
+.dimbg{position:absolute;inset:0;background:linear-gradient(#8FD3FF,#BDE8FF 45%,#9BD66A 45.5%,#7CC456)}
+.dimbg::after{content:"";position:absolute;inset:0;background:rgba(10,18,14,.55)}
+
+.mchip{display:inline-flex;align-items:center;gap:.4cqw;font-size:1.3cqw;font-weight:700;padding:.35cqw .8cqw;border-radius:99px;border:.2cqw solid #1b1b1b;color:#fff;background:var(--c,#777);white-space:nowrap}
+.bar{position:relative;height:1.6cqw;background:#E7DCC2;border:.22cqw solid #1b1b1b;border-radius:99px;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--c,#43B649);border-radius:99px;box-shadow:inset 0 -.35cqw 0 rgba(0,0,0,.18)}
+.lbl{font-size:1.35cqw;color:#6B5F48;font-weight:600}
+.dark{color:#2A2419}
+
+/* ranch scene */
+.ranch{background:linear-gradient(#86CEFF 0%,#C4EBFF 40%,#A6DD73 40.3%,#7CC456 100%)}
+.hill{position:absolute;border-radius:50%;background:#95D56A}
+.tree{position:absolute;width:5cqw;height:5cqw;border-radius:50%;background:radial-gradient(circle at 35% 30%,#8EDB6A,#3E9B3A 70%);border:.25cqw solid #1f4a1f}
+.tree::after{content:"";position:absolute;left:42%;top:88%;width:16%;height:50%;background:#8B5A2B;border:.2cqw solid #3b2412;border-top:0}
+.barn{position:absolute;right:24%;top:16%;width:14cqw;height:12cqw;background:#D8483A;border:.35cqw solid #1b1b1b;clip-path:polygon(0 38%,50% 0,100% 38%,100% 100%,0 100%)}
+.barn-door{position:absolute;right:calc(24% + 4.5cqw);top:32%;width:5cqw;height:4.5cqw;background:repeating-linear-gradient(45deg,#fff 0 .35cqw,#B83328 .35cqw 1.6cqw);border:.3cqw solid #1b1b1b}
+.pen{position:absolute;background:#A2D776;border:.45cqw solid #7A4A22;border-radius:1.2cqw;box-shadow:inset 0 0 0 .5cqw rgba(255,255,255,.18)}
+.pen::before{content:"";position:absolute;left:-.5cqw;right:-.5cqw;top:-1.5cqw;height:1.5cqw;background:repeating-linear-gradient(90deg,#9C6130 0 .7cqw,transparent .7cqw 3.2cqw),linear-gradient(transparent 30%,#B87A40 30% 55%,transparent 55%)}
+.pen-tag{position:absolute;left:1cqw;top:-3.6cqw;font-size:1.5cqw}
+.bubble{position:absolute;display:flex;align-items:center;gap:.4cqw;background:#fff;color:#2A2419;border:.25cqw solid #1b1b1b;border-radius:99px;padding:.2cqw .8cqw .2cqw .3cqw;font-size:1.35cqw;font-weight:700;box-shadow:0 .3cqw 0 rgba(0,0,0,.25)}
+.incub{position:absolute;width:7cqw;height:8.4cqw}
+.incub .dome{position:absolute;left:0;right:0;top:0;height:6.4cqw;border-radius:50% 50% 12% 12%;background:linear-gradient(135deg,rgba(255,255,255,.75),rgba(190,230,255,.35));border:.3cqw solid #1b1b1b}
+.incub .base{position:absolute;left:-.5cqw;right:-.5cqw;bottom:0;height:2.4cqw;background:#6C7A8A;border:.3cqw solid #1b1b1b;border-radius:.8cqw;display:grid;place-items:center;font-size:1.25cqw}
+.incub .egg{left:1.6cqw;top:1.2cqw;width:3.8cqw}
+.rain{position:absolute;inset:0;background:repeating-linear-gradient(105deg,transparent 0 2.2cqw,rgba(255,255,255,.35) 2.2cqw 2.35cqw);opacity:.55;pointer-events:none}
+.side-stack{position:absolute;left:1.8%;top:22%;display:grid;gap:1.1cqw}
+.sbtn{width:7.2cqw;height:7.2cqw;border:.3cqw solid #1b1b1b;border-radius:1.6cqw;background:var(--c);box-shadow:inset 0 -.6cqw 0 rgba(0,0,0,.2),0 .35cqw 0 rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:.5cqw;font-size:1.35cqw;position:relative}
+.sbtn .icn{position:absolute;top:.8cqw;left:50%;transform:translateX(-50%);width:3.6cqw;height:3.6cqw;display:grid;place-items:center}
+.sbtn .icn .mon,.sbtn .icn .egg{position:static;width:3.6cqw}
+.badge{position:absolute;top:-1cqw;right:-1cqw;min-width:2.6cqw;height:2.6cqw;border-radius:99px;background:#E5484D;border:.25cqw solid #1b1b1b;display:grid;place-items:center;font-size:1.4cqw;padding:0 .5cqw}
+.toast{position:absolute;background:rgba(18,28,22,.7);border:.2cqw solid rgba(255,255,255,.6);border-radius:1cqw;padding:.6cqw 1.2cqw;font-size:1.45cqw;font-weight:600}
+.gold{color:#FFD447}
+
+/* egg shop cards */
+.ecard{position:relative;background:#fff;border:.3cqw solid #1b1b1b;border-radius:1.4cqw;padding:1cqw .8cqw .9cqw;display:flex;flex-direction:column;align-items:center;gap:.5cqw;box-shadow:0 .35cqw 0 rgba(0,0,0,.2)}
+.ecard .egg{position:relative;width:6.6cqw}
+.ecard .nm{font-size:1.65cqw;font-weight:700}
+.ecard .stock{font-size:1.2cqw;color:#6B5F48}
+.ecard.sel{outline:.5cqw solid #F2A93B;outline-offset:.1cqw}
+.ecard.sold{opacity:.55}
+.soldout{position:absolute;top:34%;left:50%;transform:translate(-50%,-50%) rotate(-12deg);background:#E5484D;color:#fff;border:.25cqw solid #1b1b1b;border-radius:.6cqw;font-size:1.4cqw;padding:.3cqw .8cqw}
+.oddrow{display:grid;grid-template-columns:9cqw 1fr 5.4cqw;align-items:center;gap:.8cqw;font-size:1.4cqw}
+.oddrow .bar{height:1.5cqw}
+
+/* expedition map */
+.region-bg{position:absolute;inset:0;background:linear-gradient(180deg,#5EC4E8 0%,#7FD6EE 40%,#F4DFA6 40.3%,#EFD28E 100%)}
+.snode{position:absolute;width:3.4cqw;height:3.4cqw;border-radius:50%;border:.3cqw solid #1b1b1b;display:grid;place-items:center;font-size:1.3cqw;transform:translate(-50%,-50%)}
+.snode.done{background:#43B649}
+.snode.cur{background:#F2A93B;width:4.6cqw;height:4.6cqw;font-size:1.7cqw;box-shadow:0 0 0 .6cqw rgba(255,255,255,.7)}
+.snode.lock{background:#B9B2A2;color:#EEE}
+.snode.boss{background:#E5484D;width:5cqw;height:5cqw;font-size:1.3cqw}
+.slot{position:relative;width:8.6cqw;height:9.6cqw;background:#fff;border:.3cqw solid #1b1b1b;border-radius:1.2cqw;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:.5cqw;font-size:1.2cqw;color:#2A2419}
+.slot .mon{left:1.3cqw;top:.5cqw;width:5.4cqw}
+.slot .mchip{position:absolute;top:-1cqw;right:-.8cqw;font-size:1.05cqw;padding:.2cqw .6cqw}
+.dur{display:flex;gap:.7cqw}
+.dur span{font-size:1.4cqw;border:.25cqw solid #1b1b1b;border-radius:.9cqw;padding:.45cqw .9cqw;background:#fff;color:#2A2419}
+.dur span.on{background:#F2A93B;color:#fff}
+
+/* boss */
+.arena{background:radial-gradient(ellipse at 50% 110%,#E9B66B 0%,#C98A4A 35%,#6B3F5E 70%,#2C2346 100%)}
+.dmg{position:absolute;font-size:2.2cqw;font-weight:700;color:#fff}
+.dmg.crit{color:#FFD447;font-size:2.8cqw}
+
+/* trade */
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.8cqw}
+.tslot{position:relative;aspect-ratio:1;background:#fff;border:.28cqw solid #1b1b1b;border-radius:1cqw}
+.tslot.empty{background:#EFE6CF;border-style:dashed;border-color:#B7A98A}
+.tslot .mon{left:14%;top:6%;width:72%}
+.tslot .egg{left:24%;top:10%;width:52%}
+.tslot .tt{position:absolute;left:.3cqw;bottom:.3cqw;right:.3cqw;display:flex;gap:.2cqw;flex-wrap:wrap}
+.tslot .tt .mchip{font-size:.85cqw;padding:.1cqw .4cqw;border-width:.15cqw}
+.ready{display:inline-flex;align-items:center;gap:.4cqw;font-size:1.4cqw;color:#fff;background:#43B649;border:.25cqw solid #1b1b1b;border-radius:99px;padding:.3cqw 1cqw}
+
+/* server map */
+.map svg{display:block;width:100%;min-width:600px;height:auto;border-radius:18px;border:1px solid var(--line)}
+.map text{font-family:var(--display);font-weight:600}
+
+@media (prefers-reduced-motion:no-preference){
+  .wob{animation:wob 2.4s ease-in-out infinite;transform-origin:50% 90%}
+  .bob{animation:bob 3s ease-in-out infinite}
+  @keyframes wob{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-9deg)}90%{transform:rotate(8deg)}95%{transform:rotate(-4deg)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6%)}}
+}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <p class="toc-title">Monster Ranch Idle</p>
+  <ol>
+    <li><a href="#pitch">Pitch &amp; pillars</a></li>
+    <li><a href="#loops">Core loops</a></li>
+    <li><a href="#world">World &amp; server</a></li>
+    <li><a href="#monsters">Monsters</a></li>
+    <li><a href="#eggs">Eggs &amp; hatching</a></li>
+    <li><a href="#ranch">Ranch &amp; levels</a></li>
+    <li><a href="#economy">Economy</a></li>
+    <li><a href="#expeditions">Expeditions &amp; combat</a></li>
+    <li><a href="#breeding">Breeding &amp; hybrids</a></li>
+    <li><a href="#weather">Weather &amp; mutations</a></li>
+    <li><a href="#social">Social systems</a></li>
+    <li><a href="#prestige">Prestige</a></li>
+    <li><a href="#ftue">First session</a></li>
+    <li><a href="#monetization">Monetization</a></li>
+    <li><a href="#scope">Launch content</a></li>
+    <li><a href="#tech">Tech architecture</a></li>
+    <li><a href="#kpis">Analytics &amp; KPIs</a></li>
+    <li><a href="#roadmap">Roadmap &amp; updates</a></li>
+    <li><a href="#risks">Risks</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="hero-top">
+    <div>
+      <p class="eyebrow">Game design document · v0.1 · September 2026</p>
+      <h1>Monster <span>Ranch</span> Idle</h1>
+    </div>
+  </div>
+  <p class="lede">Hatch monsters, raise them on your ranch, and send them on expeditions while you sleep. Breed rare hybrids, catch weather mutations, and trade with your friends.</p>
+  <dl class="facts">
+    <div><dt>Genre</dt><dd>Idle RPG · creature collector</dd></div>
+    <div><dt>Platform</dt><dd>Roblox, mobile-first landscape</dd></div>
+    <div><dt>Core audience</dt><dd>Ages 9–16, plus 17+ collectors</dd></div>
+    <div><dt>Session shape</dt><dd>5-min check-ins, 20-min play</dd></div>
+    <div><dt>Server</dt><dd>6 ranches + shared hub</dd></div>
+    <div><dt>MVP build</dt><dd>About 12 weeks</dd></div>
+  </dl>
+
+  <figure class="mock" id="mock-hud">
+    <div class="mock-scroll"><div class="phone"><div class="screen ranch">
+      <div class="hill" style="left:-8%;top:30%;width:40%;height:22%"></div>
+      <div class="hill" style="left:52%;top:31%;width:46%;height:20%"></div>
+      <div class="tree" style="left:44%;top:29%"></div>
+      <div class="tree" style="left:81%;top:30%;width:4cqw;height:4cqw"></div>
+      <div class="barn"></div><div class="barn-door"></div>
+
+      <div class="pen" style="left:14%;top:47%;width:33%;height:36%">
+        <span class="pen-tag st">Pen 1 · 6/6</span>
+        <i class="mon bob" data-el="ember" data-v="golden" style="left:5%;top:14%;width:7.4cqw"></i>
+        <i class="mon" data-el="tide" style="left:31%;top:36%;width:6.6cqw"></i>
+        <i class="mon" data-el="sprout" data-m="soaked" style="left:55%;top:8%;width:6.4cqw"></i>
+        <i class="mon" data-el="spark" style="left:76%;top:40%;width:6cqw"></i>
+        <i class="mon" data-el="stone" style="left:10%;top:56%;width:5.6cqw"></i>
+        <i class="mon" data-el="gloom" style="left:54%;top:58%;width:5.6cqw"></i>
+        <span class="bubble" style="left:2%;top:-2%"><b class="ico coin sm"></b>+18.4K</span>
+        <span class="bubble" style="left:58%;top:-12%"><b class="ico coin sm"></b>+6.1K</span>
+      </div>
+      <div class="pen" style="left:51%;top:50%;width:26%;height:30%">
+        <span class="pen-tag st">Pen 2 · 4/6</span>
+        <i class="mon" data-el="tide" data-v="rainbow" style="left:8%;top:18%;width:6.8cqw"></i>
+        <i class="mon" data-el="ember" style="left:44%;top:30%;width:6cqw"></i>
+        <i class="mon" data-el="gloom" data-m="frosted" style="left:70%;top:6%;width:5.8cqw"></i>
+        <span class="bubble" style="left:26%;top:-14%"><b class="ico coin sm"></b>+23.7K</span>
+      </div>
+
+      <div class="incub" style="left:80%;top:62%"><div class="dome"></div><i class="egg wob" data-t="crystal"></i><div class="base st">14:10</div></div>
+      <div class="incub" style="left:89.5%;top:62%"><div class="dome"></div><i class="egg wob" data-t="grove"></i><div class="base st" style="background:#43B649">READY!</div></div>
+
+      <div class="rain"></div>
+
+      <div class="abs" style="left:1.8%;top:3%;display:flex;gap:1cqw">
+        <div class="pill st"><b class="ico coin"></b>1.28M</div>
+        <div class="pill st"><b class="ico gem"></b>340</div>
+        <div class="pill st"><b class="ico food"></b>86</div>
+      </div>
+      <div class="abs" style="right:2%;top:3%;width:19cqw">
+        <div class="st" style="font-size:1.6cqw;display:flex;justify-content:space-between"><span>Ranch Lv 14</span><span>62%</span></div>
+        <div class="bar" style="margin-top:.4cqw;--c:#4FB6F2"><i style="width:62%"></i></div>
+      </div>
+      <div class="toast" style="left:50%;top:3.2%;transform:translateX(-50%)">Rain · <span style="color:#9FDBFF">Soaked</span> chance ×3 · 2:41</div>
+      <div class="toast" style="left:1.8%;top:11.5%;font-size:1.3cqw">PixelPaws hatched a <span class="gold">GOLDEN</span> Blazefang!</div>
+
+      <div class="side-stack st">
+        <div class="sbtn" style="--c:#F2A93B"><span class="icn"><b class="ico coin" style="width:3.2cqw;height:3.2cqw"></b></span>Shop</div>
+        <div class="sbtn" style="--c:#EF6FA8"><span class="icn"><i class="egg" data-t="royal"></i></span>Eggs<span class="badge">!</span></div>
+        <div class="sbtn" style="--c:#4FB6F2"><span class="icn"><i class="mon" data-el="spark"></i></span>Codex</div>
+        <div class="sbtn" style="--c:#8B6AD8"><span class="icn"><i class="mon" data-el="gloom"></i></span>Breed</div>
+      </div>
+
+      <div class="abs st" style="right:2%;top:16%;display:grid;gap:1cqw;justify-items:end">
+        <div class="sbtn" style="--c:#43B649;width:9cqw"><span class="icn"><i class="mon" data-el="tide"></i></span>Expeditions<span class="badge">2</span></div>
+        <div class="toast" style="position:relative;display:flex;align-items:center;gap:.8cqw;font-size:1.35cqw"><i class="mon" data-el="stone" style="position:relative;width:3.4cqw"></i><span>STAMPEDE<br><span class="gold">12:04</span></span></div>
+      </div>
+
+      <div class="abs" style="left:50%;bottom:3%;transform:translateX(-50%);display:flex;gap:1.2cqw;align-items:flex-end">
+        <span class="gbtn st" style="--c:#F2A93B"><b class="ico food sm"></b>Feed</span>
+        <span class="gbtn big st"><b class="ico coin"></b>Collect all +48.2K</span>
+        <span class="gbtn st" style="--c:#4FB6F2">Friends 2</span>
+      </div>
+    </div></div></div>
+    <figcaption><b>Main ranch view.</b> Currencies top left, Ranch Level top right, server weather and a broadcast at the top centre. Coin jars float over each pen. Incubators sit by the barn. The left stack holds the menus players open most, the right side holds timed activities, and the one big action sits at the bottom where thumbs reach.</figcaption>
+  </figure>
+</header>
+
+<!-- ============ 1 PITCH ============ -->
+<section id="pitch">
+  <p class="sec-num">01</p>
+  <h2>Pitch &amp; design pillars</h2>
+  <p><strong>One-sentence pitch:</strong> Hatch monsters, raise them on your ranch, send them on expeditions while you sleep.</p>
+  <p>Monster Ranch Idle combines the two idle patterns proven at the very top of Roblox. From Grow a Garden it takes real-time growth that continues offline, plus server-wide weather that creates rare mutations. From Adopt Me and Pet Simulator it takes collectible creatures with a trading economy. On top sits the RPG layer those games lack: squads of monsters that battle through regions, evolve along different paths, and breed into hybrids nobody on the server has discovered yet.</p>
+
+  <div class="grid2">
+    <div class="card"><h4><span class="pillar-n">P1</span>Always something ready</h4><p>Every return has a payoff: a full coin jar, a hatched egg, a finished expedition, a monster ready to evolve. Timers run in parallel, so a player is never stuck waiting on just one.</p></div>
+    <div class="card"><h4><span class="pillar-n">P2</span>Your ranch is on display</h4><p>Every ranch is a real plot on a shared server. Other players walk past your Golden Blazefang and your Hall of Fame statues. Rare monsters give you status only because people can see them.</p></div>
+    <div class="card"><h4><span class="pillar-n">P3</span>The server shares moments</h4><p>Egg restocks, weather, the Stampede boss and discovery broadcasts happen to everyone on the server at once. They give players something to talk about and a reason to play together.</p></div>
+    <div class="card"><h4><span class="pillar-n">P4</span>Choices change the monster</h4><p>Diet decides the evolution branch. Breeding pairs decide hybrids and traits. Which pen a monster stands in during a storm decides its mutation. Two players with the same egg end up with different monsters.</p></div>
+    <div class="card"><h4><span class="pillar-n">P5</span>Fair to kids, generous to free players</h4><p>No paid timer skips, no punishment for neglect, odds shown on every random item. Mythics can be earned for free. Players pay for convenience, parallel slots, cosmetics and server-wide fun.</p></div>
+    <div class="card"><h4><span class="pillar-n">P6</span>Content is data</h4><p>Species, eggs, regions, weather and events are rows in config tables built on a modular monster kit. A new species or region ships as data and art, with no new systems code.</p></div>
+  </div>
+
+  <h3>Who it's for</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Player type</th><th>Share (est.)</th><th>What hooks them</th><th>Where they spend</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Collectors</strong> (9–13)</td><td>~45%</td><td>Hatching, cute monsters, the Codex, Golden and Rainbow variants</td><td>Starter pack, eggs, accessories</td></tr>
+      <tr><td><strong>Optimizers</strong> (12–17)</td><td>~25%</td><td>Expedition stages, squads, element counters, leaderboards</td><td>Passes (slots, 2× coins), season pass</td></tr>
+      <tr><td><strong>Traders</strong> (12–20)</td><td>~20%</td><td>Mutation stacking, hybrids, weight records, trading</td><td>Weather totems, Lucky Hatcher</td></tr>
+      <tr><td><strong>Decorators / socials</strong></td><td>~10%</td><td>Ranch decor, visiting friends, Clubs (later update)</td><td>Pen themes, decor, gifts</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ 2 LOOPS ============ -->
+<section id="loops">
+  <p class="sec-num">02</p>
+  <h2>Core loops</h2>
+  <p>The core loop is a cycle. Each step produces what the next step needs, and every step keeps running while the player is offline.</p>
+
+  <div class="diagram">
+    <svg class="loop" viewBox="0 0 600 400" role="img" aria-label="Core loop: hatch eggs, raise and evolve, run expeditions, collect coins, upgrade ranch, breed and mutate, then hatch again">
+      <ellipse class="ring" cx="300" cy="200" rx="200" ry="150"/>
+      <g class="arrow">
+        <path d="M-8,-6 L8,0 L-8,6 Z" transform="translate(400,70) rotate(23.4)"/>
+        <path d="M-8,-6 L8,0 L-8,6 Z" transform="translate(500,200) rotate(90)"/>
+        <path d="M-8,-6 L8,0 L-8,6 Z" transform="translate(400,330) rotate(156.6)"/>
+        <path d="M-8,-6 L8,0 L-8,6 Z" transform="translate(200,330) rotate(203.4)"/>
+        <path d="M-8,-6 L8,0 L-8,6 Z" transform="translate(100,200) rotate(270)"/>
+        <path d="M-8,-6 L8,0 L-8,6 Z" transform="translate(200,70) rotate(336.6)"/>
+      </g>
+      <g class="node"><rect x="222" y="26" width="156" height="50" rx="12"/><text x="300" y="48" text-anchor="middle">Hatch eggs</text><text class="sub" x="300" y="66" text-anchor="middle">shop, drops, breeding</text></g>
+      <g class="node"><rect x="395" y="100" width="156" height="50" rx="12"/><text x="473" y="122" text-anchor="middle">Raise &amp; evolve</text><text class="sub" x="473" y="140" text-anchor="middle">feed, level, pick diet</text></g>
+      <g class="node"><rect x="395" y="250" width="156" height="50" rx="12"/><text x="473" y="272" text-anchor="middle">Expeditions</text><text class="sub" x="473" y="290" text-anchor="middle">loot, food, eggs, XP</text></g>
+      <g class="node"><rect x="222" y="325" width="156" height="50" rx="12"/><text x="300" y="347" text-anchor="middle">Collect coins</text><text class="sub" x="300" y="365" text-anchor="middle">idle jars in every pen</text></g>
+      <g class="node"><rect x="49" y="250" width="156" height="50" rx="12"/><text x="127" y="272" text-anchor="middle">Upgrade ranch</text><text class="sub" x="127" y="290" text-anchor="middle">pens, jars, incubators</text></g>
+      <g class="node"><rect x="49" y="100" width="156" height="50" rx="12"/><text x="127" y="122" text-anchor="middle">Breed &amp; mutate</text><text class="sub" x="127" y="140" text-anchor="middle">hybrids, traits, weather</text></g>
+      <text class="center-t" x="300" y="198" text-anchor="middle">Your ranch</text>
+      <text class="center-s" x="300" y="220" text-anchor="middle">everything keeps running offline</text>
+    </svg>
+  </div>
+
+  <h3>Session rhythm</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Cadence</th><th>What the player does</th><th>What pulls them back</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><strong>Every 30 s</strong></td><td>Collect a coin jar, feed a monster, tap a hatch</td><td>Numbers going up, hatch reveals</td></tr>
+      <tr><td class="nowrap"><strong>Every 5 min</strong></td><td>Buy from the egg restock, start or claim expeditions, level up monsters</td><td>Global restock timer; short expeditions early on</td></tr>
+      <tr><td class="nowrap"><strong>Every 30 min</strong></td><td>Join the Stampede boss; weather events roll</td><td>Boss eggs; mutation chances</td></tr>
+      <tr><td class="nowrap"><strong>Daily</strong></td><td>Welcome Back haul, 3 daily quests, breeding (2 per monster per day), petting friends' monsters</td><td>Jar caps (1–12 h) and 8 h expeditions line up with sleep and school</td></tr>
+      <tr><td class="nowrap"><strong>Weekly</strong></td><td>Saturday update, rotating shop egg, hosted weather hour, Club goals (after launch)</td><td>New codes, limited eggs, leaderboard resets</td></tr>
+      <tr><td class="nowrap"><strong>Seasonal (6 wk)</strong></td><td>Ranch Pass track, event region, event mutation</td><td>Limited species and decor</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ 3 WORLD ============ -->
+<section id="world">
+  <p class="sec-num">03</p>
+  <h2>World &amp; server layout</h2>
+  <p>Each server holds <strong>6 players</strong>, one ranch plot each, arranged around a shared <strong>Market Square</strong>. Six keeps every ranch visible and every monster on screen without killing phone frame rates. It also matches the small-server format that worked for Grow a Garden.</p>
+
+  <figure class="mock map">
+    <div class="mock-scroll">
+    <svg viewBox="0 0 800 440" role="img" aria-label="Top-down server map: six ranch plots around a central Market Square with Egg Shop, Feed Store, Trading Plaza, Expedition Gate, Stampede Arena and Hall of Fame">
+      <rect width="800" height="440" fill="#8FCB62"/>
+      <path d="M0 220 H800 M400 0 V440" stroke="#E4C98F" stroke-width="26"/>
+      <path d="M0 220 H800 M400 0 V440" stroke="#D8B774" stroke-width="2" stroke-dasharray="10 12"/>
+      <g stroke="#1d1d1d" stroke-width="3">
+        <rect x="30" y="24" width="210" height="150" rx="14" fill="#A9DB7E"/>
+        <rect x="30" y="266" width="210" height="150" rx="14" fill="#A9DB7E"/>
+        <rect x="560" y="24" width="210" height="150" rx="14" fill="#A9DB7E"/>
+        <rect x="560" y="266" width="210" height="150" rx="14" fill="#A9DB7E"/>
+      </g>
+      <!-- plots 5 & 6 top/bottom middle-edges -->
+      <g stroke="#1d1d1d" stroke-width="3">
+        <rect x="250" y="14" width="120" height="82" rx="12" fill="#A9DB7E"/>
+        <rect x="430" y="344" width="120" height="82" rx="12" fill="#A9DB7E"/>
+      </g>
+      <!-- plot contents -->
+      <g fill="#7A4A22">
+        <rect x="46" y="44" width="80" height="54" rx="6" opacity=".35"/><rect x="140" y="44" width="80" height="54" rx="6" opacity=".35"/>
+        <rect x="46" y="286" width="80" height="54" rx="6" opacity=".35"/><rect x="140" y="286" width="80" height="54" rx="6" opacity=".35"/>
+        <rect x="576" y="44" width="80" height="54" rx="6" opacity=".35"/><rect x="670" y="44" width="80" height="54" rx="6" opacity=".35"/>
+        <rect x="576" y="286" width="80" height="54" rx="6" opacity=".35"/><rect x="670" y="286" width="80" height="54" rx="6" opacity=".35"/>
+        <rect x="262" y="24" width="60" height="40" rx="6" opacity=".35"/><rect x="442" y="354" width="60" height="40" rx="6" opacity=".35"/>
+      </g>
+      <g fill="#D8483A" stroke="#1d1d1d" stroke-width="2.5">
+        <path d="M190 118 l22 -16 l22 16 v36 h-44z"/><path d="M190 360 l22 -16 l22 16 v36 h-44z"/>
+        <path d="M720 118 l22 -16 l22 16 v36 h-44z"/><path d="M720 360 l22 -16 l22 16 v36 h-44z"/>
+        <path d="M330 50 l16 -12 l16 12 v30 h-32z"/><path d="M510 382 l16 -12 l16 12 v30 h-32z"/>
+      </g>
+      <g font-size="15" fill="#1d2a20">
+        <text x="46" y="160">Plot 1 · your ranch</text><text x="46" y="402">Plot 2</text>
+        <text x="576" y="160">Plot 3</text><text x="576" y="402">Plot 4</text>
+        <text x="262" y="86">Plot 5</text><text x="442" y="416">Plot 6</text>
+      </g>
+      <!-- Market square -->
+      <circle cx="400" cy="220" r="118" fill="#EBD7A6" stroke="#1d1d1d" stroke-width="3"/>
+      <circle cx="400" cy="220" r="34" fill="#7FD0F5" stroke="#1d1d1d" stroke-width="3"/>
+      <text x="400" y="225" text-anchor="middle" font-size="12" fill="#10324a">Fountain</text>
+      <g stroke="#1d1d1d" stroke-width="2.5">
+        <rect x="318" y="128" width="72" height="40" rx="8" fill="#EF6FA8"/>
+        <rect x="410" y="128" width="72" height="40" rx="8" fill="#F2A93B"/>
+        <rect x="300" y="200" width="54" height="40" rx="8" fill="#4FB6F2"/>
+        <rect x="446" y="200" width="54" height="40" rx="8" fill="#43B649"/>
+        <rect x="318" y="272" width="72" height="40" rx="8" fill="#8B6AD8"/>
+        <rect x="410" y="272" width="72" height="40" rx="8" fill="#E5484D"/>
+      </g>
+      <g font-size="11.5" fill="#fff" text-anchor="middle">
+        <text x="354" y="152">Egg Shop</text><text x="446" y="152">Feed Store</text>
+        <text x="327" y="224">Trading</text><text x="473" y="224">Gate</text>
+        <text x="354" y="296">Hall of Fame</text><text x="446" y="296">Arena</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>Server map (top-down).</b> Your own plot always spawns in Plot 1's camera position, so the view is the same on every server. The Egg Shop and Feed Store face the spawn. The Arena hosts the Stampede boss every 30 minutes, and the Hall of Fame shows the server's top retired monsters as statues.</figcaption>
+  </figure>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Hub location</th><th>Purpose</th><th>Unlock</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Egg Shop</strong></td><td>Coin eggs on a <em>global</em> 5-minute restock (same stock on every server), Starlit gem egg, event egg</td><td>Start</td></tr>
+      <tr><td><strong>Feed Store</strong></td><td>Four food flavours, Treats, decor catalogue</td><td>Start</td></tr>
+      <tr><td><strong>Expedition Gate</strong></td><td>Region select, stage battles, timed expeditions, Caravans</td><td>Start (tutorial)</td></tr>
+      <tr><td><strong>Stampede Arena</strong></td><td>Server boss every :00 and :30</td><td>Ranch Lv 4</td></tr>
+      <tr><td><strong>Trading Plaza</strong></td><td>Trade booths; request any player in the server</td><td>Ranch Lv 8</td></tr>
+      <tr><td><strong>Hall of Fame</strong></td><td>Retire max-level monsters for permanent buffs; server statues</td><td>Ranch Lv 20</td></tr>
+    </tbody>
+  </table></div>
+  <p>Most actions are also available from GUI buttons anywhere on the map. The 3D hub is there to show off and to play together, and a player never has to walk somewhere just to use a menu.</p>
+</section>
+
+<!-- ============ 4 MONSTERS ============ -->
+<section id="monsters">
+  <p class="sec-num">04</p>
+  <h2>Monsters</h2>
+
+  <h3>Elements: two triangles</h3>
+  <p>Six elements in two rock-paper-scissors triangles. It's easy to teach ("fire beats plant") and gives squad building real choices. Attacks between the two triangles are neutral.</p>
+  <div class="grid2">
+    <div class="card"><h4>Triangle A: nature</h4><p><span class="tag t-ember">Ember</span> beats <span class="tag t-sprout">Sprout</span> beats <span class="tag t-tide">Tide</span> beats <span class="tag t-ember">Ember</span></p></div>
+    <div class="card"><h4>Triangle B: forces</h4><p><span class="tag t-spark">Spark</span> beats <span class="tag t-gloom">Gloom</span> beats <span class="tag t-stone">Stone</span> beats <span class="tag t-spark">Spark</span></p></div>
+  </div>
+  <p class="muted">Advantage ×1.5 damage, disadvantage ×0.7. Hybrids have both elements: they use the better multiplier when attacking and the worse one when defending.</p>
+
+  <h3>Rarity</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Rarity</th><th class="num">Stat mult</th><th class="num">Coins/s (adult, Lv 1)</th><th class="num">Max stars</th><th>Hall of Fame Stardust</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag r-c">Common</span></td><td class="num">1.00</td><td class="num">1</td><td class="num">3</td><td>5</td></tr>
+      <tr><td><span class="tag r-u">Uncommon</span></td><td class="num">1.25</td><td class="num">3</td><td class="num">3</td><td>12</td></tr>
+      <tr><td><span class="tag r-r">Rare</span></td><td class="num">1.60</td><td class="num">8</td><td class="num">4</td><td>30</td></tr>
+      <tr><td><span class="tag r-e">Epic</span></td><td class="num">2.10</td><td class="num">25</td><td class="num">4</td><td>75</td></tr>
+      <tr><td><span class="tag r-l">Legendary</span></td><td class="num">2.80</td><td class="num">80</td><td class="num">5</td><td>180</td></tr>
+      <tr><td><span class="tag r-m">Mythic</span></td><td class="num">3.80</td><td class="num">250</td><td class="num">5</td><td>400</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Life stages</h3>
+  <p>Every monster grows <strong>Egg → Baby → Teen → Adult</strong>. Growth timers keep running offline. Moving up a stage needs a level, a number of meals and time, so players always have a small goal in view.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Stage</th><th class="num">Coin output</th><th class="num">Level cap</th><th>To grow up</th><th class="num">Grow time C / R / L / M</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Baby</strong></td><td class="num">40%</td><td class="num">10</td><td>Lv 10 + 3 meals (any flavour)</td><td class="num">2m / 15m / 2h / 4h</td></tr>
+      <tr><td><strong>Teen</strong></td><td class="num">70%</td><td class="num">25</td><td>Lv 25 + 5 meals; the <em>majority flavour</em> decides the adult branch</td><td class="num">5m / 45m / 5h / 10h</td></tr>
+      <tr><td><strong>Adult</strong></td><td class="num">100%</td><td class="num">40 + 2 per star</td><td>Stars raise the cap (5★ = Lv 50). Max level unlocks Hall of Fame.</td><td class="num">–</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Stats, care and traits</h3>
+  <div class="grid2">
+    <div class="card">
+      <h4>Stats</h4>
+      <p><strong>HP, ATK, DEF, SPD</strong> for battle, plus <strong>Luck</strong> for expedition drops.</p>
+      <p class="mono" style="font-size:13px">stat = base[species] × rarityMult × (1 + 0.06 × (lv − 1)) × starMult × traitMods</p>
+      <p class="muted" style="font-size:14px">Star multiplier: 1★ 1.00, 2★ 1.25, 3★ 1.60, 4★ 2.00, 5★ 2.60. Stars come from fusing a duplicate of the same species and rarity, or from Star Shards.</p>
+    </div>
+    <div class="card">
+      <h4>Mood (care without punishment)</h4>
+      <p>Mood runs from 0 to 100 and changes coin output between −10% and +10%. Feeding, petting from visitors and decor auras raise it. It drops slowly while you play and <strong>freezes while you're offline</strong>. Monsters never get sick, run away or die.</p>
+      <p class="muted" style="font-size:14px">Kids shouldn't come back to a punishment. Care is an upside, never a tax.</p>
+    </div>
+  </div>
+
+  <p>Every monster rolls <strong>2 visible traits</strong> at birth and <strong>1 hidden trait</strong> that is revealed when it becomes an Adult. There are 20 traits at launch. A sample:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Trait</th><th>Effect</th><th>Roll weight</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Speedy Grower</strong></td><td>Growth timers −20%</td><td>Common</td></tr>
+      <tr><td><strong>Glutton</strong></td><td>Each meal counts double for growth</td><td>Common</td></tr>
+      <tr><td><strong>Tough Hide</strong></td><td>DEF +12%</td><td>Common</td></tr>
+      <tr><td><strong>Lucky Paw</strong></td><td>Expedition loot +8% (stacks per squad member, max 3)</td><td>Uncommon</td></tr>
+      <tr><td><strong>Hoarder</strong></td><td>Its pen's jar cap +30 min</td><td>Uncommon</td></tr>
+      <tr><td><strong>Night Owl</strong></td><td>ATK +15% during the server's night phase (20-minute day/night cycle)</td><td>Uncommon</td></tr>
+      <tr><td><strong>Charmer</strong></td><td>Petting from visitors gives double Mood; the owner gets a Friendship Point</td><td>Uncommon</td></tr>
+      <tr><td><strong>Weather Magnet</strong></td><td>Double mutation chance during weather</td><td>Rare</td></tr>
+      <tr><td><strong>Show-off</strong></td><td>+10% coins for each mutation it has</td><td>Rare</td></tr>
+      <tr><td><strong>Firstborn</strong> (hidden only)</td><td>Offspring always inherit one extra trait</td><td>Very rare</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Variants, mutations and weight</h3>
+  <p>Three separate collectible layers. They multiply together, and they are what drives trading and bragging.</p>
+  <div class="grid3">
+    <div class="card"><h4>Variant (on hatch)</h4><p>Normal · <strong>Golden</strong> 1 in 40 (×3 coins) · <strong>Rainbow</strong> 1 in 400 (×10 coins). Rolled for every egg.</p></div>
+    <div class="card"><h4>Mutation (from weather)</h4><p>Up to 2 per monster, from weather while the monster stands in a pen. Some pairs combine into rarer ones. See <a href="#weather">Weather</a>.</p></div>
+    <div class="card"><h4>Weight</h4><p>Rolled from 0.5× to 2× the species' average weight. Anything over 1.8× is <strong>Huge</strong> (1 in 100, ×2 value) and appears on the server's heaviest-monster board.</p></div>
+  </div>
+
+  <figure class="mock" id="mock-detail">
+    <div class="mock-scroll"><div class="phone"><div class="screen">
+      <div class="dimbg"></div>
+      <div class="panel" style="left:6%;top:6%;right:6%;bottom:6%;--c:#9D52DD">
+        <div class="panel-head st"><span>Toasty · Kindlefox</span><span style="display:flex;gap:1cqw;align-items:center"><span class="mchip" style="--c:#9D52DD">EPIC</span><span class="mchip" style="--c:#E0A915">GOLDEN</span><span class="xbtn">✕</span></span></div>
+        <div style="display:grid;grid-template-columns:31% 1fr 30%;gap:2cqw;padding:1.8cqw 2cqw;height:calc(100% - 6.2cqw)">
+          <!-- left portrait -->
+          <div style="position:relative;background:radial-gradient(circle at 50% 70%,#FFE9B0,#F7D489 55%,#EBC06A);border:.3cqw solid #1b1b1b;border-radius:1.6cqw">
+            <i class="mon bob" data-el="ember" data-v="golden" data-m="soaked" style="left:12%;top:10%;width:18cqw"></i>
+            <div class="abs" style="left:1cqw;top:1cqw;display:flex;gap:.5cqw;flex-wrap:wrap"><span class="mchip" style="--c:#E85F33">Ember</span><span class="mchip" style="--c:#2F8EE0">Soaked ×1.5</span></div>
+            <div class="abs" style="left:1cqw;right:1cqw;bottom:1cqw;display:flex;justify-content:space-between;font-size:1.35cqw"><span style="color:#2A2419">Teen · 3.8 kg</span><span style="color:#2A2419">Mood 86</span></div>
+          </div>
+          <!-- middle stats -->
+          <div style="display:flex;flex-direction:column;gap:1cqw;color:#2A2419">
+            <div><div style="display:flex;justify-content:space-between;font-size:1.6cqw"><span>Level 17 / 25</span><span class="lbl">340 / 520 XP</span></div><div class="bar" style="--c:#4FB6F2;margin-top:.4cqw"><i style="width:65%"></i></div></div>
+            <div style="display:grid;grid-template-columns:5cqw 1fr 5cqw;gap:.5cqw .8cqw;align-items:center;font-size:1.4cqw">
+              <span>HP</span><div class="bar" style="--c:#43B649"><i style="width:58%"></i></div><span style="text-align:right">1,842</span>
+              <span>ATK</span><div class="bar" style="--c:#E85F33"><i style="width:74%"></i></div><span style="text-align:right">612</span>
+              <span>DEF</span><div class="bar" style="--c:#94775A"><i style="width:40%"></i></div><span style="text-align:right">288</span>
+              <span>SPD</span><div class="bar" style="--c:#F2C14E"><i style="width:66%"></i></div><span style="text-align:right">141</span>
+              <span>Luck</span><div class="bar" style="--c:#9D52DD"><i style="width:30%"></i></div><span style="text-align:right">22</span>
+            </div>
+            <div style="display:flex;gap:.6cqw;flex-wrap:wrap"><span class="mchip" style="--c:#3FA23A">Speedy Grower</span><span class="mchip" style="--c:#2F8EE0">Lucky Paw</span><span class="mchip" style="--c:#8A8F8B">Hidden · ???</span></div>
+            <div style="display:flex;gap:1cqw;margin-top:auto">
+              <span class="gbtn st" style="--c:#F2A93B"><b class="ico food sm"></b>Feed</span>
+              <span class="gbtn st"><b class="ico coin sm"></b>Level up 8.2K</span>
+              <span class="gbtn off st">Evolve · Lv 25</span>
+            </div>
+          </div>
+          <!-- right evolution -->
+          <div style="background:#fff;border:.3cqw solid #1b1b1b;border-radius:1.4cqw;padding:1cqw 1.2cqw;color:#2A2419;display:flex;flex-direction:column;gap:.8cqw">
+            <div style="font-size:1.6cqw">Diet this stage</div>
+            <div style="display:grid;grid-template-columns:6cqw 1fr 2cqw;gap:.4cqw .6cqw;align-items:center;font-size:1.3cqw">
+              <span>Spicy</span><div class="bar" style="--c:#E5484D;height:1.3cqw"><i style="width:60%"></i></div><span>3</span>
+              <span>Sweet</span><div class="bar" style="--c:#EF6FA8;height:1.3cqw"><i style="width:20%"></i></div><span>1</span>
+              <span>Savory</span><div class="bar" style="--c:#94775A;height:1.3cqw"><i style="width:0%"></i></div><span>0</span>
+              <span>Sour</span><div class="bar" style="--c:#C3D93B;height:1.3cqw"><i style="width:0%"></i></div><span>0</span>
+            </div>
+            <div style="font-size:1.4cqw;margin-top:.4cqw">Evolution path</div>
+            <div style="position:relative;height:13cqw">
+              <i class="mon" data-el="ember" style="left:0;top:3.4cqw;width:4.2cqw"></i>
+              <span class="abs" style="left:4.6cqw;top:4.8cqw;font-size:1.6cqw">›</span>
+              <i class="mon" data-el="ember" data-v="golden" style="left:6.2cqw;top:2.8cqw;width:5cqw"></i>
+              <span class="abs" style="left:11.6cqw;top:1.8cqw;font-size:1.6cqw">›</span>
+              <span class="abs" style="left:11.6cqw;top:7.6cqw;font-size:1.6cqw">›</span>
+              <i class="mon" data-el="ember" data-f="fang" style="left:13.2cqw;top:0;width:4.6cqw"></i>
+              <i class="mon" data-el="ember" data-f="hearth" style="left:13.2cqw;top:6.6cqw;width:4.6cqw;opacity:.45"></i>
+              <span class="abs lbl" style="left:0;top:11.2cqw;font-size:1.15cqw">Spicy → <b style="color:#E85F33">Blazefang</b> · Sweet → Hearthtail</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <figcaption><b>Monster detail.</b> Portrait with variant, mutation, weight and mood. Stat bars. Traits, with the hidden trait shown as ???. The diet meter shows which adult form the monster is heading for. Evolve stays locked until the level requirement is met.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 5 EGGS ============ -->
+<section id="eggs">
+  <p class="sec-num">05</p>
+  <h2>Eggs &amp; hatching</h2>
+  <p>Coin eggs restock on a <strong>global 5-minute clock</strong>: every server shows the same stock at the same moment, so "Royal Egg in stock!" spreads through chat and social media the way Grow a Garden's seed restocks did. Stock is <em>per player</em>, so players on the same server never compete for it.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Egg</th><th>Price</th><th>Stock per restock</th><th class="num">Incubate</th><th>Odds C / U / R / E / L / M</th><th>Unlock</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Meadow</strong></td><td class="nowrap">150 coins</td><td>Unlimited</td><td class="num">30 s</td><td><div class="odds"><span style="width:75%;background:var(--r-common)"></span><span style="width:22%;background:var(--r-uncommon)"></span><span style="width:3%;background:var(--r-rare)"></span></div><span class="mono" style="font-size:12px">75 / 22 / 3</span></td><td>Start</td></tr>
+      <tr><td><strong>Grove</strong></td><td class="nowrap">4,000 coins</td><td>3–6</td><td class="num">3 min</td><td><div class="odds"><span style="width:45%;background:var(--r-common)"></span><span style="width:40%;background:var(--r-uncommon)"></span><span style="width:13%;background:var(--r-rare)"></span><span style="width:2%;background:var(--r-epic)"></span></div><span class="mono" style="font-size:12px">45 / 40 / 13 / 2</span></td><td>Lv 3</td></tr>
+      <tr><td><strong>Crystal</strong></td><td class="nowrap">90,000 coins</td><td>0–3 (in 60% of restocks)</td><td class="num">15 min</td><td><div class="odds"><span style="width:45%;background:var(--r-uncommon)"></span><span style="width:38%;background:var(--r-rare)"></span><span style="width:15%;background:var(--r-epic)"></span><span style="width:2%;background:var(--r-legendary)"></span></div><span class="mono" style="font-size:12px">– / 45 / 38 / 15 / 2</span></td><td>Lv 10</td></tr>
+      <tr><td><strong>Royal</strong></td><td class="nowrap">2.5M coins</td><td>0–1 (in 15% of restocks)</td><td class="num">1 h</td><td><div class="odds"><span style="width:50%;background:var(--r-rare)"></span><span style="width:38%;background:var(--r-epic)"></span><span style="width:11%;background:var(--r-legendary)"></span><span style="width:1%;background:var(--r-mythic)"></span></div><span class="mono" style="font-size:12px">– / – / 50 / 38 / 11 / 1</span></td><td>Lv 25</td></tr>
+      <tr><td><strong>Stampede</strong></td><td>Boss drop only</td><td>–</td><td class="num">1 h</td><td><div class="odds"><span style="width:70%;background:var(--r-epic)"></span><span style="width:27%;background:var(--r-legendary)"></span><span style="width:3%;background:var(--r-mythic)"></span></div><span class="mono" style="font-size:12px">– / – / – / 70 / 27 / 3</span></td><td>Lv 4</td></tr>
+      <tr><td><strong>Starlit</strong></td><td class="nowrap">150 gems</td><td>Always</td><td class="num">20 min</td><td><div class="odds"><span style="width:60%;background:var(--r-rare)"></span><span style="width:32%;background:var(--r-epic)"></span><span style="width:7.5%;background:var(--r-legendary)"></span><span style="width:.5%;background:var(--r-mythic)"></span></div><span class="mono" style="font-size:12px">– / – / 60 / 32 / 7.5 / 0.5</span></td><td>Lv 5</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>Pity:</strong> a Legendary is guaranteed within 40 Starlit Eggs. The counter is shown on the egg card. Royal Eggs have a Lucky Meter that guarantees an Epic or better every 5 hatches.</li>
+    <li><strong>Variant roll</strong> (every egg): Golden 2.5%, Rainbow 0.25%. The Lucky Hatcher pass raises this to 3.3% and 0.33%, and the odds screen shows the new numbers.</li>
+    <li><strong>Hatch reveal:</strong> the egg wobbles, cracks and pops, with a rarity-coloured burst. Epic and above are announced to the server, and Mythic or Rainbow hatches are announced to <em>all servers</em>. These broadcasts are what get clipped for TikTok and YouTube.</li>
+    <li><strong>Incubators:</strong> 1 slot at start, 2 at Ranch Lv 3, 3 at Lv 30, plus 1 from a pass. Incubator upgrades cut hatch time by 10% per tier, up to 40%.</li>
+  </ul>
+
+  <figure class="mock" id="mock-shop">
+    <div class="mock-scroll"><div class="phone"><div class="screen">
+      <div class="dimbg"></div>
+      <div class="panel" style="left:4%;top:6%;right:4%;bottom:6%;--c:#EF6FA8">
+        <div class="panel-head st"><span>Egg Shop</span><span style="display:flex;gap:1.2cqw;align-items:center;font-size:1.8cqw">Restock in <span class="gold">3:12</span><span class="xbtn">✕</span></span></div>
+        <div style="display:grid;grid-template-columns:1fr 31%;gap:2cqw;padding:1.8cqw 2cqw;height:calc(100% - 6.2cqw)">
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1.2cqw;align-content:start">
+            <div class="ecard"><i class="egg" data-t="meadow"></i><span class="nm">Meadow</span><span class="gbtn sm st"><b class="ico coin sm"></b>150</span><span class="stock">Unlimited</span></div>
+            <div class="ecard"><i class="egg" data-t="grove"></i><span class="nm">Grove</span><span class="gbtn sm st"><b class="ico coin sm"></b>4K</span><span class="stock">4 left</span></div>
+            <div class="ecard sel"><i class="egg wob" data-t="crystal"></i><span class="nm">Crystal</span><span class="gbtn sm st"><b class="ico coin sm"></b>90K</span><span class="stock">2 left</span></div>
+            <div class="ecard sold"><i class="egg" data-t="royal"></i><span class="soldout st">SOLD OUT</span><span class="nm">Royal</span><span class="gbtn sm off st"><b class="ico coin sm"></b>2.5M</span><span class="stock">15% of restocks</span></div>
+            <div class="ecard"><i class="egg" data-t="starlit"></i><span class="nm">Starlit</span><span class="gbtn sm st" style="--c:#E8436F"><b class="ico gem sm"></b>150</span><span class="stock">Pity 12 / 40</span></div>
+            <div style="grid-column:1/-1;display:flex;gap:1.2cqw;align-items:center;background:#fff;border:.3cqw solid #1b1b1b;border-radius:1.2cqw;padding:1cqw 1.4cqw;color:#2A2419">
+              <i class="egg" data-t="frost" style="position:relative;width:5cqw"></i>
+              <div style="flex:1"><div style="font-size:1.7cqw">Frostfall Egg <span class="mchip" style="--c:#4FB6F2">EVENT · 9 days</span></div><div class="lbl">Frosted mutation guaranteed · 3 event species · 400 Snowflakes</div></div>
+              <span class="gbtn sm st" style="--c:#4FB6F2">View</span>
+            </div>
+          </div>
+          <div style="background:#fff;border:.3cqw solid #1b1b1b;border-radius:1.4cqw;padding:1.2cqw 1.4cqw;color:#2A2419;display:flex;flex-direction:column;gap:.9cqw">
+            <div style="font-size:1.8cqw">Crystal Egg odds</div>
+            <div class="oddrow"><span>Uncommon</span><div class="bar" style="--c:#3FA23A"><i style="width:45%"></i></div><span>45%</span></div>
+            <div class="oddrow"><span>Rare</span><div class="bar" style="--c:#2F8EE0"><i style="width:38%"></i></div><span>38%</span></div>
+            <div class="oddrow"><span>Epic</span><div class="bar" style="--c:#9D52DD"><i style="width:15%"></i></div><span>15%</span></div>
+            <div class="oddrow"><span>Legendary</span><div class="bar" style="--c:#DD8E0A"><i style="width:2%"></i></div><span>2%</span></div>
+            <div style="border-top:.2cqw dashed #CDBF9E;padding-top:.8cqw" class="lbl">Golden 2.5% · Rainbow 0.25%<br>Hatch time 15 min · 7 species possible</div>
+            <span class="gbtn st" style="margin-top:auto"><b class="ico coin sm"></b>Buy for 90,000</span>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <figcaption><b>Egg Shop.</b> The restock timer is the headline. Stock counts and a pity counter are always visible. Tapping any egg opens its odds before you can buy, which Roblox requires for paid random items. The event egg row appears only during seasons.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 6 RANCH ============ -->
+<section id="ranch">
+  <p class="sec-num">06</p>
+  <h2>Ranch buildings &amp; Ranch Level</h2>
+  <p><strong>Ranch Level</strong> is the player's main progress bar. XP comes from hatching, growing, clearing stages, breeding and collecting coins. Every level unlocks something, and the first 10 levels come quickly, one every 2–4 minutes.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Building</th><th>What it does</th><th>Upgrade path</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Pens</strong></td><td>Hold the monsters that produce coins and can catch weather mutations</td><td>1 pen at start, up to 5 (Lv 6, 15, 25, 40); capacity 6 → 10 per pen</td></tr>
+      <tr><td><strong>Coin Jars</strong></td><td>Each pen fills a jar; the jar caps offline earnings</td><td>1 h → 2 h → 4 h → 8 h (+4 h VIP, +30 min Hoarder)</td></tr>
+      <tr><td><strong>Incubators</strong></td><td>Hatch eggs</td><td>Slots 1 → 3 (+1 pass); speed tiers −10% to −40%</td></tr>
+      <tr><td><strong>Feed Garden</strong></td><td>4 plots grow food flavours offline (a mini Grow a Garden)</td><td>Plots 2 → 8; growth speed tiers</td></tr>
+      <tr><td><strong>Barn Storage</strong></td><td>Holds monsters that aren't in pens; they don't produce coins</td><td>30 → 200 (+100 Big Barn pass)</td></tr>
+      <tr><td><strong>Breeding Barn</strong></td><td>Breed 2 adults</td><td>1 pod (+1 pass); faster pods</td></tr>
+      <tr><td><strong>Decor</strong></td><td>Mood aura for nearby pens; visitors can Like your ranch</td><td>Catalogue from coins, Friendship Points, events and Robux</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Unlock ladder (launch)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th class="num">Lv</th><th>Unlock</th><th class="num">Lv</th><th>Unlock</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>Pen 1, Incubator 1, Meadow Egg, Whispering Meadow</td><td class="num">15</td><td>Pen 3, Expedition slot 3</td></tr>
+      <tr><td class="num">3</td><td>Grove Egg, Incubator 2</td><td class="num">18</td><td>Ember Peaks region</td></tr>
+      <tr><td class="num">4</td><td>Stampede boss</td><td class="num">20</td><td>Hall of Fame</td></tr>
+      <tr><td class="num">5</td><td>Feed Garden, Starlit Egg, daily quests</td><td class="num">25</td><td>Royal Egg, Pen 4</td></tr>
+      <tr><td class="num">6</td><td>Pen 2, Expedition slot 2</td><td class="num">28</td><td>Gloom Hollow region</td></tr>
+      <tr><td class="num">8</td><td>Trading, Caravans</td><td class="num">30</td><td>Incubator 3</td></tr>
+      <tr><td class="num">10</td><td>Coral Coast region, Crystal Egg</td><td class="num">35</td><td>Squad size 4</td></tr>
+      <tr><td class="num">12</td><td>Breeding Barn</td><td class="num">40</td><td>Pen 5 · Rebirth teaser (update)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ 7 ECONOMY ============ -->
+<section id="economy">
+  <p class="sec-num">07</p>
+  <h2>Economy</h2>
+
+  <h3>Currencies</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Currency</th><th>Earned from</th><th>Spent on</th><th>Tradable</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Coins</strong> (soft)</td><td>Coin jars, expeditions, boss, selling monsters</td><td>Eggs, level-ups, upgrades, breeding fees, decor</td><td>No</td></tr>
+      <tr><td><strong>Food</strong> (4 flavours)</td><td>Feed Store, Feed Garden, expeditions</td><td>Growth meals; diet chooses the branch</td><td>No</td></tr>
+      <tr><td><strong>Treats</strong></td><td>Expeditions, dailies</td><td>Level-ups (with coins)</td><td>No</td></tr>
+      <tr><td><strong>Gems</strong> (premium)</td><td>Robux; also dailies (20), boss (5), achievements, codes, the free Ranch Pass track</td><td>Starlit Eggs, cosmetics, food crates, pass tracks</td><td>No</td></tr>
+      <tr><td><strong>Stardust</strong> (prestige)</td><td>Hall of Fame retirements</td><td>Permanent Stardust upgrades</td><td>No</td></tr>
+      <tr><td><strong>Friendship Points</strong></td><td>Petting other ranches' monsters, Caravans</td><td>Decor, food, one weekly Grove Egg</td><td>No</td></tr>
+      <tr><td><strong>Event tokens</strong></td><td>Seasonal activities</td><td>Event egg, event decor</td><td>No</td></tr>
+    </tbody>
+  </table></div>
+  <p>Only monsters, eggs and some cosmetics can be traded. Currency is never tradable. That removes the main channel for real-money trading and scam laundering.</p>
+
+  <h3>Core formulas (starting values, tune with telemetry)</h3>
+<pre><code>-- Coin income per monster, per second
+coinsPerSec = baseRate[rarity]          -- 1, 3, 8, 25, 80, 250
+            × stageMult[stage]          -- 0.4 baby, 0.7 teen, 1.0 adult
+            × 1.07 ^ (level - 1)        -- Lv 50 ≈ ×27.5
+            × starMult[stars]           -- 1.0, 1.25, 1.6, 2.0, 2.6
+            × variantMult               -- 1, Golden 3, Rainbow 10
+            × Π mutationMult            -- max 2 mutations
+            × (0.9 + mood / 500)        -- 0.90 .. 1.10
+            × (1 + legacyBonus[element] + friendBoost)
+
+-- Level-up cost
+levelCoins(lv)  = floor(50 × 1.12 ^ lv)
+levelTreats(lv) = ceil(lv / 5)
+
+-- Offline: each pen's jar fills to its cap; timers and expeditions finish normally
+jar = min(jar + penRate × elapsed, penRate × jarCapSeconds)
+
+-- Expedition loot per minute on a cleared stage
+lootPerMin = regionBase × 1.08 ^ stage × durationBonus   -- 15m ×1.00 · 1h ×1.05 · 4h ×1.10 · 8h ×1.20
+</code></pre>
+
+  <h3>Sources and sinks</h3>
+  <div class="grid2">
+    <div class="card"><h4>Coin sources</h4><ul><li>Coin jars (≈70% of coin income)</li><li>Expedition loot (≈20%)</li><li>Stampede chests, dailies, selling monsters (≈10%)</li></ul></div>
+    <div class="card"><h4>Coin sinks</h4><ul><li>Eggs (the largest sink, ≈45%)</li><li>Level-ups and ranch upgrades (≈35%)</li><li>Breeding fees (10% of the higher parent's value)</li><li>Decor; the Marketplace tax (8%) arrives in update 1.3</li></ul></div>
+  </div>
+
+  <h3>Pacing targets</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Milestone</th><th class="num">Target time (free player)</th><th>Typical income then</th></tr></thead>
+    <tbody>
+      <tr><td>First Grove Egg</td><td class="num">~6 min</td><td>~10 coins/s</td></tr>
+      <tr><td>First Epic</td><td class="num">~45 min (day 1)</td><td>~60 coins/s</td></tr>
+      <tr><td>First Crystal Egg</td><td class="num">~1.5 h (day 1–2)</td><td>~150 coins/s</td></tr>
+      <tr><td>First Legendary</td><td class="num">~day 4 (boss eggs + pity)</td><td>~600 coins/s</td></tr>
+      <tr><td>First Royal Egg</td><td class="num">~day 7</td><td>~2,000 coins/s</td></tr>
+      <tr><td>First Hall of Fame retirement</td><td class="num">~day 10</td><td>–</td></tr>
+      <tr><td>First Mythic (free route)</td><td class="num">~day 14–21</td><td>–</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ 8 EXPEDITIONS ============ -->
+<section id="expeditions">
+  <p class="sec-num">08</p>
+  <h2>Expeditions &amp; combat</h2>
+  <p>This is the RPG half of the game, built the way AFK-style idle RPGs work. <strong>Stage battles</strong> push you forward. <strong>Timed expeditions</strong> farm your highest cleared stage while you're away.</p>
+
+  <h3>Regions at launch</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Region</th><th>Enemies</th><th>Unlock</th><th>Stages</th><th>Bosses</th><th>Signature drop</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Whispering Meadow</strong></td><td><span class="tag t-sprout">Sprout</span> <span class="tag t-stone">Stone</span></td><td>Lv 1</td><td>1–20</td><td>Thistlebuck (10), Old Mossback (20)</td><td>Sweet food, Grove Eggs</td></tr>
+      <tr><td><strong>Coral Coast</strong></td><td><span class="tag t-tide">Tide</span> <span class="tag t-spark">Spark</span></td><td>Lv 10</td><td>1–20</td><td>Reef Rascal (10), Queen Brineclaw (20)</td><td>Sour food, Pearl Shards</td></tr>
+      <tr><td><strong>Ember Peaks</strong></td><td><span class="tag t-ember">Ember</span> <span class="tag t-stone">Stone</span></td><td>Lv 18</td><td>1–20</td><td>Cinder Twins (10), Magmaw (20)</td><td>Spicy food, Crystal Eggs</td></tr>
+      <tr><td><strong>Gloom Hollow</strong></td><td><span class="tag t-gloom">Gloom</span> <span class="tag t-spark">Spark</span></td><td>Lv 28</td><td>1–20</td><td>Lantern Wraith (10), The Hollow King (20)</td><td>Savory food, Star Shards</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Battle rules</h3>
+  <div class="grid2">
+    <div class="card">
+      <h4>Auto-battle</h4>
+      <ul>
+        <li>A squad of 3 (4 from Lv 35) fights enemy waves. The front slot draws 50% of enemy attacks and the other slots 25% each.</li>
+        <li>Turn order goes by SPD. Each species has a <strong>Basic</strong> attack, a <strong>Special</strong> that charges over 3 turns, and a <strong>Passive</strong>.</li>
+        <li>Battles are capped at 30 turns. If time runs out, the stage is lost.</li>
+      </ul>
+      <p class="mono" style="font-size:13px">dmg = ATK × power × elementMult × 100 / (100 + DEF) × rand(0.9, 1.1)</p>
+    </div>
+    <div class="card">
+      <h4>Watch or skip</h4>
+      <ul>
+        <li>Stage battles play as a 15-second replay with big numbers. Tap to skip.</li>
+        <li><strong>Cheer:</strong> tapping during a replay fills a meter that gives +20% damage. Players who want to be active can be; the result is the same for those who skip.</li>
+        <li>The server simulates the battle deterministically from a seed, and the client only replays the result.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Timed expeditions</h3>
+  <ul>
+    <li>Send a squad to your highest cleared stage for <strong>15 min, 1 h, 4 h or 8 h</strong>. Longer runs pay a bonus, up to ×1.2 for 8 h, so players are rewarded for going to bed with an expedition running.</li>
+    <li>Loot: coins, food, Treats, XP, and a chance of an egg (Meadow and Grove early; Crystal from Ember Peaks on).</li>
+    <li>Slots: 1 at start, 2 at Lv 6, 3 at Lv 15, +1 with the Explorer pass. Monsters on an expedition leave their pen and stop producing coins, which is a real trade-off.</li>
+    <li><strong>Caravans</strong> (co-op): 2–4 players on the same server launch a Caravan together (4 h or 8 h). Everyone gets +30% loot and a shared Caravan Chest with a guaranteed Grove Egg.</li>
+  </ul>
+
+  <figure class="mock" id="mock-exp">
+    <div class="mock-scroll"><div class="phone"><div class="screen">
+      <div class="region-bg"></div>
+      <svg class="abs" viewBox="0 0 210 100" preserveAspectRatio="none" style="left:0;top:0;width:58%;height:100%">
+        <path d="M14 82 C40 82 38 62 62 62 S96 80 112 64 S130 36 152 44 S186 30 196 14" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="3 3" opacity=".9"/>
+      </svg>
+      <div class="abs st" style="left:2%;top:4%;font-size:2.6cqw">Coral Coast</div>
+      <div class="abs lbl" style="left:2%;top:12%;color:#fff" ><span class="st">Stage 14 / 20 · Tide &amp; Spark enemies</span></div>
+      <!-- nodes along path (percent of full screen; path area is 58% width) -->
+      <span class="snode done st" style="left:3.9%;top:82%">8</span>
+      <span class="snode done st" style="left:10.5%;top:73%">9</span>
+      <span class="snode done st" style="left:17.1%;top:62%">10</span>
+      <span class="snode done st" style="left:24%;top:68%">11</span>
+      <span class="snode done st" style="left:29.6%;top:70%">12</span>
+      <span class="snode done st" style="left:34.5%;top:55%">13</span>
+      <span class="snode cur st" style="left:40.2%;top:44%">14</span>
+      <span class="snode lock st" style="left:46%;top:40%">15</span>
+      <span class="snode lock st" style="left:51%;top:28%">16</span>
+      <span class="snode boss st" style="left:54.6%;top:14%">BOSS</span>
+      <i class="mon" data-el="tide" style="left:44.5%;top:52%;width:4.6cqw;opacity:.95"></i>
+
+      <div class="panel" style="left:58%;top:5%;right:2%;bottom:5%;--c:#43B649">
+        <div class="panel-head st" style="font-size:2cqw"><span>Squad</span><span style="font-size:1.5cqw">Slots 2 / 3</span></div>
+        <div style="padding:1.4cqw 1.6cqw;display:flex;flex-direction:column;gap:1.1cqw;color:#2A2419">
+          <div style="display:flex;gap:1.2cqw;justify-content:center">
+            <div class="slot"><i class="mon" data-el="spark"></i><span class="mchip" style="--c:#E5B316;color:#2A2208">Spark</span><span>Voltfurr 32</span></div>
+            <div class="slot"><i class="mon" data-el="sprout" data-m="soaked"></i><span class="mchip" style="--c:#3FA23A">Sprout</span><span>Clovermane 29</span></div>
+            <div class="slot"><i class="mon" data-el="ember" data-v="golden"></i><span class="mchip" style="--c:#E85F33">Ember</span><span>Toasty 17</span></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:1.45cqw"><span>Squad power <b>12,480</b></span><span style="color:#2F8A3A">Recommended 11,900</span></div>
+          <div class="lbl" style="background:#FFF;border:.2cqw solid #CDBF9E;border-radius:.8cqw;padding:.5cqw .8cqw">Spark and Sprout deal ×1.5 to Tide enemies here. Ember takes ×1.5 from Tide.</div>
+          <div class="dur"><span>15m</span><span>1h</span><span class="on st">4h +10%</span><span>8h +20%</span></div>
+          <div style="display:flex;gap:1.2cqw;align-items:center;font-size:1.4cqw;flex-wrap:wrap">
+            <span style="display:flex;gap:.4cqw;align-items:center"><b class="ico coin sm"></b>86K</span>
+            <span style="display:flex;gap:.4cqw;align-items:center"><b class="ico food sm"></b>40</span>
+            <span style="display:flex;gap:.4cqw;align-items:center"><b class="ico treat sm"></b>12</span>
+            <span style="display:flex;gap:.4cqw;align-items:center"><i class="egg" data-t="grove" style="position:relative;width:1.8cqw"></i>Grove 18%</span>
+          </div>
+          <div style="display:flex;gap:1cqw">
+            <span class="gbtn st" style="--c:#F2A93B;flex:1">Fight stage 14</span>
+            <span class="gbtn st" style="flex:1.3">Start 4h expedition</span>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <figcaption><b>Expedition board.</b> The region path shows cleared, current, locked and boss stages. The squad panel shows element matchups in plain language, a duration picker with its bonus, a loot preview, and two actions: push the next stage, or farm the current one while away.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 9 BREEDING ============ -->
+<section id="breeding">
+  <p class="sec-num">09</p>
+  <h2>Breeding &amp; hybrids</h2>
+  <p>Breeding unlocks at Ranch Lv 12 and is the long-term chase: better traits, inherited mutations, and <strong>hybrid species</strong> that only exist through specific pairings. The first player on a server to discover a hybrid gets a server-wide broadcast and a Codex badge.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Rule</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Parents</td><td>Two Adults, any elements. Each can breed twice per real day.</td></tr>
+      <tr><td>Time &amp; fee</td><td>20 min (Common) up to 6 h (Mythic). Fee is 10% of the higher parent's coin value.</td></tr>
+      <tr><td>Species</td><td>45% parent A, 45% parent B, 10% hybrid (when a recipe exists for the pair)</td></tr>
+      <tr><td>Rarity</td><td>Lower parent's rarity 60% · higher parent's 32% · one tier above the higher parent 8% (Legendary + Legendary can give Mythic at 2%)</td></tr>
+      <tr><td>Traits</td><td>Each slot copies a random parent slot; 12% chance of a fresh roll. A Firstborn parent passes one extra.</td></tr>
+      <tr><td>Mutations</td><td>20% chance to inherit one parent mutation. Rainbow variant chance becomes 1 in 100 if both parents are Rainbow.</td></tr>
+      <tr><td>Weight</td><td>The average of the parents' weights ± 20%, so players can breed toward Huge monsters over generations.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Launch hybrids</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Hybrid</th><th>Recipe</th><th>Elements</th><th>Signature</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Steamling</strong></td><td>Ember + Tide</td><td><span class="tag t-ember">Ember</span> <span class="tag t-tide">Tide</span></td><td>Special hits all enemies</td></tr>
+      <tr><td><strong>Mudpuff</strong></td><td>Tide + Stone</td><td><span class="tag t-tide">Tide</span> <span class="tag t-stone">Stone</span></td><td>Taunts; front-line tank</td></tr>
+      <tr><td><strong>Thornbolt</strong></td><td>Spark + Sprout</td><td><span class="tag t-spark">Spark</span> <span class="tag t-sprout">Sprout</span></td><td>Chains lightning through the squad's Sprout allies</td></tr>
+      <tr><td><strong>Lavashell</strong></td><td>Ember + Stone</td><td><span class="tag t-ember">Ember</span> <span class="tag t-stone">Stone</span></td><td>Reflects 20% of damage</td></tr>
+      <tr><td><strong>Eclipsette</strong></td><td>Gloom + Spark</td><td><span class="tag t-gloom">Gloom</span> <span class="tag t-spark">Spark</span></td><td>+Luck at night</td></tr>
+      <tr><td><strong>Mirebloom</strong></td><td>Gloom + Sprout</td><td><span class="tag t-gloom">Gloom</span> <span class="tag t-sprout">Sprout</span></td><td>Heals the squad with each Special</td></tr>
+    </tbody>
+  </table></div>
+
+  <figure class="mock" id="mock-breed">
+    <div class="mock-scroll"><div class="phone"><div class="screen">
+      <div class="dimbg"></div>
+      <div class="panel" style="left:5%;top:6%;right:5%;bottom:6%;--c:#8B6AD8">
+        <div class="panel-head st"><span>Breeding Barn</span><span style="display:flex;gap:1.2cqw;align-items:center;font-size:1.6cqw">Pod 1 of 1<span class="xbtn">✕</span></span></div>
+        <div style="display:grid;grid-template-columns:22% 6% 22% 1fr;gap:1.4cqw;padding:2cqw;align-items:stretch;height:calc(100% - 6.2cqw);color:#2A2419">
+          <div style="position:relative;background:#fff;border:.3cqw solid #1b1b1b;border-radius:1.4cqw;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:1cqw;gap:.4cqw">
+            <i class="mon" data-el="ember" data-f="fang" style="left:22%;top:6%;width:11cqw"></i>
+            <span style="font-size:1.7cqw">Blazefang</span>
+            <span style="display:flex;gap:.4cqw"><span class="mchip" style="--c:#9D52DD">Epic</span><span class="mchip" style="--c:#E85F33">Ember</span></span>
+            <span class="lbl">Tough Hide · Hoarder</span><span class="lbl">Breeds left today: 1</span>
+          </div>
+          <div style="display:grid;place-items:center;font-size:4cqw;color:#EF6FA8" class="st">♥</div>
+          <div style="position:relative;background:#fff;border:.3cqw solid #1b1b1b;border-radius:1.4cqw;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:1cqw;gap:.4cqw">
+            <i class="mon" data-el="tide" data-m="soaked" style="left:22%;top:6%;width:11cqw"></i>
+            <span style="font-size:1.7cqw">Pearlfin</span>
+            <span style="display:flex;gap:.4cqw"><span class="mchip" style="--c:#2F8EE0">Rare</span><span class="mchip" style="--c:#2F8EE0">Soaked</span></span>
+            <span class="lbl">Lucky Paw · Glutton</span><span class="lbl">Breeds left today: 2</span>
+          </div>
+          <div style="background:#fff;border:.3cqw solid #1b1b1b;border-radius:1.4cqw;padding:1.2cqw 1.6cqw;display:flex;flex-direction:column;gap:.9cqw">
+            <div style="font-size:1.8cqw">Possible offspring</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1cqw;text-align:center;font-size:1.35cqw">
+              <div style="position:relative;height:9cqw"><i class="mon" data-el="ember" style="left:22%;top:0;width:5.6cqw"></i><span class="abs" style="left:0;right:0;bottom:0">Cindlet 45%</span></div>
+              <div style="position:relative;height:9cqw"><i class="mon" data-el="tide" style="left:22%;top:0;width:5.6cqw"></i><span class="abs" style="left:0;right:0;bottom:0">Bubblin 45%</span></div>
+              <div style="position:relative;height:9cqw"><i class="mon" data-el="tide" data-s="1" style="left:22%;top:0;width:5.6cqw"></i><span class="abs st" style="left:44%;top:1.6cqw;font-size:2.4cqw;color:#fff">?</span><span class="abs" style="left:0;right:0;bottom:0;color:#8B6AD8">Hybrid 10%</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:7cqw 1fr;gap:.5cqw .8cqw;align-items:center;font-size:1.3cqw">
+              <span>Rarity</span><div class="odds" style="height:1.4cqw;min-width:0;border:.2cqw solid #1b1b1b"><span style="width:60%;background:#2F8EE0"></span><span style="width:32%;background:#9D52DD"></span><span style="width:8%;background:#DD8E0A"></span></div>
+              <span></span><span class="lbl" style="font-size:1.15cqw">Rare 60 · Epic 32 · Legendary 8</span>
+              <span>Mutation</span><span class="lbl">20% to inherit Soaked</span>
+            </div>
+            <div style="display:flex;gap:1cqw;align-items:center;margin-top:auto">
+              <span class="lbl" style="flex:1">2 h 30 m · fee <b style="color:#2A2419">38,400</b> coins</span>
+              <span class="gbtn st" style="--c:#8B6AD8">Start breeding</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <figcaption><b>Breeding Barn.</b> Both parents with their traits and daily breeds left. Every possible outcome with its percentage. An undiscovered hybrid shows as a silhouette with "?" until someone breeds it. Time and fee are shown before you commit.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 10 WEATHER ============ -->
+<section id="weather">
+  <p class="sec-num">10</p>
+  <h2>Weather &amp; mutations</h2>
+  <p>Weather is shared by the whole server and is the main source of rare, tradable value. Every 20 minutes the server rolls weather that lasts 4 minutes. Monsters <strong>standing in a pen</strong> during that time can mutate. That turns a boring question, which monsters go in the pens, into a real decision and a reason to log in at the right moment.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Weather</th><th class="num">Roll chance</th><th>Mutation</th><th class="num">Value ×</th><th class="num">Chance / event (matching element)</th><th>Side effect</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Clear</strong></td><td class="num">55%</td><td>–</td><td class="num">–</td><td class="num">–</td><td>–</td></tr>
+      <tr><td><strong>Rain</strong></td><td class="num">15%</td><td>Soaked</td><td class="num">1.5</td><td class="num">4% (12% <span class="tag t-tide">Tide</span>)</td><td>Feed Garden grows ×2</td></tr>
+      <tr><td><strong>Heatwave</strong></td><td class="num">10%</td><td>Scorched</td><td class="num">1.5</td><td class="num">4% (12% <span class="tag t-ember">Ember</span>)</td><td>Hatch speed +25%</td></tr>
+      <tr><td><strong>Thunderstorm</strong></td><td class="num">8%</td><td>Charged</td><td class="num">2</td><td class="num">4% (12% <span class="tag t-spark">Spark</span>)</td><td>Boss damage +10%</td></tr>
+      <tr><td><strong>Snow</strong></td><td class="num">6%</td><td>Frosted</td><td class="num">2</td><td class="num">4% (12% <span class="tag t-stone">Stone</span>)</td><td>–</td></tr>
+      <tr><td><strong>Blood Moon</strong> (night only)</td><td class="num">3%</td><td>Shadow</td><td class="num">4</td><td class="num">3% (9% <span class="tag t-gloom">Gloom</span>)</td><td>Gloom ATK +20%</td></tr>
+      <tr><td><strong>Starfall</strong></td><td class="num">2.5%</td><td>Starstruck</td><td class="num">3</td><td class="num">5% (all)</td><td>Free Grove Egg to everyone online</td></tr>
+      <tr><td><strong>Aurora</strong></td><td class="num">0.5%</td><td>Prismatic</td><td class="num">8</td><td class="num">1% (all)</td><td>Broadcast to all servers</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card"><h4>Combo mutations</h4><p>Some pairs merge into a rarer mutation that takes a single slot: <strong>Soaked + Frosted → Frozen</strong> (×3.5) and <strong>Scorched + Charged → Plasma</strong> (×4). Players will figure these out and share them, which is free marketing.</p></div>
+    <div class="card"><h4>Weather Totems</h4><p>A Robux product that summons Rain, Thunderstorm or Starfall for <em>everyone on the server</em>. It's a generous, social purchase ("PixelPaws summoned a Starfall!"). Aurora can never be bought, so Prismatic always stays special.</p></div>
+  </div>
+  <p class="muted">Guardrails: a monster can hold at most 2 mutations, and further rolls skip it. Economy dashboards track total coins per hour so mutation stacking can't inflate the economy unseen.</p>
+</section>
+
+<!-- ============ 11 SOCIAL ============ -->
+<section id="social">
+  <p class="sec-num">11</p>
+  <h2>Social systems</h2>
+  <p>Players want to play with friends more than anything else, and Roblox now tracks <em>intentional co-play</em> when recommending games. Every social feature here works for a player who is mostly idle.</p>
+
+  <div class="grid2">
+    <div class="card"><h4>Friends on server</h4><p>+10% coins for each friend on the same server, up to +40%. A "Join a friend" button sits on the Welcome Back screen.</p></div>
+    <div class="card"><h4>Ranch visits and petting</h4><p>Walk onto any ranch and pet up to 20 monsters a day. The owner's monster gets +10 Mood and you get a Friendship Point. Ranches can be Liked, and the most-liked ranch on the server wears a crown.</p></div>
+    <div class="card"><h4>Caravans</h4><p>A co-op expedition for 2–4 players with +30% loot and a shared chest. You need friends or party members on the same server to start one.</p></div>
+    <div class="card"><h4>Broadcasts</h4><p>Epic-or-better hatches, hybrid discoveries, Huge weights and Aurora mutations are announced. Mythic and Rainbow hatches are announced across all servers.</p></div>
+  </div>
+
+  <h3>Stampede: the server boss</h3>
+  <ul>
+    <li>Starts at :00 and :30 server time and lasts 90 seconds. Anyone joins with one tap from any screen.</li>
+    <li>Every participant's squad attacks automatically, and tapping <strong>Cheer</strong> adds up to +20% damage. Boss HP scales with the combined power of everyone taking part, so a full server always wins.</li>
+    <li>Rewards: every participant gets a Boss Chest (coins, food, Treats, 5 gems). Players with at least 5% of the damage have a 25% chance of a Stampede Egg. The top 3 get a Stampede Egg guaranteed.</li>
+    <li>The boss rotates through the four region bosses. Event seasons bring their own Stampede.</li>
+  </ul>
+
+  <figure class="mock" id="mock-boss">
+    <div class="mock-scroll"><div class="phone"><div class="screen arena">
+      <div class="abs" style="left:50%;top:4%;transform:translateX(-50%);width:44cqw;text-align:center">
+        <div class="st" style="font-size:2.4cqw">OLD MOSSBACK</div>
+        <div class="bar" style="height:2.2cqw;margin-top:.6cqw;--c:#E5484D;border-width:.3cqw"><i style="width:62%"></i></div>
+        <div class="st" style="font-size:1.4cqw;margin-top:.4cqw">62% · 0:48 left · 6 players</div>
+      </div>
+      <i class="mon" data-el="stone" data-m="frosted" style="left:36%;top:20%;width:26cqw"></i>
+      <span class="dmg st" style="left:34%;top:30%">-12.4K</span>
+      <span class="dmg crit st" style="left:57%;top:24%">CRIT -38K</span>
+      <span class="dmg st" style="left:62%;top:44%">-9.1K</span>
+      <div class="abs" style="left:4%;bottom:4%;display:flex;gap:.8cqw;align-items:flex-end">
+        <i class="mon" data-el="spark" style="position:relative;width:6cqw"></i>
+        <i class="mon" data-el="ember" data-v="golden" style="position:relative;width:6.6cqw"></i>
+        <i class="mon" data-el="sprout" style="position:relative;width:5.6cqw"></i>
+        <i class="mon" data-el="gloom" style="position:relative;width:5.8cqw"></i>
+        <i class="mon" data-el="tide" data-v="rainbow" style="position:relative;width:6cqw"></i>
+      </div>
+      <div class="panel" style="right:2.5%;top:20%;width:24%;--c:#E5484D">
+        <div class="panel-head st" style="font-size:1.6cqw;padding:.6cqw 1.2cqw">Damage</div>
+        <div style="padding:.8cqw 1.2cqw;display:grid;gap:.5cqw;font-size:1.3cqw">
+          <div style="display:flex;justify-content:space-between"><span>1 · PixelPaws</span><span>31%</span></div>
+          <div style="display:flex;justify-content:space-between"><span>2 · moonbean_7</span><span>22%</span></div>
+          <div style="display:flex;justify-content:space-between;background:#FFE7A6;border-radius:.5cqw;padding:0 .3cqw"><span>3 · You</span><span>18%</span></div>
+          <div style="display:flex;justify-content:space-between"><span>4 · TacoRancher</span><span>14%</span></div>
+          <div style="display:flex;justify-content:space-between"><span>5 · ellie_moo</span><span>9%</span></div>
+          <div class="lbl" style="border-top:.2cqw dashed #CDBF9E;padding-top:.4cqw">Top 3 get a Stampede Egg</div>
+        </div>
+      </div>
+      <div class="abs" style="right:4%;bottom:5%;display:flex;flex-direction:column;align-items:center;gap:.6cqw">
+        <div class="st" style="font-size:1.3cqw">Cheer 80%</div>
+        <span class="gbtn big st" style="--c:#F2A93B;border-radius:50%;width:12cqw;height:12cqw;padding:0;box-shadow:0 0 0 .8cqw rgba(255,212,71,.55),inset 0 -.8cqw 0 rgba(0,0,0,.2)">CHEER!</span>
+      </div>
+    </div></div></div>
+    <figcaption><b>Stampede boss.</b> Boss HP and timer at the top. Everyone's squads attack together at the bottom, with big damage numbers. A live damage board shows the reward cutoff. One large Cheer button is the only active input.</figcaption>
+  </figure>
+
+  <h3>Trading</h3>
+  <ul>
+    <li>Unlocks at Ranch Lv 8 and after 30 minutes of total playtime, which blocks throwaway scam accounts.</li>
+    <li>Up to 8 items per side: monsters, eggs and tradable cosmetics. No currency.</li>
+    <li>Two steps: both players press <strong>Ready</strong>, then <strong>Confirm</strong> starts a 5-second countdown. Any change resets both sides and flashes the changed slot.</li>
+    <li>Every item shows the facts that set its value: rarity, variant, mutations, weight, level and stars. The game never shows an "official value", because players would game it.</li>
+    <li>Trades run on the server as a single transaction across both profiles, with a trade log (30 days) and support tools to roll one back.</li>
+    <li>Marketplace listings (asynchronous, coins only, 8% tax) arrive in update 1.3.</li>
+  </ul>
+
+  <figure class="mock" id="mock-trade">
+    <div class="mock-scroll"><div class="phone"><div class="screen">
+      <div class="dimbg"></div>
+      <div class="panel" style="left:4%;top:6%;right:4%;bottom:6%;--c:#4FB6F2">
+        <div class="panel-head st"><span>Trade with PixelPaws</span><span class="xbtn">✕</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2.4cqw;padding:1.6cqw 2cqw 1cqw;color:#2A2419">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8cqw;font-size:1.7cqw"><span>You</span><span class="ready st">✓ Ready</span></div>
+            <div class="tgrid">
+              <div class="tslot"><i class="mon" data-el="gloom" data-m="frosted"></i><span class="tt"><span class="mchip" style="--c:#9D52DD">Epic</span><span class="mchip" style="--c:#4FB6F2">Frosted</span></span></div>
+              <div class="tslot"><i class="mon" data-el="stone"></i><span class="tt"><span class="mchip" style="--c:#2F8EE0">Rare</span><span class="mchip" style="--c:#6B5F48">Huge</span></span></div>
+              <div class="tslot"><i class="egg" data-t="crystal"></i><span class="tt"><span class="mchip" style="--c:#4FB6F2">Egg</span></span></div>
+              <div class="tslot empty"></div>
+              <div class="tslot empty"></div><div class="tslot empty"></div><div class="tslot empty"></div><div class="tslot empty"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8cqw;font-size:1.7cqw"><span>PixelPaws</span><span class="ready st">✓ Ready</span></div>
+            <div class="tgrid">
+              <div class="tslot"><i class="mon" data-el="ember" data-v="golden" data-m="charged"></i><span class="tt"><span class="mchip" style="--c:#DD8E0A">Legendary</span><span class="mchip" style="--c:#E0A915">Golden</span><span class="mchip" style="--c:#E5B316;color:#2A2208">Charged</span></span></div>
+              <div class="tslot empty"></div><div class="tslot empty"></div><div class="tslot empty"></div>
+              <div class="tslot empty"></div><div class="tslot empty"></div><div class="tslot empty"></div><div class="tslot empty"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:2cqw;padding:0 2cqw 1.6cqw;color:#2A2419">
+          <span class="lbl" style="max-width:52%">Check every tag. Trades are final once the countdown ends. Any change resets both sides.</span>
+          <div style="display:flex;gap:1cqw;align-items:center">
+            <span class="gbtn st" style="--c:#E5484D">Cancel</span>
+            <span class="gbtn big st">Trading in 3…</span>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <figcaption><b>Trade window.</b> Both sides use the same grid. Every value factor appears as a tag on its slot. The ready state shows on each side. The final confirm is a visible countdown that can still be cancelled.</figcaption>
+  </figure>
+
+  <h3>Leaderboards (weekly, per server and global)</h3>
+  <p>Heaviest monster by species · Codex completion · Stampede damage · Hall of Fame count · Highest stage cleared. Global boards appear on a board in the Market Square, and the week's winners get a nameplate title for the following week.</p>
+</section>
+
+<!-- ============ 12 PRESTIGE ============ -->
+<section id="prestige">
+  <p class="sec-num">12</p>
+  <h2>Prestige</h2>
+  <p>There are two layers. The first is soft and in the game from launch, so nobody loses anything. The second is a real reset that arrives in an update, once the most engaged players reach the cap.</p>
+  <div class="grid2">
+    <div class="card">
+      <h4>Layer 1 · Hall of Fame (launch, Lv 20)</h4>
+      <ul>
+        <li>Retire an Adult at its level cap. It becomes a <strong>statue on your ranch</strong> that visitors can see, and an entry in the server's Hall of Fame.</li>
+        <li>You get a <strong>Legacy bonus</strong> of +1% to +6% coins (by rarity) for every monster of that element, stacking up to +60% per element, plus <strong>Stardust</strong> and Star Shards.</li>
+        <li>Stardust buys permanent upgrades: +1 incubator speed tier, +5% expedition loot, +1 daily breed, +15 min on jar caps, and more.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Layer 2 · Ranch Rebirth (update 1.4, Lv 40+)</h4>
+      <ul>
+        <li><strong>Resets:</strong> coins, ranch buildings, region progress. Monsters you don't keep turn into Stardust at 50% of their value.</li>
+        <li><strong>Keeps:</strong> Codex, Hall of Fame, gems, cosmetics, passes, and 3 Heirloom monsters (+1 per rebirth).</li>
+        <li><strong>Gains:</strong> a Rebirth Star (×1.5 coins per star), a new ranch biome theme, the Celestial Egg tier, and a 3rd visible trait slot at 3 stars.</li>
+        <li>Always optional. The confirmation screen lists exactly what you keep and what you lose.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 13 FTUE ============ -->
+<section id="ftue">
+  <p class="sec-num">13</p>
+  <h2>First session, second by second</h2>
+  <p>The goal is to beat Roblox's most important early signal, <strong>first-play bounce</strong>. Something rewarding happens every few seconds in the first minute, and a new system appears every minute or two until minute 10.</p>
+  <ol class="timeline">
+    <li><span class="when">0:00</span><p>Spawn on your own plot. A starter egg is already wobbling in Incubator 1. One arrow, no text wall.</p></li>
+    <li><span class="when">0:08</span><p>The egg hatches into a guaranteed <strong>Uncommon</strong> baby (choose Cindlet, Bubblin or Mossbun). Name it. It walks into Pen 1.</p></li>
+    <li><span class="when">0:20</span><p>Its coin jar already shows +25. Tap to collect: the first number goes up. A quest bar appears: "Collect 100 coins".</p></li>
+    <li><span class="when">0:45</span><p>Quest reward: 300 coins. Arrow to the Egg Shop. Buy 2 Meadow Eggs (30 s hatch). The restock timer is pointed out once.</p></li>
+    <li><span class="when">1:30</span><p>Two hatches. Feed the starter 3 meals, then "Grow up" (tutorial growth time is 15 s). It becomes a Teen, a big moment with a sound sting.</p></li>
+    <li><span class="when">2:30</span><p>Expedition Gate: fight Whispering Meadow stage 1 with the 3 monsters (a scripted win), then stage 2, where the enemy is Sprout and the Ember choice shows the element advantage.</p></li>
+    <li><span class="when">4:00</span><p>Start a first <strong>15-minute expedition</strong>. The game explains "it keeps going when you leave".</p></li>
+    <li><span class="when">5:30</span><p>Ranch Lv 3: Grove Egg and Incubator 2 unlock. Friends-on-server boost is explained if a friend is present.</p></li>
+    <li><span class="when">7:00</span><p><strong>Scripted Rain</strong> (first session only). One monster is guaranteed to gain Soaked. This teaches pens + weather = value.</p></li>
+    <li><span class="when">9:00</span><p>Ranch Lv 4. If the Stampede is within 10 minutes, a countdown appears. If not, a solo tutorial boss plays instead. Players get their first boss chest and gems.</p></li>
+    <li><span class="when">12:00</span><p>The expedition returns: coins, food and a Grove Egg. Then the prompts: "Join our group for a free Crystal Egg code" and the favourite/notification ask, both after a win and never before.</p></li>
+  </ol>
+
+  <h3>Returning session: Welcome Back</h3>
+  <p>The Welcome Back screen is the most-seen screen in the game. It adds up everything that happened offline, points to the next action, and offers the best rewarded-ad placement in the game.</p>
+  <figure class="mock" id="mock-welcome">
+    <div class="mock-scroll"><div class="phone"><div class="screen">
+      <div class="dimbg"></div>
+      <div class="panel" style="left:20%;top:6%;right:20%;bottom:6%;--c:#43B649">
+        <div class="panel-head st" style="justify-content:center">Welcome back, Rancher!</div>
+        <div style="padding:1.4cqw 2.2cqw;display:flex;flex-direction:column;gap:1cqw;color:#2A2419">
+          <div style="text-align:center;font-size:1.6cqw" class="lbl">You were away <b style="color:#2A2419">7 h 42 m</b></div>
+          <div style="display:flex;align-items:center;gap:1.2cqw;background:#fff;border:.3cqw solid #1b1b1b;border-radius:1.2cqw;padding:.8cqw 1.2cqw">
+            <b class="ico coin" style="width:3.6cqw;height:3.6cqw"></b>
+            <div style="flex:1"><div style="font-size:2.4cqw">+312,480</div><div class="lbl">Pen 2's jar filled at 4 h. Upgrade it to hold 8 h.</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1cqw;font-size:1.35cqw">
+            <div style="background:#fff;border:.3cqw solid #1b1b1b;border-radius:1cqw;padding:.7cqw;position:relative;min-height:9cqw"><div>2 expeditions done</div><div class="lbl">Coral 14 · Meadow 20</div><i class="mon" data-el="spark" style="right:.6cqw;bottom:.4cqw;width:3.8cqw"></i></div>
+            <div style="background:#fff;border:.3cqw solid #1b1b1b;border-radius:1cqw;padding:.7cqw;position:relative;min-height:9cqw"><div>3 eggs hatched</div><div class="lbl">1 Epic · 1 Rare · 1 Unc.</div><i class="egg" data-t="crystal" style="right:.8cqw;bottom:.4cqw;width:3cqw"></i></div>
+            <div style="background:#fff;border:.3cqw solid #1b1b1b;border-radius:1cqw;padding:.7cqw;position:relative;min-height:9cqw"><div>Toasty can evolve</div><div class="lbl">Spicy → Blazefang</div><i class="mon" data-el="ember" data-v="golden" style="right:.6cqw;bottom:.4cqw;width:3.8cqw"></i></div>
+          </div>
+          <div style="display:flex;gap:1.2cqw;justify-content:center;margin-top:.4cqw">
+            <span class="gbtn big st">Collect</span>
+            <span class="gbtn big st" style="--c:#F2A93B"><span class="play"></span>Watch ad · ×2 coins</span>
+          </div>
+          <div class="lbl" style="text-align:center">Stampede starts in 6:10 · 2 friends online</div>
+        </div>
+      </div>
+    </div></div></div>
+    <figcaption><b>Welcome Back.</b> One total for coins, with a nudge to upgrade the jar that capped out. Three cards for what finished while you were away. Two clear actions, the optional ad on the right. The footer suggests the next social moment.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 14 MONETIZATION ============ -->
+<section id="monetization">
+  <p class="sec-num">14</p>
+  <h2>Monetization</h2>
+  <div class="callout"><p><span class="decision">Decision</span><strong>No paid timer skips.</strong> Roblox's own guidance says players resent paying to skip timers, and kids feel it most. Robux buys <em>parallel</em> capacity (more incubators, pods, slots) and convenience instead. Rewarded ads allow a small, capped amount of skipping.</p></div>
+
+  <h3>Game passes (one-time)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Pass</th><th class="num">Robux</th><th>What it gives</th><th>Why it's fair</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Auto-Collect</strong></td><td class="num">149</td><td>Jars collect themselves while you're online</td><td>Convenience</td></tr>
+      <tr><td><strong>Extra Incubator</strong></td><td class="num">199</td><td>+1 incubator slot</td><td>Parallel capacity</td></tr>
+      <tr><td><strong>Big Barn</strong></td><td class="num">199</td><td>+100 storage</td><td>Convenience</td></tr>
+      <tr><td><strong>Explorer</strong></td><td class="num">249</td><td>+1 expedition slot</td><td>Parallel capacity</td></tr>
+      <tr><td><strong>Breeding Pod</strong></td><td class="num">249</td><td>+1 breeding pod</td><td>Parallel capacity</td></tr>
+      <tr><td><strong>VIP Rancher</strong></td><td class="num">299</td><td>+4 h jar cap, daily VIP crate, chat tag, VIP lounge</td><td>Convenience + status</td></tr>
+      <tr><td><strong>Lucky Hatcher</strong></td><td class="num">349</td><td>Golden 1 in 30, Rainbow 1 in 300 (instead of 1 in 40 and 1 in 400)</td><td>Only changes cosmetic variants; odds shown</td></tr>
+      <tr><td><strong>Double Coins</strong></td><td class="num">399</td><td>×2 coin income</td><td>Speed in a game with no PvP</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Developer products (repeatable)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Product</th><th class="num">Robux</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Starter Pack</strong> (once)</td><td class="num">99</td><td>Crystal Egg + 300 gems + Sprout Cap accessory. The best-value first purchase.</td></tr>
+      <tr><td><strong>Gems</strong></td><td class="num">49 · 249 · 499 · 999 · 2,499</td><td>100 · 550 · 1,200 · 2,600 · 7,000 gems</td></tr>
+      <tr><td><strong>Weather Totem</strong></td><td class="num">49 · 99 · 249</td><td>Rain · Thunderstorm · Starfall for the whole server. Social and broadcast.</td></tr>
+      <tr><td><strong>Ranch Pass</strong> (6-week season)</td><td class="num">399</td><td>Premium track: cosmetics, gems, food, 1 Legendary egg. The free track is generous.</td></tr>
+      <tr><td><strong>Cosmetics</strong></td><td class="num">gems</td><td>Monster hats and accessories, pen themes, decor sets, name colours</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Rewarded video ads</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Placement</th><th>Reward</th><th class="num">Cap</th></tr></thead>
+    <tbody>
+      <tr><td>Welcome Back</td><td>×2 coins from the offline total</td><td class="num">4 / day</td></tr>
+      <tr><td>Incubator</td><td>Hatch Rush: −15 min</td><td class="num">3 / day</td></tr>
+      <tr><td>Egg Shop</td><td>Free Grove Egg</td><td class="num">1 / day</td></tr>
+      <tr><td>Failed stage</td><td>Retry with +20% stats</td><td class="num">5 / day</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Guardrails</h3>
+  <ul>
+    <li>Odds are shown for every random item. Paid random items are hidden for players whose <code>PolicyService</code> result has <code>ArePaidRandomItemsRestricted</code>. Coin eggs stay available.</li>
+    <li>Every species and rarity can be earned for free. Mythic has three free routes: Stampede Eggs, Royal Eggs and breeding.</li>
+    <li>No limited-time pressure on Robux items beyond a season. No "last chance" countdowns on paid offers.</li>
+    <li>All passes can be gifted, so players can buy for friends.</li>
+    <li>Monetization tuning waits until the game holds 200–300+ concurrent players. Before that, retention and discovery come first.</li>
+  </ul>
+</section>
+
+<!-- ============ 15 SCOPE ============ -->
+<section id="scope">
+  <p class="sec-num">15</p>
+  <h2>Launch content scope</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Content</th><th class="num">Launch count</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Species lines</td><td class="num">18</td><td>3 per element × Baby / Teen / Adult</td></tr>
+      <tr><td>Branching adults</td><td class="num">+6</td><td>The first line of each element has a second adult (chosen by diet)</td></tr>
+      <tr><td>Hybrid lines</td><td class="num">6</td><td>3 stages each</td></tr>
+      <tr><td><strong>Total monster forms</strong></td><td class="num"><strong>78</strong></td><td>Built from a modular kit of 8 body shapes, element parts and palettes</td></tr>
+      <tr><td>Regions / stages / bosses</td><td class="num">4 / 80 / 8</td><td>Plus 4 Stampede variants</td></tr>
+      <tr><td>Eggs</td><td class="num">6 + 1 event</td><td>Meadow, Grove, Crystal, Royal, Stampede, Starlit, Frostfall</td></tr>
+      <tr><td>Weather / mutations</td><td class="num">8 / 7 + 2 combos</td><td></td></tr>
+      <tr><td>Traits</td><td class="num">20</td><td>Including 4 hidden-only</td></tr>
+      <tr><td>Decor / pen themes / accessories</td><td class="num">24 / 3 / 12</td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Species roster</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Element</th><th>Line 1 (branching)</th><th>Line 2</th><th>Line 3</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag t-ember">Ember</span></td><td>Cindlet → Kindlefox → Blazefang | Hearthtail</td><td>Scorchmoth</td><td>Emberslug</td></tr>
+      <tr><td><span class="tag t-tide">Tide</span></td><td>Bubblin → Brinelotl → Tsunamander | Pearlfin</td><td>Drizzlet</td><td>Coralbun</td></tr>
+      <tr><td><span class="tag t-sprout">Sprout</span></td><td>Mossbun → Clovermane → Thornbuck | Bloomhorn</td><td>Petalpaw</td><td>Acornling</td></tr>
+      <tr><td><span class="tag t-spark">Spark</span></td><td>Zappip → Voltfurr → Stormwhisker | Glowtail</td><td>Buzzbee</td><td>Staticat</td></tr>
+      <tr><td><span class="tag t-stone">Stone</span></td><td>Pebblet → Cragrump → Boulderback | Geodeon</td><td>Rumblet</td><td>Crystomp</td></tr>
+      <tr><td><span class="tag t-gloom">Gloom</span></td><td>Hushling → Murkmoth → Hollowgaze | Moonveil</td><td>Wisplet</td><td>Gloomcap</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Lines 2 and 3 list the baby name only; their teen and adult forms follow the same naming style. Every name is original, so there is no IP risk.</p>
+</section>
+
+<!-- ============ 16 TECH ============ -->
+<section id="tech">
+  <p class="sec-num">16</p>
+  <h2>Tech architecture</h2>
+  <div class="grid2">
+    <div class="card">
+      <h4>Server services</h4>
+      <ul>
+        <li><strong>ProfileService</strong>: session-locked DataStore profiles, schema version and migrations, autosave, BindToClose</li>
+        <li><strong>RanchService</strong>: pens, jars, buildings, offline calculation on join</li>
+        <li><strong>MonsterService</strong>: creation, growth, feeding, levels, stars, traits</li>
+        <li><strong>IncubatorService</strong>, <strong>BreedingService</strong>: timestamp-based timers</li>
+        <li><strong>ExpeditionService</strong>: deterministic battle simulation from a seed</li>
+        <li><strong>WeatherService</strong>: per-server schedule, totems, mutation rolls</li>
+        <li><strong>ShopService</strong>: global restock seeded by <code>os.time() // 300</code></li>
+        <li><strong>BossService</strong>, <strong>TradeService</strong>, <strong>SocialService</strong></li>
+        <li><strong>PurchaseService</strong>: <code>ProcessReceipt</code> with idempotent grants</li>
+        <li><strong>AnalyticsService</strong>: funnel and economy events</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Rules</h4>
+      <ul>
+        <li>The server owns everything. Remotes carry <em>intent only</em> (<code>Egg.Buy(eggId)</code>, never amounts). Every call is validated for type and range and rate-limited per player.</li>
+        <li>No timer ever runs on the client. All timers are stored as <code>startedAt</code> plus duration and checked against <code>os.time()</code>.</li>
+        <li>Offline calculation on join is capped at 7 days. It fills jars to their cap, completes timers and resolves expeditions from their seeds.</li>
+        <li>Content lives in ModuleScript config tables (species, eggs, regions, weather, traits). Adding content means adding data.</li>
+        <li>Luau numbers are fine here: late-game values stay under 1e15, far from double-precision limits.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Profile schema (v1)</h3>
+<pre><code>Profile = {
+  schema = 1,
+  coins = 0, gems = 0, stardust = 0, friendship = 0,
+  food = { sweet = 0, spicy = 0, savory = 0, sour = 0 }, treats = 0,
+  ranch = {
+    level = 1, xp = 0,
+    pens = { { id = 1, cap = 6, jarTier = 1, jar = 0, theme = "Wood" } },
+    incubators = { { slot = 1, egg = nil, startedAt = 0, speedTier = 0 } },
+    garden = { plots = {} }, decor = {},
+  },
+  monsters = {
+    m7Q2 = { sp = "cindlet", stage = 2, lv = 17, xp = 340, stars = 1,
+             rarity = 4, variant = 1, muts = { "Soaked" },
+             traits = { 3, 11 }, hidden = 19, weight = 3.8, mood = 86,
+             meals = { spicy = 3, sweet = 1 }, pen = 1,
+             born = 1790412000, name = "Toasty", locked = false },
+  },
+  expeditions = { { slot = 1, region = 2, stage = 14, squad = { "m7Q2" },
+                    startedAt = 0, duration = 14400, seed = 91823 } },
+  breeding = {}, codex = {}, hallOfFame = {},
+  daily = { day = 0, quests = {}, ads = {} },
+  lastSeen = 0,
+  receipts = {},   -- PurchaseId -> true, for idempotent ProcessReceipt
+}</code></pre>
+  <p class="muted">About 180 bytes per serialized monster. With 200 storage + 50 in pens + 100 Big Barn, the worst case stays well under the 4 MB DataStore key limit.</p>
+
+  <h3>Performance on phones</h3>
+  <ul>
+    <li>Monster rigs come from 8 shared body archetypes, each with one animation set (idle, walk, eat, happy, attack, hurt). Colour and parts are swapped at runtime.</li>
+    <li>At most 10 animated monsters per pen, 5 pens, and 6 ranches. Distant ranches use lower-detail models and slower animation updates. StreamingEnabled is on.</li>
+    <li>Battle replays and boss damage numbers are pooled. Weather particles scale down on low-end devices (<code>UserGameSettings.SavedQualityLevel</code>).</li>
+    <li>Target: 60 fps on mid-range phones, and 30 fps minimum on low-end phones with a full server.</li>
+  </ul>
+</section>
+
+<!-- ============ 17 KPIS ============ -->
+<section id="kpis">
+  <p class="sec-num">17</p>
+  <h2>Analytics &amp; KPIs</h2>
+  <div class="grid2">
+    <div class="card">
+      <h4>Launch targets</h4>
+      <div class="tbl" style="margin:6px 0 0"><table>
+        <tbody>
+          <tr><td>Tutorial completion (reach 12:00)</td><td class="num">≥ 70%</td></tr>
+          <tr><td>First-minute bounce</td><td class="num">≤ 25%</td></tr>
+          <tr><td>D1 / D7 / D30 retention</td><td class="num">25% / 10% / 4%</td></tr>
+          <tr><td>Average session</td><td class="num">15–20 min</td></tr>
+          <tr><td>Sessions per day (DAU)</td><td class="num">≥ 3</td></tr>
+          <tr><td>Payer conversion</td><td class="num">2–3%</td></tr>
+          <tr><td>Rewarded ad opt-in</td><td class="num">≥ 30%</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h4>Funnel events</h4>
+      <p class="mono" style="font-size:12.5px;line-height:1.7">ftue_step(n) · egg_bought(tier) · hatch(rarity, variant) · evolve(stage, branch) · stage_clear(region, stage) · expedition_start / claim(duration) · breed(result) · mutation(type) · trade_done(items) · boss_join / boss_reward · purchase(product) · ad_watch(placement) · hall_of_fame(rarity) · session_end(minutes)</p>
+      <h4 style="margin-top:12px">First A/B tests</h4>
+      <ul style="font-size:14.5px">
+        <li>Starter egg hatch time: 8 s vs 20 s</li>
+        <li>Starting jar cap: 1 h vs 2 h</li>
+        <li>Restock interval: 5 min vs 10 min</li>
+        <li>Welcome Back ad button: left vs right</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 18 ROADMAP ============ -->
+<section id="roadmap">
+  <p class="sec-num">18</p>
+  <h2>Roadmap &amp; future updates</h2>
+  <p>The schedule assumes development starts in early October 2026. That puts launch in <strong>mid-December</strong>, when the Winter holidays bring the year's biggest Roblox traffic. Launch goes out with the Frostfall event already live.</p>
+
+  <p class="phase-label">Build to launch</p>
+  <div class="road">
+    <div class="card"><span class="when">Weeks 1–2 · early Oct</span><h4>Vertical slice</h4><ul><li>Profiles and offline calculation</li><li>1 pen, hatching, growth</li><li>Battle sim with 1 region</li><li>Main HUD on a phone</li></ul></div>
+    <div class="card"><span class="when">Weeks 3–8 · Oct–Nov</span><h4>Alpha</h4><ul><li>All 4 regions and the monster kit</li><li>Eggs, restock, weather, mutations</li><li>Breeding and Stampede</li><li>All mocked screens built</li></ul></div>
+    <div class="card"><span class="when">Weeks 9–11 · early Dec</span><h4>Closed beta</h4><ul><li>100–300 testers from a Roblox group</li><li>Tune the tutorial and D1</li><li>Trading with rollback tools</li><li>Passes, receipts, odds screens</li></ul></div>
+    <div class="card launch"><span class="when">Week 12 · mid-Dec 2026</span><h4>v1.0 launch + Frostfall</h4><ul><li>Frostfall event egg and Snow weather boost</li><li>4 weeks of events built in advance</li><li>Codes at like milestones</li><li>Sponsored ads for the first 2 weeks</li></ul></div>
+  </div>
+
+  <p class="phase-label">After launch</p>
+  <div class="road">
+    <div class="card"><span class="when">Launch + 1 wk</span><h4>1.0.x · Stabilize</h4><ul><li>Hotfixes and a balance pass from the dashboards</li><li>2× coin weekend "Launch Party"</li></ul></div>
+    <div class="card"><span class="when">+3 wks · Jan 2027</span><h4>1.1 · Coral Depths</h4><ul><li>Coral Coast stages 21–30</li><li>3 new Tide/Spark species</li><li>Pearl combo mutation (Soaked + Starstruck)</li><li>Beach decor set</li></ul></div>
+    <div class="card"><span class="when">+6 wks · Feb 2027</span><h4>1.2 · Clubs + Lunar Lanterns</h4><ul><li>Clubs of up to 30 with a Club Plaza</li><li>Weekly club goals and a club boss</li><li>Lantern event egg</li></ul></div>
+    <div class="card"><span class="when">+9 wks · Mar 2027</span><h4>1.3 · Market Day</h4><ul><li>Marketplace listings (coins, 8% tax)</li><li>Price history charts</li><li>Club trading post</li></ul></div>
+    <div class="card"><span class="when">+12 wks · Apr 2027</span><h4>1.4 · Rebirth + Spring Bloom</h4><ul><li>Ranch Rebirth (prestige layer 2)</li><li>Stardust skill tree and the Celestial Egg</li><li>Season 2 Ranch Pass</li></ul></div>
+    <div class="card"><span class="when">May 2027</span><h4>1.5 · Showtime</h4><ul><li>Monster Contests: themed shows where players vote (in the style of Dress to Impress)</li><li>A big wave of accessories</li></ul></div>
+    <div class="card"><span class="when">Summer 2027</span><h4>2.0 · Light &amp; Void</h4><ul><li>Two new elements that form a third pair</li><li>Sky Islands: an explorable 3D region</li><li>Riding: travel the hub on your adult monster</li><li>Summer Splash event</li></ul></div>
+    <div class="card"><span class="when">Fall 2027</span><h4>2.1 · Arena &amp; Raids</h4><ul><li>Asynchronous PvP arena with normalized stats (no pay-to-win)</li><li>4-player raids with raid-only species</li><li>Harvest Moon event</li></ul></div>
+    <div class="card"><span class="when">Year 2</span><h4>Later</h4><ul><li>Cross-server Trading Hub place</li><li>Monster racing minigame</li><li>UGC accessories for monsters</li><li>A new region every quarter</li></ul></div>
+  </div>
+
+  <h3>Seasonal event calendar</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Event</th><th>Window</th><th>Event weather / mutation</th><th>Limited content</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Frostfall</strong></td><td>Dec–Jan</td><td>Snow boosted, Frosted guaranteed from the event egg</td><td>3 winter species, snow-globe pen theme</td></tr>
+      <tr><td><strong>Lunar Lanterns</strong></td><td>Feb</td><td>Lantern Night: Glow mutation</td><td>Lantern Dragon line</td></tr>
+      <tr><td><strong>Spring Bloom</strong></td><td>Apr</td><td>Pollen Storm: Blossom mutation</td><td>Egg hunt around the hub</td></tr>
+      <tr><td><strong>Summer Splash</strong></td><td>Jul–Aug</td><td>Heatwave boosted, Sunkissed</td><td>Beach ranch theme, surfing minigame</td></tr>
+      <tr><td><strong>Harvest Moon</strong></td><td>Oct</td><td>Blood Moon ×3 frequency</td><td>Pumpkin species, haunted decor</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Weekly live-ops rhythm</h3>
+  <ul>
+    <li><strong>Every Saturday at 10:00 ET:</strong> update goes live, the rotating shop egg changes, and a new code drops on socials. That time works for both US mornings and EU afternoons.</li>
+    <li><strong>Saturday hosted hour:</strong> developers join servers and trigger Starfall and Aurora on a schedule announced in advance. This worked for top idle games on Roblox.</li>
+    <li><strong>Mid-week:</strong> a small balance patch, a leaderboard reset, and a teaser for the next update.</li>
+    <li><strong>Every 6 weeks:</strong> a new Ranch Pass season.</li>
+  </ul>
+</section>
+
+<!-- ============ 19 RISKS ============ -->
+<section id="risks">
+  <p class="sec-num">19</p>
+  <h2>Risks &amp; mitigations</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Duplication and trade scams</strong></td><td>Session-locked profiles, trades that complete as one server transaction, trade logs, rollback tools, playtime and level gates, no currency trading</td></tr>
+      <tr><td><strong>Economy inflation from stacked mutations</strong></td><td>2-mutation cap, strong coin sinks (eggs, breeding fees, marketplace tax), economy dashboards with weekly review</td></tr>
+      <tr><td><strong>Art production load (78 forms)</strong></td><td>Modular kit of 8 archetypes with swappable parts, palette variants, a shared animation set per archetype</td></tr>
+      <tr><td><strong>Crowded pet and collector genre</strong></td><td>Lead with what others lack: evolution by diet, breeding hybrids and the expedition RPG. Put a hybrid in the thumbnail.</td></tr>
+      <tr><td><strong>Phone performance with many monsters</strong></td><td>Render caps, lower-detail distant ranches, pooling, weather quality scaling, a weekly test on a low-end device</td></tr>
+      <tr><td><strong>Scrutiny of spending by kids</strong></td><td>No paid timer skips, odds everywhere, PolicyService checks, free routes to Mythic, no pressure countdowns</td></tr>
+      <tr><td><strong>Roblox's 20-minute idle kick</strong></td><td>Offline progress doesn't depend on staying connected. Idle is the game, and leaving is fine.</td></tr>
+      <tr><td><strong>Content runs out</strong></td><td>Content is data. Plan a 3-month runway before launch and ship updates every 3 weeks.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted" style="margin-top:28px">Numbers in this document are starting values for tuning in the closed beta. Market context comes from <a href="01-research.md">the research notes</a> in the same folder.</p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+  var S='#1d1d1d';
+  var EL={ember:{b:'#F57A45',l:'#FFD2AE',f:'#FFB547'},tide:{b:'#4AA6F0',l:'#D2EDFF',f:'#9FD7FF'},sprout:{b:'#62BF55',l:'#E0F6CF',f:'#8EE07A'},spark:{b:'#F6CD3A',l:'#FFF4C2',f:'#FFE680'},stone:{b:'#A68B70',l:'#E6D9C8',f:'#EDE3D3'},gloom:{b:'#9168D0',l:'#E4D6F8',f:'#C9A8FF'}};
+  var uid=0;
+  function feature(el,body,c,shape){
+    var sw='stroke="'+S+'" stroke-width="2.6" stroke-linejoin="round"';
+    if(shape==='fang') return '<path d="M30 30 L18 4 L40 20Z" fill="'+c.f+'" '+sw+'/><path d="M70 30 L82 4 L60 20Z" fill="'+c.f+'" '+sw+'/><path d="M50 2c8 10 13 16 8 25 3-8-3-12-8-6-4-6-11-2-8 6-5-9 0-15 8-25z" fill="#FFD447" '+sw+'/>';
+    if(shape==='hearth') return '<path d="M26 34c-10-6-12-18-6-26 4 8 10 12 16 16z" fill="'+c.f+'" '+sw+'/><path d="M74 34c10-6 12-18 6-26-4 8-10 12-16 16z" fill="'+c.f+'" '+sw+'/><circle cx="50" cy="12" r="6" fill="#FFD447" '+sw+'/>';
+    switch(el){
+      case 'ember': return '<path d="M50 3c7 9 12 15 7 23 3-8-3-12-7-6-3-6-10-2-7 6-5-8 0-14 7-23z" fill="'+c.f+'" '+sw+'/>';
+      case 'tide': return '<path d="M16 58c-10-1-13-12-7-17 4 6 9 8 12 8z" fill="'+c.f+'" '+sw+'/><path d="M84 58c10-1 13-12 7-17-4 6-9 8-12 8z" fill="'+c.f+'" '+sw+'/><path d="M50 4c5 7 8 11 8 15a8 8 0 0 1-16 0c0-4 3-8 8-15z" fill="'+c.f+'" '+sw+'/>';
+      case 'sprout': return '<path d="M50 22V10" stroke="'+S+'" stroke-width="3" stroke-linecap="round"/><path d="M50 12c-4-8-14-10-18-5 4 7 12 9 18 5z" fill="'+c.f+'" '+sw+'/><path d="M50 12c4-8 14-10 18-5-4 7-12 9-18 5z" fill="'+c.f+'" '+sw+'/>';
+      case 'spark': return '<path d="M31 28L20 5l14 9 1-8 8 18z" fill="'+c.f+'" '+sw+'/><path d="M69 28L80 5l-14 9-1-8-8 18z" fill="'+c.f+'" '+sw+'/>';
+      case 'stone': return '<path d="M33 27c-7-6-9-15-5-21 3 6 9 10 13 14z" fill="'+c.f+'" '+sw+'/><path d="M67 27c7-6 9-15 5-21-3 6-9 10-13 14z" fill="'+c.f+'" '+sw+'/>';
+      case 'gloom': return '<path d="M35 25c-11-3-16-13-11-21 1 8 7 12 14 14z" fill="'+body+'" '+sw+'/><path d="M65 25c11-3 16-13 11-21-1 8-7 12-14 14z" fill="'+body+'" '+sw+'/>';
+    }
+    return '';
+  }
+  function mutation(m){
+    var sw='stroke="'+S+'" stroke-width="1.8"';
+    switch(m){
+      case 'soaked': return '<path d="M20 30c3 4 4 6 4 8a4 4 0 0 1-8 0c0-2 1-4 4-8z" fill="#7CC7FF" '+sw+'/><path d="M84 38c3 4 4 6 4 8a4 4 0 0 1-8 0c0-2 1-4 4-8z" fill="#7CC7FF" '+sw+'/>';
+      case 'frosted': return '<path d="M26 32c6-12 42-12 48 0-6 4-10 0-14 4-3-4-7 1-10-2-3 3-7-2-10 2-4-4-8 0-14-4z" fill="#FFFFFF" '+sw+'/>';
+      case 'charged': return '<path d="M84 22l-8 12h6l-5 12 12-15h-6l5-9z" fill="#FFE14D" '+sw+'/>';
+    }
+    return '';
+  }
+  function monster(el,v,m,shape,sil){
+    var c=EL[el]||EL.sprout, body=c.b, belly=c.l, defs='', id='mg'+(uid++), extra='';
+    if(v==='golden'){body='#F4C43A';belly='#FFF1B3';extra='<path d="M86 14l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#FFF7C8" stroke="'+S+'" stroke-width="1.5"/><path d="M12 30l1.5 3.5 3.5 1.5-3.5 1.5-1.5 3.5-1.5-3.5-3.5-1.5 3.5-1.5z" fill="#FFF7C8" stroke="'+S+'" stroke-width="1.5"/>';}
+    if(v==='rainbow'){defs='<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7A7A"/><stop offset=".28" stop-color="#FFD35A"/><stop offset=".52" stop-color="#7BE07B"/><stop offset=".76" stop-color="#6BB8FF"/><stop offset="1" stop-color="#C17BFF"/></linearGradient></defs>';body='url(#'+id+')';belly='#FFFFFF';}
+    if(sil){body='#3B3350';belly='#3B3350';}
+    var fc={f:(v==='golden'?'#FFE38A':(sil?'#3B3350':c.f))};
+    var s='<svg viewBox="0 0 100 100" aria-hidden="true">'+defs;
+    s+=feature(el,body,fc,shape);
+    s+='<ellipse cx="34" cy="90" rx="9" ry="5" fill="'+body+'" stroke="'+S+'" stroke-width="2.6"/><ellipse cx="66" cy="90" rx="9" ry="5" fill="'+body+'" stroke="'+S+'" stroke-width="2.6"/>';
+    s+='<path d="M50 17C74 17 88 38 88 60C88 81 72 92 50 92C28 92 12 81 12 60C12 38 26 17 50 17Z" fill="'+body+'" stroke="'+S+'" stroke-width="3"/>';
+    if(!sil){
+      s+='<ellipse cx="50" cy="71" rx="21" ry="15" fill="'+belly+'"/>';
+      s+='<ellipse cx="38" cy="50" rx="7.5" ry="9" fill="#fff" stroke="'+S+'" stroke-width="2"/><ellipse cx="62" cy="50" rx="7.5" ry="9" fill="#fff" stroke="'+S+'" stroke-width="2"/>';
+      s+='<circle cx="39" cy="52" r="4.3" fill="'+S+'"/><circle cx="63" cy="52" r="4.3" fill="'+S+'"/><circle cx="37.5" cy="49.5" r="1.6" fill="#fff"/><circle cx="61.5" cy="49.5" r="1.6" fill="#fff"/>';
+      s+='<ellipse cx="28" cy="62" rx="4.5" ry="2.6" fill="#FF8FA3" opacity=".7"/><ellipse cx="72" cy="62" rx="4.5" ry="2.6" fill="#FF8FA3" opacity=".7"/>';
+      s+=(shape==='fang')?'<path d="M43 63q7 6 14 0" stroke="'+S+'" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M45 64l2 4 2-3.4M55 64l-2 4-2-3.4" fill="#fff" stroke="'+S+'" stroke-width="1.4"/>':'<path d="M45 63q5 5 10 0" stroke="'+S+'" stroke-width="2.6" fill="none" stroke-linecap="round"/>';
+      s+=mutation(m)+extra;
+    }
+    return s+'</svg>';
+  }
+  var EGG={meadow:['#C9EDA8','#79C455'],grove:['#8FD19E','#2F8A4A'],crystal:['#A9DEFF','#FFFFFF'],royal:['#B58CFF','#FFD447'],starlit:['#2E3A78','#FFE680'],frost:['#E6F6FF','#7CC7FF'],stampede:['#F08A4B','#7A3A12']};
+  function egg(t){
+    var e=EGG[t]||EGG.meadow, b=e[0], p=e[1], deco='';
+    if(t==='royal') deco='<path d="M18 58 Q50 66 82 58 L83 66 Q50 74 17 66Z" fill="'+p+'" stroke="'+S+'" stroke-width="2"/>';
+    else if(t==='starlit') deco='<path d="M40 40l2 5 5 2-5 2-2 5-2-5-5-2 5-2z M62 60l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z M56 28l1 3 3 1-3 1-1 3-1-3-3-1 3-1z" fill="'+p+'"/>';
+    else if(t==='crystal') deco='<path d="M34 30 L44 22 L40 44Z M60 52 L70 44 L68 66Z" fill="'+p+'" opacity=".85"/>';
+    else if(t==='frost') deco='<path d="M50 34v24M40 40l20 12M60 40L40 52" stroke="'+p+'" stroke-width="3" stroke-linecap="round"/>';
+    else deco='<circle cx="38" cy="40" r="6" fill="'+p+'"/><circle cx="62" cy="58" r="8" fill="'+p+'"/><circle cx="42" cy="72" r="5" fill="'+p+'"/><circle cx="64" cy="30" r="4" fill="'+p+'"/>';
+    return '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6C71 6 84 40 84 62C84 82 69 94 50 94C31 94 16 82 16 62C16 40 29 6 50 6Z" fill="'+b+'" stroke="'+S+'" stroke-width="3.2"/>'+deco+'<path d="M32 26 Q36 18 42 15" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/></svg>';
+  }
+  document.querySelectorAll('.mon').forEach(function(n){n.innerHTML=monster(n.dataset.el,n.dataset.v,n.dataset.m,n.dataset.f,n.dataset.s);});
+  document.querySelectorAll('.egg').forEach(function(n){n.innerHTML=egg(n.dataset.t);});
+})();
+</script>

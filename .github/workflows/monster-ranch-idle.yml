@@ -1,0 +1,55 @@
+name: Monster Ranch Idle
+
+on:
+  push:
+    paths:
+      - "monster-ranch-idle/**"
+      - ".github/workflows/monster-ranch-idle.yml"
+  pull_request:
+    paths:
+      - "monster-ranch-idle/**"
+      - ".github/workflows/monster-ranch-idle.yml"
+
+jobs:
+  check:
+    name: Tests, lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: monster-ranch-idle
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+          key: cargo-tools-lune0.10.5-stylua2.5.2-selene0.31.0-rojo7.7.0
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binstall
+
+      - name: Install toolchain (versions match rokit.toml)
+        run: |
+          command -v lune || cargo binstall -y --locked lune@0.10.5
+          command -v selene || cargo binstall -y --locked selene@0.31.0
+          command -v rojo || cargo binstall -y --locked rojo@7.7.0
+          # StyLua needs the luau feature; build it from source to be sure it's enabled.
+          command -v stylua || cargo install --locked stylua@2.5.2 --features luau
+
+      - name: Unit, system and integration tests
+        run: lune run tests
+
+      - name: Syntax check (client code included)
+        run: lune run tests/lint
+
+      - name: Lint
+        run: selene src tests
+
+      - name: Formatting
+        run: stylua --check src tests
+
+      - name: Build place file
+        run: rojo build -o build.rbxl
