@@ -28,6 +28,8 @@ local world: Instance? = nil
 local hubPrompts = {} -- Instances created for hub buildings
 local ranchPrompts = {} -- Instances created for the own plot
 local ranchKey = ""
+local likePrompts = {} -- "Like ranch" prompts on other players' plot gates
+local likeKey = ""
 local connections = {}
 
 local function open(screen: string, params: any?)
@@ -172,7 +174,47 @@ local function buildRanchPrompts(index: number?, penCount: number)
 	end
 end
 
+-- Other players' plots: a "Like" prompt on each occupied gate (Social.Like).
+local function buildLikePrompts(plots)
+	clear(likePrompts)
+	local folder = world and world:FindFirstChild("Plots")
+	if not folder or type(plots) ~= "table" then
+		return
+	end
+	for i, plot in plots do
+		if type(plot) == "table" and (plot.userId or 0) ~= 0 and plot.userId ~= player.UserId then
+			local model = folder:FindFirstChild("Plot" .. i)
+			local gate = model and model:FindFirstChild("Gate")
+			local post = gate and gate:FindFirstChild("PostL")
+			if post and post:IsA("BasePart") then
+				local owner = plot.userId
+				local label = string.format("%s's ranch · %d likes", tostring(plot.name or "Player"), tonumber(plot.likes) or 0)
+				addPrompt(likePrompts, post, post.Position + Vector3.new(0, 2, 0), "Like", label, PROMPT_DISTANCE, function()
+					local ok, res = ctx.Net:Request("Social.Like", { owner = owner })
+					if ok then
+						ctx:Toast("You liked this ranch!", "success")
+					else
+						ctx:Toast(tostring(res), "error")
+					end
+				end)
+			end
+		end
+	end
+end
+
 local function onPlots(plots)
+	local parts = {}
+	for i, plot in (if type(plots) == "table" then plots else {}) do
+		if type(plot) == "table" then
+			table.insert(parts, string.format("%d:%s:%s", i, tostring(plot.userId), tostring(plot.likes)))
+		end
+	end
+	local nextLikeKey = table.concat(parts, "|")
+	if nextLikeKey ~= likeKey then
+		likeKey = nextLikeKey
+		buildLikePrompts(plots)
+	end
+
 	local index, penCount = ownPlot(plots)
 	local key = tostring(index) .. ":" .. penCount
 	if key == ranchKey then
@@ -204,7 +246,9 @@ function Interaction.Destroy()
 	table.clear(connections)
 	clear(hubPrompts)
 	clear(ranchPrompts)
+	clear(likePrompts)
 	ranchKey = ""
+	likeKey = ""
 end
 
 return Interaction
