@@ -73,11 +73,14 @@ return {
 		-- Views --------------------------------------------------------------------------------
 
 		local lobby = New("Frame", { Name = "Lobby", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = panel.Body })
-		local tradeView = New("Frame", { Name = "TradeView", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = panel.Body })
+		local tradeView =
+			New("Frame", { Name = "TradeView", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = panel.Body })
 
 		local playersCard = Util.card({ Title = "Players on this server", Size = UDim2.new(0, 560, 1, 0), Parent = lobby })
-		local playerList = Widgets.List({ Position = UDim2.fromOffset(4, 42), Size = UDim2.new(1, -8, 1, -46), Padding = 8, Parent = playersCard })
-		local statusCard = Util.card({ Title = "Trading", Position = UDim2.fromOffset(572, 0), Size = UDim2.new(1, -572, 1, 0), Parent = lobby })
+		local playerList =
+			Widgets.List({ Position = UDim2.fromOffset(4, 42), Size = UDim2.new(1, -8, 1, -46), Padding = 8, Parent = playersCard })
+		local statusCard =
+			Util.card({ Title = "Trading", Position = UDim2.fromOffset(572, 0), Size = UDim2.new(1, -572, 1, 0), Parent = lobby })
 		local statusBody = New("Frame", {
 			BackgroundTransparency = 1,
 			Position = UDim2.fromOffset(14, 42),
@@ -136,9 +139,12 @@ return {
 			Size = UDim2.new(0, 550, 1, 0),
 			Parent = bottom,
 		}, { Create.List("x", 10, Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Center) })
-		local cancelButton = Button.new({ Text = "Cancel", Color = C.Red, Size = UDim2.fromOffset(130, 54), LayoutOrder = 1, Parent = actions })
-		local readyButton = Button.new({ Text = "Ready", Color = C.Orange, Size = UDim2.fromOffset(170, 54), LayoutOrder = 2, Parent = actions })
-		local confirmButton = Button.new({ Text = "Confirm", Color = C.Green, Size = UDim2.fromOffset(220, 54), LayoutOrder = 3, Parent = actions })
+		local cancelButton =
+			Button.new({ Text = "Cancel", Color = C.Red, Size = UDim2.fromOffset(130, 54), LayoutOrder = 1, Parent = actions })
+		local readyButton =
+			Button.new({ Text = "Ready", Color = C.Orange, Size = UDim2.fromOffset(170, 54), LayoutOrder = 2, Parent = actions })
+		local confirmButton =
+			Button.new({ Text = "Confirm", Color = C.Green, Size = UDim2.fromOffset(220, 54), LayoutOrder = 3, Parent = actions })
 
 		-- Offer editing -------------------------------------------------------------------------
 
@@ -444,7 +450,13 @@ return {
 			end
 
 			local function line(text, order, props)
-				local p = { Text = text, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 20), LayoutOrder = order, Parent = statusBody }
+				local p = {
+					Text = text,
+					AutomaticSize = Enum.AutomaticSize.Y,
+					Size = UDim2.new(1, 0, 0, 20),
+					LayoutOrder = order,
+					Parent = statusBody,
+				}
 				for k, v in props or {} do
 					p[k] = v
 				end
@@ -452,7 +464,11 @@ return {
 			end
 			local name = if partner then partner.name or "Someone" else "Someone"
 			if status == "outgoing" or status == "pending" then
-				line(string.format("Waiting for %s to answer…", name), 1, { Font = Theme.Fonts.Display, TextSize = Theme.TextSize.Body + 2 })
+				line(
+					string.format("Waiting for %s to answer…", name),
+					1,
+					{ Font = Theme.Fonts.Display, TextSize = Theme.TextSize.Body + 2 }
+				)
 				line(string.format("Requests expire after %d seconds.", TradeConfig.requestTimeout), 2, { TextColor3 = C.TextMuted })
 				Button.new({
 					Text = "Cancel request",
@@ -569,11 +585,16 @@ return {
 			local theirItems = theirs.items or {}
 			for i = 1, MAX do
 				local item = theirItems[i]
-				local cell = tile(theirsCol.grid, item, i, if item
-					then function()
-						showDetail(item)
-					end
-					else nil)
+				local cell = tile(
+					theirsCol.grid,
+					item,
+					i,
+					if item
+						then function()
+							showDetail(item)
+						end
+						else nil
+				)
 				local sig = signature(item)
 				if lastTheirs[i] ~= nil and lastTheirs[i] ~= sig then
 					local stroke = cell:FindFirstChildOfClass("UIStroke")

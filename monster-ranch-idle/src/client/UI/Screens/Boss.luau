@@ -168,7 +168,13 @@ return {
 			Size = UDim2.new(1, 0, 0, 22),
 			Parent = cheerHolder,
 		})
-		local cheerBar = Widgets.Bar({ Color = C.Gold, Value = 0, Size = UDim2.new(1, 0, 0, 14), Position = UDim2.fromOffset(0, 24), Parent = cheerHolder })
+		local cheerBar = Widgets.Bar({
+			Color = C.Gold,
+			Value = 0,
+			Size = UDim2.new(1, 0, 0, 14),
+			Position = UDim2.fromOffset(0, 24),
+			Parent = cheerHolder,
+		})
 		local cheerButton = Button.new({
 			Text = "CHEER!",
 			Color = C.Pink,
@@ -189,7 +195,8 @@ return {
 
 		-- Board --------------------------------------------------------------------------------
 
-		local boardCard = Util.card({ Title = "Damage", Position = UDim2.fromOffset(652, 0), Size = UDim2.new(1, -652, 1, 0), Parent = panel.Body })
+		local boardCard =
+			Util.card({ Title = "Damage", Position = UDim2.fromOffset(652, 0), Size = UDim2.new(1, -652, 1, 0), Parent = panel.Body })
 		local boardList = New("Frame", {
 			Name = "Board",
 			BackgroundTransparency = 1,
@@ -316,7 +323,11 @@ return {
 			end
 			local mine = me()
 			if mine.joined or (mine.damage or 0) > 0 then
-				youLabel.Text = string.format("You: %s dmg · %s", Format.short(math.floor(mine.damage or 0)), Format.percent((mine.damage or 0) / dealt))
+				youLabel.Text = string.format(
+					"You: %s dmg · %s",
+					Format.short(math.floor(mine.damage or 0)),
+					Format.percent((mine.damage or 0) / dealt)
+				)
 			else
 				youLabel.Text = if b.state == "idle" then "" else "You haven't joined yet"
 			end
@@ -374,7 +385,9 @@ return {
 					then "Every participant gets a Boss Chest. Join from any screen when the horn sounds!"
 					else Util.unlockText(BossConfig.Unlock)
 			elseif b.state == "lobby" then
-				centreInfo.Text = if mine.joined then "You're in! Your squad attacks automatically." else "Join now. Your squad attacks automatically."
+				centreInfo.Text = if mine.joined
+					then "You're in! Your squad attacks automatically."
+					else "Join now. Your squad attacks automatically."
 			else
 				centreInfo.Text = if mine.joined then "" else "Join to add your squad's power!"
 			end

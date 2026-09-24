@@ -474,7 +474,12 @@ return {
 					Parent = cell,
 				})
 				local bought = (product.oncePerAccount and once[product.key] == true)
-					or (product.key == "ranchPass" and type(pass) == "table" and pass.premium == true and pass.season == Config.Quests.Pass.season)
+					or (
+						product.key == "ranchPass"
+						and type(pass) == "table"
+						and pass.premium == true
+						and pass.season == Config.Quests.Pass.season
+					)
 				if bought then
 					Util.text({
 						Text = "Owned ✓",

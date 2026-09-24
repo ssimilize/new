@@ -457,7 +457,14 @@ function BattleReplay.play(ctx, opts)
 				task.spawn(opts.onClose)
 			end
 		end
-		Button.new({ Text = "Continue", Color = C.Gray, Size = UDim2.fromOffset(170, 54), LayoutOrder = 1, OnClick = close, Parent = buttons })
+		Button.new({
+			Text = "Continue",
+			Color = C.Gray,
+			Size = UDim2.fromOffset(170, 54),
+			LayoutOrder = 1,
+			OnClick = close,
+			Parent = buttons,
+		})
 		if not win and opts.onRetry then
 			local retry
 			retry = Button.new({

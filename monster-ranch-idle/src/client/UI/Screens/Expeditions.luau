@@ -229,7 +229,12 @@ return {
 			Parent = mapCard,
 		})
 
-		local slotsCard = Util.card({ Title = "Expeditions", Position = UDim2.fromOffset(0, 206), Size = UDim2.new(0, 560, 1, -206), Parent = stagesView })
+		local slotsCard = Util.card({
+			Title = "Expeditions",
+			Position = UDim2.fromOffset(0, 206),
+			Size = UDim2.new(0, 560, 1, -206),
+			Parent = stagesView,
+		})
 		local claimAll = Button.new({
 			Text = "Claim all",
 			Color = C.Green,
@@ -239,9 +244,11 @@ return {
 			TextSize = Theme.TextSize.Body,
 			Parent = slotsCard,
 		})
-		local slotList = Widgets.List({ Position = UDim2.fromOffset(4, 50), Size = UDim2.new(1, -8, 1, -54), Padding = 6, Parent = slotsCard })
+		local slotList =
+			Widgets.List({ Position = UDim2.fromOffset(4, 50), Size = UDim2.new(1, -8, 1, -54), Padding = 6, Parent = slotsCard })
 
-		local squadCard, squadTitle = Util.card({ Title = "Squad", Position = UDim2.fromOffset(572, 0), Size = UDim2.new(1, -572, 1, 0), Parent = stagesView })
+		local squadCard, squadTitle =
+			Util.card({ Title = "Squad", Position = UDim2.fromOffset(572, 0), Size = UDim2.new(1, -572, 1, 0), Parent = stagesView })
 		squadTitle.Size = UDim2.new(0, 220, 0, 26)
 		local bestButton = Button.new({
 			Text = "Best squad",
@@ -306,8 +313,10 @@ return {
 			Size = UDim2.new(1, -20, 0, 54),
 			Parent = squadCard,
 		}, { Create.List("x", 10, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center) })
-		local fightButton = Button.new({ Text = "Fight", Color = C.Orange, Size = UDim2.fromOffset(196, 54), LayoutOrder = 1, Parent = actions })
-		local startButton = Button.new({ Text = "Start", Color = C.Green, Size = UDim2.fromOffset(212, 54), LayoutOrder = 2, Parent = actions })
+		local fightButton =
+			Button.new({ Text = "Fight", Color = C.Orange, Size = UDim2.fromOffset(196, 54), LayoutOrder = 1, Parent = actions })
+		local startButton =
+			Button.new({ Text = "Start", Color = C.Green, Size = UDim2.fromOffset(212, 54), LayoutOrder = 2, Parent = actions })
 
 		local durationButtons = {}
 		for i, seconds in Regions.Durations do
@@ -706,7 +715,10 @@ return {
 					end
 				end
 				if #threats > 0 then
-					table.insert(sentences, string.format("%s takes ×%s from %s.", elementName(e), tostring(Elements.Advantage), joinNames(threats)))
+					table.insert(
+						sentences,
+						string.format("%s takes ×%s from %s.", elementName(e), tostring(Elements.Advantage), joinNames(threats))
+					)
 				end
 			end
 			if #sentences == 0 then
@@ -736,7 +748,12 @@ return {
 			Util.clear(lootHolder)
 			local fs = farmStage()
 			if fs < 1 then
-				Util.text({ Text = "Clear stage 1 to send expeditions here.", TextColor3 = C.TextMuted, Size = UDim2.fromScale(1, 1), Parent = lootHolder })
+				Util.text({
+					Text = "Clear stage 1 to send expeditions here.",
+					TextColor3 = C.TextMuted,
+					Size = UDim2.fromScale(1, 1),
+					Parent = lootHolder,
+				})
 				return
 			end
 			local g = Regions.GlobalIndex(region, fs)
@@ -745,7 +762,12 @@ return {
 			local bonus = Regions.DurationBonus[duration] or 1
 			local items = {
 				{ kind = "coins", amount = math.floor(per.coins * minutes * bonus) },
-				{ kind = "food", id = r.food, amount = math.floor(per.food * minutes * bonus), label = Format.short(math.floor(per.food * minutes * bonus)) },
+				{
+					kind = "food",
+					id = r.food,
+					amount = math.floor(per.food * minutes * bonus),
+					label = Format.short(math.floor(per.food * minutes * bonus)),
+				},
 				{ kind = "treats", amount = math.floor(per.treats * minutes * bonus) },
 			}
 			for _, egg in r.eggs or {} do
@@ -848,13 +870,18 @@ return {
 						end)
 					else
 						timer.Text = Format.clock((s.endsAt or 0) - now)
-						Widgets.Countdown(timer, function()
-							return s.endsAt
-						end, Format.clock, function()
-							if isOpen then
-								refresh()
+						Widgets.Countdown(
+							timer,
+							function()
+								return s.endsAt
+							end,
+							Format.clock,
+							function()
+								if isOpen then
+									refresh()
+								end
 							end
-						end)
+						)
 						button:SetOnClick(function()
 							Dialog.confirm(ctx.UI.Top, {
 								Title = "Recall expedition?",
@@ -922,7 +949,8 @@ return {
 				ctx:Toast("All expedition slots are busy", "error")
 				return
 			end
-			local ok = Util.requestOnce(ctx, "Expeditions.JoinCaravan", { caravan = lobby.id, slot = slot, squad = table.clone(squadIds()) })
+			local ok =
+				Util.requestOnce(ctx, "Expeditions.JoinCaravan", { caravan = lobby.id, slot = slot, squad = table.clone(squadIds()) })
 			if ok then
 				ctx:Toast("Joined the caravan", "success")
 			end
@@ -1126,7 +1154,9 @@ return {
 				)
 				Util.rewardRow(Regions.Caravan.chest, content, { LayoutOrder = 3 })
 				line(
-					if fs >= 1 then string.format("%s · stage %d", if r then r.name else region, fs) else "Clear stage 1 of this region first.",
+					if fs >= 1
+						then string.format("%s · stage %d", if r then r.name else region, fs)
+						else "Clear stage 1 of this region first.",
 					4,
 					{ Font = Theme.Fonts.Display, TextSize = Theme.TextSize.Body }
 				)
@@ -1278,13 +1308,15 @@ return {
 
 		local function connect()
 			bag.clean()
-			for _, path in {
-				"profile.Expeditions",
-				"session.Expeditions",
-				"global.Expeditions",
-				"profile.Monsters.list",
-				"profile.Progression.level",
-			} do
+			for _, path in
+				{
+					"profile.Expeditions",
+					"session.Expeditions",
+					"global.Expeditions",
+					"profile.Monsters.list",
+					"profile.Progression.level",
+				}
+			do
 				bag.add(ctx.Store:Observe(path, refresh))
 			end
 		end

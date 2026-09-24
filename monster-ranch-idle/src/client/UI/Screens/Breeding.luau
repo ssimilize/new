@@ -735,7 +735,15 @@ return {
 			Open = function()
 				isOpen = true
 				bag.clean()
-				for _, path in { "profile.Breeding", "session.Breeding", "profile.Monsters.list", "profile.Progression.level", "profile.Currency.coins" } do
+				for _, path in
+					{
+						"profile.Breeding",
+						"session.Breeding",
+						"profile.Monsters.list",
+						"profile.Progression.level",
+						"profile.Currency.coins",
+					}
+				do
 					bag.add(ctx.Store:Observe(path, refresh))
 				end
 				refresh()

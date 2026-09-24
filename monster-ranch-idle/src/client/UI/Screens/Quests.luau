@@ -300,7 +300,9 @@ return {
 			else
 				local product = Config.Monetization.ProductByKey.ranchPass
 				Button.new({
-					Text = if product and product.productId ~= 0 then string.format("Get Ranch Pass R$%d", product.price) else "Ranch Pass: soon",
+					Text = if product and product.productId ~= 0
+						then string.format("Get Ranch Pass R$%d", product.price)
+						else "Ranch Pass: soon",
 					Color = C.Orange,
 					Size = UDim2.fromOffset(236, 54),
 					TextSize = Theme.TextSize.Body,
@@ -312,7 +314,10 @@ return {
 			end
 
 			-- Track labels
-			local track = New("Frame", { BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 74), Size = UDim2.new(1, 0, 1, -74), Parent = content })
+			local track = New(
+				"Frame",
+				{ BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 74), Size = UDim2.new(1, 0, 1, -74), Parent = content }
+			)
 			for i, name in { "Free", "Premium" } do
 				Create.Text({
 					Text = name,
@@ -343,11 +348,17 @@ return {
 				local isClaimed = flagged(claimed[trackName], t)
 				local lockedPremium = trackName == "premium" and not premium
 				local card = New("Frame", {
-					BackgroundColor3 = if isClaimed then C.PanelDeep elseif trackName == "premium" then Color3.fromHex("#FFF1CF") else C.Card,
+					BackgroundColor3 = if isClaimed
+						then C.PanelDeep
+						elseif trackName == "premium" then Color3.fromHex("#FFF1CF")
+						else C.Card,
 					Position = UDim2.fromOffset(0, y),
 					Size = UDim2.fromOffset(150, 136),
 					Parent = parent,
-				}, { Create.Corner(Theme.Radius.Card), Create.Stroke(2.5, if reached and not isClaimed and not lockedPremium then C.Green else C.Line) })
+				}, {
+					Create.Corner(Theme.Radius.Card),
+					Create.Stroke(2.5, if reached and not isClaimed and not lockedPremium then C.Green else C.Line),
+				})
 				local first = rewards and rewards[1]
 				if first then
 					local icon = Util.rewardIcon(first, 44)

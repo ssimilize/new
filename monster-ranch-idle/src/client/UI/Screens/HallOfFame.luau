@@ -76,7 +76,12 @@ return {
 			Size = UDim2.new(1, -8, 1, -42),
 			Parent = statuesCard,
 		})
-		local legacyCard = Util.card({ Title = "Legacy bonus", Position = UDim2.fromOffset(0, 250), Size = UDim2.new(0, 600, 1, -250), Parent = panel.Body })
+		local legacyCard = Util.card({
+			Title = "Legacy bonus",
+			Position = UDim2.fromOffset(0, 250),
+			Size = UDim2.new(0, 600, 1, -250),
+			Parent = panel.Body,
+		})
 		local legacyGrid = New("Frame", {
 			BackgroundTransparency = 1,
 			Position = UDim2.fromOffset(14, 40),
@@ -84,8 +89,14 @@ return {
 			Parent = legacyCard,
 		}, { Create.Grid(Vector2.new(278, 38), 8) })
 
-		local upgradesCard = Util.card({ Title = "Stardust upgrades", Position = UDim2.fromOffset(612, 0), Size = UDim2.new(1, -612, 1, -64), Parent = panel.Body })
-		local upgradeList = Widgets.List({ Position = UDim2.fromOffset(4, 38), Size = UDim2.new(1, -8, 1, -42), Padding = 6, Parent = upgradesCard })
+		local upgradesCard = Util.card({
+			Title = "Stardust upgrades",
+			Position = UDim2.fromOffset(612, 0),
+			Size = UDim2.new(1, -612, 1, -64),
+			Parent = panel.Body,
+		})
+		local upgradeList =
+			Widgets.List({ Position = UDim2.fromOffset(4, 38), Size = UDim2.new(1, -8, 1, -42), Padding = 6, Parent = upgradesCard })
 		local retireButton = Button.new({
 			Text = "Retire a monster",
 			Color = C.Orange,
@@ -132,7 +143,11 @@ return {
 						{ kind = "stardust", amount = stardust, label = Format.commas(stardust) .. " Stardust" },
 					}
 					if shards > 0 then
-						table.insert(items, { kind = "star", amount = shards, label = string.format("%d Star Shard%s", shards, if shards > 1 then "s" else "") })
+						table.insert(items, {
+							kind = "star",
+							amount = shards,
+							label = string.format("%d Star Shard%s", shards, if shards > 1 then "s" else ""),
+						})
 					end
 					Util.rewardRow(items, content, { LayoutOrder = 3, IconSize = 28, Align = Enum.HorizontalAlignment.Center })
 					Util.text({
@@ -144,7 +159,11 @@ return {
 								Format.percent(current, 1),
 								Format.percent(current + gain, 1)
 							)
-							else string.format("%s Legacy is already at the %s cap", if elementDef then elementDef.name else element, Format.percent(HoF.LegacyCapPerElement)),
+							else string.format(
+								"%s Legacy is already at the %s cap",
+								if elementDef then elementDef.name else element,
+								Format.percent(HoF.LegacyCapPerElement)
+							),
 						Font = Theme.Fonts.Display,
 						TextXAlignment = Enum.TextXAlignment.Center,
 						AutomaticSize = Enum.AutomaticSize.Y,
@@ -297,7 +316,11 @@ return {
 			end
 			stardustPill:SetText(Format.short(ctx.Store:Get("profile.Currency.stardust") or 0))
 			local shards = hof().starShards
-			retireButton:SetText(if type(shards) == "number" and shards > 0 then string.format("Retire a monster  (%d ★ shards)", shards) else "Retire a monster")
+			retireButton:SetText(
+				if type(shards) == "number" and shards > 0
+					then string.format("Retire a monster  (%d ★ shards)", shards)
+					else "Retire a monster"
+			)
 			drawStatues()
 			drawLegacy()
 			drawUpgrades()
