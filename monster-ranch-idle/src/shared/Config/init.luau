@@ -1,0 +1,33 @@
+--[[
+	Config: all game content and tuning numbers, as plain data.
+
+	Designers edit these tables; systems read them. Nothing in Config may require
+	Roblox services or runtime state. Colours are hex strings so the same data works
+	on the server, the client and in Lune tests.
+]]
+
+local Config = {
+	Rarities = require(script.Rarities),
+	Elements = require(script.Elements),
+	Species = require(script.Species),
+	Traits = require(script.Traits),
+	Mutations = require(script.Mutations),
+	Weather = require(script.Weather),
+	Eggs = require(script.Eggs),
+	Food = require(script.Food),
+	Economy = require(script.Economy),
+	Unlocks = require(script.Unlocks),
+	Regions = require(script.Regions),
+	Boss = require(script.Boss),
+	Breeding = require(script.Breeding),
+	HallOfFame = require(script.HallOfFame),
+	Decor = require(script.Decor),
+	Quests = require(script.Quests),
+	Monetization = require(script.Monetization),
+	Social = require(script.Social),
+	World = require(script.World),
+	Sounds = require(script.Sounds),
+	Flags = require(script.Flags),
+}
+
+return Config
