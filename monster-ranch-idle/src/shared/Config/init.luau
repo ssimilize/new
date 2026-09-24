@@ -25,6 +25,7 @@ local Config = {
 	Quests = require(script.Quests),
 	Monetization = require(script.Monetization),
 	Social = require(script.Social),
+	Leaderboards = require(script.Leaderboards),
 	World = require(script.World),
 	Sounds = require(script.Sounds),
 	Flags = require(script.Flags),

@@ -13,7 +13,7 @@ local Quests = {}
 -- Steps run in order. `topic` completes a step; `ack` steps complete when the client
 -- acknowledges the dialog (Quests.Ack). `arrow` tells the client what to point at.
 Quests.Tutorial = {
-	{ id = "hatch_starter", text = "Your first egg is hatching! Tap the incubator.", topic = "EggHatched", arrow = "incubator" },
+	{ id = "hatch_starter", text = "Your first egg is ready! Tap it and choose your monster.", topic = "EggHatched", arrow = "incubator" },
 	{
 		id = "collect_first",
 		text = "Your monster makes coins. Collect the jar!",

@@ -1,0 +1,50 @@
+--[[
+	Weekly leaderboards (design §11). Each board has a per-server view (live, everyone on
+	this server) and a global view (every server, stored in OrderedDataStores keyed by
+	week). The week's #1 on each global board gets that board's nameplate title for the
+	whole following week.
+
+	format: how values are shown. Values are stored as whole numbers; weights are stored in
+	hundredths of a kilogram (see WeightScale).
+]]
+
+local Leaderboards = {}
+
+Leaderboards.Boards = {
+	{ id = "heaviest", name = "Heaviest Monster", title = "Heavyweight Champ", format = "weight", color = "#F2A93B" },
+	{ id = "codex", name = "Codex", title = "Master Collector", format = "count", unit = "forms", color = "#4FB6F2" },
+	{ id = "stampede", name = "Stampede Damage", title = "Stampede Hero", format = "short", color = "#E5484D" },
+	{ id = "halloffame", name = "Hall of Fame", title = "Living Legend", format = "count", unit = "statues", color = "#8B6AD8" },
+	{ id = "stage", name = "Highest Stage", title = "Trailblazer", format = "stage", color = "#43B649" },
+}
+
+Leaderboards.ById = {}
+for i, board in Leaderboards.Boards do
+	board.order = i
+	Leaderboards.ById[board.id] = board
+end
+
+-- Weeks start on Saturday at 15:00 UTC (10:00 ET in winter), with the weekly update.
+Leaderboards.WeekAnchor = 1789830000 -- Saturday 19 Sep 2026, 15:00 UTC (week 0)
+Leaderboards.WeekSeconds = 7 * 24 * 3600
+
+Leaderboards.ServerRefresh = 10 -- seconds between per-server board rebuilds
+Leaderboards.GlobalRefresh = 300 -- seconds between global submits and top-list reads
+Leaderboards.ChampionRefresh = 1800 -- seconds between reads of last week's winners
+Leaderboards.Rows = 10 -- rows shown per board
+Leaderboards.WeightScale = 100 -- heaviest-monster values are kg × 100
+
+function Leaderboards.Week(now: number): number
+	return math.floor((now - Leaderboards.WeekAnchor) / Leaderboards.WeekSeconds)
+end
+
+function Leaderboards.WeekEndsAt(week: number): number
+	return Leaderboards.WeekAnchor + (week + 1) * Leaderboards.WeekSeconds
+end
+
+-- The DataStore key for one board in one week.
+function Leaderboards.Key(boardId: string, week: number): string
+	return boardId .. "_w" .. tostring(week)
+end
+
+return Leaderboards

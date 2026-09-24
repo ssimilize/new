@@ -24,6 +24,7 @@
 	  HallOfFame:UpgradeLevel(player, upgradeId) -> number
 	  HallOfFame:UpgradeEffect(player, upgradeId, effectKey) -> number   -- level × effect (0 when not bought)
 	  HallOfFame:Statues(player) -> { Appearance }                       -- newest Config.MaxStatues
+	  HallOfFame:RetiredCount(player) -> number
 	  HallOfFame:StarShards(player) -> number
 ]]
 
@@ -82,6 +83,12 @@ function HallOfFame:UpgradeEffect(player, upgradeId: string, effectKey: string):
 		return 0
 	end
 	return HallOfFame:UpgradeLevel(player, upgradeId) * per
+end
+
+-- Every monster this player has retired (statues shown are capped at MaxStatues).
+function HallOfFame:RetiredCount(player): number
+	local s = ctx:Section(player)
+	return if s then #s.entries else 0
 end
 
 function HallOfFame:Statues(player)

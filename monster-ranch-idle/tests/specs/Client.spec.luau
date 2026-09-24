@@ -205,19 +205,25 @@ return function(t)
 			local _, _, c = boot()
 			c:Advance(10)
 			local incubators = c:Open("Incubators")
-			c:Click(c:Button("Hatch!", incubators))
-			c:Advance(5)
+			c:Click(c:Button("Choose!", incubators))
+			c:Advance(0.5)
 			local top = c.kernel.UI.Top
+			local choices = top:FindFirstChild("Choices", true)
+			expect(choices ~= nil).toBe(true)
+			c:Click(c:Button("Choose", choices:FindFirstChild("mossbun")))
+			c:Advance(5)
 			local nameIt = c:Button("Name it", top)
 			expect(nameIt ~= nil).toBe(true)
 			c:Click(c:Button("Nice!", top))
 			c:Advance(2)
 			local list = c:Store("profile.Monsters.list")
 			local count = 0
-			for _ in list do
+			for _, m in list do
 				count += 1
+				expect(m.line).toBe("mossbun")
 			end
 			expect(count).toBe(1)
+			expect(choices:IsDescendantOf(c.playerGui)).toBe(false)
 			expectClean(c)
 		end)
 
@@ -345,6 +351,43 @@ return function(t)
 			if #overflow > 0 then
 				error("off-screen on 568x320:\n  " .. table.concat(overflow, "\n  "))
 			end
+		end)
+
+		it("draws the leaderboard board and the champion's nameplate", function()
+			local h = TestKernel.new({ systems = allSystems() })
+			local Boards = t.Shared("Config").Leaderboards
+			local player = h:Join(8801, "Champ")
+			local week = Boards.Week(h.adapters.Clock.Now())
+			h.adapters.boards[Boards.Key("codex", week - 1)] = { [8801] = 30 }
+			veteran(h, player)
+			local c = ClientHarness.new(h, player)
+			c:Advance(Boards.ChampionRefresh)
+			local body = c.world.workspace.World.Hub.Buildings.leaderboard.Body
+			local gui = body:FindFirstChild("BoardGui")
+			expect(gui ~= nil).toBe(true)
+			local texts = {}
+			for _, d in gui:GetDescendants() do
+				if d:IsA("TextLabel") and d.Text ~= "" then
+					table.insert(texts, d.Text)
+				end
+			end
+			expect(#texts).toBeGreaterThan(2)
+			local plate = c.character.HumanoidRootPart:FindFirstChild("ChampionTitle")
+			if not plate then
+				local champs = c:Store("global.Leaderboards.champions")
+				error(
+					"no plate; champions.codex = "
+						.. tostring(champs and champs.codex and champs.codex.userId)
+						.. " problems: "
+						.. table.concat(c:Problems(), "\n")
+				)
+			end
+			expect(string.find(plate.Title.Text, "Master Collector", 1, true) ~= nil).toBe(true)
+			local screen = c:Open("Leaderboards", { board = "codex" })
+			c:Advance(1)
+			expect(c:HasText("Master Collector", screen)).toBe(true)
+			expect(c:HasText("You! Nice work.", screen)).toBe(true)
+			expectClean(c)
 		end)
 	end)
 end

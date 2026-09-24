@@ -9,7 +9,7 @@
 	  result = { pity = { [eggId] = count } (a new table: the counters AFTER this hatch),
 	             guaranteed = boolean (pity or lucky meter forced the rarity), hybrid = boolean }
 
-	EggRoll.starter(rng, opts?) -> spec          -- the first-join egg: Uncommon, random starter line
+	EggRoll.starter(rng, opts?) -> spec          -- the first-join egg: Uncommon, opts.line or a random starter line
 	EggRoll.RollRarity(rng, odds, minRarity?) -> rarity
 	EggRoll.Guarantee(eggDef) -> { counter, every, minRarity }?   -- pity or lucky meter, if any
 	EggRoll.HatchesUntilGuarantee(eggDef, pity) -> number?        -- 1 = the next hatch is guaranteed
@@ -114,10 +114,11 @@ function EggRoll.roll(rng, egg, opts: { lucky: boolean?, pity: { [string]: numbe
 	return spec, { pity = pity, guaranteed = guaranteed, hybrid = hybrid }
 end
 
-function EggRoll.starter(rng, opts: { lucky: boolean? }?)
+function EggRoll.starter(rng, opts: { lucky: boolean?, line: string? }?)
 	local starter = Config.Eggs.Starter
+	local chosen = opts and opts.line
 	return {
-		line = rng:Pick(starter.lines),
+		line = if chosen and table.find(starter.lines, chosen) then chosen else rng:Pick(starter.lines),
 		rarity = starter.rarity,
 		variant = MonsterGen.RollVariant(rng, opts and opts.lucky),
 	}

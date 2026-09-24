@@ -52,6 +52,8 @@ World.Hub = {
 	{ id = "arena", name = "Stampede Arena", position = { 35, 0, 55 }, size = { 30, 12, 30 }, color = "#E5484D", screen = "Boss" },
 }
 World.Fountain = { position = { 0, 0, 0 }, radius = 14 }
+-- Weekly leaderboard board between the shops, facing the fountain (Screen: Leaderboards).
+World.Board = { position = { 0, 0, -40 }, size = { 20, 12, 1.2 }, color = "#D49A12" }
 World.Spawn = { 0, 3, -20 }
 
 return World

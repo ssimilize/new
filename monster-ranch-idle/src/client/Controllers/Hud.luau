@@ -461,7 +461,7 @@ local function build()
 		Name = "RightStack",
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -16, 0, 72),
-		Size = UDim2.fromOffset(150, 380),
+		Size = UDim2.fromOffset(150, 390),
 		Parent = root,
 	}, 10, Enum.HorizontalAlignment.Right)
 	sideButton(right, "Expeditions", "Expeditions", C.Green, previewIcon("bubblin", 30), 1, function()
@@ -531,6 +531,9 @@ local function build()
 		openScreen("HallOfFame")
 	end, Config.HallOfFame.Unlock).button.Label.TextSize =
 		Theme.TextSize.Small
+	sideButton(right, "Leaderboards", "Boards", Color3.fromHex("#D49A12"), Icon.new("trophy", 28), 6, function()
+		openScreen("Leaderboards")
+	end)
 
 	-- Bottom-centre
 	local bottom = Tiles.row({

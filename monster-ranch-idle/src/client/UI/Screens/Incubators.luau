@@ -3,7 +3,8 @@
 
 	  slots 1..4   locked beyond session.Eggs.slotCount (next unlock level or the Extra
 	               Incubator pass); empty → "Place egg" (arms that slot); filled → egg,
-	               progress bar and timer, READY → Eggs.Hatch; Hatch Rush rewarded ad
+	               progress bar and timer, READY → Eggs.Hatch (the starter egg first
+	               opens a picker for its line); Hatch Rush rewarded ad
 	               (ads left = cap − profile.Monetization.ads.counts.hatchRush, same UTC day)
 	  header       Fill slots → Eggs.PlaceAuto · Hatch all → Eggs.HatchAll
 	  inventory    profile.Eggs.list grouped by type; tap → Eggs.Place into the armed slot or
@@ -17,6 +18,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
+local Appearance = require(Shared.Logic.Appearance)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -26,7 +28,10 @@ local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local StoreKit = require(UI.Components.StoreKit)
 local Tiles = require(UI.Components.Tiles)
+local Create = require(UI.Create)
+local Dialog = require(script.Parent.Parts.Dialog)
 
+local New = Create.New
 local C = Theme.Colors
 
 local Incubators = { Name = "Incubators" }
@@ -39,6 +44,68 @@ local function eggName(eggType: string?): string
 	end
 	local def = eggType and Config.Eggs.ById[eggType]
 	return if def then def.name else "Egg"
+end
+
+-- The starter picker: one card per Config.Eggs.Starter line; picking hatches slot `slot`.
+local function chooseStarter(ctx, slot: number)
+	local starter = Config.Eggs.Starter
+	Dialog.show(ctx.UI.Top, {
+		Title = "Choose your first monster!",
+		Color = C.Pink,
+		Size = Vector2.new(720, 400),
+		Build = function(content, close)
+			local row = New("Frame", {
+				Name = "Choices",
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 300),
+				LayoutOrder = 2,
+				Parent = content,
+			}, { Create.List("x", 14, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center) })
+			for i, lineId in starter.lines do
+				local line = Config.Species.ById[lineId]
+				local element = line and Config.Elements.ById[line.elements[1]]
+				local card = Tiles.card({ Name = lineId, Size = UDim2.fromOffset(206, 290), LayoutOrder = i, Parent = row })
+				local ok, ap = pcall(Appearance.Preview, lineId, 1, nil, starter.rarity)
+				if ok then
+					local icon = MonsterIcon.new(ap, 110)
+					icon.AnchorPoint = Vector2.new(0.5, 0)
+					icon.Position = UDim2.new(0.5, 0, 0, 12)
+					icon.Parent = card
+				end
+				Tiles.label({
+					Text = if line then line.forms[1].name else lineId,
+					Font = Theme.Fonts.Display,
+					TextSize = Theme.TextSize.Header,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Position = UDim2.fromOffset(0, 128),
+					Size = UDim2.new(1, 0, 0, 34),
+					Parent = card,
+				})
+				Tiles.label({
+					Text = if element then element.name .. " type" else "",
+					TextColor3 = if element then Color3.fromHex(element.color) else C.TextMuted,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Position = UDim2.fromOffset(0, 162),
+					Size = UDim2.new(1, 0, 0, 26),
+					Parent = card,
+				})
+				Button.new({
+					Text = "Choose",
+					Color = C.Green,
+					Size = UDim2.fromOffset(160, 50),
+					AnchorPoint = Vector2.new(0.5, 1),
+					Position = UDim2.new(0.5, 0, 1, -12),
+					Parent = card,
+					OnClick = function()
+						local picked = StoreKit.request(ctx, "Eggs.Hatch", { slot = slot, starter = lineId })
+						if picked then
+							close()
+						end
+					end,
+				})
+			end
+		end,
+	})
 end
 
 function Incubators.Build(ctx)
@@ -201,15 +268,20 @@ function Incubators.Build(ctx)
 		})
 		table.insert(timers, { bar = bar, startedAt = startedAt, endsAt = endsAt, ready = ready })
 		if ready then
+			local isStarter = s.type == "starter"
 			Button.new({
-				Text = "Hatch!",
+				Text = if isStarter then "Choose!" else "Hatch!",
 				Color = C.Green,
 				Size = UDim2.fromOffset(170, 48),
 				AnchorPoint = Vector2.new(0.5, 1),
 				Position = UDim2.new(0.5, 0, 1, -8),
 				Parent = card,
 				OnClick = function()
-					StoreKit.request(ctx, "Eggs.Hatch", { slot = i })
+					if isStarter then
+						chooseStarter(ctx, i)
+					else
+						StoreKit.request(ctx, "Eggs.Hatch", { slot = i })
+					end
 				end,
 			})
 		else

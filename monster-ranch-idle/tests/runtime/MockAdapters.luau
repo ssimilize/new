@@ -47,8 +47,9 @@ function MockAdapters.new(options: { startTime: number? }?)
 	-- Client harnesses register here to receive events and state as they are sent.
 	a.clients = {}
 	function a.advance(seconds: number)
-		now += seconds
-		precise += seconds
+		-- Rounded to microseconds so many small frame steps add up exactly (0.1 × 10 = 1).
+		now = math.floor((now + seconds) * 1e6 + 0.5) / 1e6
+		precise = math.floor((precise + seconds) * 1e6 + 0.5) / 1e6
 	end
 	function a.setTime(unix: number)
 		now = unix
@@ -94,6 +95,44 @@ function MockAdapters.new(options: { startTime: number? }?)
 		IsInGroup = function(player, groupId)
 			local g = a.groups[player.UserId]
 			return g ~= nil and g[groupId] == true
+		end,
+		NameOf = function(userId)
+			return a.names[userId]
+		end,
+	}
+	a.names = {} -- [userId] = name, for players who are not on the server
+
+	-- Global leaderboards: boards[key][userId] = value. Set a.leaderboardsDown to fail calls.
+	a.boards = {}
+	a.leaderboardsDown = false
+	a.Leaderboards = {
+		Submit = function(key, userId, value)
+			if a.leaderboardsDown then
+				return false
+			end
+			assert(value == math.floor(value), "leaderboard values must be whole numbers")
+			a.boards[key] = a.boards[key] or {}
+			a.boards[key][userId] = value
+			return true
+		end,
+		Top = function(key, count)
+			if a.leaderboardsDown then
+				return nil
+			end
+			local list = {}
+			for userId, value in a.boards[key] or {} do
+				table.insert(list, { userId = userId, value = value })
+			end
+			table.sort(list, function(x, y)
+				if x.value ~= y.value then
+					return x.value > y.value
+				end
+				return x.userId < y.userId
+			end)
+			while #list > count do
+				table.remove(list)
+			end
+			return list
 		end,
 	}
 
