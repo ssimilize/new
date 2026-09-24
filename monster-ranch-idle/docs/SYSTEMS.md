@@ -12,10 +12,10 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Rewards | S1 | 🔌 | `Economy.spec` | |
 | Settings | S1 | 🔌 | `Kernel.spec` | |
 | Monsters | S2 | 🔌 | `Economy.spec` | growth, feeding, levels, stars, codex |
-| Eggs | S3 | ⬜ | | |
-| Shop | S3 | ⬜ | | |
-| Ranch | S3 | ⬜ | | |
-| WelcomeBack | S3 | ⬜ | | |
+| Eggs | S3 | 🟩 | `Eggs.spec`, `RanchLogic.spec` | starter egg, 4 slots (unlocks + Extra Incubator pass), speed providers (cap 0.75, fixed at placement), Starlit pity / Royal lucky meter (`Logic/EggRoll`), Hatch Rush ad, offline-ready eggs → WelcomeItem; `Room()` for trade/shop caps |
+| Shop | S3 | 🟩 | `Shop.spec`, `RanchLogic.spec` | deterministic global restock (`Logic/Restock`), per-player allowance per window, unlocks, event eggs, paid-random gate (Monetization → Policy fallback), storage cap, food, decor, themes, daily free egg ad |
+| Ranch | S3 | 🟩 | `Ranch.spec`, `RanchLogic.spec` | pens + jars (`Logic/Jar`, settle-on-change, offline at saved rates), modifiers/jar bonuses, passes (doubleCoins, vip, bigBarn, autoCollect), assign/busy auto-removal + return, upgrades, decor mood aura, themes, garden (rain ×2) |
+| WelcomeBack | S3 | 🟩 | `WelcomeBack.spec` | buffers join WelcomeItems, ≥ 5 min away summary, claim ×1 / ×2 (ad); holds Auto-Collect until claimed |
 | Expeditions | S4 | 🟩 | `Expeditions.spec`, `BattleSim.spec` | stage fights (`Logic/BattleSim`), timed runs + offline finish (`Logic/Loot`), caravans; optional Monetization (explorer, stageRetry ad), Weather (night) |
 | Boss | S4 | 🟩 | `Boss.spec` | Stampede schedule, cheer (≤ `Boss.MaxTapsPerSecond`), rewards; needs Expeditions; optional Weather (bossDamage) |
 | Breeding | S5 | ⬜ | | |

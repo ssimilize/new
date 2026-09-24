@@ -5,6 +5,11 @@
 ]]
 
 return {
-	Controllers = {},
+	Controllers = {
+		-- C1 · World
+		"World",
+		"Weather",
+		"Interaction",
+	},
 	Screens = {},
 }

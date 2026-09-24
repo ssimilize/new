@@ -19,5 +19,11 @@ return {
 		-- S4 · Adventure
 		"Expeditions",
 		"Boss",
+		-- S6 · Live-ops & money
+		"Monetization",
+		"Quests",
+		"HallOfFame",
+		-- C1 · World geometry (Studio-tested)
+		"World",
 	},
 }
