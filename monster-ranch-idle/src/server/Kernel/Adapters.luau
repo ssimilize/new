@@ -183,9 +183,50 @@ function Adapters.Roblox()
 	adapters.Transport = makeTransport()
 	adapters.DataStore = makeDataStore()
 
+	local DataStoreService = game:GetService("DataStoreService")
+
+	-- Clubs: one record per club in its own DataStore, keyed by the club code. Update is
+	-- atomic (UpdateAsync) so servers can write the same club at the same time; the
+	-- transform may return nil to leave the record unchanged.
+	local clubStore = nil
+	local function clubs()
+		if clubStore == nil then
+			local ok, store = pcall(function()
+				return DataStoreService:GetDataStore("MonsterRanch_Clubs_v1")
+			end)
+			clubStore = if ok then store else false
+		end
+		return clubStore or nil
+	end
+	adapters.Clubs = {
+		Get = function(id: string): (boolean, any)
+			local store = clubs()
+			if not store then
+				return false, nil
+			end
+			local ok, record = pcall(function()
+				return store:GetAsync(id)
+			end)
+			return ok, if ok then record else nil
+		end,
+		Update = function(id: string, transform): (boolean, any)
+			local store = clubs()
+			if not store then
+				return false, nil
+			end
+			local result = nil
+			local ok = pcall(function()
+				store:UpdateAsync(id, function(current)
+					result = transform(current)
+					return result
+				end)
+			end)
+			return ok, result
+		end,
+	}
+
 	-- Global leaderboards: one OrderedDataStore per board per week (key from
 	-- Config.Leaderboards.Key). Values are whole numbers; failures return false / nil.
-	local DataStoreService = game:GetService("DataStoreService")
 	adapters.Leaderboards = {
 		Submit = function(key: string, userId: number, value: number): boolean
 			local ok = pcall(function()

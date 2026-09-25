@@ -24,6 +24,17 @@ Decor.List = {
 	{ id = "snow_globe", name = "Snow Globe", price = { token = 250 }, mood = 3, color = "#E6F6FF", shape = "ball", event = "frostfall" },
 	{ id = "gift_pile", name = "Gift Pile", price = { token = 150 }, mood = 2, color = "#E5484D", event = "frostfall" },
 	{ id = "golden_statue", name = "Golden Statue", price = { gems = 900 }, mood = 5, color = "#F4C43A" },
+	-- Update 1.2 · Lunar Lanterns event decor
+	{
+		id = "paper_lantern",
+		name = "Paper Lantern",
+		price = { token = 200 },
+		mood = 3,
+		color = "#E5484D",
+		shape = "tall",
+		event = "lunarlanterns",
+	},
+	{ id = "moon_gate", name = "Moon Gate", price = { token = 350 }, mood = 4, color = "#C98B2E", event = "lunarlanterns" },
 	-- Update 1.1 · Coral Depths beach set
 	{ id = "sandcastle", name = "Sandcastle", price = { coins = 40000 }, mood = 2, color = "#EFD08A", set = "beach" },
 	{
@@ -51,6 +62,14 @@ Decor.PenThemes = {
 	{ id = "candy", name = "Candy Fence", price = { gems = 350 }, fence = "#FF8FC8", ground = "#FFE3F1" },
 	{ id = "snowglobe", name = "Snow Globe", price = { token = 600 }, fence = "#BFE9FF", ground = "#F2FAFF", event = "frostfall" },
 	{ id = "boardwalk", name = "Beach Boardwalk", price = { gems = 300 }, fence = "#D9A066", ground = "#F4DFA6" },
+	{
+		id = "lantern_garden",
+		name = "Lantern Garden",
+		price = { token = 600 },
+		fence = "#B3282D",
+		ground = "#F6E7C8",
+		event = "lunarlanterns",
+	},
 }
 Decor.PenThemeById = {}
 for _, t in Decor.PenThemes do

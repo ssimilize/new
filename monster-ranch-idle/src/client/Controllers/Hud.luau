@@ -461,7 +461,7 @@ local function build()
 		Name = "RightStack",
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -16, 0, 72),
-		Size = UDim2.fromOffset(150, 390),
+		Size = UDim2.fromOffset(150, 440),
 		Parent = root,
 	}, 10, Enum.HorizontalAlignment.Right)
 	sideButton(right, "Expeditions", "Expeditions", C.Green, previewIcon("bubblin", 30), 1, function()
@@ -534,6 +534,9 @@ local function build()
 	sideButton(right, "Leaderboards", "Boards", Color3.fromHex("#D49A12"), Icon.new("trophy", 28), 6, function()
 		openScreen("Leaderboards")
 	end)
+	sideButton(right, "Clubs", "Clubs", Color3.fromHex("#2BA89A"), Icon.new("friendship", 26), 7, function()
+		openScreen("Clubs")
+	end, Config.Clubs.Unlock)
 
 	-- Bottom-centre
 	local bottom = Tiles.row({

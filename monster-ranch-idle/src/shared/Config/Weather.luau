@@ -65,6 +65,17 @@ Weather.List = {
 		effects = { freeEgg = "grove" },
 		starry = true,
 	},
+	-- Lunar Lanterns (update 1.2): only rolls at night while the event runs.
+	{
+		id = "lanternnight",
+		name = "Lantern Night",
+		weight = 8,
+		event = "lunarlanterns",
+		nightOnly = true,
+		mutation = "glow",
+		chance = 0.06,
+		effects = {},
+	},
 	{
 		id = "aurora",
 		name = "Aurora",

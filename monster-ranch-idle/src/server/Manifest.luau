@@ -31,10 +31,12 @@ return {
 		"Trade",
 		"Plots",
 		"Leaderboards",
+		"Clubs",
 		-- S6 · Live-ops & money
 		"Monetization",
 		"Quests",
 		"HallOfFame",
+		"Events",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

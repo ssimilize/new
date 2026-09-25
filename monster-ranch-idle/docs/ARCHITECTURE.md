@@ -90,7 +90,7 @@ Rules:
 | `ctx:Notify(player, text, kind)` | toast (`info`, `success`, `error`, `reward`) |
 | `ctx:RequestSave(player)` | save soon (after purchases and trades) |
 | `ctx.Rng` | server RNG (`Logic/Rng`); use `Rng.new(seed)` for reproducible rolls |
-| `ctx.Services` | adapters: `Players`, `Marketplace`, `Policy`, `Ads`, `Messaging`, `Text`, `Analytics`, `Leaderboards`, `Workspace`, `Spawn`, `Wait` |
+| `ctx.Services` | adapters: `Players`, `Marketplace`, `Policy`, `Ads`, `Messaging`, `Text`, `Analytics`, `Leaderboards`, `Clubs`, `Workspace`, `Spawn`, `Wait` |
 | `ctx.Analytics` | `Custom(player, name, value, fields)`, `Economy(...)`, `Onboarding(player, step, name)` |
 | `ctx:Log(fmt, …)` | debug log (printed when the kernel is verbose) |
 
@@ -160,6 +160,8 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Social**: `Social:GetFriendBoost(player) -> pct`, `:Broadcast(kind, text, player?, appearance?, scope)`. Registers the Ranch rate modifier `friends`. Subscribes to `EggHatched`, `Bred`, `Mutated`, `WeatherChanged` for broadcasts.
 - **Trade**: all `Trade.*` actions; atomic two-sided transfer through `Monsters:Remove/Insert` and `Eggs:Remove/Insert`; `ctx:RequestSave` for both players; private `log`.
 - **Plots**: `Plots:GetPlot(player) -> 1..6`, `:Refresh(player)`. Publishes `global.Plots[i]` (see Api.State). Throttles refreshes (≤ 1 per 2 s per player).
+- **Clubs** (1.2): `Clubs:ClubOf(player) -> clubId?`, `Clubs:Flush()`. Records through `ctx.Services.Clubs.Get/Update` (atomic); pure rules in `Systems/Clubs/Record.luau`. Subscribes to the goal topics in `Config.Clubs.Goals`; publishes `ClubJoined`. State: `session.Clubs.club`, `global.Clubs.here`.
+- **Events** (1.2): `Events:Active() -> eventDef?`, `Events:Grant(player, amount, source) -> granted`. The calendar is `Config.Events` (`Active(now)`, `ActiveId(now)`); read the running event through it, never through `Flags.ActiveEvent` directly.
 - **Leaderboards**: `Leaderboards:Value(player, boardId) -> (value, label?)`, `:Titles(userId) -> { boardId }`. Reads `Monsters:All`/`:CodexCount`, `HallOfFame:RetiredCount`, `Expeditions:Cleared` (all optional) and the `BossDamage` topic. Publishes `global.Leaderboards` (see Api.State); global IO through `ctx.Services.Leaderboards.Submit/Top` and `Services.Players.NameOf`, inside `Services.Spawn`.
 
 ### S6: Monetization, Quests, HallOfFame

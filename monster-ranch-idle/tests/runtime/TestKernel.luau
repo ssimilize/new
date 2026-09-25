@@ -56,7 +56,7 @@ end
 function TestKernel.new(options)
 	Loader.reset("src/server/Systems")
 	local Kernel = Loader.get("Server.Kernel.Kernel")
-	local adapters = MockAdapters.new({ startTime = options.startTime })
+	local adapters = MockAdapters.new({ startTime = options.startTime, network = options.network })
 	local kernel = Kernel.new({ adapters = adapters, verbose = options.verbose })
 	for name, api in options.stubs or {} do
 		kernel:Stub(name, api)

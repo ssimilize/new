@@ -4,7 +4,7 @@
 	  header      restock countdown (global.Shop.endsAt)
 	  left        egg cards in Config.Eggs order: price, stock left (global.Shop.stock −
 	              profile.Shop.bought), SOLD OUT, lock, Starlit pity / Royal lucky meter.
-	              Event eggs only while Flags.ActiveEvent matches; Starlit hidden when
+	              Event eggs only while their event runs (StoreKit.activeEvent); Starlit hidden when
 	              session.Monetization.paidRandomAllowed == false; eggs without a price are
 	              not sold here.
 	  right       odds for the selected egg (always shown before buying): rarity bars,
@@ -141,7 +141,7 @@ function EggShop.Build(ctx)
 		if not egg.price then
 			return false
 		end
-		if egg.event and egg.event ~= Config.Flags.ActiveEvent then
+		if egg.event and egg.event ~= StoreKit.activeEvent() then
 			return false
 		end
 		if

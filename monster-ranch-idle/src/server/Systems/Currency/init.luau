@@ -4,7 +4,7 @@
 	Keys: "coins", "gems", "stardust", "friendship", "treats",
 	      "food.<flavor>" (sweet/spicy/savory/sour), "token.<eventId>".
 	Config prices use { coins = n } / { gems = n } / { friendship = n } / { token = n } —
-	`token` means the active event's token (Flags.ActiveEvent).
+	`token` means the running event's token (Config.Events).
 
 	Public API (other systems):
 	  Currency:Balance(player, key) -> number
@@ -116,7 +116,7 @@ function Currency:NormalizeCost(price, eventId: string?): { [string]: number }
 	local cost = {}
 	for k, v in price or {} do
 		if k == "token" then
-			local ev = eventId or ctx.Config.Flags.ActiveEvent
+			local ev = eventId or ctx.Config.Events.ActiveId(ctx:Now())
 			assert(ev, "[Currency] token price used with no active event")
 			cost["token." .. ev] = v
 		else

@@ -50,7 +50,7 @@ local Currency, Progression, Eggs
 
 local policyCache = {} -- [player] = boolean (Policy fallback only)
 local claiming = {} -- [player] = true while the free-egg ad is showing
-local lastEvent -- Flags.ActiveEvent the current stock was rolled for
+local lastEvent -- the running event (Config.Events) the current stock was rolled for
 
 -- Helpers ------------------------------------------------------------------------------
 
@@ -78,13 +78,13 @@ local function paidRandomAllowed(player): boolean
 end
 
 local function eventActive(eventId: string?): boolean
-	return eventId == nil or eventId == Config.Flags.ActiveEvent
+	return eventId == nil or eventId == Config.Events.ActiveId(ctx:Now())
 end
 
 local function restock(force: boolean?)
 	local g = ctx:Global()
 	local window = Restock.Window(ctx:Now())
-	local event = Config.Flags.ActiveEvent
+	local event = Config.Events.ActiveId(ctx:Now())
 	if not force and g.window == window and lastEvent == event then
 		return false
 	end

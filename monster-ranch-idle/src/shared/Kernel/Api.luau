@@ -188,6 +188,45 @@ Api.Actions = {
 	},
 	["Quests.Redeem"] = { schema = T.struct({ code = T.string(30, 1) }), rate = 1, returns = "{ rewards: { Reward } }" },
 
+	-- Clubs (S5, update 1.2) ------------------------------------------------------------
+	["Clubs.Create"] = {
+		schema = T.struct({
+			name = T.string(40, 1),
+			tag = T.string(8, 1),
+			color = T.integer(1, #Config.Clubs.Colors),
+			emblem = T.key(Config.Clubs.EmblemById),
+			open = T.boolean,
+		}),
+		rate = 0.2,
+		returns = "{ id: string }  -- the new club's code; costs Config.Clubs.CreateCost",
+	},
+	["Clubs.Join"] = { schema = T.struct({ code = T.string(12, 1) }), rate = 0.5, returns = "{ id, name }" },
+	["Clubs.JoinPlayer"] = {
+		schema = T.struct({ userId = T.userId }),
+		rate = 0.5,
+		returns = "{ id, name }  -- an open club of a player here",
+	},
+	["Clubs.Leave"] = { schema = T.none, rate = 0.5, returns = "nil" },
+	["Clubs.Kick"] = { schema = T.struct({ userId = T.userId }), rate = 1, returns = "nil" },
+	["Clubs.SetRole"] = {
+		schema = T.struct({ userId = T.userId, role = T.enum({ "owner", "officer", "member" }) }),
+		rate = 1,
+		returns = "nil  -- owner only; 'owner' hands the club over",
+	},
+	["Clubs.Settings"] = {
+		schema = T.struct({
+			open = T.optional(T.boolean),
+			color = T.optional(T.integer(1, #Config.Clubs.Colors)),
+			emblem = T.optional(T.key(Config.Clubs.EmblemById)),
+		}),
+		rate = 1,
+		returns = "nil",
+	},
+	["Clubs.ClaimGoal"] = { schema = T.struct({ goal = T.key(Config.Clubs.GoalById) }), rate = 2, returns = "{ rewards: { Reward } }" },
+	["Clubs.AttackBoss"] = { schema = T.none, rate = 1, returns = "{ damage: number, hp: number }" },
+	["Clubs.ClaimBoss"] = { schema = T.none, rate = 1, returns = "{ rewards: { Reward } }" },
+	["Clubs.Refresh"] = { schema = T.none, rate = 0.2, returns = "nil  -- re-reads (and writes) your club now" },
+
 	-- Monetization (S6) ------------------------------------------------------------
 	["Monetization.RefreshPasses"] = {
 		schema = T.none,
@@ -240,6 +279,8 @@ Api.State = {
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true } }",
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true } }",
 		Leaderboards = "{ week, stampede }  -- this week's Stampede damage",
+		Events = "{ event, day, earned, login }  -- event tokens earned today (daily cap)",
+		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n } }",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -251,6 +292,7 @@ Api.State = {
 		Trade = "{ status: 'none'|'outgoing'|'incoming'|'open'|'countdown', partner = { userId, name }, mine = TradeSide, theirs = TradeSide, endsAt }",
 		Expeditions = "{ caravan = { id, host, region, stage, duration, members = { { userId, name } } }? }",
 		Boss = "{ joined: boolean, damage, cheer }",
+		Clubs = "{ club: ClubView | false }  -- see Systems/Clubs header",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
@@ -258,6 +300,8 @@ Api.State = {
 		Boss = "{ state: 'idle'|'lobby'|'active', bossId, startsAt, endsAt, hp, maxHp, board = { { userId, name, damage } } }",
 		Plots = "{ ['1'..'6' as numbers]: PublicPlot }  -- array of 6",
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
+		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",
+		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open } } }  -- club tags of players here",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 	},
 }
@@ -303,6 +347,7 @@ Api.Topics = {
 	RateModifiersChanged = "(player, {})",
 	WelcomeItem = "(player, { kind: string, text: string, icon: string? })",
 	PlotChanged = "(player, {})",
+	ClubJoined = "(player, { club: string })",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------

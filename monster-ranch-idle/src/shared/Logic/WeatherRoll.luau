@@ -3,9 +3,10 @@
 
 	WeatherRoll.Weights(opts) -> { number }          -- aligned with Config.Weather.List
 	WeatherRoll.Roll(rng, opts) -> weatherId
-	  opts = { night = boolean, event = string? }    -- event = Flags.ActiveEvent
-	  Night-only weather (Blood Moon) has weight 0 during the day; an active event multiplies
-	  the weights listed in Config.Weather.EventBoosts[event].
+	  opts = { night = boolean, event = string? }    -- event = Config.Events.ActiveId(now)
+	  Night-only weather (Blood Moon) has weight 0 during the day; event weather (`event = id`,
+	  e.g. Lantern Night) only rolls while that event runs; an active event multiplies the
+	  weights listed in Config.Weather.EventBoosts[event].
 
 	WeatherRoll.Phase(now) -> (night, phaseEndsAt)   -- day/night cycle aligned to the unix clock
 	WeatherRoll.NextRollAt(now) -> number            -- next multiple of RollInterval after `now`
@@ -26,6 +27,9 @@ function WeatherRoll.Weights(opts: { night: boolean?, event: string? }?): { numb
 	for i, w in Weather.List do
 		local weight = w.weight
 		if w.nightOnly and not o.night then
+			weight = 0
+		end
+		if w.event and w.event ~= o.event then
 			weight = 0
 		end
 		if boosts and boosts[w.id] then

@@ -1,14 +1,12 @@
 --[[
-	Leaderboards controller: the in-world board and champion nameplates.
+	Leaderboards controller: the in-world board (champion nameplates are drawn by the
+	Nameplates controller).
 
 	· Board: draws a SurfaceGui on Workspace.World.Hub.Buildings.leaderboard.Body (built by
 	  the World system) and cycles through the global boards every CYCLE seconds. The
 	  per-server board is shown instead while the global one has no rows yet.
-	· Nameplates: players who won a board last week (global.Leaderboards.champions) get
-	  their title(s) in a BillboardGui above their character, e.g. "Master Collector".
 ]]
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -24,7 +22,6 @@ local Boards = Config.Leaderboards
 
 local CYCLE = 8
 local BOARD_ROWS = 5
-local PLATE_NAME = "ChampionTitle"
 
 local Leaderboards = {
 	Name = "Leaderboards",
@@ -35,7 +32,6 @@ local ctx
 local boardGui = nil
 local boardTitle, boardScope, boardRows = nil, nil, {}
 local boardIndex = 1
-local plates = {} -- [Player] = BillboardGui
 
 local function state()
 	local G = ctx.Store:Get("global.Leaderboards")
@@ -132,75 +128,6 @@ local function drawBoard()
 	end
 end
 
--- Nameplates -----------------------------------------------------------------------------
-
-local function titlesFor(userId: number): { string }
-	local list = {}
-	local champions = state().champions
-	if type(champions) ~= "table" then
-		return list
-	end
-	for _, board in Boards.Boards do
-		local champ = champions[board.id]
-		if type(champ) == "table" and champ.userId == userId then
-			table.insert(list, board.title)
-		end
-	end
-	return list
-end
-
-local function updatePlate(player: Player)
-	local titles = titlesFor(player.UserId)
-	local character = player.Character
-	local anchor = character and (character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart"))
-	local plate = plates[player]
-	if #titles == 0 or not anchor then
-		if plate then
-			plate:Destroy()
-			plates[player] = nil
-		end
-		return
-	end
-	if not plate or plate.Parent ~= anchor then
-		if plate then
-			plate:Destroy()
-		end
-		plate = New("BillboardGui", {
-			Name = PLATE_NAME,
-			Size = UDim2.fromOffset(240, 30),
-			StudsOffset = Vector3.new(0, 3.2, 0),
-			MaxDistance = 90,
-			AlwaysOnTop = false,
-			LightInfluence = 0,
-			Parent = anchor,
-		})
-		Create.Text({
-			Name = "Title",
-			Text = "",
-			Font = Theme.Fonts.Display,
-			TextScaled = true,
-			TextColor3 = C.Gold,
-			Size = UDim2.fromScale(1, 1),
-			Parent = plate,
-		})
-		plates[player] = plate
-	end
-	plate.Title.Text = "🏆 " .. table.concat(titles, " · ")
-end
-
-local function updateAllPlates()
-	for _, player in Players:GetPlayers() do
-		updatePlate(player)
-	end
-end
-
-local function watchPlayer(player: Player)
-	player.CharacterAdded:Connect(function()
-		task.defer(updatePlate, player)
-	end)
-	updatePlate(player)
-end
-
 -- Lifecycle -------------------------------------------------------------------------------
 
 function Leaderboards.Init(context)
@@ -208,22 +135,7 @@ function Leaderboards.Init(context)
 end
 
 function Leaderboards.Start()
-	ctx.Store:Observe("global.Leaderboards", function()
-		drawBoard()
-		updateAllPlates()
-	end)
-
-	for _, player in Players:GetPlayers() do
-		watchPlayer(player)
-	end
-	Players.PlayerAdded:Connect(watchPlayer)
-	Players.PlayerRemoving:Connect(function(player)
-		local plate = plates[player]
-		if plate then
-			plate:Destroy()
-		end
-		plates[player] = nil
-	end)
+	ctx.Store:Observe("global.Leaderboards", drawBoard)
 
 	task.spawn(function()
 		local world = workspace:WaitForChild("World", 60)

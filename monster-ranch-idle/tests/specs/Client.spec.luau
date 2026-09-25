@@ -372,7 +372,7 @@ return function(t)
 				end
 			end
 			expect(#texts).toBeGreaterThan(2)
-			local plate = c.character.HumanoidRootPart:FindFirstChild("ChampionTitle")
+			local plate = c.character.HumanoidRootPart:FindFirstChild("Nameplate")
 			if not plate then
 				local champs = c:Store("global.Leaderboards.champions")
 				error(
@@ -416,6 +416,85 @@ return function(t)
 			c:Advance(0.5)
 			expect(screen:FindFirstChild("Stage30", true) ~= nil).toBe(true)
 			expectClean(c)
+		end)
+
+		it("shows the Lunar Lanterns event across the UI while it runs", function()
+			local Events = t.Shared("Config").Events
+			local h = TestKernel.new({ systems = allSystems(), startTime = Events.ById.lunarlanterns.startsAt + 3600 })
+			local player = h:Join()
+			veteran(h, player)
+			h:System("Currency"):Add(player, "token.lunarlanterns", 1000, "test")
+			local c = ClientHarness.new(h, player)
+			c:Advance(1)
+			local shop = c:Open("EggShop")
+			c:Advance(0.5)
+			expect(c:HasText("Lantern", shop)).toBe(true)
+			local glyphs = {}
+			for _, d in shop:GetDescendants() do
+				if d:IsA("TextLabel") and d.Text == "✺" then
+					table.insert(glyphs, d)
+				end
+			end
+			expect(#glyphs).toBeGreaterThan(0)
+			c:Close("EggShop")
+			local manifest = c:require(c.clientFolder.Manifest)
+			for _, name in manifest.Screens do
+				if name ~= "MonsterDetail" then
+					c:Open(name)
+					c:Advance(0.3)
+					c:Close(name)
+				end
+			end
+			expectClean(c)
+		end)
+
+		it("creates a club, shows its tag and lets a second player join from the list", function()
+			local h = TestKernel.new({ systems = allSystems() })
+			local owner = h:Join(8901, "Ana")
+			veteran(h, owner)
+			local guest = h:Join(8902, "Ben")
+			veteran(h, guest)
+			local a = ClientHarness.new(h, owner)
+			local b = ClientHarness.new(h, guest)
+			a:Advance(1)
+			local screen = a:Open("Clubs")
+			a:Type(screen:FindFirstChild("ClubName", true), "Night Owls")
+			a:Type(screen:FindFirstChild("ClubTag", true), "owl")
+			a:Click(screen:FindFirstChild("Emblem_moon", true))
+			a:Click(screen:FindFirstChild("Color6", true))
+			a:Click(screen:FindFirstChild("Create", true))
+			a:Advance(1)
+			expect(a:HasText("[OWL] Night Owls", screen)).toBe(true)
+			local plate = a.character.HumanoidRootPart:FindFirstChild("Nameplate")
+			expect(plate ~= nil and plate.Club.Text).toBe("[OWL] Night Owls")
+
+			-- The guest sees the club in "Clubs on this server" and joins it.
+			local list = b:Open("Clubs")
+			b:Advance(1)
+			expect(b:HasText("[OWL] Night Owls", list)).toBe(true)
+			b:Click(list:FindFirstChild("JoinHere", true))
+			b:Advance(1)
+			expect(b:HasText("2 / 30 members", list)).toBe(true)
+
+			-- Tabs: goals, boss (attack), members (the owner can promote the guest).
+			a:Advance(1)
+			a:Click(a:Button("Goals", screen))
+			a:Advance(0.5)
+			expect(screen:FindFirstChild("Claim", true) ~= nil).toBe(true)
+			a:Click(a:Button("Club boss", screen))
+			a:Advance(0.5)
+			a:Click(screen:FindFirstChild("Attack", true))
+			a:Advance(1)
+			expect(a:HasText("Attacks left today: 2", screen)).toBe(true)
+			a:Click(a:Button("Members", screen))
+			a:Advance(0.5)
+			a:Click(a:Button("Promote", screen))
+			a:Advance(1)
+			local clubId = h:System("Clubs"):ClubOf(owner)
+			expect(h:System("Clubs"):ClubOf(guest)).toBe(clubId)
+			expect(h.adapters.network.clubs[clubId].members.u8902.role).toBe("officer")
+			expectClean(a)
+			expectClean(b)
 		end)
 	end)
 end

@@ -8,7 +8,8 @@
 	  to the unix clock (Logic/WeatherRoll), so every server agrees on when night falls.
 
 	Schedule: every Config.Weather.RollInterval seconds (while the sky is clear) one weather is
-	rolled by weight: Blood Moon only at night, Flags.ActiveEvent boosts applied. Non-clear
+	rolled by weight: Blood Moon only at night, the running event's weather and boosts applied
+	(Config.Events). Non-clear
 	weather lasts Config.Weather.Duration. During it, Ticks mutation rolls are spread evenly;
 	each monster in a pen (Ranch:MonstersInPens) rolls (matchChance if it has the weather's
 	element, else chance) / Ticks × Weather Magnet × Stargazer (starry weather only).
@@ -168,7 +169,7 @@ local function step()
 		g.nextRollAt = WeatherRoll.NextRollAt(now)
 		ctx:DirtyGlobal()
 		if g.id == "clear" then
-			local id = WeatherRoll.Roll(ctx.Rng, { night = g.night, event = Config.Flags.ActiveEvent })
+			local id = WeatherRoll.Roll(ctx.Rng, { night = g.night, event = Config.Events.ActiveId(now) })
 			if id ~= "clear" then
 				startWeather(id, "roll", nil)
 			end
