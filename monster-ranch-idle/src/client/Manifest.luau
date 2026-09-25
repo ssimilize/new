@@ -22,6 +22,8 @@ return {
 		"Nameplates",
 		-- 1.4 · Spring Bloom
 		"EggHunt",
+		-- 1.5 · Showtime
+		"Showtime",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -47,5 +49,8 @@ return {
 		"Market",
 		-- 1.4 · Rebirth + Spring Bloom
 		"Rebirth",
+		-- 1.5 · Showtime
+		"Wardrobe",
+		"Contests",
 	},
 }

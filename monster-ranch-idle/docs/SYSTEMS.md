@@ -33,6 +33,8 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | HallOfFame | S6 | 🔌 | `HallOfFame.spec` | retire → statue, legacy (capped per element), Stardust + Star Shards, upgrades; providers for Ranch, Eggs, Monsters, Boss, Breeding, Expeditions |
 | Rebirth | S6 | 🔌 | `Rebirth.spec` | 1.4: Ranch Rebirth (Lv 40, coins in hand), Heirlooms, unkept monsters → Stardust, resets via Ranch/Expeditions hooks, Rebirth Stars (coin multiplier), biome themes, 3rd trait at 3 stars; Stardust skill tree through the provider hooks |
 | EggHunt | S6 | 🔌 | `SpringBloom.spec` | 1.4: Spring Bloom hub egg hunt, 20-minute rounds on the unix clock (same spots on every server), proximity-checked finds, round bonus, daily cap |
+| Accessories | S6 | 🔌 | `Showtime.spec` | 1.5: 39 accessories in 4 slots, buy (gems / Contest Ribbons), equip / swap / unequip, storage; stripped from monsters that leave the ranch and returned to storage |
+| Contests | S6 | 🔌 | `Showtime.spec` | 1.5: Monster Contests every 10 minutes on the unix clock (same theme on every server): entry → runway votes (1–5 ★) → results; score = 70% votes + 30% theme judge (judge alone when nobody votes); ribbons, gems and stats |
 | World (geometry) | C1 | 🔌 | Studio | `Systems/World` + `Build.luau`: ground, paths, plaza + fountain, the hub buildings of `Config.World.Hub` + the leaderboard board (HubId/Screen), 6 plots (PlotId) with 5 fenced pens (PenIndex), incubator pad, barn, gate; ~380 parts |
 
 ## Client
@@ -51,6 +53,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Screen: Market · component: PriceChart | C3 | 🔌 | 1.3: Browse / Sell / My listings / Club post, price chart, mail toast; HUD Market button (Settings moved to a gear by the level bar) |
 | Screen: Clubs · controller: Nameplates | C3 | 🔌 | 1.2: create / join / members / goals / boss / settings; Club Plaza building + HUD button; nameplates show club tags and champion titles |
 | Screen: Rebirth · controller: EggHunt | C3 | 🔌 | 1.4: rebirth requirements / keep / reset / gain, Heirloom pick + confirm, skill tree; Star Altar in the hub and a Hall of Fame link; hunt eggs with pick-up prompts; Pollen Storm particles in the Weather controller |
+| Screens: Wardrobe, Contests (Showtime) · controller: Showtime | C3 | 🔌 | 1.5: dress-up with a live 3D preview, owned / shop tabs; show phases, entry, runway stars, podium; Showtime Stage in the hub shows the walking monster; MonsterDetail Style button; accessory placeholders in `Visuals/MonsterModel` |
 | Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
 
 ## Studio test pass (not yet done)

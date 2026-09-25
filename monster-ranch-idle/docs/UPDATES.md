@@ -3,6 +3,42 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 1.5 · Showtime
+
+**For players**
+- **Accessories** (Wardrobe at Ranch Level 3): 39 hats, glasses, scarves, capes, wings and more in four slots (head, face, neck, back), drawn on your monster everywhere it appears.
+  - Open the Wardrobe with the new **Style** button on any monster, or from the Showtime screen.
+  - Buy them with gems or with **Contest Ribbons**, the new currency.
+  - Accessories stay yours: when a monster is sold, traded, listed, retired or left behind in a rebirth, whatever it wore goes back to your storage.
+  - The Starter Pack now includes the Sprout Cap.
+- **Monster Contests** (Ranch Level 7), at the new Showtime Stage in the Market Square:
+  - A themed show every 10 minutes, with the same theme on every server. There are 10 themes, such as Royal Ball, Spooky Night, Beach Day, Space Explorers and Superheroes.
+  - **Entry (90 s):** enter one monster and dress it to fit the theme. You can switch or withdraw until the runway starts, and that is when outfits lock in.
+  - **Runway:** each entry walks the stage for 8 seconds while everyone else rates it 1–5 stars.
+  - **Results:** score = 70% votes + 30% the theme judge, who rewards accessories that fit the theme. On a quiet server the judge decides alone.
+  - **Prizes:** 1st 30 Ribbons + 15 gems, 2nd 20 + 10, 3rd 12 + 5, everyone else who entered 5. Every runway walk you rate gives 1 Ribbon (up to 5 a show).
+- **Ranch Pass Season 3, "Showtime"** (15 May – 26 Jun 2027): accessories on both tracks, including the pass-only Rainbow Wings and Starlight Crown.
+- **New achievements:** win a contest, enter 10, vote on 25 walks, and collect 10 accessories.
+- **Code:** `SHOWTIME` gives a Party Hat and 25 Ribbons. It expires on 26 Jun 2027.
+
+**In the code**
+- **Accessories:**
+  - `Config/Accessories` and the `Accessories` system.
+  - `Monster.acc` is worn items, set only through `Monsters:SetAccessory`. `Monsters:Remove` strips it into the `MonsterRemoved` detail, and `Monsters:Insert` clears it.
+  - `Appearance.Of` carries `acc`, and `Visuals/MonsterModel` draws placeholder shapes for every accessory.
+  - The `ribbons` Currency key and Rewards kind, and the `accessory` Rewards kind.
+- **Contests:**
+  - `Config/Contests` (the schedule on the unix clock, themes, judge, prizes) and the `Contests` system.
+  - Per-server state in `global.Contests`; votes are kept in server memory only.
+- **Client:**
+  - New Wardrobe and Contests (Showtime) screens, and a Showtime controller that stands the walking monster on the stage.
+  - A Showtime Stage hub building, and a Style button on the monster screen.
+  - A Ribbon icon.
+- **Ranch Pass:** Season 3 is added to `Config.Quests.Seasons`.
+- **Tests:**
+  - `Showtime.spec`
+  - `ShowtimeClient.spec`: buying and wearing through the Wardrobe; every accessory built on every body shape against the Roblox API database; a two-player show that enters, walks, votes and reaches the podium.
+
 ## 1.4 · Rebirth + Spring Bloom
 
 **For players**

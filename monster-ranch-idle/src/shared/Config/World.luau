@@ -54,6 +54,8 @@ World.Hub = {
 	{ id = "market", name = "Market", position = { -62, 0, -34 }, size = { 18, 12, 16 }, color = "#F2A93B", screen = "Market" },
 	-- Update 1.4: the Star Altar (Ranch Rebirth) between the Expedition Gate and the Arena.
 	{ id = "starAltar", name = "Star Altar", position = { 62, 0, 36 }, size = { 14, 14, 14 }, color = "#6B5BD6", screen = "Rebirth" },
+	-- Update 1.5: the Showtime Stage (Monster Contests) across from the Market stalls.
+	{ id = "showStage", name = "Showtime Stage", position = { 62, 0, -36 }, size = { 20, 6, 16 }, color = "#FF7AC8", screen = "Contests" },
 	-- Update 1.2: the Club Plaza between the Hall of Fame and the Arena.
 	{ id = "clubPlaza", name = "Club Plaza", position = { 0, 0, 62 }, size = { 16, 12, 14 }, color = "#2BA89A", screen = "Clubs" },
 }
