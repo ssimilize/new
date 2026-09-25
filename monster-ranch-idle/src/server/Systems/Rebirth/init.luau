@@ -207,7 +207,6 @@ local function rebirth(player, keep: { string })
 	ctx.Bus:Publish("Rebirthed", player, { stars = star, dust = dust, kept = kept })
 	ctx.Bus:Publish("RateModifiersChanged", player, {})
 	ctx.Analytics.Custom(player, "Rebirth", star, { dust = dust, kept = kept })
-	ctx:Notify(player, string.format("Rebirth complete! You earned Rebirth Star %d.", star), "success")
 	ctx:RequestSave(player)
 	return { stars = star, stardust = dust, kept = kept, theme = theme }
 end

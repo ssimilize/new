@@ -170,6 +170,10 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Quests**: tutorial (`Config.Quests.Tutorial`), dailies, achievements, codes, Ranch Pass handler `Quests.RanchPass`. Sends onboarding funnel steps through `ctx.Analytics.Onboarding`.
 - **HallOfFame**: `HallOfFame:GetLegacy(player, element) -> pct`, `:UpgradeLevel(player, id) -> n`, `:Statues(player) -> { Appearance }`. In `Start()` registers: Ranch rate modifier `legacy` and jar bonus `jar_cap`, Eggs speed `incubator_speed`, Monsters mood floor, Boss damage `boss_power`, Breeding per-day `daily_breed`, Expeditions loot `expedition_loot`.
 
+### 1.4: Rebirth, EggHunt
+- **Rebirth**: `Rebirth:Stars(player) -> n`, `:SkillLevel(player, id)`, `:SkillEffect(player, id, key)`, `:Heirlooms(player)`. `Rebirth.Rebirth { keep }` runs in one step with no yields and calls the owners' reset hooks: `Ranch:ResetForRebirth(player, theme?)`, `Expeditions:ResetForRebirth(player)`, `Shop:GrantTheme(player, themeId)`, `Monsters:Remove(..., "rebirth")`. In `Start()` registers: Ranch rate multiplier `rebirth_stars` (new: `Ranch:RegisterRateMultiplier(key, fn(player) -> factor)`, multiplied into every pen's rate), Ranch rate modifier and jar bonus `rebirth_skill`, Eggs speed, Breeding per-day, Expeditions loot and Boss damage `rebirth_skill`. From `Config.Rebirth.ThirdTraitStars` stars it adds a 3rd visible trait to every monster (`Monsters:AddVisibleTrait`). Publishes `Rebirthed`. `Shop.BuyEgg` checks an egg's `rebirths` through `Rebirth:Stars`.
+- **EggHunt**: `EggHunt.Find { spot }` (Spring Bloom). Round maths in `Logic/EggHunt` (`Round(now)`, `SpotsFor(round)`, deterministic on every server); the server checks the player's character stands within `Config.EggHunt.Reach` of the spot. Publishes `EggFound` and `global.EggHunt`.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 
@@ -347,7 +351,7 @@ BattleReplay = {
 - Client: the `Hud` controller exposes `Hud:GetTarget(name) -> GuiObject?` for the Tutorial arrow (`incubator`, `jar`, `shop`, `monster`, `expeditions`, `weather`, `quests`).
 
 ### Season pass
-`Config.Quests.Pass = { season, startsAt, endsAt, xpPerTier, xpPerDaily, xpPerAchievement, tiers = { { free = { Reward }, premium = { Reward } } } }`. Claim with `Quests.ClaimPass { tier, track }`. Tier `n` needs pass XP ≥ `n × xpPerTier`.
+`Config.Quests.Seasons = { { season, name, startsAt, endsAt, xpPerTier, xpPerDaily, xpPerAchievement, tiers = { { free = { Reward }, premium = { Reward } } } } }`. The season in effect is `Config.Quests.PassAt(now)` (the latest one that has started), on the server and the client; `Config.Quests.Pass` still points at season 1 for old call sites. Claim with `Quests.ClaimPass { tier, track }`. Tier `n` needs pass XP ≥ `n × xpPerTier`. A player whose saved pass is from an older season gets a fresh pass on join.
 
 ## 8. Update 1.3 · Market Day contract (fixed before parallel work)
 

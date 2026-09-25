@@ -20,6 +20,8 @@ return {
 		"TradeRequests",
 		"Leaderboards",
 		"Nameplates",
+		-- 1.4 · Spring Bloom
+		"EggHunt",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -43,5 +45,7 @@ return {
 		"Clubs",
 		-- M3 · Market Day (1.3)
 		"Market",
+		-- 1.4 · Rebirth + Spring Bloom
+		"Rebirth",
 	},
 }
