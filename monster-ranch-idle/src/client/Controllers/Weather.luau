@@ -42,7 +42,7 @@ local hex = Color3.fromHex
 	  tint (Color3) brightness contrast saturation   ColorCorrection
 	  bloom bloomSize                                 Bloom
 	  density haze sky (Color3)                        Atmosphere
-	  rain snow stars                                  particles per second (full quality)
+	  rain snow stars pollen                           particles per second (full quality)
 	  lightning aurora                                 0..1 weights for the animated extras
 ]]
 local BASE = {
@@ -58,6 +58,7 @@ local BASE = {
 	rain = 0,
 	snow = 0,
 	stars = 0,
+	pollen = 0,
 	lightning = 0,
 	aurora = 0,
 }
@@ -134,6 +135,16 @@ local PROFILES = {
 		sky = hex("#4A1F3A"),
 		stars = 8,
 	},
+	-- Spring Bloom (1.4): a warm, hazy pink day full of drifting pollen.
+	pollenstorm = {
+		tint = hex("#FFF0E0"),
+		saturation = 0.2,
+		bloom = 0.45,
+		density = 0.34,
+		haze = 1.1,
+		sky = hex("#FFD6E8"),
+		pollen = 120,
+	},
 	aurora = {
 		saturation = 0.25,
 		bloom = 0.6,
@@ -162,12 +173,26 @@ local FIELDS = {
 	"rain",
 	"snow",
 	"stars",
+	"pollen",
 	"lightning",
 	"aurora",
 }
 
-local SCALAR_FIELDS =
-	{ "brightness", "contrast", "saturation", "bloom", "bloomSize", "density", "haze", "rain", "snow", "stars", "lightning", "aurora" }
+local SCALAR_FIELDS = {
+	"brightness",
+	"contrast",
+	"saturation",
+	"bloom",
+	"bloomSize",
+	"density",
+	"haze",
+	"rain",
+	"snow",
+	"stars",
+	"pollen",
+	"lightning",
+	"aurora",
+}
 
 -- Aurora colours (precomputed; the animation indexes this table).
 local AURORA_STEPS = 96
@@ -193,7 +218,7 @@ local cc: ColorCorrectionEffect
 local bloom: BloomEffect
 local atmosphere: Atmosphere
 local emitterPart: Part
-local emitters = {} -- rain / snow / stars
+local emitters = {} -- rain / snow / stars / pollen
 local baseLightingBrightness = 2.5
 local clock = 0
 local nextFlashAt = 0
@@ -359,6 +384,17 @@ local function build()
 		RotSpeed = NumberRange.new(-60, 60),
 		LightEmission = 0.3,
 	})
+	emitters.pollen = newEmitter("Pollen", {
+		Color = ColorSequence.new(hex("#FFE38A"), hex("#FFB3D1")),
+		Transparency = NumberSequence.new(0.2, 0.8),
+		Size = NumberSequence.new(0.25),
+		Speed = NumberRange.new(3, 6),
+		Lifetime = NumberRange.new(6, 9),
+		SpreadAngle = Vector2.new(40, 40),
+		Acceleration = Vector3.new(2.5, 0.4, 1.2),
+		RotSpeed = NumberRange.new(-90, 90),
+		LightEmission = 0.5,
+	})
 	emitters.stars = newEmitter("Stars", {
 		Color = ColorSequence.new(hex("#FFE38A"), hex("#FFFFFF")),
 		Transparency = NumberSequence.new(0, 1),
@@ -456,10 +492,11 @@ local function step(dt: number)
 
 	-- Particles
 	local quality = if lowGraphics then LOW_PARTICLES else 1
-	local total = current.rain + current.snow + current.stars
+	local total = current.rain + current.snow + current.stars + current.pollen
 	setIfChanged(emitters.rain, "Rate", "rain", math.floor(current.rain * quality), 0.5)
 	setIfChanged(emitters.snow, "Rate", "snow", math.floor(current.snow * quality), 0.5)
 	setIfChanged(emitters.stars, "Rate", "stars", math.floor(current.stars * quality + 0.5), 0.5)
+	setIfChanged(emitters.pollen, "Rate", "pollen", math.floor(current.pollen * quality), 0.5)
 	if total >= 0.5 then
 		local camera = workspace.CurrentCamera
 		if camera then

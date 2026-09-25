@@ -9,6 +9,7 @@
 	  min, max                   stock range when the egg appears
 	  appearChance               chance the egg appears in a given restock
 	pool: which Species pool the line is drawn from.
+	rebirths: Rebirth Stars needed to buy it (Celestial Egg), on top of `unlock`.
 ]]
 
 local Eggs = {}
@@ -145,6 +146,40 @@ table.insert(Eggs.List, {
 	stock = { unlimited = true },
 	colors = { shell = "#E5484D", spots = "#FFD447" },
 	pattern = "band",
+})
+
+-- Update 1.4 · Rebirth: the Celestial Egg tier. Sold to ranches with a Rebirth Star
+-- (`rebirths`), for coins; hatches the three celestial lines only.
+table.insert(Eggs.List, {
+	id = "celestial",
+	name = "Celestial Egg",
+	order = 10,
+	price = { coins = 6000000 },
+	hatchSeconds = 5400,
+	unlock = "rebirth",
+	rebirths = 1,
+	odds = { 0, 0, 35, 42, 19, 4 },
+	pool = "celestial",
+	stock = { min = 1, max = 2, appearChance = 0.5 },
+	colors = { shell = "#1B1F4B", spots = "#B9A7FF" },
+	pattern = "stars",
+})
+
+-- Update 1.4 · Spring Bloom event egg (bought with Petals while the event runs).
+table.insert(Eggs.List, {
+	id = "bloom",
+	name = "Bloom Egg",
+	order = 11,
+	event = "springbloom",
+	price = { token = 400 },
+	hatchSeconds = 900,
+	unlock = "egg_meadow",
+	odds = { 0, 40, 35, 18, 6, 1 },
+	pool = "springbloom",
+	forcedMutation = "blossom",
+	stock = { unlimited = true },
+	colors = { shell = "#FFE3F1", spots = "#7BD389" },
+	pattern = "spots",
 })
 
 Eggs.ById = {}

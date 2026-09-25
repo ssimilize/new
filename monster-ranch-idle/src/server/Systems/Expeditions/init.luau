@@ -20,6 +20,7 @@
 	  Expeditions:SquadSize(player) -> number
 	  Expeditions:LootBonus(player, ids) -> pct        -- loot bonus a squad would get right now
 	  Expeditions:RegisterLootModifier(key, fn(player) -> pct)
+	  Expeditions:ResetForRebirth(player) -> boolean  -- clears region progress (Rebirth)
 
 	Rules:
 	  • Stage fights: region unlocked, stage ≤ cleared + 1, whole squad free. Simulated by
@@ -239,6 +240,20 @@ end
 function Expeditions:Cleared(player, regionId: string): number
 	local s = section(player)
 	return s and s.cleared[regionId] or 0
+end
+
+-- Rebirth: forget every cleared stage (first clears pay again) and drop squad members
+-- that no longer exist. Callers make sure no slot is running first.
+function Expeditions:ResetForRebirth(player): boolean
+	local s = section(player)
+	if not s then
+		return false
+	end
+	s.cleared = {}
+	s.squad = Expeditions:GetSquad(player)
+	ctx:Dirty(player, "cleared")
+	ctx:Dirty(player, "squad")
+	return true
 end
 
 function Expeditions:SlotCount(player): number

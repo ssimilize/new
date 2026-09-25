@@ -76,6 +76,17 @@ Weather.List = {
 		chance = 0.06,
 		effects = {},
 	},
+	-- Spring Bloom (update 1.4): daytime only while the event runs; gardens grow faster.
+	{
+		id = "pollenstorm",
+		name = "Pollen Storm",
+		weight = 8,
+		event = "springbloom",
+		dayOnly = true,
+		mutation = "blossom",
+		chance = 0.06,
+		effects = { gardenSpeed = 1.5 },
+	},
 	{
 		id = "aurora",
 		name = "Aurora",

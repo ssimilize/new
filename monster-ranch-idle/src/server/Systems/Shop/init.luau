@@ -19,6 +19,7 @@
 	  Shop:TakeDecor(player, decorId) -> boolean     -- storage → pen (Ranch)
 	  Shop:ReturnDecor(player, decorId)              -- pen → storage (Ranch)
 	  Shop:OwnsTheme(player, themeId) -> boolean
+	  Shop:GrantTheme(player, themeId) -> boolean   -- free grant (Rebirth biomes)
 	  Shop:DecorCount(player, decorId) -> number
 	  Shop:Stock(eggType) -> number?                 -- this window's stock (nil = not on sale)
 	  Shop:Left(player, eggType) -> number           -- what the player can still buy (-1 unlimited)
@@ -34,7 +35,7 @@ local Restock = require(Shared.Logic.Restock)
 local Shop = {
 	Name = "Shop",
 	Dependencies = { "Currency", "Progression", "Eggs" },
-	OptionalDependencies = { "Monetization" },
+	OptionalDependencies = { "Monetization", "Rebirth" },
 }
 
 Shop.Profile = {
@@ -193,11 +194,22 @@ function Shop:OwnsTheme(player, themeId: string): boolean
 	if not def then
 		return false
 	end
-	if def.price == nil then
+	if def.price == nil and not def.rebirth then
 		return true
 	end
 	local s = section(player)
 	return s ~= nil and s.themes[themeId] == true
+end
+
+-- Gives a theme without charging (Rebirth biomes). Returns false if already owned.
+function Shop:GrantTheme(player, themeId: string): boolean
+	local s = section(player)
+	if not s or not Config.Decor.PenThemeById[themeId] or s.themes[themeId] == true then
+		return false
+	end
+	s.themes[themeId] = true
+	ctx:Dirty(player, "themes", themeId)
+	return true
 end
 
 -- Lifecycle ----------------------------------------------------------------------------
@@ -221,6 +233,12 @@ function Shop.Init(context)
 			ctx:Fail("That event egg isn't available right now")
 		end
 		Progression:Require(player, def.unlock)
+		if def.rebirths then
+			local Rebirth = ctx:GetSystem("Rebirth")
+			if not Rebirth or Rebirth:Stars(player) < def.rebirths then
+				ctx:Fail(string.format("Rebirth your ranch to unlock the %s", def.name))
+			end
+		end
 		if def.paidRandom and not paidRandomAllowed(player) then
 			ctx:Fail("That egg isn't available for your account")
 		end
@@ -281,6 +299,9 @@ function Shop.Init(context)
 		local def = Config.Decor.PenThemeById[payload.theme]
 		if Shop:OwnsTheme(player, payload.theme) then
 			ctx:Fail("You already own that theme")
+		end
+		if def.price == nil then
+			ctx:Fail("That theme isn't for sale")
 		end
 		if not eventActive(def.event) then
 			ctx:Fail("That event theme isn't available right now")

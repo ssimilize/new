@@ -19,7 +19,8 @@
 	DailyPool (skipping locked ones), deterministically per (userId, day).
 
 	Ranch Pass: pass XP comes from claimed dailies and achievements while the season is open
-	(Pass.startsAt ≤ now < Pass.endsAt). Earned tiers stay claimable until the next season,
+	(Pass.startsAt ≤ now < Pass.endsAt, Pass = Config.Quests.PassAt(now), the latest season that has
+	started). Earned tiers stay claimable until the next season,
 	which resets pass progress. Premium needs the "Quests.RanchPass" product (registered with
 	Monetization in Start) bought for the current season.
 
@@ -42,10 +43,20 @@ local Quests = {
 local TRACKS = { "free", "premium" }
 local DAILY_SWEEP_SECONDS = 30
 
+local ctx
+local Config -- Config.Quests
+local Rewards, Progression
+
+-- The Ranch Pass season in effect right now (Config.Quests.PassAt).
+local function currentPass()
+	return QuestsConfig.PassAt(if ctx then ctx:Now() else 0)
+end
+
 local function newPass()
-	local tiers = #QuestsConfig.Pass.tiers
+	local def = currentPass()
+	local tiers = #def.tiers
 	return {
-		season = QuestsConfig.Pass.season,
+		season = def.season,
 		xp = 0,
 		premium = false,
 		claimed = { free = table.create(tiers, false), premium = table.create(tiers, false) },
@@ -64,10 +75,6 @@ Quests.Profile = {
 		}
 	end,
 }
-
-local ctx
-local Config -- Config.Quests
-local Rewards, Progression
 
 local dailyById = {}
 local achievementById = {}
@@ -98,11 +105,13 @@ end
 
 local function seasonOpen(): boolean
 	local now = ctx:Now()
-	return now >= Config.Pass.startsAt and now < Config.Pass.endsAt
+	local def = currentPass()
+	return now >= def.startsAt and now < def.endsAt
 end
 
 local function ensurePass(player, s)
-	if s.pass.season ~= Config.Pass.season then
+	local def = currentPass()
+	if s.pass.season ~= def.season then
 		s.pass = newPass()
 		ctx:Dirty(player, "pass")
 		return
@@ -110,8 +119,8 @@ local function ensurePass(player, s)
 	-- A live config may add tiers mid-season: keep the claim arrays contiguous.
 	for _, track in TRACKS do
 		local list = s.pass.claimed[track]
-		if #list < #Config.Pass.tiers then
-			for i = #list + 1, #Config.Pass.tiers do
+		if #list < #def.tiers then
+			for i = #list + 1, #def.tiers do
 				list[i] = false
 			end
 			ctx:Dirty(player, "pass")
@@ -134,7 +143,7 @@ local function onRanchPassPurchased(player, _product, _receiptInfo): boolean
 		return false
 	end
 	ensurePass(player, s)
-	if ctx:Now() >= Config.Pass.endsAt then
+	if ctx:Now() >= currentPass().endsAt then
 		warn("[Quests] Ranch Pass bought after the season ended; not granted")
 		return false
 	end
@@ -339,7 +348,7 @@ end
 
 function Quests:PassPremium(player): boolean
 	local s = ctx:Section(player)
-	return s ~= nil and s.pass.season == Config.Pass.season and s.pass.premium == true
+	return s ~= nil and s.pass.season == currentPass().season and s.pass.premium == true
 end
 
 -- Lifecycle ----------------------------------------------------------------------------
@@ -420,7 +429,7 @@ function Quests.Init(context)
 		entry.claimed = true
 		ctx:Dirty(player, "daily", "list", payload.index)
 		local granted = grant(player, def.reward, "daily")
-		addPassXP(player, s, Config.Pass.xpPerDaily)
+		addPassXP(player, s, currentPass().xpPerDaily)
 		ctx.Analytics.Custom(player, "DailyClaimed", 1, { quest = def.id })
 		return { rewards = granted }
 	end)
@@ -441,7 +450,7 @@ function Quests.Init(context)
 		entry.claimed = true
 		ctx:Dirty(player, "achievements", def.id)
 		local granted = grant(player, def.reward, "achievement")
-		addPassXP(player, s, Config.Pass.xpPerAchievement)
+		addPassXP(player, s, currentPass().xpPerAchievement)
 		ctx.Analytics.Custom(player, "AchievementClaimed", 1, { achievement = def.id })
 		return { rewards = granted }
 	end)
@@ -449,11 +458,12 @@ function Quests.Init(context)
 	ctx.Net:Handle("Quests.ClaimPass", function(player, payload)
 		local s = section(player)
 		ensurePass(player, s)
-		local tier = Config.Pass.tiers[payload.tier]
+		local def = currentPass()
+		local tier = def.tiers[payload.tier]
 		if not tier then
 			ctx:Fail("That tier doesn't exist")
 		end
-		local needed = payload.tier * Config.Pass.xpPerTier
+		local needed = payload.tier * def.xpPerTier
 		if s.pass.xp < needed then
 			ctx:Fail(string.format("Reach %d Pass XP to unlock tier %d", needed, payload.tier))
 		end

@@ -68,6 +68,25 @@ Api.Actions = {
 		returns = "{ level: number }",
 	},
 
+	-- Rebirth (1.4) ---------------------------------------------------------------------
+	["Rebirth.Rebirth"] = {
+		schema = T.struct({ keep = T.array(id, Config.Rebirth.MaxHeirlooms, 1) }),
+		rate = 0.5,
+		returns = "{ stars: number, stardust: number, kept: number, theme: string }",
+	},
+	["Rebirth.BuySkill"] = {
+		schema = T.struct({ skill = T.key(Config.Rebirth.SkillById) }),
+		rate = 4,
+		returns = "{ level: number }",
+	},
+
+	-- Egg hunt (1.4, Spring Bloom) -----------------------------------------------------
+	["EggHunt.Find"] = {
+		schema = T.struct({ spot = T.integer(1, #Config.EggHunt.Spots) }),
+		rate = 2,
+		returns = "{ tokens: number, found: number, left: number, complete: boolean }",
+	},
+
 	-- Eggs & incubators (S3) --------------------------------------------------------
 	["Eggs.Place"] = { schema = T.struct({ egg = id, slot = slot }), rate = 6, returns = "{ endsAt: number }" },
 	["Eggs.PlaceAuto"] = { schema = T.none, rate = 2, returns = "{ placed: number }  -- fills empty slots with the best eggs" },
@@ -311,6 +330,7 @@ Api.State = {
 		Settings = "{ music, sfx, lowGraphics, hideBroadcasts }",
 		Monsters = "{ list = { [id]: Monster }, codex = { [lineId]: { forms = { [formId]: true }, variants = { [n]: true }, count } }, nextId }",
 		HallOfFame = "{ entries = { Statue }, legacy = { [element]: pct }, upgrades = { [upgradeId]: level }, starShards }",
+		Rebirth = "{ stars, skills = { [skillId]: level }, lastAt, dust }",
 		Eggs = "{ list = { [id]: { type, source, t } }, slots = { { egg: id|false, type: string|false, startedAt, endsAt } }, nextId, pity = { starlit, royal } }",
 		Shop = "{ window, bought = { [eggType]: n }, decor = { [decorId]: n owned }, themes = { [themeId]: true } }",
 		Ranch = "{ pens = { Pen }, incubatorTier, barnTier, garden = { tier, plots = { { flavor|false, readyAt } } } }",
@@ -321,6 +341,7 @@ Api.State = {
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true } }",
 		Leaderboards = "{ week, stampede }  -- this week's Stampede damage",
 		Events = "{ event, day, earned, login }  -- event tokens earned today (daily cap)",
+		EggHunt = "{ round, found = { spotIndex }, day, finds, total }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n } }",
 	},
@@ -344,6 +365,7 @@ Api.State = {
 		Plots = "{ ['1'..'6' as numbers]: PublicPlot }  -- array of 6",
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
 		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",
+		EggHunt = "{ active: boolean, round, endsAt, spots = { spotIndex } }  -- eggs hidden this round (Config.EggHunt.Spots)",
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open } } }  -- club tags of players here",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 	},
@@ -361,7 +383,7 @@ Api.Topics = {
 	RanchXP = "(player, { amount: number, reason: string })",
 	LevelUp = "(player, { level: number })",
 	MonsterCreated = "(player, { id: string, source: 'hatch'|'breed'|'trade'|'reward'|'starter' })",
-	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade' })",
+	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth' })",
 	MonsterChanged = "(player, { id: string, fields: { string }? })",
 	MonsterFed = "(player, { id: string, flavor: string })",
 	MonsterLeveled = "(player, { id: string, lv: number })",
@@ -381,6 +403,8 @@ Api.Topics = {
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
 	Retired = "(player, { rarity: number, element: string })",
+	Rebirthed = "(player, { stars: number, dust: number, kept: number })",
+	EggFound = "(player, { spot: number, round: number, complete: boolean })",
 	PetGiven = "(player, { owner: number })",
 	PetReceived = "(player, { from: number, id: string })",
 	TradeCompleted = "(player, { partner: number })",
