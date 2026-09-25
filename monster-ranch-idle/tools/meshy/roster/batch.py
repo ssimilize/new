@@ -4,7 +4,8 @@
   python tools/meshy/roster/batch.py run   FORM[,FORM...] [--concepts] [--reserve N]   make them (waits;
                                                          safe to re-run; --concepts stops before the
                                                          models; --reserve: credits to keep, default 60)
-  python tools/meshy/roster/batch.py reroll FORM             a new concept for a form that failed
+  python tools/meshy/roster/batch.py reroll FORM [--from LATER]   a new concept for a form that failed;
+                                                         --from redraws a baby from its teen's concept
   python tools/meshy/roster/batch.py sheet FORM[,FORM...]    contact sheet of the concepts
   python tools/meshy/roster/batch.py accept FORM[,FORM...]   pass a failed check after looking at it
 
@@ -145,18 +146,13 @@ def matte(image: Image.Image, hovering: bool = False) -> Image.Image:
     gaps = np.zeros_like(exact)
     for i in range(1, count + 1):
         patch = labels == i
-        size, flat = patch.sum(), rgb[patch].std(axis=0).max()
-        if size >= 0.002 * h * w and flat < 4:
+        # Only big patches: smaller ones can't be told from the monster by colour, flatness or
+        # surroundings. A rule for small pockets (Voltmedusa's background caught under tentacle
+        # curls, cut by hand in batch 5) cut holes in the grey-brown bodies of the stone line
+        # (Mochibun's head, Asterock's rock limbs) in batch 6; a pocket of trapped background is
+        # rare enough to catch in the visual review of the concepts.
+        if patch.sum() >= 0.002 * h * w and rgb[patch].std(axis=0).max() < 4:
             gaps |= patch
-        elif size >= 100 and flat < 5:
-            # Smaller ones overlap eye glints in size and flatness (Staticat's 519 and 227 px, to
-            # keep; Voltmedusa's background caught under tentacle curls, 152-1896 px, to cut), but
-            # a glint touches its near-black eye (8% and 33% of the ring below value 60) and
-            # trapped background is ringed by body colour only (0%). The ring's MEDIAN does not
-            # separate them: a glint also borders the white highlight and grey sheen.
-            ring = ndimage.binary_dilation(patch, iterations=4) & ~patch
-            if (value[ring] < 60).mean() < 0.02:
-                gaps |= patch
     background = outside | gaps
     if hovering:
         background |= floating_shadow(rgb, ~background, bg)
@@ -292,11 +288,15 @@ def plan(forms: list[str]):
     return elements, table, steps, cost
 
 
-def create_concept(form: str, elements, table, name: str) -> None:
+def create_concept(form: str, elements, table, name: str, source: str | None = None) -> None:
+    """source: draw this (stage 1) form from a LATER stage's concept instead of from text."""
     entry = table[form]
     # The grey background stays: matte() cuts it out (Meshy's remover took pale bellies with it).
-    settings = {"ai_model": CONCEPT_MODEL, "prompt": subjects.prompt(entry["form"], entry["line"], elements), "aspect_ratio": "1:1", "remove_background": False}
-    if entry["form"]["stage"] == 1:
+    text = subjects.prompt(entry["form"], entry["line"], elements, from_later=source is not None)
+    settings = {"ai_model": CONCEPT_MODEL, "prompt": text, "aspect_ratio": "1:1", "remove_background": False}
+    if source is not None:
+        reply = meshy("create", "image-to-image", name, "--link", f"input_task_id={concept_name(source)}", "--settings", json.dumps(settings))
+    elif entry["form"]["stage"] == 1:
         reply = meshy("create", "text-to-image", name, "--settings", json.dumps(settings))
     else:
         parent = concept_name(entry["parent"])
@@ -424,7 +424,11 @@ def main() -> None:
         if names and status(names[-1]) not in ("SUCCEEDED", "FAILED", "CANCELED", "EXPIRED"):
             raise SystemExit(f"{names[-1]} is still running")
         name = f"{form}-concept-{len(names) + 1}" if names else f"{form}-concept"
-        create_concept(form, elements, table, name)
+        extra = sys.argv[3:]
+        source = extra[extra.index("--from") + 1] if "--from" in extra else None
+        if source is not None and (source not in table or status(concept_name(source)) != "SUCCEEDED"):
+            raise SystemExit(f"--from {source}: no finished concept to draw from")
+        create_concept(form, elements, table, name, source)
         print(f"made {name}; `run {form}` checks it and makes the model")
     elif command == "sheet":
         sheet(forms)

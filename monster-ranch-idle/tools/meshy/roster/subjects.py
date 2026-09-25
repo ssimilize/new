@@ -247,7 +247,91 @@ SUBJECTS = {
     "voltmedusa": "Voltmedusa: a big regal jellyfish blob with a large glowing dome crown, a ring of short "
     "thick curling tentacles around the crown's rim like a mane, lightning-bolt markings on its solid "
     "opaque body.",
+    # ── Batch 6 (2026-09-25): lines 25 and 27-34 ──
+    # 25 shellsnap (bug, tide). Tidecrusher is also the region boss "Old Snapjaw". Claws sit low at
+    # the front and ridges stay low: the bug rig reads what rises well above the shell as wings.
+    "shellsnap": "Shellsnap, a baby shell crab-bug: a round blue shell on its back like a little clam, two small "
+    "snapping claws at the front, two short eye-stalk antennae.",
+    "clawcrest": "Clawcrest: a bigger shell bug with larger snapping claws, a row of low spiky ridges along its "
+    "shell, small barnacle spots.",
+    "tidecrusher": "Tidecrusher: a huge old armoured crab-bug with one giant crushing claw and one smaller claw, "
+    "a thick shell crusted with barnacles, a grumpy old face with a short mossy beard.",
+    "pearlguard": "Pearlguard: a graceful shell bug with a big shiny pearl set on top of its round shell, pale "
+    "pearly swirl patterns, small elegant claws.",
+    # 27 anglit (slug, tide + spark). Abyssangler is also the region boss "The Abyssal Lantern".
+    "anglit": "Anglit, a baby anglerfish slug: a big round head with a wide friendly smile, a short thick bendy "
+    "stalk on its forehead ending in a glowing yellow lure, small fin frills along its sides.",
+    "lanternfin": "Lanternfin: a longer anglerfish slug with a brighter glowing lure on its stalk, fin-like "
+    "frills along its back and sides, glowing yellow spots.",
+    "abyssangler": "Abyssangler: a big deep-sea anglerfish serpent-slug with a large glowing lantern lure on a "
+    "thick stalk, a wide toothy but friendly grin, a deep blue body with glowing yellow spots and stripes.",
+    # 28 lanternling (fox, ember + spark). Dragons keep four legs and only small folded wings (the fox
+    # rig has no wing bones).
+    # Lanternling's first concept drew two upright creatures holding lanterns: "on all four legs"
+    # goes first (as Staticat's did), and the lantern is part of the tail, not held.
+    "lanternling": "Lanternling, a baby lantern fox standing on all four legs like a real fox kit: a round "
+    "fluffy body, its own tail ending in a glowing paper-lantern shape, little flame-shaped ear tufts, "
+    "glowing yellow cheek marks.",
+    "lanternwyrm": "Lanternwyrm: a longer, slightly dragon-like fox with two small horns, scale patterns along "
+    "its back, a longer tail ending in a glowing lantern.",
+    "lanterndragon": "Lanterndragon: a proud four-legged dragon with small folded wings, two curved horns, "
+    "flame-orange scales with golden patterns, a long tail ending in a big glowing paper lantern.",
+    "moonlitdragon": "Moonlitdragon: a calm four-legged dragon glowing softly like moonlight, small folded wings, "
+    "pale gold scales with orange tips, a long tail ending in a glowing crescent-moon-shaped lantern.",
+    # 29 mochibun (bunny, stone)
+    "mochibun": "Mochibun, a baby mochi bunny: a soft round squishy body like a rice cake, short rounded ears, a "
+    "little pink blush, a small smooth pebble charm on its forehead.",
+    "mooncrest": "Mooncrest: a taller bunny with long ears, a smooth stone crescent-moon crest on its forehead, "
+    "speckled stone patterns on its fur.",
+    "jadehare": "Jadehare: an elegant hare with long ears tipped in green jade, a polished jade gem on its "
+    "forehead, carved stone patterns like a statue.",
+    # 30 wickit (sprite, spark)
+    "wickit": "Wickit, a baby candle sprite: a small round body like a soft candle, a tiny solid yellow flame on "
+    "top of its head like a wick, drips of wax on its sides.",
+    "crackleflit": "Crackleflit: a livelier sprite with a crackling spark-shaped solid flame on its head, small "
+    "zigzag spark tufts on its cheeks, a longer wispy tail.",
+    "skyblossom": "Skyblossom: a graceful sprite with a crown of glowing yellow petals bursting like fireworks, "
+    "star-shaped sparkle markings on its body, a long elegant wispy tail.",
+    # 31 cometkit (fox, ember + spark)
+    # Cometkit's first concept drew two creatures; redrawn from Meteorlynx as its baby it stood up on two
+    # legs: "on all four legs" goes first.
+    "cometkit": "Cometkit, a baby comet fox standing on all four legs like a real fox kit: a small orange fox "
+    "with a big fluffy tail shaped like a comet's tail streaming behind it, a little star mark on its forehead.",
+    "meteorlynx": "Meteorlynx: a sleek lynx with tufted ears, a rocky meteor-textured patch on its back with "
+    "glowing orange cracks, a long comet-shaped tail.",
+    "supernova": "Supernova: a majestic fox with a radiant solid mane like a bursting star, glowing golden "
+    "markings, a huge fiery comet-shaped tail.",
+    # 32 moonmoth (moth, gloom + tide)
+    "moonmoth": "Moonmoth, a baby moon moth: a round fluffy body, pale blue-purple wings with small crescent "
+    "moon spots, two feathery antennae, short rounded tails on the lower wings.",
+    "eclipsewing": "Eclipsewing: bigger wings patterned like a night sky with a glowing blue crescent on each, a "
+    "fluffy collar, longer feathery antennae.",
+    "nebulamoth": "Nebulamoth: a majestic moth with large wings showing swirling purple and blue nebula clouds "
+    "dotted with tiny stars, a thick fluffy mane, long elegant antennae.",
+    # 33 orbiton (golem, stone). A planet's ring is a solid band worn like a belt: a real ring leaves
+    # see-through gaps.
+    "orbiton": "Orbiton, a baby moon golem: a round stone body like a tiny moon with a few small craters, stubby "
+    "rock arms and legs, a small glowing star on its forehead.",
+    "asterock": "Asterock: a sturdier asteroid golem with craggy crater-covered arms, small glowing crystals set "
+    "in its craters.",
+    "planetitan": "Planetitan: a huge titan golem whose body is a round planet with a solid stone ring band "
+    "around its middle like a belt, massive fists, glowing star specks.",
+    # 34 budling (bunny, sprout)
+    "budling": "Budling, a baby bud bunny: a small bunny with a closed flower bud on its head and leaf-shaped "
+    "ears.",
+    "petalhop": "Petalhop: a bunny with ears shaped like pink petals, a small flower blooming on its head, leaf "
+    "patterns on its fur.",
+    "bloomhare": "Bloomhare: an elegant hare with long petal-shaped ears, a crown of blooming flowers, a "
+    "flowery round tail.",
 }
+
+
+# A baby re-drawn from a later stage's concept (batch.py reroll FORM --from LATER): when the baby's
+# own concept failed but its teen and adults came out right, this keeps the line consistent.
+FROM_LATER = (
+    "Turn this creature into its baby form: the same creature, the same colours and markings and the "
+    "same body plan, much smaller and cuter, with a round chubby body, an oversized head and stubby limbs. "
+)
 
 
 def colours(palette: dict) -> str:
@@ -257,11 +341,26 @@ def colours(palette: dict) -> str:
     )
 
 
-def prompt(form: dict, line: dict, elements: dict) -> str:
+def palette_for(line: dict, elements: dict) -> str:
+    """One element's colours, or ONE blended scheme for a two-element line: listing two full
+    schemes made the image model draw two creatures side by side, one per element (Mudpuff, all
+    four of Lanternling's line, Cometkit, Moonmoth)."""
+    if len(line["elements"]) == 1:
+        return colours(elements[line["elements"][0]])
+    a, b = (elements[e] for e in line["elements"][:2])
+    return (
+        f"One single creature, alone. Main colour {a['color']} blending into {b['color']}, belly and muzzle "
+        f"{a['light']}, accents {b['accent']} ({a['name']} and {b['name']} elements in one body). "
+    )
+
+
+def prompt(form: dict, line: dict, elements: dict, from_later: bool = False) -> str:
     """The concept prompt for one form (see the module docstring)."""
     body = BODY[line["archetype"]]
-    palette = " ".join(colours(elements[e]) for e in line["elements"])
+    palette = palette_for(line, elements)
     subject = SUBJECTS[form["id"]]
+    if from_later:
+        return FROM_LATER + subject + f" It is {body}. " + palette + EYES + STYLE
     if form["stage"] == 1:
         return STAGE[1] + subject + f" It is {body}. " + palette + EYES + STYLE
     return STAGE[form["stage"]] + subject + f" Still {body}. " + palette + STYLE
