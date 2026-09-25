@@ -22,6 +22,10 @@
 	  Sky/LaunchPad, Sky/ReturnPad   pads (attr SkyPad = "launch"|"return"); the client adds prompts
 	  Sky/Gate                       arch (attr Screen = "Expeditions", Region = "sky")
 
+	On the Trading Hub place (Build.world(Config, "hub"), update 3.0): Ground, Hub/Plaza and
+	Hub/Buildings/<id> from Config.TradingHub.World (booths are booth1..n, screen "Trade"),
+	empty Plots and Paths folders, and the SpawnLocation. No plots and no Sky.
+
 	Plot frame: plot-local +X points at the hub (Config.World.Plots[i].facing is the compass
 	heading of that direction, 0 = +Z, 90 = +X). Pen, incubator, barn and statue offsets are
 	in this frame. Clients use the same maths (Controllers/World.luau).
@@ -188,43 +192,9 @@ local function buildGround(World, root: Instance)
 	)
 end
 
-local function buildHub(World, root: Instance)
-	local hub = Instance.new("Folder")
-	hub.Name = "Hub"
-	hub.Parent = root
-	local y = World.GroundY
-
-	disc("Plaza", World.HubRadius * 2, 0.6, Vector3.new(0, y, 0), COLORS.plaza, hub, { CastShadow = false })
-	disc("PlazaEdge", World.HubRadius * 2 + 4, 0.5, Vector3.new(0, y - 0.05, 0), COLORS.plazaEdge, hub, { CastShadow = false })
-
-	-- Fountain
-	local fountain = Instance.new("Model")
-	fountain.Name = "Fountain"
-	local fp = v3(World.Fountain.position)
-	local r = World.Fountain.radius
-	local basin = disc("Basin", r * 2, 1.6, fp + Vector3.new(0, y + 0.8, 0), COLORS.stone, fountain)
-	disc("Water", r * 2 - 2.5, 0.2, fp + Vector3.new(0, y + 1.45, 0), COLORS.water, fountain, {
-		CanCollide = false,
-		Transparency = 0.15,
-		Material = Enum.Material.Glass,
-		CastShadow = false,
-	})
-	disc("Pillar", 3, 5, fp + Vector3.new(0, y + 4.1, 0), COLORS.stone, fountain)
-	disc("Bowl", 8, 0.8, fp + Vector3.new(0, y + 6.6, 0), COLORS.stone, fountain)
-	disc("BowlWater", 6.6, 0.2, fp + Vector3.new(0, y + 7.05, 0), COLORS.water, fountain, {
-		CanCollide = false,
-		Material = Enum.Material.Neon,
-		Transparency = 0.2,
-		CastShadow = false,
-	})
-	fountain.PrimaryPart = basin
-	fountain.Parent = hub
-
-	-- Buildings
-	local buildings = Instance.new("Folder")
-	buildings.Name = "Buildings"
-	buildings.Parent = hub
-	for _, def in World.Hub do
+-- Hub buildings: a box with a gable roof, sign and door, facing the fountain at the origin.
+local function buildBuildings(defs, buildings: Instance, y: number)
+	for _, def in defs do
 		local model = Instance.new("Model")
 		model.Name = def.id
 		local size = v3(def.size)
@@ -263,6 +233,45 @@ local function buildHub(World, root: Instance)
 		body:SetAttribute("Screen", def.screen)
 		model.Parent = buildings
 	end
+end
+
+local function buildHub(World, root: Instance)
+	local hub = Instance.new("Folder")
+	hub.Name = "Hub"
+	hub.Parent = root
+	local y = World.GroundY
+
+	disc("Plaza", World.HubRadius * 2, 0.6, Vector3.new(0, y, 0), COLORS.plaza, hub, { CastShadow = false })
+	disc("PlazaEdge", World.HubRadius * 2 + 4, 0.5, Vector3.new(0, y - 0.05, 0), COLORS.plazaEdge, hub, { CastShadow = false })
+
+	-- Fountain
+	local fountain = Instance.new("Model")
+	fountain.Name = "Fountain"
+	local fp = v3(World.Fountain.position)
+	local r = World.Fountain.radius
+	local basin = disc("Basin", r * 2, 1.6, fp + Vector3.new(0, y + 0.8, 0), COLORS.stone, fountain)
+	disc("Water", r * 2 - 2.5, 0.2, fp + Vector3.new(0, y + 1.45, 0), COLORS.water, fountain, {
+		CanCollide = false,
+		Transparency = 0.15,
+		Material = Enum.Material.Glass,
+		CastShadow = false,
+	})
+	disc("Pillar", 3, 5, fp + Vector3.new(0, y + 4.1, 0), COLORS.stone, fountain)
+	disc("Bowl", 8, 0.8, fp + Vector3.new(0, y + 6.6, 0), COLORS.stone, fountain)
+	disc("BowlWater", 6.6, 0.2, fp + Vector3.new(0, y + 7.05, 0), COLORS.water, fountain, {
+		CanCollide = false,
+		Material = Enum.Material.Neon,
+		Transparency = 0.2,
+		CastShadow = false,
+	})
+	fountain.PrimaryPart = basin
+	fountain.Parent = hub
+
+	-- Buildings
+	local buildings = Instance.new("Folder")
+	buildings.Name = "Buildings"
+	buildings.Parent = hub
+	buildBuildings(World.Hub, buildings, y)
 
 	-- Leaderboard: a framed board on two posts. Clients draw the rows onto Body's front face
 	-- (Controllers/Leaderboards); the prompt comes from the Screen attribute like the buildings.
@@ -525,11 +534,56 @@ local function buildSky(World, root: Instance)
 end
 
 -- Builds the world and returns (folder, partCount). The folder is not parented yet.
-function Build.world(Config): (Folder, number)
+-- Update 3.0 · the Trading Hub place ---------------------------------------------------
+
+-- The hub place: a big plaza with the Trade Board, Trading Plaza, Market, trade booths in a
+-- ring and the portal back to the ranch. Empty Plots/Paths folders keep clients happy.
+local function buildTradingHub(Config, root: Instance)
+	local World = Config.World
+	local Hub = Config.TradingHub.World
+	local y = World.GroundY
+	buildGround(World, root)
+	local hub = Instance.new("Folder")
+	hub.Name = "Hub"
+	hub.Parent = root
+	disc("Plaza", Hub.plazaRadius * 2, 0.6, Vector3.new(0, y, 0), COLORS.plaza, hub, { CastShadow = false })
+	disc("PlazaEdge", Hub.plazaRadius * 2 + 4, 0.5, Vector3.new(0, y - 0.05, 0), COLORS.plazaEdge, hub, { CastShadow = false })
+	local buildings = Instance.new("Folder")
+	buildings.Name = "Buildings"
+	buildings.Parent = hub
+	local defs = table.clone(Hub.buildings)
+	local b = Hub.booths
+	for i = 1, b.count do
+		local angle = (i - 0.5) / b.count * math.pi * 2
+		table.insert(defs, {
+			id = "booth" .. i,
+			name = "Trade Booth",
+			position = { math.cos(angle) * b.radius, 0, math.sin(angle) * b.radius },
+			size = b.size,
+			color = b.colors[(i - 1) % #b.colors + 1],
+			screen = "Trade",
+		})
+	end
+	buildBuildings(defs, buildings, y)
+	for _, name in { "Plots", "Paths" } do
+		local folder = Instance.new("Folder")
+		folder.Name = name
+		folder.Parent = root
+	end
+	buildSpawn({ GroundY = y, Spawn = Hub.spawn }, root)
+end
+
+function Build.world(Config, mode: string?): (Folder, number)
 	count = 0
 	local World = Config.World
 	local root = Instance.new("Folder")
 	root.Name = "World"
+	if mode == "hub" then
+		root:SetAttribute("PlaceMode", "hub")
+		buildTradingHub(Config, root)
+		root:SetAttribute("PartCount", count)
+		return root, count
+	end
 
 	buildGround(World, root)
 	buildHub(World, root)

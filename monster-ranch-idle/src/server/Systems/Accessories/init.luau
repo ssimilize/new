@@ -13,8 +13,14 @@
 	Monsters that leave the ranch drop their accessories: Monsters:Remove strips `acc` and puts
 	it in the MonsterRemoved detail, and this system returns every piece to storage.
 
+	Workshop designs (3.0) are worn with encoded ids (Config.Accessories.Encode); whatever takes
+	one off (Unequip, a swap in Equip, MonsterRemoved) hands it back through Accessories:Return,
+	which passes ids that are not catalogue items to the handler registered for them.
+
 	Public API:
 	  Accessories:Add(player, accessoryId, n?)        -- rewards (Rewards kind "accessory")
+	  Accessories:Return(player, accessoryId)         -- back to storage (or its handler)
+	  Accessories:RegisterReturn(prefix, fn(player, accessoryId))  -- e.g. Workshop, "ugc:"
 	  Accessories:Count(player, accessoryId) -> n     -- in storage + equipped
 	  Accessories:Collection(player) -> n             -- distinct accessories owned
 	Publishes AccessoryGained (player, { id, amount, source }).
@@ -35,6 +41,7 @@ Accessories.Profile = {
 local ctx
 local Config -- Config.Accessories
 local Currency, Progression, Monsters
+local returnHandlers = {} -- { { prefix, fn } }
 
 local function mustSection(player)
 	local s = ctx:Section(player)
@@ -60,6 +67,29 @@ function Accessories:Add(player, accessoryId: string, n: number?)
 	end
 	store(player, s, accessoryId, amount)
 	ctx.Bus:Publish("AccessoryGained", player, { id = accessoryId, amount = amount, source = "reward" })
+end
+
+function Accessories:RegisterReturn(prefix: string, fn)
+	table.insert(returnHandlers, { prefix = prefix, fn = fn })
+end
+
+function Accessories:Return(player, accessoryId: string?)
+	if type(accessoryId) ~= "string" then
+		return
+	end
+	if Config.ById[accessoryId] then
+		local s = ctx:Section(player)
+		if s then
+			store(player, s, accessoryId, 1)
+		end
+		return
+	end
+	for _, h in returnHandlers do
+		if string.sub(accessoryId, 1, #h.prefix) == h.prefix then
+			h.fn(player, accessoryId)
+			return
+		end
+	end
 end
 
 function Accessories:Count(player, accessoryId: string): number
@@ -140,23 +170,19 @@ local function equip(player, id: string, accessoryId: string)
 	end
 	store(player, s, def.id, -1)
 	local previous = Monsters:SetAccessory(player, id, def.slot, def.id)
-	if previous and Config.ById[previous] then
-		store(player, s, previous, 1)
-	end
+	Accessories:Return(player, previous)
 	return { slot = def.slot, previous = previous or false }
 end
 
 local function unequip(player, id: string, slot: string)
-	local s = mustSection(player)
+	mustSection(player)
 	local m = wardrobeMonster(player, id)
 	local worn = type(m.acc) == "table" and m.acc[slot]
 	if not worn then
 		ctx:Fail("Nothing to take off there")
 	end
 	Monsters:SetAccessory(player, id, slot, nil)
-	if Config.ById[worn] then
-		store(player, s, worn, 1)
-	end
+	Accessories:Return(player, worn)
 	return { accessory = worn }
 end
 
@@ -168,6 +194,7 @@ function Accessories.Init(context)
 	Currency = ctx:GetSystem("Currency")
 	Progression = ctx:GetSystem("Progression")
 	Monsters = ctx:GetSystem("Monsters")
+	table.clear(returnHandlers)
 
 	ctx.Net:Handle("Accessories.Buy", function(player, payload)
 		return buy(player, payload.accessory)
@@ -180,14 +207,11 @@ function Accessories.Init(context)
 	end)
 
 	ctx.Bus:Subscribe("MonsterRemoved", function(player, detail)
-		local s = ctx:Section(player)
-		if not s or type(detail.acc) ~= "table" then
+		if not ctx:Section(player) or type(detail.acc) ~= "table" then
 			return
 		end
 		for _, worn in detail.acc do
-			if Config.ById[worn] then
-				store(player, s, worn, 1)
-			end
+			Accessories:Return(player, worn)
 		end
 	end)
 end

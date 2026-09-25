@@ -46,6 +46,19 @@ return {
 		local gemPill = Widgets.Pill({ Icon = "gem", Text = "0", Parent = panel.HeaderRight })
 		gemPill.Root.LayoutOrder = 1
 		local ribbonPill = Widgets.Pill({ Icon = "ribbon", Text = "0", Parent = panel.HeaderRight })
+		-- Update 3.0: player-made accessories.
+		Button.new({
+			Name = "OpenWorkshop",
+			Text = "Workshop",
+			Color = C.Purple,
+			TextSize = Theme.TextSize.Small,
+			Size = UDim2.fromOffset(140, 40),
+			LayoutOrder = -1,
+			Parent = panel.HeaderRight,
+			OnClick = function()
+				ctx.Router:Open("Workshop")
+			end,
+		})
 		ribbonPill.Root.LayoutOrder = 2
 
 		local isOpen = false
@@ -179,7 +192,14 @@ return {
 			Util.clear(slotList)
 			for i, s in Acc.Slots do
 				local worn = m and type(m.acc) == "table" and m.acc[s] or nil
-				local def = worn and Acc.ById[worn]
+				local def = worn and Acc.Resolve(worn)
+				if def and def.ugc then
+					local copy = StoreKit.tbl(ctx.Store, "profile.Workshop.copies")[def.design]
+					if type(copy) == "table" and type(copy.name) == "string" then
+						def = table.clone(def)
+						def.name = copy.name
+					end
+				end
 				local row = New("TextButton", {
 					Name = "Slot_" .. s,
 					Text = "",

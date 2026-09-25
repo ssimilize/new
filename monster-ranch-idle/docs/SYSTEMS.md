@@ -27,7 +27,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Market | S5 | 🔌 | `Market.spec` | 1.3: listings with escrow across servers (`Services.Market`), 8% tax (4% club post), one winner per sale, two-phase deduplicated mailbox; every cross-server step saves an intent task first (`ctx:SaveNow`) so crashes and lost replies never duplicate or lose items or coins |
 | PriceHistory | S5 | 🔌 | `PriceHistory.spec` | 1.3: daily buckets per item key (`Logic/PriceHistory`), `PriceHistory.Get` with a suggested price, retried writes; club sales excluded |
 | Events | S6 | 🔌 | `LunarLanterns.spec` | 1.2: event calendar (`Config/Events`, `Flags.ActiveEvent` override), `global.Events`, event tokens for play with a daily cap |
-| Leaderboards | S5 | 🔌 | `Leaderboards.spec` | 5 weekly boards (heaviest, codex, stampede, halloffame, stage): live per-server rows, global rows via `Services.Leaderboards` (OrderedDataStore per board per week), last week's #1 → nameplate title; weeks start Saturday 15:00 UTC |
+| Leaderboards | S5 | 🔌 | `Leaderboards.spec` | 6 weekly boards (heaviest, codex, stampede, halloffame, stage, racing since 3.0): live per-server rows, global rows via `Services.Leaderboards` (OrderedDataStore per board per week), last week's #1 → nameplate title; weeks start Saturday 15:00 UTC |
 | Monetization | S6 | 🔌 | `Monetization.spec` | pass cache on join + live/RefreshPasses, idempotent ProcessReceipt (private `receipts`, newest 200), `RegisterProduct` handlers, oncePerAccount, capped rewarded ads (UTC-day reset), paid-random policy (fails closed) |
 | Quests | S6 | 🔌 | `Quests.spec` | tutorial state machine + onboarding funnel + scripted rain (optional Weather), deterministic dailies, achievements, codes (expiry, group), Ranch Pass (season window, `Quests.RanchPass` product) |
 | HallOfFame | S6 | 🔌 | `HallOfFame.spec` | retire → statue, legacy (capped per element), Stardust + Star Shards, upgrades; providers for Ranch, Eggs, Monsters, Boss, Breeding, Expeditions |
@@ -40,6 +40,9 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Surf | S6 | 🔌 | `LightAndVoid.spec` | 2.0: Summer Splash surfing; seeded course, server replays lane changes to score; Seashells through the event's daily cap |
 | Arena | S5 | 🔌 | `ArenaRaids.spec` | 2.1: async PvP with normalized stats, defense snapshots across servers (`Services.Arena`), Elo for both sides, bots fill in, 5 battles a day, weekly tier rewards |
 | Raids | S5 | 🔌 | `ArenaRaids.spec` | 2.1: 4-player raid lobbies (2 Adults each), Stormcrag Titan and Umbral Wyrm, Raid Egg for the raid-only lines, 3 rewarded wins a day |
+| Racing | S5 | 🔌 | `YearTwo.spec` | 3.0: daily seeded track, fixed-step sim shared with the client, server replays jump/boost moves, 3 ghosts from the track's par, 10 paid races a day, Racing Cup points (weekly `racing` board) |
+| TradingHub | S5 | 🔌 | `YearTwo.spec` | 3.0: Trading Hub place mode (`Config.TradingHub.Mode`), Travel / Return teleports, cross-server Trade Board (`Services.HubBoard`), Meet here (trade request) or on the poster's server (teleport); no plots on the hub |
+| Workshop | S6 | 🔌 | `YearTwo.spec` | 3.0: player-made accessories (catalogue shape + palette colours + filtered name), cross-server designs (`Services.Designs`), copies for ribbons, royalties, likes, reports hide; worn designs encoded in `Monster.acc` |
 | World (geometry) | C1 | 🔌 | Studio + ClientHarness | `Systems/World` + `Build.luau`: ground, paths, plaza + fountain, the hub buildings of `Config.World.Hub` + the leaderboard board (HubId/Screen), the Sky Islands (2.0), 6 plots (PlotId) with 5 fenced pens (PenIndex), incubator pad, barn, gate; ~380 parts |
 
 ## Client
@@ -61,6 +64,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Screens: Wardrobe, Contests (Showtime) · controller: Showtime | C3 | 🔌 | 1.5: dress-up with a live 3D preview, owned / shop tabs; show phases, entry, runway stars, podium; Showtime Stage in the hub shows the walking monster; MonsterDetail Style button; accessory placeholders in `Visuals/MonsterModel` |
 | Screen: Surf · controllers: SkyIslands, Riding | C3 | 🔌 | 2.0: launch / return pads, Sky Gate, wind crystals; mounts under every rider, rider speed and hip height, Get off button, Ride on the monster screen; 3-lane surfing screen; Surf Shack and Sky Islands geometry; Light/Void monster touches and Beach Day / pollen-style weather |
 | Screens: Arena, Raids | C3 | 🔌 | 2.1: Battle / Defense / Rewards tabs; raid list and server lobbies; both play fights in Parts/BattleReplay; Champions Arena and Raid Portal buildings |
+| Screens: Racing, TradingHub, Workshop | C3 | 🔌 | 3.0: side-view race with Jump / Boost and a ghost strip; Trade Board / My ad (hub) or board preview + Travel (ranch); Design / Gallery / My copies; Racetrack, Trading Hub portal and Workshop buildings; Expeditions region tabs with opening dates |
 | Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
 
 ## Studio test pass (not yet done)

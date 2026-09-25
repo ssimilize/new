@@ -244,6 +244,32 @@ table.insert(Eggs.List, {
 	pattern = "band",
 })
 
+-- Update 3.0 · Year Two: the new regions' eggs (from their expeditions and bosses).
+table.insert(Eggs.List, {
+	id = "dunes",
+	name = "Dune Egg",
+	order = 16,
+	price = nil,
+	hatchSeconds = 2700,
+	unlock = "region_dunes",
+	odds = { 0, 15, 40, 30, 12, 3 },
+	pool = "dunes",
+	colors = { shell = "#F4D58D", spots = "#C9772B" },
+	pattern = "band",
+})
+table.insert(Eggs.List, {
+	id = "glacier",
+	name = "Glacier Egg",
+	order = 17,
+	price = nil,
+	hatchSeconds = 2700,
+	unlock = "region_glacier",
+	odds = { 0, 15, 40, 30, 12, 3 },
+	pool = "glacier",
+	colors = { shell = "#DDF3FF", spots = "#7CC7FF" },
+	pattern = "snowflake",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e

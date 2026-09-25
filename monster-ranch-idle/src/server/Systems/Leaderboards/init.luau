@@ -8,6 +8,7 @@
 	  stampede    Stampede damage dealt this week (BossDamage topic, saved here)
 	  halloffame  monsters retired (HallOfFame:RetiredCount)
 	  stage       highest global stage index cleared (Expeditions:Cleared + Regions.GlobalIndex)
+	  racing      Racing Cup points this week (Racing:CupPoints, 3.0)
 
 	Save section (profile.Leaderboards): { week, stampede }  -- stampede resets each week
 
@@ -33,7 +34,7 @@ local Formulas = require(Shared.Logic.Formulas)
 local Leaderboards = {
 	Name = "Leaderboards",
 	Dependencies = {},
-	OptionalDependencies = { "Monsters", "Boss", "HallOfFame", "Expeditions" },
+	OptionalDependencies = { "Monsters", "Boss", "HallOfFame", "Expeditions", "Racing" },
 }
 
 Leaderboards.Profile = {
@@ -116,6 +117,10 @@ local VALUES = {
 		return if HallOfFame then HallOfFame:RetiredCount(player) else 0
 	end,
 	stage = highestStage,
+	racing = function(player)
+		local Racing = ctx:GetSystem("Racing")
+		return if Racing then Racing:CupPoints(player) else 0
+	end,
 }
 
 local function global()

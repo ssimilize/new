@@ -12,6 +12,10 @@
 	`from`..`stages` use the band's own unlock, levels, rarity, enemy lines and colours,
 	and their global index starts at `indexFrom` and grows by `indexStep` per stage.
 	Use Regions.Band(regionId, stage) instead of reading these fields directly.
+
+	opensAt (optional, update 3.0 · Year Two): a new region every quarter. A region with
+	`opensAt` stays closed to everyone until then (Regions.IsOpen), on top of its unlock
+	level, so a region can ship early in an update and open on its date.
 ]]
 
 local Regions = {}
@@ -24,6 +28,7 @@ Regions.MaxTurns = 30
 Regions.List = {
 	{
 		id = "meadow",
+		short = "Meadow", -- region tab label
 		name = "Whispering Meadow",
 		order = 1,
 		unlock = "region_meadow",
@@ -41,6 +46,7 @@ Regions.List = {
 	},
 	{
 		id = "coral",
+		short = "Coral", -- region tab label
 		name = "Coral Coast",
 		order = 2,
 		unlock = "region_coral",
@@ -87,6 +93,7 @@ Regions.List = {
 	},
 	{
 		id = "ember",
+		short = "Ember", -- region tab label
 		name = "Ember Peaks",
 		order = 3,
 		unlock = "region_ember",
@@ -104,6 +111,7 @@ Regions.List = {
 	},
 	{
 		id = "gloom",
+		short = "Gloom", -- region tab label
 		name = "Gloom Hollow",
 		order = 4,
 		unlock = "region_gloom",
@@ -122,6 +130,7 @@ Regions.List = {
 	-- Update 2.0 · Sky Islands: the Light & Void region, reached through the Sky Islands.
 	{
 		id = "sky",
+		short = "Sky", -- region tab label
 		name = "Sky Islands",
 		order = 5,
 		unlock = "region_sky",
@@ -143,6 +152,58 @@ Regions.List = {
 		colors = { sky = "#BFE3FF", ground = "#F4F7FF" },
 		added = "2.0",
 	},
+	-- Update 3.0 · Year Two: a new region every quarter. Mirage Dunes opens with the update,
+	-- Frostbite Glacier one quarter later.
+	{
+		id = "dunes",
+		short = "Dunes", -- region tab label
+		name = "Mirage Dunes",
+		order = 6,
+		unlock = "region_dunes",
+		opensAt = 1828537200, -- Sat 11 Dec 2027, 15:00 UTC (update 3.0)
+		elements = { "ember", "stone" },
+		enemyLines = { "sandskip", "cactling", "scarabit", "cindlet", "pebblet" },
+		levels = { 56, 70 },
+		rarity = { 5, 6 },
+		bosses = {
+			[10] = { name = "The Riddling Sphinx", line = "sandskip", form = "siroccohare" },
+			[20] = {
+				name = "The Sunken Pharaoh",
+				line = "scarabit",
+				form = "pharaohbeetle",
+				firstClear = { { kind = "egg", id = "dunes", amount = 2 } },
+			},
+		},
+		food = "spicy",
+		eggs = { { egg = "dunes", perMinute = 0.003, fromStage = 1 }, { egg = "royal", perMinute = 0.0005, fromStage = 10 } },
+		colors = { sky = "#FFD9A0", ground = "#E8C27A" },
+		added = "3.0",
+	},
+	{
+		id = "glacier",
+		short = "Glacier", -- region tab label
+		name = "Frostbite Glacier",
+		order = 7,
+		unlock = "region_glacier",
+		opensAt = 1836399600, -- Sat 11 Mar 2028, 15:00 UTC (one quarter after 3.0)
+		elements = { "tide", "light" },
+		enemyLines = { "pengling", "yetikit", "aurowl", "bubblin", "lumipup" },
+		levels = { 62, 76 },
+		rarity = { 5, 6 },
+		bosses = {
+			[10] = { name = "Old Tuskbeard", line = "yetikit", form = "avalancheyeti" },
+			[20] = {
+				name = "The Aurora Monarch",
+				line = "aurowl",
+				form = "aurorasage",
+				firstClear = { { kind = "egg", id = "glacier", amount = 2 } },
+			},
+		},
+		food = "sour",
+		eggs = { { egg = "glacier", perMinute = 0.003, fromStage = 1 }, { egg = "royal", perMinute = 0.0005, fromStage = 10 } },
+		colors = { sky = "#CFEFFF", ground = "#EAF6FF" },
+		added = "3.0",
+	},
 }
 
 Regions.ById = {}
@@ -150,6 +211,23 @@ Regions.MaxStages = Regions.StagesPerRegion -- the most stages any region has (A
 for _, r in Regions.List do
 	Regions.ById[r.id] = r
 	Regions.MaxStages = math.max(Regions.MaxStages, r.stages or Regions.StagesPerRegion)
+end
+
+-- Whether a region has opened (regions without `opensAt` are always open).
+function Regions.IsOpen(regionOrId, now: number): boolean
+	local r = if type(regionOrId) == "table" then regionOrId else Regions.ById[regionOrId]
+	return r ~= nil and (r.opensAt == nil or now >= r.opensAt)
+end
+
+-- The next region still waiting for its date, or nil.
+function Regions.NextOpening(now: number)
+	local best = nil
+	for _, r in Regions.List do
+		if r.opensAt and now < r.opensAt and (best == nil or r.opensAt < best.opensAt) then
+			best = r
+		end
+	end
+	return best
 end
 
 -- Number of stages in a region.

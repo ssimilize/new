@@ -4,6 +4,7 @@
 	week). The week's #1 on each global board gets that board's nameplate title for the
 	whole following week.
 
+	short: the tab label (the full name is shown on the board).
 	format: how values are shown. Values are stored as whole numbers; weights are stored in
 	hundredths of a kilogram (see WeightScale).
 ]]
@@ -11,11 +12,13 @@
 local Leaderboards = {}
 
 Leaderboards.Boards = {
-	{ id = "heaviest", name = "Heaviest Monster", title = "Heavyweight Champ", format = "weight", color = "#F2A93B" },
+	{ id = "heaviest", name = "Heaviest Monster", short = "Heaviest", title = "Heavyweight Champ", format = "weight", color = "#F2A93B" },
 	{ id = "codex", name = "Codex", title = "Master Collector", format = "count", unit = "forms", color = "#4FB6F2" },
-	{ id = "stampede", name = "Stampede Damage", title = "Stampede Hero", format = "short", color = "#E5484D" },
+	{ id = "stampede", name = "Stampede Damage", short = "Stampede", title = "Stampede Hero", format = "short", color = "#E5484D" },
 	{ id = "halloffame", name = "Hall of Fame", title = "Living Legend", format = "count", unit = "statues", color = "#8B6AD8" },
-	{ id = "stage", name = "Highest Stage", title = "Trailblazer", format = "stage", color = "#43B649" },
+	{ id = "stage", name = "Highest Stage", short = "Stage", title = "Trailblazer", format = "stage", color = "#43B649" },
+	-- Update 3.0: Racing Cup points from this week's races (Config.Racing.CupPoints).
+	{ id = "racing", name = "Racing Cup", short = "Racing", title = "Speed Demon", format = "count", unit = "pts", color = "#FF8A3D" },
 }
 
 Leaderboards.ById = {}

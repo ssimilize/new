@@ -400,7 +400,7 @@ return function(t)
 			c:Advance(1)
 			local screen = c:Open("Expeditions")
 			c:Advance(0.5)
-			c:Click(c:Button("Coral Coast", screen))
+			c:Click(screen:FindFirstChild("Region_coral", true))
 			c:Advance(0.5)
 			-- Stage 20 is cleared, so the map opens on the Depths where the next stage is.
 			expect(c:HasText("Coral Depths", screen)).toBe(true)

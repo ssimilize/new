@@ -398,10 +398,78 @@ Accessories.List = {
 }
 
 Accessories.ById = {}
+Accessories.ShapeSlots = {} -- shape -> slot (the slot of the first item drawn with it)
+Accessories.ShapeTags = {} -- shape -> tags (of that first item)
 for _, a in Accessories.List do
 	assert(Accessories.ById[a.id] == nil, "duplicate accessory " .. a.id)
 	assert(table.find(Accessories.Slots, a.slot), "bad accessory slot " .. a.id)
 	Accessories.ById[a.id] = a
+	if not Accessories.ShapeSlots[a.shape] then
+		Accessories.ShapeSlots[a.shape] = a.slot
+		Accessories.ShapeTags[a.shape] = a.tags
+	end
+end
+
+--[[
+	Player-made accessories (update 3.0 · Workshop). A worn design is stored on the monster as
+	an encoded id that carries everything needed to draw it, so any client can render it
+	from the monster record alone:
+	  "ugc:<designId>:<shape>:<RRGGBB>:<RRGGBB>"
+	Accessories.Resolve(id) returns the definition of a catalogue item or of such a design
+	({ id, name, slot, shape, color, color2, tags, ugc = true, design }), or nil.
+]]
+Accessories.UgcPrefix = "ugc:"
+
+local function hex6(c: string?): string?
+	local h = if type(c) == "string" then string.match(c, "^#?(%x%x%x%x%x%x)$") else nil
+	return if h then string.upper(h) else nil
+end
+
+function Accessories.Encode(designId: string, shape: string, color: string, color2: string): string
+	return string.format("%s%s:%s:%s:%s", Accessories.UgcPrefix, designId, shape, hex6(color) or "FFFFFF", hex6(color2) or "FFFFFF")
+end
+
+function Accessories.Decode(id: string)
+	if type(id) ~= "string" or string.sub(id, 1, #Accessories.UgcPrefix) ~= Accessories.UgcPrefix then
+		return nil
+	end
+	local design, shape, c1, c2 = string.match(id, "^ugc:(%w+):(%a+):(%x%x%x%x%x%x):(%x%x%x%x%x%x)$")
+	if not design or not Accessories.ShapeSlots[shape] then
+		return nil
+	end
+	return { design = design, shape = shape, slot = Accessories.ShapeSlots[shape], color = "#" .. c1, color2 = "#" .. c2 }
+end
+
+local SHAPE_NAMES = {
+	tophat = "Top Hat",
+	jetpack = "Jetpack",
+	bowtie = "Bow Tie",
+}
+
+function Accessories.Resolve(id: string?)
+	if id == nil then
+		return nil
+	end
+	local def = Accessories.ById[id]
+	if def then
+		return def
+	end
+	local d = Accessories.Decode(id)
+	if not d then
+		return nil
+	end
+	local shapeName = SHAPE_NAMES[d.shape] or (string.upper(string.sub(d.shape, 1, 1)) .. string.sub(d.shape, 2))
+	return {
+		id = id,
+		name = "Custom " .. shapeName,
+		slot = d.slot,
+		shape = d.shape,
+		color = d.color,
+		color2 = d.color2,
+		tags = Accessories.ShapeTags[d.shape] or {},
+		ugc = true,
+		design = d.design,
+	}
 end
 
 return Accessories

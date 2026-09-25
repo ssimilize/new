@@ -151,6 +151,62 @@ Api.Actions = {
 		returns = "{ score, shells, hits, survived, tokens, best }",
 	},
 
+	-- Racing (3.0) ------------------------------------------------------------------------
+	["Racing.Start"] = {
+		schema = T.struct({ id = id }),
+		rate = 0.5,
+		returns = "{ race: number, day: number, speed: number, ghosts: { { name, time } }, maxSeconds: number }",
+	},
+	["Racing.Finish"] = {
+		schema = T.struct({
+			race = T.integer(1),
+			inputs = T.array(
+				T.struct({ t = T.number(0, Config.Racing.MaxSeconds), a = T.enum({ "jump", "boost" }) }),
+				Config.Racing.MaxInputs
+			),
+		}),
+		rate = 1,
+		returns = "{ time, finished, place, stumbles, rewards: { Reward }, cup, best, bestToday }",
+	},
+
+	-- Trading Hub (3.0) -------------------------------------------------------------------
+	["TradingHub.Travel"] = { schema = T.none, rate = 0.5, returns = "{ teleporting: true }" },
+	["TradingHub.Return"] = { schema = T.none, rate = 0.5, returns = "{ teleporting: true }" },
+	["TradingHub.Post"] = {
+		schema = T.struct({
+			items = T.array(T.struct({ kind = T.enum({ "monster", "egg" }), id = id }), Config.TradingHub.MaxOffer, 1),
+			wants = T.array(T.key(Config.TradingHub.WantsById), Config.TradingHub.MaxWants),
+			note = T.integer(1, #Config.TradingHub.Notes),
+		}),
+		rate = 0.5,
+		returns = "{ ad: string }",
+	},
+	["TradingHub.Remove"] = { schema = T.none, rate = 1, returns = "{}" },
+	["TradingHub.Refresh"] = { schema = T.none, rate = 0.5, returns = "{ ads: number }" },
+	["TradingHub.Meet"] = {
+		schema = T.struct({ ad = T.string(80, 1) }),
+		rate = 1,
+		returns = "{ here: true, userId: number } | { teleporting: true }",
+	},
+
+	-- Workshop (3.0) ---------------------------------------------------------------------
+	["Workshop.Create"] = {
+		schema = T.struct({
+			name = T.string(Config.Workshop.NameMax * 4),
+			shape = T.key(Config.Accessories.ShapeSlots),
+			color = T.enum(Config.Workshop.Palette),
+			color2 = T.enum(Config.Workshop.Palette),
+		}),
+		rate = 0.5,
+		returns = "{ design: string }",
+	},
+	["Workshop.Browse"] = { schema = T.struct({ tab = T.enum({ "top", "new", "mine" }) }), rate = 1, returns = "{ count: number }" },
+	["Workshop.Like"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 2, returns = "{ likes: number }" },
+	["Workshop.Report"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 1, returns = "{ hidden: boolean }" },
+	["Workshop.Buy"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 1, returns = "{ owned: number }" },
+	["Workshop.Equip"] = { schema = T.struct({ id = id, design = T.string(40, 3) }), rate = 2, returns = "{ slot: string }" },
+	["Workshop.Claim"] = { schema = T.none, rate = 0.5, returns = "{ ribbons: number }" },
+
 	-- Riding (2.0) ------------------------------------------------------------------------
 	["Riding.Mount"] = { schema = T.struct({ id = id }), rate = 2, returns = "{ speed: number }" },
 	["Riding.Dismount"] = { schema = T.none, rate = 2, returns = "nil" },
@@ -429,6 +485,8 @@ Api.State = {
 		Contests = "{ shows, wins, podiums, best, votes }",
 		SkyIslands = "{ taken = { [crystalIndex as string]: unix }, day, count, total }",
 		Surf = "{ best, runs }",
+		Racing = "{ day, rewarded, week, cup, races, wins, best, bestDay, bestToday }",
+		Workshop = "{ designs = { designId }, made = { week, n }, copies = { [designId]: { n, name, shape, slot, color, color2, creatorName } }, liked = { [designId]: true }, next }",
 		Arena = "{ defense = { id }, attempts = { day, n }, week, bestTier, lastTier, claimed }",
 		Raids = "{ day, rewarded, wins, runs }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
@@ -449,6 +507,8 @@ Api.State = {
 		Contests = "{ entered: monsterId|false, votes = { [entryIndex]: stars } }  -- this show",
 		Riding = "{ mount: monsterId|false, speed: number }",
 		Raids = "{ lobby: string|false }",
+		TradingHub = "{ ad: adId|false, postedAt }",
+		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } } }",
 		Arena = "{ rating, tier, attemptsLeft, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
 	},
 	global = {
@@ -460,6 +520,7 @@ Api.State = {
 		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",
 		EggHunt = "{ active: boolean, round, endsAt, spots = { spotIndex } }  -- eggs hidden this round (Config.EggHunt.Spots)",
 		Raids = "{ lobbies = { [lobbyId]: { id, raid, host, hostName, expiresAt, members = { { userId, name, power } } } } }",
+		TradingHub = "{ mode: 'main'|'hub', ads = { { id, userId, name, jobId, here, offer = { { kind, appearance?, egg? } }, wants = { wantId }, note, postedAt, expiresAt } }, refreshedAt }",
 		Riding = "{ riders = { ['u'..userId]: { appearance, speed } } }",
 		Contests = "{ state: 'idle'|'entry'|'runway'|'results', show, theme, endsAt, nextAt, entries = { { userId, name, appearance } }, current, results = { { userId, name, appearance, score, votes, rank } } }",
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open } } }  -- club tags of players here",
@@ -505,6 +566,11 @@ Api.Topics = {
 	CrystalCollected = "(player, { crystal: number })",
 	Mounted = "(player, { id: string, speed: number })",
 	SurfRun = "(player, { score: number, shells: number })",
+	RaceFinished = "(player, { place: number, time: number, day: number })",
+	HubTravel = "(player, { to: 'hub'|'main'|'server' })",
+	HubAdPosted = "(player, {})",
+	DesignPublished = "(player, { design: string })",
+	DesignBought = "(player, { design: string, creator: number })",
 	ArenaBattle = "(player, { won: boolean, rating: number })",
 	RaidFinished = "(player, { raid: string, win: boolean })",
 	ContestEntered = "(player, { show: number, theme: string })",

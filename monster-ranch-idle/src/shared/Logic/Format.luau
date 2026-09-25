@@ -83,4 +83,21 @@ function Format.weight(kg: number): string
 	return string.format("%d kg", math.floor(kg + 0.5))
 end
 
+local MONTHS = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" }
+
+-- A unix time as a UTC calendar date: 1836399600 -> "11 Mar 2028".
+function Format.date(unix: number): string
+	-- Days-from-civil inverse (Howard Hinnant), valid for any date after 1970.
+	local z = math.floor(unix / 86400) + 719468
+	local era = math.floor(z / 146097)
+	local doe = z - era * 146097
+	local yoe = math.floor((doe - math.floor(doe / 1460) + math.floor(doe / 36524) - math.floor(doe / 146096)) / 365)
+	local doy = doe - (365 * yoe + math.floor(yoe / 4) - math.floor(yoe / 100))
+	local mp = math.floor((5 * doy + 2) / 153)
+	local day = doy - math.floor((153 * mp + 2) / 5) + 1
+	local month = if mp < 10 then mp + 3 else mp - 9
+	local year = yoe + era * 400 + (if month <= 2 then 1 else 0)
+	return string.format("%d %s %d", day, MONTHS[month], year)
+end
+
 return Format

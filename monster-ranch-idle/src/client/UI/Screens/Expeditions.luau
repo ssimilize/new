@@ -163,7 +163,14 @@ return {
 			return math.min(stage(), cleared(region))
 		end
 		local function regionUnlocked(r): boolean
-			return Util.unlocked(ctx, r.unlock)
+			return Regions.IsOpen(r, ctx:Now()) and Util.unlocked(ctx, r.unlock)
+		end
+		-- Why a region is closed: its opening date (3.0 quarterly regions) or its unlock level.
+		local function regionLockText(r): string
+			if not Regions.IsOpen(r, ctx:Now()) then
+				return string.format("%s opens on %s", r.name, Format.date(r.opensAt))
+			end
+			return Util.unlockText(r.unlock)
 		end
 		local function freeSlot(): number?
 			local slots = exp().slots or {}
@@ -516,7 +523,7 @@ return {
 		fightButton:SetOnClick(function()
 			local r = Regions.ById[region]
 			if not r or not regionUnlocked(r) then
-				ctx:Toast(Util.unlockText(r and r.unlock or ""), "error")
+				ctx:Toast(if r then regionLockText(r) else "", "error")
 				return
 			end
 			if #squadIds() == 0 then
@@ -1277,14 +1284,17 @@ return {
 			Util.clear(regionRow)
 			for i, r in Regions.List do
 				local unlocked = regionUnlocked(r)
-				local text = r.name
-				if not unlocked then
-					text = string.format("%s · Lv %d", r.name, Util.unlockLevel(r.unlock))
+				local text = r.short or r.name
+				if not Regions.IsOpen(r, ctx:Now()) then
+					text = string.format("%s · %s", text, string.sub(Format.date(r.opensAt), 1, -6))
+				elseif not unlocked then
+					text = string.format("%s · Lv %d", text, Util.unlockLevel(r.unlock))
 				end
 				local b = Button.new({
+					Name = "Region_" .. r.id,
 					Text = text,
 					Color = if r.id == region then C.Orange elseif unlocked then C.Blue else C.Gray,
-					Size = UDim2.fromOffset(240, 44),
+					Size = UDim2.new(1 / #Regions.List, -10, 0, 44),
 					TextSize = Theme.TextSize.Small + 1,
 					LayoutOrder = i,
 					Parent = regionRow,
@@ -1342,7 +1352,7 @@ return {
 			drawMap(r)
 			local unlocked = regionUnlocked(r)
 			if not unlocked then
-				Util.lockOverlay(mapCard, Util.unlockText(r.unlock))
+				Util.lockOverlay(mapCard, regionLockText(r))
 			end
 
 			-- Squad
