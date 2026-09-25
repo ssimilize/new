@@ -227,6 +227,46 @@ Api.Actions = {
 	["Clubs.ClaimBoss"] = { schema = T.none, rate = 1, returns = "{ rewards: { Reward } }" },
 	["Clubs.Refresh"] = { schema = T.none, rate = 0.2, returns = "nil  -- re-reads (and writes) your club now" },
 
+	-- Market (S5, update 1.3) · see Config/Market and ARCHITECTURE §8 -------------------
+	["Market.List"] = {
+		schema = T.struct({
+			kind = T.enum({ "monster", "egg" }),
+			id = id,
+			price = T.integer(Config.Market.MinPrice, Config.Market.MaxPrice),
+			club = T.optional(T.boolean),
+		}),
+		rate = 1,
+		returns = "{ listing: Listing }  -- the item leaves your profile (escrow)",
+	},
+	["Market.Cancel"] = {
+		schema = T.struct({ listing = T.string(40, 1) }),
+		rate = 2,
+		returns = "{ returned: boolean }  -- false: it went to your mailbox",
+	},
+	["Market.Buy"] = {
+		schema = T.struct({ listing = T.string(40, 1), price = T.integer(Config.Market.MinPrice, Config.Market.MaxPrice) }),
+		rate = 2,
+		returns = "{ kind: string, id: string }  -- the new monster or egg id; `price` must match the listing",
+	},
+	["Market.Browse"] = {
+		schema = T.struct({
+			kind = T.optional(T.enum({ "monster", "egg" })),
+			key = T.optional(T.string(40, 3)),
+			sort = T.optional(T.enum({ "price", "-price", "new" })),
+			club = T.optional(T.boolean),
+			page = T.optional(T.integer(1, 50)),
+		}),
+		rate = 3,
+		returns = "{ listings: { Listing }, page: number, more: boolean }",
+	},
+	["Market.Mine"] = { schema = T.none, rate = 2, returns = "{ listings: { Listing } }" },
+	["Market.Collect"] = { schema = T.none, rate = 1, returns = "{ coins: number, items: { { kind, id } }, left: number }" },
+	["PriceHistory.Get"] = {
+		schema = T.struct({ key = T.string(40, 3) }),
+		rate = 3,
+		returns = "{ key, days = { { day, count, low, high, avg } }, last: number? }  -- oldest day first",
+	},
+
 	-- Monetization (S6) ------------------------------------------------------------
 	["Monetization.RefreshPasses"] = {
 		schema = T.none,
@@ -253,6 +293,7 @@ Api.Events = {
 	["Trade.Completed"] = "{ received: { { kind: string, appearance: Appearance? } } }",
 	["Quests.StepDone"] = "{ step: string, rewards: { Reward } }",
 	["HallOfFame.Retired"] = "{ appearance: Appearance, stardust: number }",
+	["Market.MailCollected"] = "{ coins: number, items: { { kind, id } }, sold: { { key, price, proceeds } }, returned: number }",
 }
 
 --[[
@@ -280,6 +321,7 @@ Api.State = {
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true } }",
 		Leaderboards = "{ week, stampede }  -- this week's Stampede damage",
 		Events = "{ event, day, earned, login }  -- event tokens earned today (daily cap)",
+		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n } }",
 	},
 	session = {
@@ -293,6 +335,7 @@ Api.State = {
 		Expeditions = "{ caravan = { id, host, region, stage, duration, members = { { userId, name } } }? }",
 		Boss = "{ joined: boolean, damage, cheer }",
 		Clubs = "{ club: ClubView | false }  -- see Systems/Clubs header",
+		Market = "{ mail = { coins, items } }  -- mail waiting that could not be collected yet (e.g. ranch full)",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
@@ -348,12 +391,16 @@ Api.Topics = {
 	WelcomeItem = "(player, { kind: string, text: string, icon: string? })",
 	PlotChanged = "(player, {})",
 	ClubJoined = "(player, { club: string })",
+	MarketListed = "(player, { listing: string, key: string, price: number, club: boolean })",
+	MarketBought = "(player, { listing: string, key: string, kind: string, price: number, club: boolean })",
+	MarketSold = "(nil, { listing, key, kind, price, proceeds, buyer, seller, club })  -- on the buyer's server",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------
 Api.Shapes = {
 	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster', id: string?, amount: number, rarity: number? }",
 	Monster = "see ARCHITECTURE.md → Monster record",
+	Listing = "see ARCHITECTURE.md §8 → Listing (client view)",
 	Appearance = "see Logic/Appearance.luau",
 	BattleReplay = "see Logic/BattleSim.luau",
 }
