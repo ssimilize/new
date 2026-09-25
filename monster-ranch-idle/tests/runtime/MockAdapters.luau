@@ -35,6 +35,8 @@ function MockAdapters.network()
 		market = { listings = {}, mail = {} }, -- listings[id] = record (item included)
 		prices = {}, -- price history records by item key
 		marketDown = false,
+		arena = {}, -- Arena records by userId (2.1)
+		arenaDown = false,
 	}
 end
 
@@ -270,6 +272,48 @@ function MockAdapters.new(options: { startTime: number?, network: any? }?)
 				network.clubs[id] = deepCopy(result)
 			end
 			return true, deepCopy(result)
+		end,
+	}
+
+	-- Arena (2.1), shared through options.network; network.arenaDown fails every call.
+	network.arena = network.arena or {}
+	a.Arena = {
+		Get = function(userId)
+			if network.arenaDown then
+				return false, nil
+			end
+			return true, deepCopy(network.arena[userId])
+		end,
+		Update = function(userId, transform)
+			if network.arenaDown then
+				return false, nil
+			end
+			local result = transform(deepCopy(network.arena[userId]))
+			if result ~= nil then
+				network.arena[userId] = deepCopy(result)
+			end
+			return true, deepCopy(result)
+		end,
+		Index = function(_userId, _rating)
+			return not network.arenaDown
+		end,
+		Near = function(rating, window, count)
+			if network.arenaDown then
+				return false, {}
+			end
+			local list = {}
+			for userId, record in network.arena do
+				if record.team and math.abs((record.rating or 0) - rating) <= window then
+					table.insert(list, { userId = userId, rating = record.rating })
+				end
+			end
+			table.sort(list, function(x, y)
+				return x.userId < y.userId
+			end)
+			while #list > count do
+				table.remove(list)
+			end
+			return true, list
 		end,
 	}
 

@@ -49,6 +49,9 @@ return {
 		"SkyIslands",
 		"Riding",
 		"Surf",
+		-- 2.1 · Arena & Raids
+		"Arena",
+		"Raids",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

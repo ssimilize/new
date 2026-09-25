@@ -49,6 +49,14 @@ Events.List = {
 		token = { name = "Seashells", glyph = "❂", color = "#FFB347" },
 		color = "#3FB6D9",
 	},
+	{
+		id = "harvestmoon",
+		name = "Harvest Moon",
+		startsAt = 1822489200, -- Sat 2 Oct 2027, 15:00 UTC (update 2.1)
+		endsAt = 1824908400, -- Sat 30 Oct 2027
+		token = { name = "Moon Candy", glyph = "☾", color = "#F08A4B" },
+		color = "#E0701F",
+	},
 }
 
 -- Tokens earned by playing while an event runs (all capped by `dailyCap` per UTC day).

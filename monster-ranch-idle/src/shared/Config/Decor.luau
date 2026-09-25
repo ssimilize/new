@@ -35,6 +35,25 @@ Decor.List = {
 		event = "lunarlanterns",
 	},
 	{ id = "moon_gate", name = "Moon Gate", price = { token = 350 }, mood = 4, color = "#C98B2E", event = "lunarlanterns" },
+	-- Update 2.1 · Harvest Moon event decor
+	{
+		id = "jack_o_lantern",
+		name = "Jack-o'-Lantern",
+		price = { token = 150 },
+		mood = 3,
+		color = "#F08A4B",
+		shape = "ball",
+		event = "harvestmoon",
+	},
+	{
+		id = "haunted_tree",
+		name = "Haunted Tree",
+		price = { token = 350 },
+		mood = 4,
+		color = "#3A2D55",
+		shape = "tall",
+		event = "harvestmoon",
+	},
 	-- Update 2.0 · Summer Splash event decor
 	{
 		id = "beach_ball",
@@ -115,6 +134,14 @@ Decor.PenThemes = {
 		fence = "#2EC4B6",
 		ground = "#F4DFA6",
 		event = "summersplash",
+	},
+	{
+		id = "haunted_hollow",
+		name = "Haunted Hollow",
+		price = { token = 600 },
+		fence = "#3A2D55",
+		ground = "#6B5B4B",
+		event = "harvestmoon",
 	},
 	-- Update 1.4 · Rebirth biomes: never sold; each Rebirth Star grants one (Config.Rebirth.Biomes).
 	{ id = "starfield", name = "Starfield Meadow", rebirth = 1, fence = "#6B5BD6", ground = "#2E3A78" },

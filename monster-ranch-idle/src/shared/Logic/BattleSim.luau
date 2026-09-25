@@ -7,12 +7,15 @@
 	BattleSim.Simulate(allies, enemies, seed, opts?) -> BattleReplay (ARCHITECTURE.md §7)
 	  allies / enemies: monster records (≤ 4 allies, ≤ 5 enemies). Extra optional fields:
 	    statMult = n   multiplies HP/ATK/DEF/SPD (enemy bosses, see BuildEnemies)
+	    hpMult = n     multiplies HP only (raid bosses: long fights that don't one-shot)
 	    boss = true    drawn as a boss by the client
+	    look = Appearance  drawn instead of the record's own look (Arena's normalized fighters)
 	  opts = {
 	    night = boolean?,      -- Night Owl traits (nightAtkPct) add ATK
 	    boss = boolean?,       -- boss fight: Boss Brawler traits (bossDmgPct) add ally damage
 	    statBonus = number?,   -- ally stat bonus (0.2 = +20%, the stage-retry ad)
 	    maxTurns = number?,    -- defaults to Config.Regions.MaxTurns
+	    maxAllies = number?,   -- defaults to BattleSim.MaxAllies (Raids field up to 8)
 	  }
 	BattleSim.BuildEnemies(regionId, stage, seed) -> { enemy records }
 	BattleSim.RecommendedPower(regionId, stage) -> number (comparable with squad power)
@@ -71,13 +74,13 @@ local function buildUnit(m, side: string, slot: number, opts)
 		atkMult += Traits.Sum(traits, "nightAtkPct")
 	end
 	local passive = def.passive
-	local maxHp = math.max(1, round(stats.hp * mult))
+	local maxHp = math.max(1, round(stats.hp * mult * (m.hpMult or 1)))
 	return {
 		key = (if side == "ally" then "a" else "e") .. tostring(slot),
 		side = side,
 		slot = slot,
 		name = Formulas.DisplayName(m),
-		appearance = Appearance.Of(m),
+		appearance = m.look or Appearance.Of(m),
 		boss = m.boss == true,
 		elements = def.elements,
 		special = def.special,
@@ -126,7 +129,7 @@ function BattleSim.Simulate(allies, enemies, seed: number, options)
 	local sides = { ally = {}, enemy = {} }
 	local units = {}
 	for i, m in allies do
-		if i > BattleSim.MaxAllies then
+		if i > (opts.maxAllies or BattleSim.MaxAllies) then
 			break
 		end
 		table.insert(sides.ally, buildUnit(m, "ally", i, opts))

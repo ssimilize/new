@@ -190,6 +190,31 @@ Quests.Achievements = {
 		target = 1,
 		reward = { { kind = "gems", amount = 150 } },
 	},
+	-- Update 2.1 · Arena & Raids
+	{
+		id = "arena_win_10",
+		text = "Win 10 arena battles",
+		topic = "ArenaBattle",
+		filter = { won = true },
+		target = 10,
+		reward = { { kind = "gems", amount = 100 }, { kind = "accessory", id = "gold_medal", amount = 1 } },
+	},
+	{
+		id = "raid_win",
+		text = "Defeat a raid boss with your team",
+		topic = "RaidFinished",
+		filter = { win = true },
+		target = 1,
+		reward = { { kind = "gems", amount = 100 } },
+	},
+	{
+		id = "raid_wyrm",
+		text = "Defeat the Umbral Wyrm",
+		topic = "RaidFinished",
+		filter = { raid = "wyrm", win = true },
+		target = 1,
+		reward = { { kind = "egg", id = "raid", amount = 1 }, { kind = "accessory", id = "hero_cape", amount = 1 } },
+	},
 	-- Update 2.0 · Light & Void
 	{
 		id = "sky_first",
@@ -415,6 +440,33 @@ Quests.Seasons = {
 			),
 		},
 	},
+	-- Update 2.1 · Season 5 "Harvest Moon": spooky accessories, Raid and Harvest Eggs.
+	{
+		season = 5,
+		name = "Harvest Moon",
+		startsAt = 1822489200, -- Sat 2 Oct 2027, 15:00 UTC (update 2.1)
+		endsAt = 1826118000, -- Sat 13 Nov 2027, 15:00 UTC
+		xpPerTier = 300,
+		xpPerDaily = 100,
+		xpPerAchievement = 200,
+		tiers = {
+			tier({ { kind = "coins", amount = 20000 } }, { { kind = "gems", amount = 30 } }),
+			tier({ { kind = "treats", amount = 20 } }, { { kind = "accessory", id = "witch_hat", amount = 1 } }),
+			tier({ { kind = "accessory", id = "devil_horns", amount = 1 } }, { { kind = "egg", id = "crystal", amount = 2 } }),
+			tier({ { kind = "gems", amount = 20 } }, { { kind = "stardust", amount = 120 } }),
+			tier({ { kind = "egg", id = "grove", amount = 2 } }, { { kind = "accessory", id = "bat_wings", amount = 1 } }),
+			tier({ { kind = "ribbons", amount = 30 } }, { { kind = "gems", amount = 60 } }),
+			tier({ { kind = "food", id = "random", amount = 30 } }, { { kind = "egg", id = "raid", amount = 1 } }),
+			tier({ { kind = "accessory", id = "hero_mask", amount = 1 } }, { { kind = "egg", id = "sky", amount = 1 } }),
+			tier({ { kind = "gems", amount = 25 } }, { { kind = "egg", id = "royal", amount = 1 } }),
+			tier({ { kind = "coins", amount = 500000 } }, { { kind = "stardust", amount = 200 } }),
+			tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 80 } }),
+			tier({ { kind = "stardust", amount = 80 } }, { { kind = "egg", id = "raid", amount = 1 } }),
+			tier({ { kind = "gems", amount = 30 } }, { { kind = "egg", id = "celestial", amount = 1 } }),
+			tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "egg", id = "raid", amount = 2 } }),
+			tier({ { kind = "accessory", id = "halo", amount = 1 } }, { { kind = "monster", id = "pumpkit", rarity = 5, amount = 1 } }),
+		},
+	},
 }
 Quests.Pass = Quests.Seasons[1] -- kept for older call sites; prefer Quests.PassAt(now)
 
@@ -434,6 +486,8 @@ Quests.Codes = {
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
 	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
 	-- Update 1.1 launch code (expires 6 Feb 2027).
+	-- Update 2.1 launch code (expires 30 Oct 2027).
+	ARENAANDRAIDS = { reward = { { kind = "egg", id = "raid", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1824908400 },
 	-- Update 2.0 launch code (expires 14 Aug 2027).
 	LIGHTANDVOID = { reward = { { kind = "egg", id = "sky", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1818255600 },
 	-- Update 1.5 launch code (expires 26 Jun 2027).

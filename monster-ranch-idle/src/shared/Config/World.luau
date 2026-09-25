@@ -66,6 +66,25 @@ World.Fountain = { position = { 0, 0, 0 }, radius = 14 }
 World.Board = { position = { 0, 0, -40 }, size = { 20, 12, 1.2 }, color = "#D49A12" }
 World.Spawn = { 0, 3, -20 }
 
+-- Update 2.1: the Champions Arena and the Raid Portal stand just outside the Market Square,
+-- on the way to plots 1 and 3. They open their screens like hub buildings.
+table.insert(World.Hub, {
+	id = "championsArena",
+	name = "Champions Arena",
+	position = { -58, 0, -128 },
+	size = { 30, 14, 26 },
+	color = "#C0392B",
+	screen = "Arena",
+})
+table.insert(World.Hub, {
+	id = "raidPortal",
+	name = "Raid Portal",
+	position = { 58, 0, -128 },
+	size = { 20, 18, 14 },
+	color = "#6B5BD6",
+	screen = "Raids",
+})
+
 -- Update 2.0 · Sky Islands: floating islands high above the map, joined by cloud bridges.
 -- The launch pad in the Market Square flies players to the landing island's return pad;
 -- the Sky Gate there opens the Sky Islands expeditions. Island `center` is the top of the
