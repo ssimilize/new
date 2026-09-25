@@ -9,6 +9,9 @@ An idle RPG creature ranch for Roblox. Hatch monsters, raise them, send them on 
 
 ## Quick start
 
+Setting up your own computer (Windows, macOS or Linux), Studio and Claude Code:
+[`monster-ranch-idle/docs/LOCAL_SETUP.md`](monster-ranch-idle/docs/LOCAL_SETUP.md).
+
 ```bash
 cd monster-ranch-idle
 rokit install   # rojo, lune, stylua, selene

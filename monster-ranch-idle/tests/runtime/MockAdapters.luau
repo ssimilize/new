@@ -32,6 +32,7 @@ function MockAdapters.network()
 		clubs = {},
 		subscribers = {},
 		clubsDown = false,
+		clubWars = {}, -- [week] = { [clubId] = points } (3.1)
 		market = { listings = {}, mail = {} }, -- listings[id] = record (item included)
 		prices = {}, -- price history records by item key
 		marketDown = false,
@@ -288,6 +289,33 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 				network.clubs[id] = deepCopy(result)
 			end
 			return true, deepCopy(result)
+		end,
+		IndexWar = function(week, id, points)
+			if network.clubsDown then
+				return false
+			end
+			network.clubWars[week] = network.clubWars[week] or {}
+			network.clubWars[week][id] = math.floor(points)
+			return true
+		end,
+		TopWar = function(week, count)
+			if network.clubsDown then
+				return false, {}
+			end
+			local rows = {}
+			for id, points in network.clubWars[week] or {} do
+				table.insert(rows, { id = id, points = points })
+			end
+			table.sort(rows, function(x, y)
+				if x.points ~= y.points then
+					return x.points > y.points
+				end
+				return x.id < y.id
+			end)
+			while #rows > count do
+				table.remove(rows)
+			end
+			return true, rows
 		end,
 	}
 

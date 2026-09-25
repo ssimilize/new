@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lune run:*)",
+      "Bash(stylua:*)",
+      "Bash(selene:*)",
+      "Bash(rojo build:*)",
+      "Bash(rokit install)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(node render.mjs:*)"
+    ]
+  }
+}

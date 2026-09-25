@@ -1,6 +1,6 @@
 --[[
 	Nameplates controller: a small BillboardGui above each player's character with
-	  · their club tag and name (global.Clubs.here, update 1.2), in the club's colour, and
+	  · their club tag and name (global.Clubs.here, update 1.2), in the club's colour (with its banner flag since 3.1), and
 	  · their champion titles (global.Leaderboards.champions), e.g. "🏆 Master Collector".
 	Players with neither get no nameplate. Rebuilt when either state changes and when a
 	character spawns.
@@ -100,6 +100,27 @@ local function update(player: Player)
 	if club then
 		clubLabel.Text = string.format("[%s] %s", tostring(club.tag), tostring(club.name))
 		clubLabel.TextColor3 = Color3.fromHex(Config.Clubs.Colors[club.color] or Config.Clubs.Colors[1])
+	end
+	-- Update 3.1: a club banner (Workshop design) shows as a small flag before the club name.
+	local flag = clubLabel:FindFirstChild("Banner")
+	local banner = club and type(club.banner) == "table" and club.banner
+	if banner then
+		if not flag then
+			flag = New("Frame", {
+				Name = "Banner",
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(0, -2, 0.5, 0),
+				Size = UDim2.fromOffset(14, 18),
+				Parent = clubLabel,
+			}, { Create.Corner(3), Create.Stroke(2) })
+		end
+		flag.BackgroundColor3 = Color3.fromHex(banner.color or "#FFFFFF")
+		local stroke = flag:FindFirstChildOfClass("UIStroke")
+		if stroke then
+			stroke.Color = Color3.fromHex(banner.color2 or "#FFFFFF")
+		end
+	elseif flag then
+		flag:Destroy()
 	end
 	titleLabel.Visible = #titles > 0
 	titleLabel.Text = if #titles > 0 then "🏆 " .. table.concat(titles, " · ") else ""

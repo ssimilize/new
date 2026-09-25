@@ -10,6 +10,7 @@
 	    lune run tools/snapshot/scene [out.json] [screen]
 
 	`screen` optionally opens one screen (e.g. Wardrobe) on top of the HUD.
+	SNAPSHOT_START=<unix> sets the scene's time (default: a Spring Bloom afternoon).
 	SNAPSHOT_PLACE=hub runs the server as the Trading Hub place (update 3.0): the hub layout,
 	no plots, and a few ads on the Trade Board. Frame it with a raw eye/at camera.
 	Step 2 (tools/snapshot/render.mjs) draws the JSON with three.js in headless Chromium.
@@ -22,7 +23,7 @@ local serde = require("@lune/serde")
 local roblox = require("@lune/roblox")
 local Vector2, Color3, UDim2, UDim = roblox.Vector2, roblox.Color3, roblox.UDim2, roblox.UDim
 
-local ROOT = string.gsub(process.cwd, "/$", "")
+local ROOT = string.gsub(process.cwd, "[/\\]$", "") -- a Windows cwd can end in a backslash
 if not fs.isDir(ROOT .. "/tests/specs") and fs.isDir(ROOT .. "/monster-ranch-idle/tests/specs") then
 	ROOT ..= "/monster-ranch-idle"
 end
@@ -49,7 +50,7 @@ for _, name in Manifest.Systems do
 	end
 end
 -- A spring afternoon during Spring Bloom (daytime, clear or blooming weather).
-local START = Config.Events.ById.springbloom.startsAt + 2 * 3600
+local START = tonumber(process.env.SNAPSHOT_START) or (Config.Events.ById.springbloom.startsAt + 2 * 3600)
 local PLACE = process.env.SNAPSHOT_PLACE
 local h = TestKernel.new({ systems = systems, startTime = START, placeMode = if PLACE == "hub" then "hub" else nil })
 
@@ -221,6 +222,26 @@ local PREPARE = {
 			c:Advance(0.4, 0.05)
 		end
 		return true
+	end,
+	-- Update 3.1: two clubs at war, the Wars tab open (run with SNAPSHOT_START after 5 Feb 2028).
+	Clubs = function()
+		local mine = c:Request("Clubs.Create", { name = "Moonlit Ranchers", tag = "MOON", color = 6, emblem = "moon", open = true })
+		c:Advance(2)
+		local design = h:Call(me, "Workshop.Create", { name = "Moon Banner", shape = "cape", color = "#3D5BD9", color2 = "#FFD447" })
+		h:Advance(2)
+		c:Request("Clubs.SetBanner", { design = design.design })
+		h:System("Currency"):Add(friend, "coins", 1e6, "snapshot")
+		h:Call(friend, "Clubs.Create", { name = "Sunny Side", tag = "SUN", color = 2, emblem = "star", open = true })
+		for _ = 1, 6 do
+			h.kernel.Bus:Publish("RaidFinished", me, { raid = "titan", win = true })
+			h.kernel.Bus:Publish("RaceFinished", friend, { place = 1, cup = 3, time = 30, day = 1 })
+		end
+		h.kernel.Bus:Publish("BossDamage", me, { damage = 90000, rank = 1 })
+		h:System("Clubs"):Flush()
+		h:System("Clubs"):RefreshLadder()
+		c:Advance(1)
+		c:Open("Clubs", { tab = "wars" })
+		return mine ~= nil
 	end,
 	Workshop = function()
 		c:Request("Workshop.Browse", { tab = "new" })

@@ -6,11 +6,15 @@
 	record = {
 	  id, name, tag, color, emblem, open, ownerId, createdAt, disbanded,
 	  count,                                   -- members
-	  members = { ["u" .. userId] = { name, role, joinedAt, points } },  -- points: this week
+	  members = { ["u" .. userId] = { name, role, joinedAt, points, war, lastWar } },
+	                                           -- points / war: this week; lastWar: last week (3.1)
 	  week,                                    -- leaderboard week the fields below belong to
 	  scale,                                   -- member count the week's targets use
 	  goals = { [goalId] = progress },
 	  boss = { name, hp, maxHp, damage = { ["u" .. userId] = n } },
+	  warPoints,                               -- Club Wars points this week (3.1)
+	  lastWar = { week, points },              -- the week before, for league rewards
+	  banner = { design, name, shape, color, color2 } | nil,   -- Workshop banner (3.1)
 	}
 ]]
 
@@ -69,6 +73,14 @@ function Record.rollWeek(record, week: number)
 	if record.week == week then
 		return false
 	end
+	-- Club Wars: keep what the week that just ended scored (only if it was last week).
+	local ended = record.week
+	record.lastWar = { week = ended, points = record.warPoints or 0 }
+	for _, m in record.members do
+		m.lastWar = if ended == week - 1 then (m.war or 0) else 0
+		m.war = 0
+	end
+	record.warPoints = 0
 	record.week = week
 	record.scale = math.clamp(record.count or 1, Cfg.MinScaleMembers, Cfg.MaxMembers)
 	record.goals = {}
@@ -216,6 +228,13 @@ function Record.apply(record, delta, now: number)
 	for goalId, n in delta.goals or {} do
 		if active[goalId] then
 			record.goals[goalId] = (record.goals[goalId] or 0) + n
+		end
+	end
+	for key, n in delta.war or {} do
+		local m = record.members[key]
+		if m then
+			m.war = (m.war or 0) + n
+			record.warPoints = (record.warPoints or 0) + n
 		end
 	end
 	for key, n in delta.damage or {} do

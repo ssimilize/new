@@ -18,7 +18,7 @@
 	GraceSeconds) and be finished within MaxSeconds + LateSeconds.
 
 	Public API: Racing:CupPoints(player) -> number   -- this week (Leaderboards "racing")
-	Publishes RaceFinished (player, { place, time, day }) and RanchXP.
+	Publishes RaceFinished (player, { place, time, day, cup }) and RanchXP.
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -169,7 +169,7 @@ local function finish(player, raceId: number, inputs)
 		s.cup += cup
 	end
 	ctx:Dirty(player)
-	ctx.Bus:Publish("RaceFinished", player, { place = place, time = result.time, day = race.day })
+	ctx.Bus:Publish("RaceFinished", player, { place = place, time = result.time, day = race.day, cup = cup })
 	ctx.Bus:Publish("RanchXP", player, { amount = 10, reason = "race" })
 	return {
 		time = result.time,

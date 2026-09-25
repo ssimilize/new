@@ -11,6 +11,13 @@
 	Boss: a weekly club boss with `hpPerMember` × members HP. Each member attacks up to
 	`attacksPerDay` times a UTC day; an attack deals `damagePerRootPower` × √(squad power),
 	so newer players still matter. Everyone who attacked can claim the reward once it falls.
+
+	Club Wars (update 3.1, from `War.startsAt`): members earn war points for their club from
+	raids, racing and Stampedes (`War.sources`, at most `War.dailyCap` per member per UTC day).
+	A weekly ladder ranks every club across servers. When the week ends, each club lands in a
+	league by its points, the top `War.champion.top` clubs are Champions, and every member who
+	earned war points claims that reward during the next week.
+	Banners (3.1): officers can hang a Workshop design they own as the club banner.
 ]]
 
 local Clubs = {}
@@ -76,5 +83,62 @@ Clubs.Boss = {
 	minDamage = 500,
 	reward = { { kind = "egg", id = "stampede", amount = 1 }, { kind = "gems", amount = 50 } },
 }
+
+-- Club Wars (update 3.1) ------------------------------------------------------------
+Clubs.War = {
+	startsAt = 1833375600, -- Sat 5 Feb 2028, 15:00 UTC (update 3.1)
+	dailyCap = 150,
+	-- points: fixed per event; field × mult: from the event's detail; filter: detail must match;
+	-- bonus when detail.rank ≤ bonusRank.
+	sources = {
+		{ id = "raid", topic = "RaidFinished", filter = { win = true }, points = 25, text = "Win a raid: 25" },
+		{ id = "race", topic = "RaceFinished", field = "cup", mult = 5, text = "Racing Cup points ×5" },
+		{ id = "stampede", topic = "BossDamage", points = 5, bonusRank = 3, bonus = 10, text = "Finish a Stampede: 5 (+10 in the top 3)" },
+	},
+	leagues = {
+		{ id = "bronze", name = "Bronze", min = 0, color = "#C98B4E", reward = { { kind = "gems", amount = 20 } } },
+		{
+			id = "silver",
+			name = "Silver",
+			min = 600,
+			color = "#B9C3CC",
+			reward = { { kind = "gems", amount = 40 }, { kind = "ribbons", amount = 20 } },
+		},
+		{
+			id = "gold",
+			name = "Gold",
+			min = 1500,
+			color = "#F5C630",
+			reward = { { kind = "gems", amount = 70 }, { kind = "egg", id = "crystal", amount = 1 } },
+		},
+		{
+			id = "diamond",
+			name = "Diamond",
+			min = 3000,
+			color = "#7CC7FF",
+			reward = { { kind = "gems", amount = 110 }, { kind = "egg", id = "royal", amount = 1 } },
+		},
+	},
+	-- The week's top clubs on the ladder (replaces their league reward).
+	champion = {
+		top = 3,
+		name = "Champion",
+		color = "#FF7AC8",
+		reward = { { kind = "gems", amount = 160 }, { kind = "egg", id = "royal", amount = 2 } },
+	},
+	ladderSize = 10,
+	ladderRefresh = 300, -- seconds between ladder reads per server
+}
+
+-- The league a weekly war score lands in.
+function Clubs.League(points: number)
+	local best = Clubs.War.leagues[1]
+	for _, league in Clubs.War.leagues do
+		if points >= league.min then
+			best = league
+		end
+	end
+	return best
+end
 
 return Clubs

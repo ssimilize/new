@@ -40,6 +40,11 @@ Events.List = {
 		endsAt = 1803740400, -- Sat 27 Feb 2027
 		token = { name = "Lantern Coins", glyph = "✺", color = "#FF7A45" },
 		color = "#E5484D",
+		reruns = {
+			-- Year 2 (update 3.1): Lunar Lanterns returns; Lanternwyrms can now grow into the
+			-- Moonlit Dragon too.
+			{ startsAt = 1833375600, endsAt = 1835190000 }, -- Sat 5 Feb 2028 → Sat 26 Feb 2028
+		},
 	},
 	{
 		id = "springbloom",

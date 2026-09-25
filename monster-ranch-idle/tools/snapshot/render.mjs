@@ -57,8 +57,12 @@ function serve() {
 ensureFonts();
 const server = await serve();
 const { port } = server.address();
+// CHROMIUM_PATH, else the cloud container's Chromium, else the Google Chrome installed on this
+// computer (Windows / macOS / Linux) through Playwright's "chrome" channel.
+const DEFAULT_CHROMIUM = "/opt/pw-browsers/chromium";
+const executablePath = process.env.CHROMIUM_PATH || (fs.existsSync(DEFAULT_CHROMIUM) ? DEFAULT_CHROMIUM : undefined);
 const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium",
+  ...(executablePath ? { executablePath } : { channel: "chrome" }),
   args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1.5 });

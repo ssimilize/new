@@ -12,7 +12,7 @@
 local fs = require("@lune/fs")
 local process = require("@lune/process")
 
-local ROOT = string.gsub(process.cwd, "/$", "")
+local ROOT = string.gsub(process.cwd, "[/\\]$", "") -- a Windows cwd can end in a backslash
 if not fs.isDir(ROOT .. "/tests/specs") then
 	-- Allow running from the repo root: `lune run monster-ranch-idle/tests`
 	if fs.isDir(ROOT .. "/monster-ranch-idle/tests/specs") then

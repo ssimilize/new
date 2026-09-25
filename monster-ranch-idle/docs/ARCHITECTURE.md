@@ -218,6 +218,14 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Designs** adds `Owe(userId, n)`, `Collect(userId) -> ok, n` (royalty ledger) and `Flag(id)`, `Unflag(id)`, `Flagged(count) -> ok, { id }` (moderation feed). The Workshop caches records for `CacheSeconds` and lists for `ListCacheSeconds`.
 - **Players** adds `RankInGroup(player, groupId) -> number`.
 
+### 3.1: Club Wars
+- **Clubs** records gain `warPoints`, `lastWar = { week, points }`, member `war` / `lastWar` and `banner`. War points come from `Config.Clubs.War.sources` (bus topics) through the pending buffer, capped per member per day (`profile.Clubs.war`).
+  ```lua
+  Services.Clubs.IndexWar(week, clubId, points) -> ok
+  Services.Clubs.TopWar(week, count) -> ok, { { id, points } }   -- highest first
+  ```
+  `global.Clubs.ladder = { week, at, rows }`. `Clubs.ClaimWar` pays last week's league (or Champion, top 3 of `TopWar`) once per member who scored. `Clubs.SetBanner { design }` needs `Workshop:Copy`.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 
