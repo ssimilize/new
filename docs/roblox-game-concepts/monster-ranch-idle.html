@@ -131,6 +131,9 @@ td.nowrap{white-space:nowrap}
 .road h4{margin:0}
 .road ul{margin:4px 0 0;font-size:14.5px}
 .road .card.launch{border:2px solid var(--accent)}
+.road .card.shipped{background:var(--surface-2)}
+.road .tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--accent);color:var(--accent-ink);margin-left:6px;vertical-align:1px}
+.road .why{font-size:13.5px;color:var(--muted);margin:2px 0 0}
 .phase-label{font-family:var(--display);font-weight:600;font-size:18px;margin:26px 0 4px;color:var(--ink)}
 
 /* ================= MOCKUPS (single game look, not themed) ================= */
@@ -1371,6 +1374,7 @@ lootPerMin = regionBase × 1.08 ^ stage × durationBonus   -- 15m ×1.00 · 1h �
   <p class="sec-num">18</p>
   <h2>Roadmap &amp; future updates</h2>
   <p>The schedule assumes development starts in early October 2026. That puts launch in <strong>mid-December</strong>, when the Winter holidays bring the year's biggest Roblox traffic. Launch goes out with the Frostfall event already live.</p>
+  <p>Every Year 1 update through 3.0 is built (see <code>docs/UPDATES.md</code>). Year 2 runs from 3.0 in December 2027 to the second anniversary in December 2028. It keeps the same rhythm: a content update about every 6 weeks, a new region every quarter, every seasonal event coming back with something new, and a Ranch Pass season every 6 weeks.</p>
 
   <p class="phase-label">Build to launch</p>
   <div class="road">
@@ -1380,28 +1384,42 @@ lootPerMin = regionBase × 1.08 ^ stage × durationBonus   -- 15m ×1.00 · 1h �
     <div class="card launch"><span class="when">Week 12 · mid-Dec 2026</span><h4>v1.0 launch + Frostfall</h4><ul><li>Frostfall event egg and Snow weather boost</li><li>4 weeks of events built in advance</li><li>Codes at like milestones</li><li>Sponsored ads for the first 2 weeks</li></ul></div>
   </div>
 
-  <p class="phase-label">After launch</p>
+  <p class="phase-label">Year 1: after launch</p>
   <div class="road">
     <div class="card"><span class="when">Launch + 1 wk</span><h4>1.0.x · Stabilize</h4><ul><li>Hotfixes and a balance pass from the dashboards</li><li>2× coin weekend "Launch Party"</li></ul></div>
-    <div class="card"><span class="when">+3 wks · Jan 2027</span><h4>1.1 · Coral Depths</h4><ul><li>Coral Coast stages 21–30</li><li>3 new Tide/Spark species</li><li>Pearl combo mutation (Soaked + Starstruck)</li><li>Beach decor set</li></ul></div>
-    <div class="card"><span class="when">+6 wks · Feb 2027</span><h4>1.2 · Clubs + Lunar Lanterns</h4><ul><li>Clubs of up to 30 with a Club Plaza</li><li>Weekly club goals and a club boss</li><li>Lantern event egg</li></ul></div>
-    <div class="card"><span class="when">+9 wks · Mar 2027</span><h4>1.3 · Market Day</h4><ul><li>Marketplace listings (coins, 8% tax)</li><li>Price history charts</li><li>Club trading post</li></ul></div>
-    <div class="card"><span class="when">+12 wks · Apr 2027</span><h4>1.4 · Rebirth + Spring Bloom</h4><ul><li>Ranch Rebirth (prestige layer 2)</li><li>Stardust skill tree and the Celestial Egg</li><li>Season 2 Ranch Pass</li></ul></div>
-    <div class="card"><span class="when">May 2027</span><h4>1.5 · Showtime</h4><ul><li>Monster Contests: themed shows where players vote (in the style of Dress to Impress)</li><li>A big wave of accessories</li></ul></div>
-    <div class="card"><span class="when">Summer 2027</span><h4>2.0 · Light &amp; Void</h4><ul><li>Two new elements that form a third pair</li><li>Sky Islands: an explorable 3D region</li><li>Riding: travel the hub on your adult monster</li><li>Summer Splash event</li></ul></div>
-    <div class="card"><span class="when">Fall 2027</span><h4>2.1 · Arena &amp; Raids</h4><ul><li>Asynchronous PvP arena with normalized stats (no pay-to-win)</li><li>4-player raids with raid-only species</li><li>Harvest Moon event</li></ul></div>
-    <div class="card"><span class="when">Year 2</span><h4>Later</h4><ul><li>Cross-server Trading Hub place</li><li>Monster racing minigame</li><li>UGC accessories for monsters</li><li>A new region every quarter</li></ul></div>
+    <div class="card shipped"><span class="when">+3 wks · Jan 2027</span><h4>1.1 · Coral Depths<span class="tag">shipped</span></h4><ul><li>Coral Coast stages 21–30</li><li>3 new Tide/Spark species</li><li>Pearl combo mutation (Soaked + Starstruck)</li><li>Beach decor set</li></ul></div>
+    <div class="card shipped"><span class="when">+6 wks · Feb 2027</span><h4>1.2 · Clubs + Lunar Lanterns<span class="tag">shipped</span></h4><ul><li>Clubs of up to 30 with a Club Plaza</li><li>Weekly club goals and a club boss</li><li>Lantern event egg</li></ul></div>
+    <div class="card shipped"><span class="when">+9 wks · Mar 2027</span><h4>1.3 · Market Day<span class="tag">shipped</span></h4><ul><li>Marketplace listings (coins, 8% tax)</li><li>Price history charts</li><li>Club trading post</li></ul></div>
+    <div class="card shipped"><span class="when">+12 wks · Apr 2027</span><h4>1.4 · Rebirth + Spring Bloom<span class="tag">shipped</span></h4><ul><li>Ranch Rebirth (prestige layer 2)</li><li>Stardust skill tree and the Celestial Egg</li><li>Season 2 Ranch Pass</li></ul></div>
+    <div class="card shipped"><span class="when">May 2027</span><h4>1.5 · Showtime<span class="tag">shipped</span></h4><ul><li>Monster Contests: themed shows where players vote (in the style of Dress to Impress)</li><li>A big wave of accessories</li></ul></div>
+    <div class="card shipped"><span class="when">Summer 2027</span><h4>2.0 · Light &amp; Void<span class="tag">shipped</span></h4><ul><li>Two new elements that form a third pair</li><li>Sky Islands: an explorable 3D region</li><li>Riding: travel the hub on your adult monster</li><li>Summer Splash event</li></ul></div>
+    <div class="card shipped"><span class="when">Fall 2027</span><h4>2.1 · Arena &amp; Raids<span class="tag">shipped</span></h4><ul><li>Asynchronous PvP arena with normalized stats (no pay-to-win)</li><li>4-player raids with raid-only species</li><li>Harvest Moon event</li></ul></div>
   </div>
+
+  <p class="phase-label">Year 2: Dec 2027 – Dec 2028</p>
+  <div class="road">
+    <div class="card shipped launch"><span class="when">Sat 11 Dec 2027</span><h4>3.0 · Year Two<span class="tag">shipped</span></h4><ul><li>Cross-server Trading Hub place with a Trade Board</li><li>Monster Racing at the Racetrack, weekly Racing Cup</li><li>Workshop: player-made accessories with royalties</li><li>Mirage Dunes (region 6); Frostbite Glacier queued for March</li><li>Ranch Pass Season 6 "Year Two"</li></ul></div>
+    <div class="card"><span class="when">Sat 18 Dec 2027</span><h4>3.0.1 · Go live + Frostfall returns</h4><ul><li>Publish the Trading Hub place and set both place ids</li><li>Live checks: teleports, MemoryStore and DataStore budgets with many hub servers</li><li>Moderator queue for reported Workshop designs (restore or remove)</li><li>Frostfall comes back with its egg and one new winter line</li></ul><p class="why">3.0 shipped without a holiday event, and the hub can't open until its place is published.</p></div>
+    <div class="card"><span class="when">Sat 5 Feb 2028</span><h4>3.1 · Club Wars + Lunar Lanterns</h4><ul><li>Clubs meet on a weekly ladder: raid clears, Racing Cup points and Stampede damage</li><li>Club banners designed in the Workshop</li><li>Lunar Lanterns returns: a Glow rerun and a second Lantern Dragon form</li></ul><p class="why">It gives clubs a shared goal that draws on the arena, raids and racing.</p></div>
+    <div class="card"><span class="when">Sat 11 Mar 2028</span><h4>3.2 · Frostbite Glacier + Level 70</h4><ul><li>Frostbite Glacier opens (region 7, already in the build)</li><li>Ranch Level cap 60 → 70: pen 6, incubator 4, squad size 5</li><li>Raid 3: the Frost Leviathan with its own raid-only line</li><li>Controller support and Spanish / Portuguese (BR) text</li></ul><p class="why">Mirage Dunes and Frostbite Glacier already unlock at Ranch Level 50 and 55. Top players need more levels before regions 8 and 9.</p></div>
+    <div class="card"><span class="when">Sat 1 Apr 2028</span><h4>3.3 · Spring Bloom + Design Weeks</h4><ul><li>Themed Workshop weeks: the community votes, and winners join the shop catalogue with creator credit</li><li>Player-designed pen themes (palette and pattern, same safety rules)</li><li>Spring Bloom returns with a new egg-hunt layout</li></ul><p class="why">The best player designs become catalogue items for everyone.</p></div>
+    <div class="card"><span class="when">Sat 10 Jun 2028</span><h4>3.4 · Clockwork Canyon + Live Racing</h4><ul><li>Region 8: Clockwork Canyon (Spark/Stone, three clockwork lines)</li><li>Live races with up to 6 players on one server, ghosts filling empty lanes</li><li>Racing gear (saddles, goggles) as accessories</li></ul><p class="why">Racing against real players instead of ghosts.</p></div>
+    <div class="card"><span class="when">Sat 1 Jul 2028</span><h4>4.0 · Tides of the Deep</h4><ul><li>Deep Reef: an explorable underwater area (the Sky Islands idea, under the sea)</li><li>Swimming mounts: ride Tide monsters under water</li><li>Summer Splash returns with new surf wave patterns</li></ul><p class="why">The big summer update, as 2.0 was.</p></div>
+    <div class="card"><span class="when">Sat 9 Sep 2028</span><h4>4.1 · Sunken Abyss + Arena Seasons</h4><ul><li>Region 9: Sunken Abyss, reached through the Deep Reef</li><li>Arena seasons of 8 weeks with end-of-season rewards</li><li>A featured species each season that fights at a small boost</li></ul><p class="why">The arena gets seasons with fresh goals, still normalized.</p></div>
+    <div class="card"><span class="when">Sat 7 Oct 2028</span><h4>4.2 · Harvest Moon + Global Stampede</h4><ul><li>A world boss shared by every server (MessagingService totals)</li><li>Server-vs-server contribution board; everyone who joined shares the rewards</li><li>Harvest Moon returns with a new haunted decor set</li></ul><p class="why">A goal the whole game works on together, like the Trading Hub.</p></div>
+    <div class="card launch"><span class="when">Sat 9 Dec 2028</span><h4>5.0 · Year Three + Frostfall</h4><ul><li>Region 10 and the second anniversary celebration</li><li>Frostfall returns</li><li>Year 3 roadmap reveal in game</li></ul></div>
+  </div>
+  <p>Every card is a plan, not a promise. The Year 1 dashboards (D7 and D30 retention, trades per daily player, races per day, Workshop reports) can reorder cards 3.1 to 4.2 without changing the region and event dates.</p>
 
   <h3>Seasonal event calendar</h3>
   <div class="tbl"><table>
-    <thead><tr><th>Event</th><th>Window</th><th>Event weather / mutation</th><th>Limited content</th></tr></thead>
+    <thead><tr><th>Event</th><th>Window</th><th>Event weather / mutation</th><th>Limited content</th><th>Year 2 return</th></tr></thead>
     <tbody>
-      <tr><td><strong>Frostfall</strong></td><td>Dec–Jan</td><td>Snow boosted, Frosted guaranteed from the event egg</td><td>3 winter species, snow-globe pen theme</td></tr>
-      <tr><td><strong>Lunar Lanterns</strong></td><td>Feb</td><td>Lantern Night: Glow mutation</td><td>Lantern Dragon line</td></tr>
-      <tr><td><strong>Spring Bloom</strong></td><td>Apr</td><td>Pollen Storm: Blossom mutation</td><td>Egg hunt around the hub</td></tr>
-      <tr><td><strong>Summer Splash</strong></td><td>Jul–Aug</td><td>Heatwave boosted, Sunkissed</td><td>Beach ranch theme, surfing minigame</td></tr>
-      <tr><td><strong>Harvest Moon</strong></td><td>Oct</td><td>Blood Moon ×3 frequency</td><td>Pumpkin species, haunted decor</td></tr>
+      <tr><td><strong>Frostfall</strong></td><td>Dec–Jan</td><td>Snow boosted, Frosted guaranteed from the event egg</td><td>3 winter species, snow-globe pen theme</td><td>18 Dec 2027 · a 4th winter line</td></tr>
+      <tr><td><strong>Lunar Lanterns</strong></td><td>Feb</td><td>Lantern Night: Glow mutation</td><td>Lantern Dragon line</td><td>5 Feb 2028 · a second dragon form</td></tr>
+      <tr><td><strong>Spring Bloom</strong></td><td>Apr</td><td>Pollen Storm: Blossom mutation</td><td>Egg hunt around the hub</td><td>1 Apr 2028 · a new hunt layout</td></tr>
+      <tr><td><strong>Summer Splash</strong></td><td>Jul–Aug</td><td>Heatwave boosted, Sunkissed</td><td>Beach ranch theme, surfing minigame</td><td>1 Jul 2028 · new wave patterns</td></tr>
+      <tr><td><strong>Harvest Moon</strong></td><td>Oct</td><td>Blood Moon ×3 frequency</td><td>Pumpkin species, haunted decor</td><td>7 Oct 2028 · a new decor set</td></tr>
     </tbody>
   </table></div>
 
@@ -1410,7 +1428,8 @@ lootPerMin = regionBase × 1.08 ^ stage × durationBonus   -- 15m ×1.00 · 1h �
     <li><strong>Every Saturday at 10:00 ET:</strong> update goes live, the rotating shop egg changes, and a new code drops on socials. That time works for both US mornings and EU afternoons.</li>
     <li><strong>Saturday hosted hour:</strong> developers join servers and trigger Starfall and Aurora on a schedule announced in advance. This worked for top idle games on Roblox.</li>
     <li><strong>Mid-week:</strong> a small balance patch, a leaderboard reset, and a teaser for the next update.</li>
-    <li><strong>Every 6 weeks:</strong> a new Ranch Pass season.</li>
+    <li><strong>Every 6 weeks:</strong> a new Ranch Pass season (Season 6 opens Year 2; Seasons 7–14 follow through Dec 2028).</li>
+    <li><strong>Every quarter:</strong> a new region opens on a Saturday. It ships one update early with an opening date (<code>Regions.opensAt</code>), so the launch day needs no code push.</li>
   </ul>
 </section>
 
