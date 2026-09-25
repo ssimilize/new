@@ -56,7 +56,6 @@ lune run tests
 
 ## Where things stand
 
-- Shipped in code: launch through 3.0 (Year Two), 3.0.1 (go-live, Frostfall returns).
-- 3.1 (Club Wars + Lunar Lanterns) is in pull request #13 on branch `claude/roblox-game-concepts-research-0oitwr`.
+- Merged on `main`: launch through 3.0 (Year Two), 3.0.1 (go-live, Frostfall returns) and 3.1 (Club Wars + Lunar Lanterns). No pull request is open.
 - Next on the roadmap: **3.2 · Frostbite Glacier + Level 70** (Sat 11 Mar 2028). Glacier is already built and date-gated; the work is the Ranch Level cap 60 → 70 (pen 6, incubator 4, squad size 5), raid 3 (the Frost Leviathan with a raid-only line), controller support, and Spanish / Portuguese (BR) text.
 - Manual go-live steps (publishing both places, live checks, moderators): `monster-ranch-idle/docs/GO_LIVE.md`.
