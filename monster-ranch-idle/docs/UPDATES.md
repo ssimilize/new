@@ -3,6 +3,48 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 2.0 · Light & Void
+
+**For players**
+- **Light and Void**, a third group of elements: a pair where each beats the other (×1.5 both ways) and neither has a weakness against the other six. There are seven new lines:
+  - Light: Lumipup → Beamhound → Sunfang or Dawnmane · Halobee → Glintwing → Seraphly · Dawnling → Aurelle → Daybreak Seraph
+  - Void: Nullkit → Voidlynx → Eventide Lynx · Hollowisp → Riftshade → Abyss Warden · Gravitoad → Singulatoad → Event Horizon
+  - Both: Eclipsa → Penumbra → Total Eclipse
+- **Sky Islands** (Ranch Level 45):
+  - Five floating islands high above the map, joined by cloud bridges. Fly up from the launch pad in the Market Square.
+  - **Wind crystals:** 13 of them, each collectable once an hour (up to 60 a day). Each pays coins, Treats, Stardust or a Sky Egg.
+  - **Sky Gate:** opens the new **Sky Islands** expedition region, stages 1–20 (global stages 81–100), with two bosses. The Sunlit Warden guards stage 10, and Umbra, the Hungry Star, stage 20 (first clear: 2 Sky Eggs).
+  - **Sky Egg:** from Sky Islands expeditions and crystals. It hatches the Light and Void lines.
+- **Riding** (Ranch Level 16): tap **Ride** on any Adult to travel on it, and everyone sees your mount. Riding speed comes from the species' speed and rarity (20–40 studs/s, against 16 walking). **Get off** is on the HUD.
+- **Summer Splash event** (3 Jul – 14 Aug 2027), with **Seashells** as its token:
+  - Heatwave is 3× as likely.
+  - **Beach Day:** daytime event weather that gives the new **Sunkissed** mutation (×3). **Soaked + Sunkissed = Tropical** (×5).
+  - **Surf Shack** in the Market Square: a 45-second, three-lane surfing run. Catch seashells, dodge rocks, and earn up to 40 Seashells a run.
+  - **Splash Egg** (400 Seashells, always Sunkissed): Surfotter → Wavebreaker → Tidal Champion, Coconutty → Palmguard → Island King, and Sunnyray → Glareray → Solar Manta.
+  - **Decor:** Beach Ball and Tiki Torch, plus the Tropical Lagoon pen theme.
+- **Ranch Pass Season 4, "Summer Splash"** (26 Jun – 7 Aug 2027): beachwear accessories, Sky, Celestial and Royal Eggs, and a Legendary Surfotter.
+- **New achievements:** your first wind crystal, 50 crystals, clearing the Sky Islands, riding a monster, and 10 surf runs.
+- **Code:** `LIGHTANDVOID` gives a Sky Egg and 50 gems. It expires on 14 Aug 2027.
+
+**In the code**
+- **Content:**
+  - `Config/Elements` gains the Light/Void pair.
+  - New entries in `Config/Species`, `Config/Eggs` (`sky`, `splash`), `Config/Regions` (`sky`), `Config/Mutations` (`sunkissed`, the `tropical` combo), `Config/Weather` (`beachday`, the new `dayOnly` rule, `EventBoosts.summersplash`), `Config/Events` and `Config/Decor`.
+- **World:** `Config.World.Sky` holds the island layout. `World/Build` builds the islands, bridges, pads and gate, and the Surf Shack joins the hub buildings.
+- **New systems:**
+  - `SkyIslands` (`Config/SkyIslands`)
+  - `Riding` (`Config/Riding`)
+  - `Surf` (`Config/Surf`, `Logic/Surf`): the course comes from a server seed, and the server replays the lane changes, so a client can't report a made-up score.
+- **Client:**
+  - `SkyIslands` and `Riding` controllers, and a Surf screen.
+  - A Ride button on the monster screen.
+  - `MonsterModel` adds Light/Void touches and a `scale` option for mounts.
+  - A Beach Day weather look.
+- **Tests:**
+  - `LightAndVoid.spec` (11)
+  - `LightAndVoidClient.spec` (3): fly up, collect a crystal and open the gate; ride and get off; surf a whole run through the UI.
+- **Snapshots:** `docs/snapshots/2.0-*.png`, from `tools/snapshot`.
+
 ## 1.5 · Showtime
 
 **For players**

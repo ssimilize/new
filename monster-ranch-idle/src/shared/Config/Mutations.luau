@@ -17,11 +17,14 @@ Mutations.List = {
 	{ id = "prismatic", name = "Prismatic", mult = 8, color = "#FF7AC8", statPct = 0.05 },
 	{ id = "glow", name = "Glow", mult = 3, color = "#FFB547", statPct = 0.03 }, -- Lantern Night (1.2)
 	{ id = "blossom", name = "Blossom", mult = 3, color = "#FF9EC7", statPct = 0.03 }, -- Pollen Storm (1.4)
+	{ id = "sunkissed", name = "Sunkissed", mult = 3, color = "#FFB347", statPct = 0.03 }, -- Beach Day (2.0)
 	-- Combos (never rolled directly)
 	{ id = "frozen", name = "Frozen", mult = 3.5, color = "#9FE3FF", statPct = 0.04, combo = { "soaked", "frosted" } },
 	{ id = "plasma", name = "Plasma", mult = 4, color = "#C06BFF", statPct = 0.04, combo = { "scorched", "charged" } },
 	-- Update 1.1 · Coral Depths
 	{ id = "pearl", name = "Pearl", mult = 5, color = "#F3EEE2", statPct = 0.05, combo = { "soaked", "starstruck" } },
+	-- Update 2.0 · Summer Splash
+	{ id = "tropical", name = "Tropical", mult = 5, color = "#2EC4B6", statPct = 0.05, combo = { "soaked", "sunkissed" } },
 }
 
 Mutations.ById = {}

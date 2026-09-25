@@ -56,6 +56,8 @@ World.Hub = {
 	{ id = "starAltar", name = "Star Altar", position = { 62, 0, 36 }, size = { 14, 14, 14 }, color = "#6B5BD6", screen = "Rebirth" },
 	-- Update 1.5: the Showtime Stage (Monster Contests) across from the Market stalls.
 	{ id = "showStage", name = "Showtime Stage", position = { 62, 0, -36 }, size = { 20, 6, 16 }, color = "#FF7AC8", screen = "Contests" },
+	-- Update 2.0: the Surf Shack (Summer Splash surfing) south-west of the fountain.
+	{ id = "surfShack", name = "Surf Shack", position = { -62, 0, 36 }, size = { 16, 10, 14 }, color = "#3FB6D9", screen = "Surf" },
 	-- Update 1.2: the Club Plaza between the Hall of Fame and the Arena.
 	{ id = "clubPlaza", name = "Club Plaza", position = { 0, 0, 62 }, size = { 16, 12, 14 }, color = "#2BA89A", screen = "Clubs" },
 }
@@ -63,5 +65,23 @@ World.Fountain = { position = { 0, 0, 0 }, radius = 14 }
 -- Weekly leaderboard board between the shops, facing the fountain (Screen: Leaderboards).
 World.Board = { position = { 0, 0, -40 }, size = { 20, 12, 1.2 }, color = "#D49A12" }
 World.Spawn = { 0, 3, -20 }
+
+-- Update 2.0 · Sky Islands: floating islands high above the map, joined by cloud bridges.
+-- The launch pad in the Market Square flies players to the landing island's return pad;
+-- the Sky Gate there opens the Sky Islands expeditions. Island `center` is the top of the
+-- grass; `radius` its size. Wind crystals are listed in Config.SkyIslands.
+World.Sky = {
+	launchPad = { 0, 0, -82 },
+	returnPad = { 0, 160, 22 },
+	gate = { 0, 160, -24 },
+	islands = {
+		{ id = "landing", name = "Landing Isle", center = { 0, 160, 0 }, radius = 42, grass = "#A6E07A" },
+		{ id = "sunrise", name = "Sunrise Isle", center = { 118, 170, -8 }, radius = 26, grass = "#FFE9A8" },
+		{ id = "dusk", name = "Dusk Isle", center = { -112, 166, 44 }, radius = 24, grass = "#B9A7FF" },
+		{ id = "halo", name = "Halo Isle", center = { 34, 182, -122 }, radius = 22, grass = "#FFF6D6" },
+		{ id = "rift", name = "Rift Isle", center = { -46, 176, 120 }, radius = 24, grass = "#6E62B6" },
+	},
+	bridges = { { "landing", "sunrise" }, { "landing", "dusk" }, { "landing", "halo" }, { "landing", "rift" } },
+}
 
 return World

@@ -87,6 +87,17 @@ Weather.List = {
 		chance = 0.06,
 		effects = { gardenSpeed = 1.5 },
 	},
+	-- Summer Splash (update 2.0): sunny beach days while the event runs (Heatwave is boosted too).
+	{
+		id = "beachday",
+		name = "Beach Day",
+		weight = 8,
+		event = "summersplash",
+		dayOnly = true,
+		mutation = "sunkissed",
+		chance = 0.06,
+		effects = { hatchSpeed = 1.15 },
+	},
 	{
 		id = "aurora",
 		name = "Aurora",
@@ -112,6 +123,7 @@ Weather.Totems = { rain = true, thunderstorm = true, starfall = true }
 Weather.EventBoosts = {
 	frostfall = { snow = 3 },
 	harvestmoon = { bloodmoon = 3 },
+	summersplash = { heatwave = 3 },
 }
 
 return Weather

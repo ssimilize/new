@@ -24,6 +24,9 @@ return {
 		"EggHunt",
 		-- 1.5 · Showtime
 		"Showtime",
+		-- 2.0 · Light & Void
+		"SkyIslands",
+		"Riding",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -52,5 +55,7 @@ return {
 		-- 1.5 · Showtime
 		"Wardrobe",
 		"Contests",
+		-- 2.0 · Summer Splash
+		"Surf",
 	},
 }

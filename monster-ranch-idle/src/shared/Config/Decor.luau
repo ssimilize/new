@@ -35,6 +35,25 @@ Decor.List = {
 		event = "lunarlanterns",
 	},
 	{ id = "moon_gate", name = "Moon Gate", price = { token = 350 }, mood = 4, color = "#C98B2E", event = "lunarlanterns" },
+	-- Update 2.0 · Summer Splash event decor
+	{
+		id = "beach_ball",
+		name = "Beach Ball",
+		price = { token = 150 },
+		mood = 3,
+		color = "#FF6B6B",
+		shape = "ball",
+		event = "summersplash",
+	},
+	{
+		id = "tiki_torch",
+		name = "Tiki Torch",
+		price = { token = 250 },
+		mood = 3,
+		color = "#D9A066",
+		shape = "tall",
+		event = "summersplash",
+	},
 	-- Update 1.4 · Spring Bloom event decor
 	{
 		id = "tulip_patch",
@@ -88,6 +107,14 @@ Decor.PenThemes = {
 		fence = "#F7A8C8",
 		ground = "#C9EDA8",
 		event = "springbloom",
+	},
+	{
+		id = "tropical_lagoon",
+		name = "Tropical Lagoon",
+		price = { token = 600 },
+		fence = "#2EC4B6",
+		ground = "#F4DFA6",
+		event = "summersplash",
 	},
 	-- Update 1.4 · Rebirth biomes: never sold; each Rebirth Star grants one (Config.Rebirth.Biomes).
 	{ id = "starfield", name = "Starfield Meadow", rebirth = 1, fence = "#6B5BD6", ground = "#2E3A78" },

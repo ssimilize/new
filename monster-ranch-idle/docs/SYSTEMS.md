@@ -35,7 +35,10 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | EggHunt | S6 | 🔌 | `SpringBloom.spec` | 1.4: Spring Bloom hub egg hunt, 20-minute rounds on the unix clock (same spots on every server), proximity-checked finds, round bonus, daily cap |
 | Accessories | S6 | 🔌 | `Showtime.spec` | 1.5: 39 accessories in 4 slots, buy (gems / Contest Ribbons), equip / swap / unequip, storage; stripped from monsters that leave the ranch and returned to storage |
 | Contests | S6 | 🔌 | `Showtime.spec` | 1.5: Monster Contests every 10 minutes on the unix clock (same theme on every server): entry → runway votes (1–5 ★) → results; score = 70% votes + 30% theme judge (judge alone when nobody votes); ribbons, gems and stats |
-| World (geometry) | C1 | 🔌 | Studio | `Systems/World` + `Build.luau`: ground, paths, plaza + fountain, the hub buildings of `Config.World.Hub` + the leaderboard board (HubId/Screen), 6 plots (PlotId) with 5 fenced pens (PenIndex), incubator pad, barn, gate; ~380 parts |
+| SkyIslands | S5 | 🔌 | `LightAndVoid.spec` | 2.0: 13 wind crystals on 5 floating islands, 1 h per-player respawn, daily cap 60, distance-checked, one Loot roll each (coins, treats, Stardust or a Sky Egg) |
+| Riding | S5 | 🔌 | `LightAndVoid.spec` | 2.0: mount any Adult (Lv 16); speed from species SPD and rarity; riders replicated in `global.Riding`; dismount on busy / removed / leave |
+| Surf | S6 | 🔌 | `LightAndVoid.spec` | 2.0: Summer Splash surfing; seeded course, server replays lane changes to score; Seashells through the event's daily cap |
+| World (geometry) | C1 | 🔌 | Studio + ClientHarness | `Systems/World` + `Build.luau`: ground, paths, plaza + fountain, the hub buildings of `Config.World.Hub` + the leaderboard board (HubId/Screen), the Sky Islands (2.0), 6 plots (PlotId) with 5 fenced pens (PenIndex), incubator pad, barn, gate; ~380 parts |
 
 ## Client
 
@@ -54,6 +57,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Screen: Clubs · controller: Nameplates | C3 | 🔌 | 1.2: create / join / members / goals / boss / settings; Club Plaza building + HUD button; nameplates show club tags and champion titles |
 | Screen: Rebirth · controller: EggHunt | C3 | 🔌 | 1.4: rebirth requirements / keep / reset / gain, Heirloom pick + confirm, skill tree; Star Altar in the hub and a Hall of Fame link; hunt eggs with pick-up prompts; Pollen Storm particles in the Weather controller |
 | Screens: Wardrobe, Contests (Showtime) · controller: Showtime | C3 | 🔌 | 1.5: dress-up with a live 3D preview, owned / shop tabs; show phases, entry, runway stars, podium; Showtime Stage in the hub shows the walking monster; MonsterDetail Style button; accessory placeholders in `Visuals/MonsterModel` |
+| Screen: Surf · controllers: SkyIslands, Riding | C3 | 🔌 | 2.0: launch / return pads, Sky Gate, wind crystals; mounts under every rider, rider speed and hip height, Get off button, Ride on the monster screen; 3-lane surfing screen; Surf Shack and Sky Islands geometry; Light/Void monster touches and Beach Day / pollen-style weather |
 | Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
 
 ## Studio test pass (not yet done)

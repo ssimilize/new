@@ -1,7 +1,7 @@
 --[[
 	MonsterModel: procedural placeholder 3D monsters. THE ART SWAP POINT.
 
-		local model = MonsterModel.Build(appearance, { anchored = true })
+		local model = MonsterModel.Build(appearance, { anchored = true })  -- opts.scale multiplies the size (mounts)
 		model:PivotTo(CFrame.new(0, 3, 0))
 
 	Contract (keep it when real models replace this file):
@@ -364,9 +364,9 @@ function MonsterModel.ScaleFor(appearance): number
 	return stageScale * weightScale
 end
 
-function MonsterModel.Build(appearance, opts: { anchored: boolean? }?)
+function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: number? }?)
 	local options = opts or {}
-	local s = BASE_SIZE * MonsterModel.ScaleFor(appearance)
+	local s = BASE_SIZE * MonsterModel.ScaleFor(appearance) * (options.scale or 1)
 	local element, body, belly, accent = colorsFor(appearance)
 	local archetype = appearance.archetype or "blob"
 
@@ -578,6 +578,42 @@ function MonsterModel.Build(appearance, opts: { anchored: boolean? }?)
 				CFrame.new(x * s * 0.22, top + s * 0.05, -s * 0.05) * CFrame.Angles(0, 0, math.rad(-x * 20))
 			)
 		end
+	elseif element == "light" then
+		-- Light (2.0): a small sun-crest and a warm glow.
+		ball(model, root, "Crest", Vector3.new(s * 0.22, s * 0.22, s * 0.22), accent, CFrame.new(0, top + s * 0.16, 0), Enum.Material.Neon)
+		for _, x in { -1, 1 } do
+			ball(
+				model,
+				root,
+				"Ray",
+				Vector3.new(s * 0.08, s * 0.3, s * 0.08),
+				accent,
+				CFrame.new(x * s * 0.16, top + s * 0.1, 0) * CFrame.Angles(0, 0, math.rad(-x * 35)),
+				Enum.Material.Neon
+			)
+		end
+		local glow = Instance.new("PointLight")
+		glow.Color = Color3.fromHex("#FFE9A8")
+		glow.Brightness = 1.2
+		glow.Range = s * 3
+		glow.Parent = bodyPart
+	elseif element == "void" then
+		-- Void (2.0): a tiny rift orbiting the head.
+		local rift = ball(
+			model,
+			root,
+			"Rift",
+			Vector3.new(s * 0.2, s * 0.2, s * 0.2),
+			accent,
+			CFrame.new(s * 0.35, top + s * 0.1, s * 0.1),
+			Enum.Material.Neon
+		)
+		rift.Transparency = 0.15
+		local glow = Instance.new("PointLight")
+		glow.Color = Color3.fromHex("#5CE1E6")
+		glow.Brightness = 0.8
+		glow.Range = s * 2.5
+		glow.Parent = bodyPart
 	elseif element == "gloom" then
 		local light = Instance.new("PointLight")
 		light.Color = Color3.fromHex("#C9A8FF")

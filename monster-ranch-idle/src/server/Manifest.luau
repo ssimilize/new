@@ -45,6 +45,10 @@ return {
 		-- 1.5 · Showtime
 		"Accessories",
 		"Contests",
+		-- 2.0 · Light & Void
+		"SkyIslands",
+		"Riding",
+		"Surf",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

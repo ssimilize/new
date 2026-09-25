@@ -182,6 +182,38 @@ table.insert(Eggs.List, {
 	pattern = "spots",
 })
 
+-- Update 2.0 · Sky Islands: dropped by Sky Islands expeditions and wind crystals; hatches
+-- the Light and Void lines.
+table.insert(Eggs.List, {
+	id = "sky",
+	name = "Sky Egg",
+	order = 12,
+	price = nil,
+	hatchSeconds = 2400,
+	unlock = "region_sky",
+	odds = { 0, 20, 40, 28, 10, 2 },
+	pool = "sky",
+	colors = { shell = "#EAF6FF", spots = "#F2C94C" },
+	pattern = "stars",
+})
+
+-- Update 2.0 · Summer Splash event egg (bought with Seashells while the event runs).
+table.insert(Eggs.List, {
+	id = "splash",
+	name = "Splash Egg",
+	order = 13,
+	event = "summersplash",
+	price = { token = 400 },
+	hatchSeconds = 900,
+	unlock = "egg_meadow",
+	odds = { 0, 40, 35, 18, 6, 1 },
+	pool = "summersplash",
+	forcedMutation = "sunkissed",
+	stock = { unlimited = true },
+	colors = { shell = "#7FDBFF", spots = "#FFD447" },
+	pattern = "band",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e

@@ -46,6 +46,8 @@ Unlocks.Features = {
 	incubator_3 = 30,
 	squad_4 = 35,
 	pen_5 = 40,
+	riding = 16,
+	region_sky = 45,
 	rebirth = 40,
 }
 
@@ -79,6 +81,8 @@ Unlocks.Names = {
 	incubator_3 = "Incubator 3",
 	squad_4 = "Squad size 4",
 	pen_5 = "Pen 5",
+	riding = "Riding",
+	region_sky = "Sky Islands",
 	rebirth = "Ranch Rebirth",
 }
 

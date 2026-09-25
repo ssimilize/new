@@ -190,6 +190,43 @@ Quests.Achievements = {
 		target = 1,
 		reward = { { kind = "gems", amount = 150 } },
 	},
+	-- Update 2.0 · Light & Void
+	{
+		id = "sky_first",
+		text = "Collect a wind crystal on the Sky Islands",
+		topic = "CrystalCollected",
+		target = 1,
+		reward = { { kind = "gems", amount = 50 } },
+	},
+	{
+		id = "sky_crystals_50",
+		text = "Collect 50 wind crystals",
+		topic = "CrystalCollected",
+		target = 50,
+		reward = { { kind = "egg", id = "sky", amount = 1 }, { kind = "gems", amount = 100 } },
+	},
+	{
+		id = "clear_sky",
+		text = "Clear the Sky Islands",
+		topic = "StageCleared",
+		filter = { region = "sky", stage = 20 },
+		target = 1,
+		reward = { { kind = "gems", amount = 250 }, { kind = "egg", id = "sky", amount = 2 } },
+	},
+	{
+		id = "ride_1",
+		text = "Ride one of your monsters",
+		topic = "Mounted",
+		target = 1,
+		reward = { { kind = "accessory", id = "backpack", amount = 1 } },
+	},
+	{
+		id = "surf_10",
+		text = "Finish 10 surf runs at the Surf Shack",
+		topic = "SurfRun",
+		target = 10,
+		reward = { { kind = "accessory", id = "surfboard", amount = 1 } },
+	},
 	-- Update 1.5 · Showtime
 	{
 		id = "contest_win",
@@ -348,6 +385,36 @@ Quests.Seasons = {
 			tier({ { kind = "accessory", id = "bow_tie", amount = 1 } }, { { kind = "accessory", id = "starlight_crown", amount = 1 } }),
 		},
 	},
+	-- Update 2.0 · Season 4 "Summer Splash": beachwear, Sky and Splash Eggs.
+	{
+		season = 4,
+		name = "Summer Splash",
+		startsAt = 1814022000, -- Sat 26 Jun 2027, 15:00 UTC
+		endsAt = 1817650800, -- Sat 7 Aug 2027, 15:00 UTC
+		xpPerTier = 300,
+		xpPerDaily = 100,
+		xpPerAchievement = 200,
+		tiers = {
+			tier({ { kind = "coins", amount = 15000 } }, { { kind = "gems", amount = 30 } }),
+			tier({ { kind = "treats", amount = 20 } }, { { kind = "accessory", id = "sun_hat", amount = 1 } }),
+			tier({ { kind = "accessory", id = "flower_lei", amount = 1 } }, { { kind = "egg", id = "crystal", amount = 1 } }),
+			tier({ { kind = "gems", amount = 20 } }, { { kind = "stardust", amount = 100 } }),
+			tier({ { kind = "egg", id = "grove", amount = 2 } }, { { kind = "accessory", id = "sunglasses", amount = 1 } }),
+			tier({ { kind = "ribbons", amount = 25 } }, { { kind = "gems", amount = 60 } }),
+			tier({ { kind = "food", id = "random", amount = 30 } }, { { kind = "egg", id = "sky", amount = 1 } }),
+			tier({ { kind = "accessory", id = "snorkel", amount = 1 } }, { { kind = "egg", id = "crystal", amount = 2 } }),
+			tier({ { kind = "gems", amount = 25 } }, { { kind = "accessory", id = "surfboard", amount = 1 } }),
+			tier({ { kind = "coins", amount = 400000 } }, { { kind = "egg", id = "royal", amount = 1 } }),
+			tier({ { kind = "egg", id = "sky", amount = 1 } }, { { kind = "gems", amount = 80 } }),
+			tier({ { kind = "stardust", amount = 60 } }, { { kind = "egg", id = "celestial", amount = 1 } }),
+			tier({ { kind = "gems", amount = 30 } }, { { kind = "stardust", amount = 250 } }),
+			tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "egg", id = "sky", amount = 2 } }),
+			tier(
+				{ { kind = "accessory", id = "pearl_necklace", amount = 1 } },
+				{ { kind = "monster", id = "surfotter", rarity = 5, amount = 1 } }
+			),
+		},
+	},
 }
 Quests.Pass = Quests.Seasons[1] -- kept for older call sites; prefer Quests.PassAt(now)
 
@@ -367,6 +434,8 @@ Quests.Codes = {
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
 	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
 	-- Update 1.1 launch code (expires 6 Feb 2027).
+	-- Update 2.0 launch code (expires 14 Aug 2027).
+	LIGHTANDVOID = { reward = { { kind = "egg", id = "sky", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1818255600 },
 	-- Update 1.5 launch code (expires 26 Jun 2027).
 	SHOWTIME = {
 		reward = { { kind = "accessory", id = "party_hat", amount = 1 }, { kind = "ribbons", amount = 25 } },
