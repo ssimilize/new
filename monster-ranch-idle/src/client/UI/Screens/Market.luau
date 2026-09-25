@@ -1031,7 +1031,7 @@ function Market.Build(ctx)
 		if ok and type(res) == "table" then
 			sellHistory.days = res.days
 			sellHistory.last = res.last
-			sellHistory.suggest = Market.suggest(res.days, res.last)
+			sellHistory.suggest = tonumber(res.suggest) or Market.suggest(res.days, res.last)
 			sellChart:SetSeries(res.days)
 		else
 			sellChart:SetMessage("No price history right now")

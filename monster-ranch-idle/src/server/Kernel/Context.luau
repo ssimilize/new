@@ -148,6 +148,25 @@ function Context:DirtyGlobal(...: any)
 end
 
 -- Saves the player's profile soon (use after purchases and trades, never every frame).
+-- Saves the player's profile now and waits for the result. Use it before a cross-server
+-- write that must never get ahead of the profile (market escrow, purchases): if the server
+-- dies after the external write, the saved profile already records what was intended.
+-- Returns false when the save failed or the player is gone.
+function Context:SaveNow(player: any): boolean
+	local kernel = self._kernel
+	for _ = 1, 100 do
+		if not kernel.Data._saving[player] then
+			break
+		end
+		kernel.Adapters.Wait(0.1)
+	end
+	if not kernel:IsReady(player) then
+		return false
+	end
+	kernel:_beforeSave(player)
+	return kernel.Data:Save(player, false) == true
+end
+
 function Context:RequestSave(player: any)
 	local kernel = self._kernel
 	kernel.Adapters.Spawn(function()

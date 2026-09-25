@@ -175,16 +175,14 @@ function Listing.Close(current, sellerId: number, now: number, token: string, re
 	return current
 end
 
--- Transform used after a Create that reported failure: if the write landed anyway, close it
--- without returning the item (the seller already has it back).
-function Listing.Void(current, sellerId: number, now: number)
-	if type(current) ~= "table" or current.state ~= "open" or current.seller ~= sellerId then
+-- Transform used when a listing's Create is in doubt and a fresh read found nothing: write a
+-- tombstone under the id so it can never be created (or bought) later, then the seller's
+-- server gives the item back. Returns nil (no write) when a record already exists.
+function Listing.Tombstone(current, id: string, sellerId: number, now: number)
+	if current ~= nil then
 		return nil
 	end
-	current.state = "cancelled"
-	current.closedAt = now
-	current.void = true
-	return current
+	return { id = id, seller = sellerId, state = "void", kind = "monster", club = false, price = 0, expiresAt = 0, closedAt = now }
 end
 
 return Listing

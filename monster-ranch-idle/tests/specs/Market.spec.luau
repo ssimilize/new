@@ -53,8 +53,10 @@ return function(t)
 		return listing
 	end
 
+	-- Entries waiting in a mailbox (records are { entries, acked }).
 	local function mailOf(network, userId)
-		return network.market.mail[userId] or {}
+		local box = network.market.mail[userId]
+		return if box then box.entries else {}
 	end
 
 	local function topics(h, name)
@@ -158,7 +160,7 @@ return function(t)
 			expect(h:System("Monsters"):Get(p, m.id)).toBeTruthy()
 		end)
 
-		it("puts the item straight back when the market is down", function()
+		it("keeps the item safe while the market is down and gives it back once it can confirm", function()
 			local network = MockAdapters.network()
 			local h = server(network)
 			local p = rancher(h, 7006, "Eli")
@@ -166,19 +168,24 @@ return function(t)
 			local egg = h:System("Eggs"):Add(p, "meadow", "test")[1]
 			local count, eggs = h:System("Monsters"):Count(p), h:System("Eggs"):Count(p)
 			network.marketDown = true
-			expect(h:Reject(p, "Market.List", { kind = "monster", id = m.id, price = 500 })).toContain(BUSY)
+			expect(h:Reject(p, "Market.List", { kind = "monster", id = m.id, price = 500 })).toContain("The market is busy")
 			h:Advance(1)
-			expect(h:Reject(p, "Market.List", { kind = "egg", id = egg, price = 500 })).toContain(BUSY)
-			expect(h:System("Monsters"):Count(p)).toBe(count)
-			expect(h:System("Eggs"):Count(p)).toBe(eggs)
+			expect(h:Reject(p, "Market.List", { kind = "egg", id = egg, price = 500 })).toContain("The market is busy")
+			-- Nothing is known yet (the Create may have landed), so the items wait in saved tasks.
+			expect(#h:Section(p, "Market").outbox).toBe(2)
+			expect(h:System("Monsters"):Count(p)).toBe(count - 1)
 			expect(next(network.market.listings)).toBeNil()
-			expect(#h:Section(p, "Market").listings).toBe(0)
 			expect(coins(h, p)).toBe(COINS)
-			-- The safety "void" of the failed Create is retried and finds nothing to close.
+			-- Once the market answers, a tombstone blocks each id and the items come back.
 			network.marketDown = false
 			h:Advance(Cfg.MailSyncSeconds)
 			expect(#h:Section(p, "Market").outbox).toBe(0)
-			expect(next(network.market.listings)).toBeNil()
+			expect(h:System("Monsters"):Count(p)).toBe(count)
+			expect(h:System("Eggs"):Count(p)).toBe(eggs)
+			expect(#h:Section(p, "Market").listings).toBe(0)
+			for _, l in network.market.listings do
+				expect(l.state).toBe("void")
+			end
 		end)
 	end)
 
@@ -233,7 +240,7 @@ return function(t)
 			expect(a:Section(seller, "Market").stats.earned).toBe(9200)
 			local event = a:LastEvent(seller, "Market.MailCollected").payload
 			expect(event.coins).toBe(9200)
-			expect(event.sold[1]).toEqual({ key = "m:bubblin:4:0", price = 10000, proceeds = 9200 })
+			expect(event.sold[1]).toEqual({ key = "m:bubblin:4:0", price = 10000, proceeds = 9200, name = "Bubblin" })
 			expect(#mailOf(network, 7101)).toBe(0)
 			b:Advance(3)
 			expect(b:Reject(buyer, "Market.Buy", { listing = view.id, price = 10000 })).toContain("already bought")
@@ -279,7 +286,7 @@ return function(t)
 			expect(coins(a, seller)).toBe(COINS + Cfg.Proceeds(20000))
 		end)
 
-		it("refunds when the sale can't be written", function()
+		it("holds the charge while a sale can't be confirmed, then refunds it", function()
 			local network = MockAdapters.network()
 			local a, b = server(network), server(network)
 			local seller = rancher(a, 7120, "Seller")
@@ -290,13 +297,17 @@ return function(t)
 			b.adapters.Market.Update = function()
 				return false, nil
 			end
-			expect(b:Reject(buyer, "Market.Buy", { listing = view.id, price = 3000 })).toContain(BUSY)
+			expect(b:Reject(buyer, "Market.Buy", { listing = view.id, price = 3000 })).toContain("The market is busy")
+			-- The outcome is unknown: the charge waits in a saved settle task.
+			expect(coins(b, buyer)).toBe(COINS - 3000)
+			expect(#b:Section(buyer, "Market").outbox).toBe(1)
 			b.adapters.Market.Update = update
+			b:Advance(Cfg.MailSyncSeconds)
 			expect(coins(b, buyer)).toBe(COINS)
+			expect(#b:Section(buyer, "Market").outbox).toBe(0)
 			expect(b:System("Monsters"):Count(buyer)).toBe(count)
 			expect(network.market.listings[view.id].state).toBe("open")
 			expect(#mailOf(network, 7120)).toBe(0)
-			b:Advance(1)
 			b:Call(buyer, "Market.Buy", { listing = view.id, price = 3000 })
 			expect(coins(b, buyer)).toBe(COINS - 3000)
 		end)
@@ -420,7 +431,9 @@ return function(t)
 			b:Call(member, "Market.Buy", { listing = view.id, price = 10000 })
 			a:Advance(Cfg.MailSyncSeconds)
 			expect(coins(a, owner)).toBe(ownerCoins + Cfg.Proceeds(10000, true))
-			expect(Cfg.Proceeds(10000, true)).toBe(10000)
+			-- The club post pays a lower tax than the market, but never zero.
+			expect(Cfg.Proceeds(10000, true)).toBe(9600)
+			expect(Cfg.Proceeds(10000, true)).toBeGreaterThan(Cfg.Proceeds(10000, false))
 		end)
 	end)
 
@@ -706,6 +719,162 @@ return function(t)
 			expect(a:System("Monsters"):Count(p)).toBe(count + 3)
 			expect(#a:Client(p).session.Market.mail.items).toBe(0)
 			expect(#mailOf(network, 7503)).toBe(0)
+		end)
+	end)
+
+	describe("Failure safety", function()
+		-- A copy of one server's saved profiles, as a crashed server would leave them.
+		local function snapshot(h)
+			return MockAdapters.deepCopy(h.adapters.store)
+		end
+
+		local function rebootWith(network, store)
+			local h = server(network)
+			h.adapters.store = MockAdapters.deepCopy(store)
+			return h
+		end
+
+		it("keeps mail in the box when the player leaves while it is being read", function()
+			local network = MockAdapters.network()
+			local a, b = server(network), server(network)
+			local seller = rancher(a, 7601, "Sal")
+			local buyer = rancher(b, 7602, "Bo")
+			local view = sell(a, seller, monster(a, seller).id, 8000)
+			local peek = a.adapters.Market.MailPeek
+			a.adapters.Market.MailPeek = function(userId)
+				local ok, entries = peek(userId)
+				a:Leave(seller) -- the player leaves during the read
+				return ok, entries
+			end
+			b:Call(buyer, "Market.Buy", { listing = view.id, price = 8000 })
+			a.adapters.Market.MailPeek = peek
+			expect(#mailOf(network, 7601)).toBe(1) -- still waiting, not lost
+			local back = a:Rejoin(seller, 5)
+			a:Advance(2)
+			expect(coins(a, back)).toBe(COINS + Cfg.Proceeds(8000, false))
+			expect(#mailOf(network, 7601)).toBe(0)
+		end)
+
+		it("delivers exactly once when a sale lands but reports failure", function()
+			local network = MockAdapters.network()
+			local a, b = server(network), server(network)
+			local seller = rancher(a, 7611, "Sal")
+			local buyer = rancher(b, 7612, "Bo")
+			local view = sell(a, seller, monster(a, seller).id, 6000)
+			local count = b:System("Monsters"):Count(buyer)
+			local update = b.adapters.Market.Update
+			local lied = false
+			b.adapters.Market.Update = function(id, transform)
+				local ok, result = update(id, transform)
+				if not lied and result ~= nil then
+					lied = true
+					return false, nil -- the write happened; the reply was lost
+				end
+				return ok, result
+			end
+			b:Call(buyer, "Market.Buy", { listing = view.id, price = 6000 })
+			b.adapters.Market.Update = update
+			expect(lied).toBe(true)
+			expect(coins(b, buyer)).toBe(COINS - 6000)
+			expect(b:System("Monsters"):Count(buyer)).toBe(count + 1)
+			a:Advance(Cfg.MailSyncSeconds)
+			expect(coins(a, seller)).toBe(COINS + Cfg.Proceeds(6000, false))
+		end)
+
+		it("never pays twice when a mail delivery lands but reports failure", function()
+			local network = MockAdapters.network()
+			local a, b = server(network), server(network)
+			local seller = rancher(a, 7621, "Sal")
+			local buyer = rancher(b, 7622, "Bo")
+			local view = sell(a, seller, monster(a, seller).id, 9000)
+			local add = b.adapters.Market.MailAdd
+			b.adapters.Market.MailAdd = function(userId, entry)
+				add(userId, entry)
+				return false -- delivered, but the reply was lost: the buyer's server retries it
+			end
+			b:Call(buyer, "Market.Buy", { listing = view.id, price = 9000 })
+			expect(#b:Section(buyer, "Market").outbox).toBe(1)
+			b.adapters.Market.MailAdd = add
+			b:Advance(Cfg.MailSyncSeconds) -- the retry is skipped by the mailbox (same id)
+			expect(#b:Section(buyer, "Market").outbox).toBe(0)
+			a:Advance(Cfg.MailSyncSeconds)
+			expect(coins(a, seller)).toBe(COINS + Cfg.Proceeds(9000, false))
+			a:Advance(Cfg.MailSyncSeconds)
+			expect(coins(a, seller)).toBe(COINS + Cfg.Proceeds(9000, false))
+		end)
+
+		it("recovers a listing when the server dies right after the market write", function()
+			local network = MockAdapters.network()
+			local a = server(network)
+			local seller = rancher(a, 7631, "Sal")
+			local m = monster(a, seller)
+			local count = a:System("Monsters"):Count(seller)
+			local saved
+			local create = a.adapters.Market.Create
+			a.adapters.Market.Create = function(listing)
+				local ok = create(listing)
+				saved = snapshot(a) -- the server dies here: this is all that was saved
+				return ok
+			end
+			local view = a:Call(seller, "Market.List", { kind = "monster", id = m.id, price = 700 }).listing
+			local b = rebootWith(network, saved)
+			local back = b:Join(7631, "Sal")
+			b:Advance(2)
+			-- The saved profile never had the monster after listing: no duplicate…
+			expect(b:System("Monsters"):Get(back, m.id)).toBeNil()
+			expect(b:System("Monsters"):Count(back)).toBe(count - 1)
+			-- …and the listing is still theirs and still for sale.
+			expect(table.find(b:Section(back, "Market").listings, view.id) ~= nil).toBe(true)
+			expect(#b:Section(back, "Market").outbox).toBe(0)
+			expect(network.market.listings[view.id].state).toBe("open")
+		end)
+
+		it("recovers a purchase when the buyer's server dies right after the sale", function()
+			local network = MockAdapters.network()
+			local a, b = server(network), server(network)
+			local seller = rancher(a, 7641, "Sal")
+			local buyer = rancher(b, 7642, "Bo")
+			local view = sell(a, seller, monster(a, seller).id, 4000)
+			local count = b:System("Monsters"):Count(buyer)
+			local saved
+			local update = b.adapters.Market.Update
+			b.adapters.Market.Update = function(id, transform)
+				local ok, result = update(id, transform)
+				if saved == nil and result ~= nil and result.state == "sold" then
+					saved = snapshot(b) -- the server dies here
+				end
+				return ok, result
+			end
+			b:Call(buyer, "Market.Buy", { listing = view.id, price = 4000 })
+			local c = rebootWith(network, saved)
+			local back = c:Join(7642, "Bo")
+			c:Advance(2)
+			expect(coins(c, back)).toBe(COINS - 4000) -- charged once
+			expect(c:System("Monsters"):Count(back)).toBe(count + 1) -- and got the monster
+			expect(#c:Section(back, "Market").outbox).toBe(0)
+			a:Advance(Cfg.MailSyncSeconds)
+			expect(coins(a, seller)).toBe(COINS + Cfg.Proceeds(4000, false))
+		end)
+
+		it("refuses a second purchase while one is still running", function()
+			local network = MockAdapters.network()
+			local a, b = server(network), server(network)
+			local seller = rancher(a, 7651, "Sal")
+			local buyer = rancher(b, 7652, "Bo")
+			local first = sell(a, seller, monster(a, seller).id, 1000)
+			local second = sell(a, seller, monster(a, seller).id, 1000)
+			local update = b.adapters.Market.Update
+			local nested = nil
+			b.adapters.Market.Update = function(id, transform)
+				if nested == nil then
+					nested = b:Invoke(buyer, "Market.Buy", { listing = second.id, price = 1000 })
+				end
+				return update(id, transform)
+			end
+			b:Call(buyer, "Market.Buy", { listing = first.id, price = 1000 })
+			b.adapters.Market.Update = update
+			expect(nested.ok).toBe(false)
+			expect(nested.err).toContain("last purchase")
 		end)
 	end)
 end

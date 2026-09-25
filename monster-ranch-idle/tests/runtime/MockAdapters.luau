@@ -330,21 +330,58 @@ function MockAdapters.new(options: { startTime: number?, network: any? }?)
 			end)
 			return true, list
 		end,
+		-- Two-phase, deduplicated mailbox (see Adapters.luau): mail[userId] = { entries, acked }.
 		MailAdd = function(userId, entry)
 			if not marketUp() then
 				return false
 			end
-			market.mail[userId] = market.mail[userId] or {}
-			table.insert(market.mail[userId], deepCopy(entry))
+			local box = market.mail[userId] or { entries = {}, acked = {} }
+			market.mail[userId] = box
+			if entry.id ~= nil then
+				if table.find(box.acked, entry.id) then
+					return true
+				end
+				for _, e in box.entries do
+					if e.id == entry.id then
+						return true
+					end
+				end
+			end
+			table.insert(box.entries, deepCopy(entry))
 			return true
 		end,
-		MailTake = function(userId)
+		MailPeek = function(userId)
 			if not marketUp() then
 				return false, nil
 			end
-			local list = market.mail[userId] or {}
-			market.mail[userId] = nil
-			return true, list
+			local box = market.mail[userId]
+			return true, deepCopy(if box then box.entries else {})
+		end,
+		MailAck = function(userId, ids)
+			if not marketUp() then
+				return false
+			end
+			local box = market.mail[userId]
+			if not box then
+				return true
+			end
+			local drop = {}
+			for _, id in ids do
+				drop[id] = true
+			end
+			local kept = {}
+			for _, e in box.entries do
+				if e.id ~= nil and drop[e.id] then
+					table.insert(box.acked, e.id)
+				else
+					table.insert(kept, e)
+				end
+			end
+			box.entries = kept
+			while #box.acked > 200 do
+				table.remove(box.acked, 1)
+			end
+			return true
 		end,
 	}
 	a.PriceHistory = {

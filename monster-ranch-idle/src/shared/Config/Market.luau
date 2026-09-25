@@ -9,7 +9,9 @@
 	mailbox too.
 
 	Club trading post: a listing can be posted to the seller's club only (`club = true`).
-	Only members of that club see and buy it, and it pays `ClubTax` instead of `Tax`.
+	Only members of that club see and buy it, and it pays the lower `ClubTax` instead of
+	`Tax`. ClubTax is never 0, so a club of alts can't move coins for free, and club sales
+	don't count toward public price history.
 
 	Price history: every sale is recorded per item key (Market.ItemKey) in daily buckets
 	for the last `HistoryDays` days (see Logic/PriceHistory and the PriceHistory system).
@@ -19,7 +21,7 @@ local Market = {}
 
 Market.Unlock = "market"
 Market.Tax = 0.08
-Market.ClubTax = 0.0
+Market.ClubTax = 0.04
 Market.MaxListings = 8 -- active listings per player
 Market.DurationSeconds = 48 * 3600
 Market.MinPrice = 100

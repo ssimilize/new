@@ -2,32 +2,38 @@
 	Market (update 1.3 · Market Day, ARCHITECTURE §8): asynchronous listings across every
 	server. Rules and tuning are in Config.Market; pure listing rules in Listing.luau.
 
-	Escrow: listing takes the monster or egg out of the seller's profile (Monsters:Remove /
-	Eggs:Remove) and stores it inside the listing record (Services.Market.Create). If Create
-	fails the item goes straight back. A listing only leaves "open" inside
-	Services.Market.Update (atomic), so exactly one buyer can win it across all servers.
+	Nothing is ever duplicated or lost, even when a server dies or a DataStore write lands
+	but reports failure. Every cross-server step follows the same pattern:
+	  1. record the intent as a task in the player's own profile (private `outbox`) and
+	     ctx:SaveNow — the saved profile now says what is about to happen;
+	  2. do the external write (Services.Market);
+	  3. resolve: apply the result and drop the task in one profile change. When the write's
+	     outcome is unknown, a fresh read (an Update whose transform writes nothing) decides;
+	     when even that fails the task stays saved and is resolved on the next sync, on any
+	     server, after a crash or a rejoin.
 
-	Buy:     checks → Currency:Charge → Update(open → sold). A lost race or a failed Update
-	         refunds. The winner gets the item (Monsters:Insert / Eggs:Insert); the seller gets
-	         Config.Market.Proceeds(price, club) through their mailbox.
-	Cancel / expiry: Update(open → cancelled | expired) by the seller's server; the item comes
-	         back to the profile when there is room, otherwise through the mailbox.
-	Mail:    collected on join (PlayerReady) and every MailSyncSeconds: coins are added
-	         ("market_sale"), items inserted when they fit; the rest goes back to the mailbox
-	         and shows in session.Market.mail. Fires Market.MailCollected when anything arrived.
-	Outbox:  mail that could not be sent (MailAdd failed) is kept in the sender's profile
-	         (private `outbox`, saved with it) and retried on every sync: proceeds are never
-	         dropped. Tasks for players who already left wait in memory.
+	Tasks: list   { listing, itemKind, item }          escrowed item until Create is confirmed
+	       settle { listing, token, price, key }       coins charged until the sale is confirmed
+	       close  { listing, token, reason }           cancel / expiry until confirmed
+	       mail   { userId, entry }                    a MailAdd to retry
+	A listing only leaves "open" inside Services.Market.Update (atomic, with a per-request
+	token), so exactly one buyer wins across all servers.
 
-	Market.Buy also needs the "market" unlock (alts below Ranch Level 10 can't move coins).
-	Browse results are cached per query for BrowseCacheSeconds (cleared by this server's own
-	listings, sales and cancels); expired listings are filtered at read time.
+	Mail is two-phase and deduplicated: every entry has a deterministic id ("sale:<listing>",
+	"bought:<listing>", "return:<listing>"); MailAdd skips ids it has seen, and collection is
+	MailPeek → apply + remember the ids (`mailSeen`) + SaveNow → MailAck. Entries that don't
+	fit (full ranch) stay in the mailbox and show in session.Market.mail.
 
-	Save section (profile.Market):
+	Market.Buy also needs the "market" unlock (alts below Ranch Level 10 can't move coins),
+	and one purchase per player at a time. Browse results are cached per query for
+	BrowseCacheSeconds; expired listings are filtered at read time.
+
+	Save section (profile.Market), version 2:
 	  listings = { listingId }                          -- this player's open listings
 	  stats    = { sold, bought, earned, spent }
 	  seq      = number                                 -- private: listing id counter
-	  outbox   = { { kind = "mail", userId, entry } | { kind = "void", listing, seller } }  -- private
+	  outbox   = { task }                               -- private: see above
+	  mailSeen = { mailId }                             -- private: applied, maybe not yet acked
 	Session (session.Market): { mail = { coins, items = { { kind, key, reason, item = ItemView } } } }
 
 	Actions: Market.List, Cancel, Buy, Browse, Mine, Collect. Event: Market.MailCollected.
@@ -46,11 +52,24 @@ local Market = {
 }
 
 Market.Profile = {
-	Version = 1,
+	Version = 2,
 	Default = function()
-		return { listings = {}, stats = { sold = 0, bought = 0, earned = 0, spent = 0 }, seq = 0, outbox = {} }
+		return { listings = {}, stats = { sold = 0, bought = 0, earned = 0, spent = 0 }, seq = 0, outbox = {}, mailSeen = {} }
 	end,
-	Private = { "seq", "outbox" },
+	Migrate = function(section, fromVersion)
+		if fromVersion < 2 then
+			section.mailSeen = section.mailSeen or {}
+			local kept = {}
+			for _, task in section.outbox or {} do
+				if task.kind == "mail" then
+					table.insert(kept, task)
+				end
+			end
+			section.outbox = kept
+		end
+		return section
+	end,
+	Private = { "seq", "outbox", "mailSeen" },
 }
 
 local BUSY = "The market is busy. Try again"
@@ -61,9 +80,11 @@ local Currency, Progression, Monsters
 
 local known = {} -- [player] = { [listingId] = expiresAt } open listings this server has read
 local syncing = {} -- [player] = true while a sync runs
-local orphans = {} -- outbox tasks whose sender already left
+local buying = {} -- [player] = true while a purchase runs (one at a time)
+local flushing = false
 local cache = {} -- [query] = { at, list } browse results
 local tokens = 0
+local MAIL_SEEN_MAX = 200
 
 -- Helpers -----------------------------------------------------------------------------------
 
@@ -79,11 +100,15 @@ local function section(player)
 	return ctx:Section(player)
 end
 
+-- Listings this server has read for the player. Players who already left get a throwaway
+-- table, so a request still yielding for them can't keep them in memory.
 local function knownOf(player)
 	local list = known[player]
 	if not list then
 		list = {}
-		known[player] = list
+		if ctx:IsReady(player) then
+			known[player] = list
+		end
 	end
 	return list
 end
@@ -124,48 +149,42 @@ local function invalidate()
 	table.clear(cache)
 end
 
--- Outbox -------------------------------------------------------------------------------------
+-- Outbox and mail --------------------------------------------------------------------------
 
-local function queue(owner, task)
-	local s = owner and section(owner)
-	if s then
-		table.insert(s.outbox, task)
-	else
-		table.insert(orphans, task)
+local function addTask(player, task)
+	table.insert(section(player).outbox, task)
+end
+
+local function removeTask(player, task)
+	local s = section(player)
+	local i = s and table.find(s.outbox, task)
+	if i then
+		table.remove(s.outbox, i)
 	end
 end
 
-local function runTask(task): boolean
-	if task.kind == "mail" then
-		return call("MailAdd", task.userId, task.entry) == true
-	elseif task.kind == "void" then
-		local t = now()
-		return call("Update", task.listing, function(current)
-			return Listing.Void(current, task.seller, t)
-		end) == true
-	end
-	warn("[Market] dropping unknown outbox task " .. tostring(task.kind))
-	return true
-end
-
--- Runs queued tasks in order; stops at the first failure (the market is probably down).
-local function flush(list): boolean
-	while #list > 0 do
-		if not runTask(list[1]) then
-			return false
-		end
-		table.remove(list, 1)
-	end
-	return true
-end
-
--- Sends mail to `userId`, or keeps it in `owner`'s outbox when the mailbox can't be reached.
+-- Sends mail, or keeps it in `owner`'s saved outbox to retry. Entries carry an `id`, so a
+-- retry after a write that landed anyway is skipped by the mailbox.
 local function mail(owner, userId: number, entry)
 	if call("MailAdd", userId, entry) ~= true then
-		queue(owner, { kind = "mail", userId = userId, entry = entry })
+		if owner and section(owner) then
+			addTask(owner, { kind = "mail", userId = userId, entry = entry })
+		else
+			warn("[Market] could not mail " .. tostring(entry.id) .. "; nobody to keep it")
+		end
 		return false
 	end
 	return true
+end
+
+-- Reads the latest record without writing (UpdateAsync is never cached, GetAsync can be).
+local function fresh(id: string): (boolean, any)
+	local seen = nil
+	local ok = call("Update", id, function(current)
+		seen = current
+		return nil
+	end)
+	return ok == true, seen
 end
 
 -- Items --------------------------------------------------------------------------------------
@@ -194,20 +213,21 @@ local function give(player, kind: string, record): string?
 	return Eggs and Eggs:Insert(player, record, "market")
 end
 
--- Returns a closed listing's item: to the profile if it fits, otherwise to the mailbox.
-local function returnItem(player, listing): string?
-	if roomFor(player, listing.kind) then
-		local id = give(player, listing.kind, listing.item)
+-- Gives an item back to its seller: into the profile if it fits, otherwise by mail.
+local function returnItem(player, kind: string, record, listingId: string, reason: string): string?
+	if roomFor(player, kind) then
+		local id = give(player, kind, record)
 		if id then
 			return id
 		end
 	end
-	mail(player, listing.seller, {
+	mail(player, player.UserId, {
+		id = "return:" .. listingId,
 		kind = "item",
-		itemKind = listing.kind,
-		item = listing.item,
-		listing = listing.id,
-		reason = listing.state,
+		itemKind = kind,
+		item = record,
+		listing = listingId,
+		reason = reason,
 	})
 	return nil
 end
@@ -227,8 +247,8 @@ local function forget(player, id: string)
 end
 
 -- Re-reads the player's listings (all, or only those this server hasn't read yet) and drops
--- the ones that are no longer open (a sale's coins arrive by mail). Returns the open ones and
--- whether every read worked.
+-- the ones that are no longer open (a sale's coins arrive by mail; cancels and expiries are
+-- settled by their `close` task). Returns the open ones and whether every read worked.
 local function review(player, onlyUnknown: boolean)
 	local s = section(player)
 	local seen = knownOf(player)
@@ -236,15 +256,21 @@ local function review(player, onlyUnknown: boolean)
 	if not s then
 		return open, false
 	end
+	local pendingList = {}
+	for _, task in s.outbox do
+		if task.kind == "list" then
+			pendingList[task.listing] = true
+		end
+	end
 	for _, id in table.clone(s.listings) do
-		if not (onlyUnknown and seen[id]) then
+		if not (onlyUnknown and seen[id]) and not pendingList[id] then
 			local ok, listing = call("Get", id)
 			if not ok then
 				allOk = false
 			elseif type(listing) == "table" and listing.state == "open" then
 				seen[id] = listing.expiresAt
 				table.insert(open, listing)
-			else
+			elseif listing ~= nil then
 				forget(player, id)
 			end
 		end
@@ -252,28 +278,185 @@ local function review(player, onlyUnknown: boolean)
 	return open, allOk
 end
 
--- Closes one of the player's open listings. Returns (closed listing) or (nil, "busy" | "unchanged").
-local function close(player, id: string, reason: string)
-	local token = newToken(player)
-	local t = now()
-	local ok, result = call("Update", id, function(current)
-		return Listing.Close(current, player.UserId, t, token, reason)
-	end)
-	if ok ~= true then
-		-- The write may have landed before the failure was reported: our token tells.
-		local got, current = call("Get", id)
-		if got == true and type(current) == "table" and current.token == token then
-			result = current
-		else
-			return nil, "busy"
+-- Resolvers ------------------------------------------------------------------------------------
+-- Each returns a status, or nil when the market can't be read (the task stays saved).
+
+-- A listing whose Create is in doubt: "listed" (it exists) or "returned" (item back).
+local function resolveList(player, task): string?
+	local ok, current = fresh(task.listing)
+	if not ok then
+		return nil
+	end
+	if current == nil then
+		local wrote = call("Update", task.listing, function(c)
+			return Listing.Tombstone(c, task.listing, player.UserId, now())
+		end)
+		if wrote ~= true then
+			return nil
+		end
+		ok, current = fresh(task.listing)
+		if not ok then
+			return nil
 		end
 	end
-	if type(result) ~= "table" or result.token ~= token then
-		return nil, "unchanged"
+	if type(current) == "table" and current.state == "void" then
+		returnItem(player, task.itemKind, task.item, task.listing, "cancelled")
+		forget(player, task.listing)
+		return "returned"
 	end
-	forget(player, id)
+	if type(current) == "table" and current.state == "open" then
+		knownOf(player)[task.listing] = current.expiresAt
+	end
+	return "listed" -- it exists; its own sale / close flow takes it from here
+end
+
+local function deliver(player, sold, price: number)
+	local id = sold.id
+	local newId = if roomFor(player, sold.kind) then give(player, sold.kind, sold.item) else nil
+	if not newId then
+		mail(
+			player,
+			player.UserId,
+			{ id = "bought:" .. id, kind = "item", itemKind = sold.kind, item = sold.item, listing = id, reason = "bought" }
+		)
+	end
+	local club = isClub(sold)
+	local proceeds = Cfg.Proceeds(price, club)
+	local name = if type(sold.view) == "table" then sold.view.name else nil
+	mail(
+		player,
+		sold.seller,
+		{ id = "sale:" .. id, kind = "coins", amount = proceeds, listing = id, key = sold.key, price = price, name = name }
+	)
+	local s = section(player)
+	s.stats.bought += 1
+	s.stats.spent += price
+	ctx:Dirty(player, "stats")
 	invalidate()
-	return result, nil
+	ctx.Bus:Publish("MarketBought", player, { listing = id, key = sold.key, kind = sold.kind, price = price, club = club })
+	ctx.Bus:Publish("MarketSold", nil, {
+		listing = id,
+		key = sold.key,
+		kind = sold.kind,
+		price = price,
+		proceeds = proceeds,
+		buyer = player.UserId,
+		seller = sold.seller,
+		club = club,
+	})
+	ctx.Analytics.Custom(player, "MarketBought", price, { kind = sold.kind, key = sold.key })
+	local seller = ctx:PlayerByUserId(sold.seller)
+	if seller then
+		ctx.Services.Spawn(function()
+			Market:Sync(seller) -- pay a seller on this server right away
+		end)
+	end
+	return newId
+end
+
+-- A purchase whose Update is in doubt: "bought" (item delivered) or "refunded".
+local function resolveSettle(player, task): (string?, string?)
+	local ok, current = fresh(task.listing)
+	if not ok then
+		return nil
+	end
+	if type(current) == "table" and current.state == "sold" and current.token == task.token then
+		return "bought", deliver(player, current, task.price)
+	end
+	Currency:Add(player, "coins", task.price, "market_refund")
+	return "refunded"
+end
+
+-- A cancel / expiry whose Update is in doubt: "closed" (item back) or "unchanged".
+local function resolveClose(player, task): (string?, string?)
+	local ok, current = fresh(task.listing)
+	if not ok then
+		return nil
+	end
+	if type(current) == "table" and current.token == task.token and current.state ~= "open" and current.state ~= "sold" then
+		local newId = returnItem(player, current.kind, current.item, task.listing, current.state)
+		forget(player, task.listing)
+		invalidate()
+		return "closed", newId
+	end
+	if current == nil or current.state ~= "open" then
+		forget(player, task.listing)
+	end
+	return "unchanged"
+end
+
+local function resolve(player, task): boolean
+	if task.kind == "mail" then
+		return call("MailAdd", task.userId, task.entry) == true
+	elseif task.kind == "list" then
+		return resolveList(player, task) ~= nil
+	elseif task.kind == "settle" then
+		return resolveSettle(player, task) ~= nil
+	elseif task.kind == "close" then
+		return resolveClose(player, task) ~= nil
+	end
+	warn("[Market] dropping unknown task " .. tostring(task.kind))
+	return true
+end
+
+-- Runs the player's saved tasks in order; stops at the first one the market can't settle.
+local function flushTasks(player): boolean
+	local s = section(player)
+	if not s then
+		return false
+	end
+	local changed = false
+	while #s.outbox > 0 do
+		local task = s.outbox[1]
+		if not resolve(player, task) then
+			break
+		end
+		if not section(player) then
+			return false -- left while resolving; the saved copy still has the task
+		end
+		removeTask(player, task)
+		changed = true
+	end
+	if changed then
+		ctx:SaveNow(player)
+	end
+	return #s.outbox == 0
+end
+
+-- Closes one of the player's open listings. Returns ("closed", listing, newItemId),
+-- ("unchanged") when it is not open any more, or ("busy") when the market can't settle it.
+local function closeListing(player, id: string, reason: string)
+	local task = { kind = "close", listing = id, token = newToken(player), reason = reason }
+	addTask(player, task)
+	if not ctx:SaveNow(player) then
+		removeTask(player, task)
+		return "busy"
+	end
+	local t = now()
+	local ok, result = call("Update", id, function(current)
+		return Listing.Close(current, player.UserId, t, task.token, reason)
+	end)
+	if not section(player) then
+		return "busy"
+	end
+	if ok == true then
+		removeTask(player, task)
+		if type(result) == "table" and result.token == task.token then
+			local newId = returnItem(player, result.kind, result.item, id, result.state)
+			forget(player, id)
+			invalidate()
+			ctx:SaveNow(player)
+			return "closed", result, newId
+		end
+		return "unchanged"
+	end
+	local status, newId = resolveClose(player, task)
+	if status == nil or not section(player) then
+		return "busy" -- stays saved; the next sync settles it
+	end
+	removeTask(player, task)
+	ctx:SaveNow(player)
+	return status, nil, newId
 end
 
 -- Expires the player's listings whose time is up. Returns { { kind, id } } put back.
@@ -281,16 +464,12 @@ local function expireDue(player)
 	local items = {}
 	local t = now()
 	for id, expiresAt in table.clone(knownOf(player)) do
-		if expiresAt <= t then
-			local closed, why = close(player, id, "expired")
-			if closed then
-				local newId = returnItem(player, closed)
-				if newId then
-					table.insert(items, { kind = closed.kind, id = newId })
-				end
-			elseif why == "unchanged" then
-				-- Sold or closed elsewhere: read it again on the next sync.
-				knownOf(player)[id] = nil
+		if expiresAt <= t and section(player) then
+			local status, closed, newId = closeListing(player, id, "expired")
+			if status == "closed" and newId then
+				table.insert(items, { kind = if closed then closed.kind else "monster", id = newId })
+			elseif status == "unchanged" then
+				knownOf(player)[id] = nil -- sold or closed elsewhere: read it again next sync
 			end
 		end
 	end
@@ -327,25 +506,37 @@ local function report(player, coins: number, items, sold, returned: number)
 		return
 	end
 	ctx.Net:Fire(player, "Market.MailCollected", { coins = coins, items = items, sold = sold, returned = returned })
-	ctx:RequestSave(player)
 end
 
--- One pass for one player: outbox, unknown listings, expiry, then the mailbox.
+local function rememberMail(s, id: string)
+	table.insert(s.mailSeen, id)
+	while #s.mailSeen > MAIL_SEEN_MAX do
+		table.remove(s.mailSeen, 1)
+	end
+end
+
+-- One pass for one player: saved tasks, unknown listings, expiry, then the mailbox.
 local function syncNow(player)
-	local s = section(player)
-	flush(s.outbox)
+	flushTasks(player)
 	review(player, true)
 	local items = expireDue(player)
 	local returned = #items
-	local coins, sold, left = 0, {}, {}
+	local coins, sold, left, ack = 0, {}, {}, {}
 
-	local ok, entries = call("MailTake", player.UserId)
-	local mailOk = ok == true and type(entries) == "table"
+	local ok, entries = call("MailPeek", player.UserId)
+	local s = section(player)
+	local mailOk = ok == true and type(entries) == "table" and s ~= nil
 	if mailOk then
 		for _, entry in entries do
 			if type(entry) ~= "table" then
 				continue
 			end
+			local id = entry.id
+			if id ~= nil and table.find(s.mailSeen, id) then
+				table.insert(ack, id) -- applied before; the ack was lost
+				continue
+			end
+			local applied = false
 			if entry.kind == "coins" then
 				local amount = math.max(0, math.floor(tonumber(entry.amount) or 0))
 				if entry.refund then
@@ -355,12 +546,13 @@ local function syncNow(player)
 					s.stats.sold += 1
 					s.stats.earned += amount
 					ctx:Dirty(player, "stats")
-					table.insert(sold, { key = entry.key, price = entry.price, proceeds = amount })
+					table.insert(sold, { key = entry.key, price = entry.price, proceeds = amount, name = entry.name })
 				end
 				coins += amount
 				if type(entry.listing) == "string" then
 					forget(player, entry.listing)
 				end
+				applied = true
 			elseif entry.kind == "item" and type(entry.item) == "table" and roomFor(player, entry.itemKind) then
 				local newId = give(player, entry.itemKind, entry.item)
 				if newId then
@@ -368,17 +560,22 @@ local function syncNow(player)
 					if entry.reason ~= "bought" then
 						returned += 1
 					end
-				else
-					table.insert(left, entry)
+					applied = true
+				end
+			end
+			if applied then
+				if id ~= nil then
+					rememberMail(s, id)
+					table.insert(ack, id)
 				end
 			else
-				table.insert(left, entry) -- no room (or unknown): back into the mailbox
+				table.insert(left, entry) -- no room: it stays in the mailbox
 			end
 		end
-		for _, entry in left do
-			mail(player, player.UserId, entry)
-		end
 		setMailView(player, left)
+		if #ack > 0 and ctx:SaveNow(player) then
+			call("MailAck", player.UserId, ack)
+		end
 	end
 	report(player, coins, items, sold, returned)
 	return { mailOk = mailOk, coins = coins, items = items, sold = sold, left = #left }
@@ -399,10 +596,14 @@ function Market:Sync(player)
 end
 
 function Market:Flush()
-	flush(orphans)
+	if flushing then
+		return
+	end
+	flushing = true
 	for _, player in ctx:Players() do
 		Market:Sync(player)
 	end
+	flushing = false
 end
 
 local function syncLater(player)
@@ -473,19 +674,40 @@ local function list(player, payload)
 		now = t,
 		club = clubId,
 	})
-	if call("Create", listing) ~= true then
-		give(player, payload.kind, record)
-		-- If the write landed after all, close it without returning the item a second time.
-		queue(player, { kind = "void", listing = listing.id, seller = player.UserId })
-		ctx:Fail(BUSY)
-	end
-
+	-- 1. Intent: the saved profile holds the item in a `list` task until Create is settled.
+	local task = { kind = "list", listing = listing.id, itemKind = payload.kind, item = record }
+	addTask(player, task)
 	table.insert(s.listings, listing.id)
 	ctx:Dirty(player, "listings")
+	if not ctx:SaveNow(player) then
+		removeTask(player, task)
+		forget(player, listing.id)
+		give(player, payload.kind, record)
+		ctx:Fail(BUSY)
+	end
+	-- 2. The external write.
+	local created = call("Create", listing) == true
+	if not section(player) then
+		ctx:Fail(BUSY) -- left mid-request: the saved task settles it on their next join
+	end
+	-- 3. Settle.
+	if not created then
+		local status = resolveList(player, task)
+		if status == nil then
+			ctx:Fail("The market is busy. Your item is safe and will be listed or returned shortly")
+		end
+		removeTask(player, task)
+		ctx:SaveNow(player)
+		if status == "returned" then
+			ctx:Fail(BUSY)
+		end
+	else
+		removeTask(player, task)
+		ctx:RequestSave(player)
+	end
 	knownOf(player)[listing.id] = listing.expiresAt
 	invalidate()
 	ctx.Bus:Publish("MarketListed", player, { listing = listing.id, key = listing.key, price = listing.price, club = isClub(listing) })
-	ctx:RequestSave(player)
 	ctx.Analytics.Custom(player, "MarketListed", listing.price, { kind = listing.kind, key = listing.key })
 	return { listing = Listing.View(listing, player.UserId) }
 end
@@ -496,40 +718,44 @@ local function cancel(player, payload)
 	if not table.find(s.listings, id) then
 		ctx:Fail("That isn't one of your listings")
 	end
-	local closed, why = close(player, id, "cancelled")
-	if why == "busy" then
+	for _, task in s.outbox do
+		if task.listing == id then
+			ctx:Fail("That listing is still being settled. Try again in a moment")
+		end
+	end
+	local status, _, newId = closeListing(player, id, "cancelled")
+	if status == "busy" then
 		ctx:Fail(BUSY)
 	end
-	if not closed then
+	if status == "unchanged" then
 		local ok, current = call("Get", id)
-		if ok ~= true then
-			ctx:Fail(BUSY)
-		end
-		if type(current) ~= "table" or current.state ~= "open" then
+		if ok == true and type(current) == "table" and current.state == "sold" then
 			forget(player, id)
-		end
-		if type(current) == "table" and current.state == "sold" then
 			syncLater(player) -- the coins may already be waiting
 			ctx:Fail("That listing already sold")
 		end
+		if ok == true and (current == nil or current.state ~= "open") then
+			forget(player, id)
+		end
 		ctx:Fail("That listing is no longer open")
 	end
-	local newId = returnItem(player, closed :: any)
-	ctx:RequestSave(player)
 	if not newId then
 		syncLater(player) -- shows it in session.Market.mail
 	end
 	return { returned = newId ~= nil }
 end
 
-local function buy(player, payload)
+local function buyNow(player, payload)
 	Progression:Require(player, Cfg.Unlock)
 	local id = payload.listing
 	local ok, listing = call("Get", id)
 	if ok ~= true then
 		ctx:Fail(BUSY)
 	end
-	if type(listing) ~= "table" then
+	if not section(player) then
+		ctx:Fail(BUSY)
+	end
+	if type(listing) ~= "table" or listing.state == "void" then
 		ctx:Fail("That listing is gone")
 	end
 	if listing.seller == player.UserId then
@@ -564,65 +790,62 @@ local function buy(player, payload)
 		end
 	end
 
-	-- Pay first, then try to win the listing; anything but a win refunds.
+	-- 1. Intent: pay, and save a `settle` task holding the charge until the sale is settled.
 	local price = listing.price
 	Currency:Charge(player, { coins = price }, "market_buy")
-	local token = newToken(player)
+	local task = { kind = "settle", listing = id, token = newToken(player), price = price, key = listing.key }
+	addTask(player, task)
+	if not ctx:SaveNow(player) then
+		removeTask(player, task)
+		Currency:Add(player, "coins", price, "market_refund")
+		ctx:Fail(BUSY)
+	end
+	-- 2. The external write: exactly one buyer can win.
 	local buyer = { userId = player.UserId, name = displayName(player) }
 	local t = now()
 	local done, sold = call("Update", id, function(current)
-		return Listing.Sell(current, buyer, price, t, token)
+		return Listing.Sell(current, buyer, price, t, task.token)
 	end)
-	if done ~= true then
-		local got, current = call("Get", id)
-		if got == true and type(current) == "table" and current.token == token then
-			done, sold = true, current
-		end
+	if not section(player) then
+		ctx:Fail(BUSY) -- left mid-request: the saved task settles it on their next join
 	end
-	if done ~= true or type(sold) ~= "table" or sold.token ~= token or sold.state ~= "sold" then
-		if section(player) then
-			Currency:Add(player, "coins", price, "market_refund")
-		else
-			mail(nil, player.UserId, { kind = "coins", amount = price, listing = id, key = listing.key, price = price, refund = true })
+	-- 3. Settle.
+	if done == true then
+		removeTask(player, task)
+		if type(sold) == "table" and sold.token == task.token and sold.state == "sold" then
+			local newId = deliver(player, sold, price)
+			ctx:SaveNow(player)
+			return { kind = sold.kind, id = newId or "" }
 		end
+		Currency:Add(player, "coins", price, "market_refund")
+		ctx:RequestSave(player)
 		invalidate()
-		ctx:Fail(if done == true then "Someone else just bought that" else BUSY)
+		ctx:Fail("Someone else just bought that")
 	end
+	local status, newId = resolveSettle(player, task)
+	if status == nil or not section(player) then
+		ctx:Fail("The market is busy. Your purchase will be confirmed or refunded shortly")
+	end
+	removeTask(player, task)
+	ctx:SaveNow(player)
+	if status == "refunded" then
+		invalidate()
+		ctx:Fail("Someone else just bought that")
+	end
+	return { kind = listing.kind, id = newId or "" }
+end
 
-	-- Won: the item to the buyer, the proceeds to the seller's mailbox.
-	local newId = give(player, sold.kind, sold.item)
-	if not newId then
-		mail(player, player.UserId, { kind = "item", itemKind = sold.kind, item = sold.item, listing = id, reason = "bought" })
+local function buy(player, payload)
+	if buying[player] then
+		ctx:Fail("Finish your last purchase first")
 	end
-	local club = isClub(sold)
-	local proceeds = Cfg.Proceeds(price, club)
-	mail(player, sold.seller, { kind = "coins", amount = proceeds, listing = id, key = sold.key, price = price })
-
-	local s = section(player)
-	if s then
-		s.stats.bought += 1
-		s.stats.spent += price
-		ctx:Dirty(player, "stats")
+	buying[player] = true
+	local ok, result = pcall(buyNow, player, payload)
+	buying[player] = nil
+	if not ok then
+		error(result, 0)
 	end
-	invalidate()
-	ctx.Bus:Publish("MarketBought", player, { listing = id, key = sold.key, kind = sold.kind, price = price, club = club })
-	ctx.Bus:Publish("MarketSold", nil, {
-		listing = id,
-		key = sold.key,
-		kind = sold.kind,
-		price = price,
-		proceeds = proceeds,
-		buyer = player.UserId,
-		seller = sold.seller,
-		club = club,
-	})
-	ctx:RequestSave(player)
-	ctx.Analytics.Custom(player, "MarketBought", price, { kind = sold.kind, key = sold.key })
-	local seller = ctx:PlayerByUserId(sold.seller)
-	if seller then
-		syncLater(seller) -- pay a seller on this server right away
-	end
-	return { kind = sold.kind, id = newId or "" }
+	return result
 end
 
 -- Raw open listings for a query, cached for BrowseCacheSeconds.
@@ -695,8 +918,9 @@ function Market.Init(context)
 	-- Fresh module state (tests boot many kernels in one process).
 	table.clear(known)
 	table.clear(syncing)
-	table.clear(orphans)
+	table.clear(buying)
 	table.clear(cache)
+	flushing = false
 
 	ctx.Net:Handle("Market.List", list)
 	ctx.Net:Handle("Market.Cancel", cancel)
@@ -725,8 +949,19 @@ function Market.PlayerAdded(player, _info)
 end
 
 function Market.PlayerRemoving(player)
+	-- One best-effort pass over mail meant for others (e.g. a seller's proceeds) before the
+	-- profile is released; anything left stays saved and is retried when the player returns.
+	local s = section(player)
+	if s then
+		for _, task in table.clone(s.outbox) do
+			if task.kind == "mail" and call("MailAdd", task.userId, task.entry) == true then
+				removeTask(player, task)
+			end
+		end
+	end
 	known[player] = nil
 	syncing[player] = nil
+	buying[player] = nil
 end
 
 return Market

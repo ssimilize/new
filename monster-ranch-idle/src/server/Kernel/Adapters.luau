@@ -265,6 +265,49 @@ function Adapters.Roblox()
 		end)
 		return ok, result
 	end
+	local function normalizeBox(current)
+		if type(current) ~= "table" then
+			return { entries = {}, acked = {} }
+		end
+		if current.entries == nil then -- an old plain list of entries
+			return { entries = current, acked = {} }
+		end
+		current.acked = current.acked or {}
+		return current
+	end
+	local function isKnownMail(box, id): boolean
+		if id == nil then
+			return false
+		end
+		if table.find(box.acked, id) then
+			return true
+		end
+		for _, e in box.entries do
+			if e.id == id then
+				return true
+			end
+		end
+		return false
+	end
+	local function ackBox(box, ids)
+		local drop = {}
+		for _, id in ids do
+			drop[id] = true
+		end
+		local kept = {}
+		for _, e in box.entries do
+			if e.id ~= nil and drop[e.id] then
+				table.insert(box.acked, e.id)
+			else
+				table.insert(kept, e)
+			end
+		end
+		box.entries = kept
+		while #box.acked > 200 do
+			table.remove(box.acked, 1)
+		end
+		return box
+	end
 	adapters.Market = {
 		Create = function(listing): boolean
 			local ok = atomic(listingStore, listing.id, function(current)
@@ -318,24 +361,36 @@ function Adapters.Roblox()
 			end)
 			return ok, if ok then result else nil
 		end,
+		-- Mailbox record: { entries = { entry }, acked = { entry id } }. Every entry has an `id`;
+		-- MailAdd skips ids already in the box or acknowledged recently, so retries never
+		-- deliver twice. Reading is two-phase: MailPeek, apply + save, then MailAck.
 		MailAdd = function(userId: number, entry): boolean
 			local ok = atomic(mailStore, "mail_" .. tostring(userId), function(current)
-				local list = if type(current) == "table" then current else {}
-				table.insert(list, entry)
-				return list
+				local box = normalizeBox(current)
+				if isKnownMail(box, entry.id) then
+					return nil
+				end
+				table.insert(box.entries, entry)
+				return box
 			end)
 			return ok
 		end,
-		MailTake = function(userId: number): (boolean, any)
-			local taken = nil
+		MailPeek = function(userId: number): (boolean, any)
+			if not mailStore then
+				return false, nil
+			end
+			local seen = nil
 			local ok = atomic(mailStore, "mail_" .. tostring(userId), function(current)
-				taken = if type(current) == "table" then current else {}
-				if #taken == 0 then
-					return nil
-				end
-				return {}
+				seen = normalizeBox(current).entries
+				return nil -- read the latest value without writing
 			end)
-			return ok, if ok then (taken or {}) else nil
+			return ok, if ok then (seen or {}) else nil
+		end,
+		MailAck = function(userId: number, ids: { string }): boolean
+			local ok = atomic(mailStore, "mail_" .. tostring(userId), function(current)
+				return ackBox(normalizeBox(current), ids)
+			end)
+			return ok
 		end,
 	}
 	adapters.PriceHistory = {

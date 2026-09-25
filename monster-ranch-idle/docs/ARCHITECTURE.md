@@ -89,6 +89,7 @@ Rules:
 | `ctx:Fail(message)` | abort the request with a player-facing message |
 | `ctx:Notify(player, text, kind)` | toast (`info`, `success`, `error`, `reward`) |
 | `ctx:RequestSave(player)` | save soon (after purchases and trades) |
+| `ctx:SaveNow(player) -> ok` | save now and wait (before a cross-server write that must not get ahead of the profile) |
 | `ctx.Rng` | server RNG (`Logic/Rng`); use `Rng.new(seed)` for reproducible rolls |
 | `ctx.Services` | adapters: `Players`, `Marketplace`, `Policy`, `Ads`, `Messaging`, `Text`, `Analytics`, `Leaderboards`, `Clubs`, `Workspace`, `Spawn`, `Wait` |
 | `ctx.Analytics` | `Custom(player, name, value, fields)`, `Economy(...)`, `Onboarding(player, step, name)` |
@@ -395,16 +396,26 @@ Services.Market = {
   Browse({ scope = "all" | clubId, kind?, key?, sort = "price" | "-price" | "new" }) -> ok, { listing }
                                                  -- open listings without `item`; may include expired
                                                  -- ones (callers filter by expiresAt); ≤ 200 per kind
-  MailAdd(userId, entry) -> ok                   -- atomic append
-  MailTake(userId) -> ok, { entry }              -- atomic take-all
+  MailAdd(userId, entry) -> ok                   -- atomic append; skips an entry.id it has seen
+  MailPeek(userId) -> ok, { entry }              -- fresh read, nothing removed
+  MailAck(userId, { entryId }) -> ok             -- removes applied entries (ids remembered)
 }
 Services.PriceHistory = { Get(key) -> ok, record?, Update(key, transform) -> ok, record? }
 ```
 Every call can fail (`ok == false`); systems must fail the action politely
 ("The market is busy. Try again") and never lose or duplicate an item.
 
-Mail entry: `{ kind = "coins", amount, listing, key, price }` (a sale) or
-`{ kind = "item", itemKind = "monster" | "egg", item = record, listing, reason = "expired" | "cancelled" }`.
+Mail entry: `{ id, kind = "coins", amount, listing, key, price, name? }` (a sale, id `sale:<listing>`) or
+`{ id, kind = "item", itemKind = "monster" | "egg", item = record, listing, reason }` (ids `return:<listing>`,
+`bought:<listing>`). Ids are deterministic, so a retried delivery is skipped by the mailbox.
+
+**Failure safety (after review).** Every cross-server step saves its intent first: the system
+adds a task to the player's private `outbox` (`list` holding the escrowed item, `settle` holding
+the charge, `close`), calls `ctx:SaveNow(player)`, then writes, then settles the task. An outcome
+that is unknown (the write may have landed) is settled by a fresh read (an `Update` whose
+transform writes nothing); if that fails too, the task stays saved and is settled on the next
+sync, on any server, after a crash or a rejoin. Mail is collected in two phases (peek → apply and
+remember ids → SaveNow → ack). See the header of `Systems/Market/init.luau`.
 
 ### Flows (M1)
 - **List:** unlock `market` (Lv 10); ≤ `MaxListings` open listings (`profile.Market.listings`);

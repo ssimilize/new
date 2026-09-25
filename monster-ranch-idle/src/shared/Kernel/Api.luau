@@ -264,7 +264,7 @@ Api.Actions = {
 	["PriceHistory.Get"] = {
 		schema = T.struct({ key = T.string(40, 3) }),
 		rate = 3,
-		returns = "{ key, days = { { day, count, low, high, avg } }, last: number? }  -- oldest day first",
+		returns = "{ key, days = { { day, count, low, high, avg } }, last: number?, suggest: number? }  -- oldest day first; club sales excluded",
 	},
 
 	-- Monetization (S6) ------------------------------------------------------------
@@ -293,7 +293,7 @@ Api.Events = {
 	["Trade.Completed"] = "{ received: { { kind: string, appearance: Appearance? } } }",
 	["Quests.StepDone"] = "{ step: string, rewards: { Reward } }",
 	["HallOfFame.Retired"] = "{ appearance: Appearance, stardust: number }",
-	["Market.MailCollected"] = "{ coins: number, items: { { kind, id } }, sold: { { key, price, proceeds } }, returned: number }",
+	["Market.MailCollected"] = "{ coins: number, items: { { kind, id } }, sold: { { key, price, proceeds, name? } }, returned: number }",
 }
 
 --[[

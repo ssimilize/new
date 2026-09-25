@@ -191,7 +191,12 @@ local function registerActions()
 		if not found then
 			ctx:Fail("The market is busy. Try again")
 		end
-		return { key = key, days = History.Series(current, ctx:Day()), last = History.Last(current) }
+		return {
+			key = key,
+			days = History.Series(current, ctx:Day()),
+			last = History.Last(current),
+			suggest = History.Suggest(current, ctx:Day()),
+		}
 	end)
 end
 
@@ -206,6 +211,9 @@ function PriceHistory.Init(context)
 	registerActions()
 
 	ctx.Bus:Subscribe("MarketSold", function(_player, detail)
+		if detail and detail.club then
+			return -- club trading post sales are private and could be used to fake prices
+		end
 		local key = detail and detail.key
 		local price = tonumber(detail and detail.price)
 		if not History.ValidKey(key) or not price or price ~= price or price <= 0 or price == math.huge then

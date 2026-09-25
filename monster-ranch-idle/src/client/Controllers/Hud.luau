@@ -653,7 +653,7 @@ local function onMailCollected(payload)
 		ctx:Toast(
 			string.format(
 				"Your %s sold for %s! +%s coins",
-				marketItemName(sale.key),
+				if type(sale.name) == "string" and sale.name ~= "" then sale.name else marketItemName(sale.key),
 				Format.short(tonumber(sale.price) or 0),
 				Format.short(tonumber(sale.proceeds) or coins)
 			),
