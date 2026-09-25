@@ -1,13 +1,14 @@
 --[[
-	Eggs (S3): the egg inventory, the four incubator slots, hatching and the starter egg.
+	Eggs (S3): the egg inventory, the five incubator slots, hatching and the starter egg.
 
 	Save section (profile.Eggs):
 	  list    = { [eggId] = { type, source, t } }       -- eggId = "e<n>"; eggs waiting in storage
-	  slots   = { [1..4] = { egg = eggId|false, type = eggType|"starter"|false, startedAt, endsAt } }
+	  slots   = { [1..5] = { egg = eggId|false, type = eggType|"starter"|false, startedAt, endsAt } }  -- always 5
+	            (Version 2, update 3.2: Migrate appends the 5th empty slot to 4-slot saves)
 	  nextId  = number
 	  pity    = { starlit, royal }                       -- Starlit pity / Royal lucky meter counters
 	  hatched = number                                   -- lifetime hatches
-	Session (session.Eggs): { slotCount, speed }         -- usable slots 1..4; hatch-time reduction
+	Session (session.Eggs): { slotCount, speed }         -- usable slots 1..5; hatch-time reduction
 
 	An egg leaves `list` when it is placed in an incubator (the slot keeps its id), so eggs
 	that are incubating can never be traded or counted as storage. Timers are fixed at
@@ -25,7 +26,7 @@
 	  Eggs:Get(player, eggId) -> record?
 	  Eggs:Count(player) -> number                               -- eggs in storage
 	  Eggs:Room(player) -> number                                -- storage left under Economy.MaxEggs
-	  Eggs:SlotCount(player) -> 1..4
+	  Eggs:SlotCount(player) -> 1..5
 	  Eggs:Speed(player) -> fraction                             -- summed providers, capped
 	  Eggs:RefreshSpeed(player)                                  -- call after a provider's input changes
 	  Eggs:RegisterSpeedProvider(key, fn(player) -> fraction)    -- 0.1 = 10% faster
@@ -46,20 +47,31 @@ local Eggs = {
 	OptionalDependencies = { "Monetization" },
 }
 
-local SLOTS = 4
+-- Saved slots: always this many (4 earned by level + 1 from the Extra Incubator pass).
+local SLOTS = 5
 
 local function emptySlot()
 	return { egg = false, type = false, startedAt = 0, endsAt = 0 }
 end
 
 Eggs.Profile = {
-	Version = 1,
+	Version = 2,
 	Default = function()
 		local slots = {}
 		for i = 1, SLOTS do
 			slots[i] = emptySlot()
 		end
 		return { list = {}, slots = slots, nextId = 1, pity = { starlit = 0, royal = 0 }, hatched = 0 }
+	end,
+	Migrate = function(section, fromVersion)
+		-- v2 (update 3.2): incubator 4 at Ranch Level 62 makes 5 slots with the pass. Old saves
+		-- keep slots 1..4 exactly as they were (eggs and timers) and gain an empty 5th.
+		if fromVersion < 2 and type(section.slots) == "table" then
+			for i = #section.slots + 1, SLOTS do
+				section.slots[i] = emptySlot()
+			end
+		end
+		return section
 	end,
 }
 

@@ -357,15 +357,16 @@ local function buildPlot(World, plot, parent: Instance)
 	local pens = Instance.new("Folder")
 	pens.Name = "Pens"
 	pens.Parent = model
-	for penIndex = 1, math.min(5, #World.PenOffsets) do
+	for penIndex = 1, #World.PenOffsets do
 		buildPen(plot.id, penIndex, plotCf, World, pens)
 	end
 
 	-- Incubator pad
 	local io = World.IncubatorOffset
 	local padCenter = (plotCf * CFrame.new(io[1], 0.4, io[3])).Position
-	disc("IncubatorRim", 15, 0.6, padCenter - Vector3.new(0, 0.1, 0), COLORS.padRim, model, { CastShadow = false })
-	local pad = disc("IncubatorPad", 13, 0.8, padCenter, COLORS.pad, model, { CastShadow = false })
+	local padSize = World.IncubatorPadSize
+	disc("IncubatorRim", padSize, 0.6, padCenter - Vector3.new(0, 0.1, 0), COLORS.padRim, model, { CastShadow = false })
+	local pad = disc("IncubatorPad", padSize - 2, 0.8, padCenter, COLORS.pad, model, { CastShadow = false })
 	pad:SetAttribute("PlotId", plot.id)
 	pad:SetAttribute("Incubator", true)
 
@@ -373,7 +374,7 @@ local function buildPlot(World, plot, parent: Instance)
 	local bo = World.BarnOffset
 	local barn = Instance.new("Model")
 	barn.Name = "Barn"
-	local barnSize = Vector3.new(14, 10, 12)
+	local barnSize = Vector3.new(World.BarnSize[1], World.BarnSize[2], World.BarnSize[3])
 	local barnCf = plotCf * CFrame.new(bo[1], 0.3 + barnSize.Y / 2, bo[3])
 	local barnBody = block("Body", barnSize, barnCf, COLORS.barn, barn)
 	gableRoof(barn, barnCf * CFrame.Angles(0, math.rad(90), 0), Vector3.new(barnSize.Z, barnSize.Y, barnSize.X), COLORS.barnRoof, 0.45)

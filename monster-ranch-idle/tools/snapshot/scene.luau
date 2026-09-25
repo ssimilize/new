@@ -11,6 +11,7 @@
 
 	`screen` optionally opens one screen (e.g. Wardrobe) on top of the HUD.
 	SNAPSHOT_START=<unix> sets the scene's time (default: a Spring Bloom afternoon).
+	SNAPSHOT_LOCALE=es-mx (or pt-br) shows the game in that language (update 3.2).
 	SNAPSHOT_PLACE=hub runs the server as the Trading Hub place (update 3.0): the hub layout,
 	no plots, and a few ads on the Trade Board. Frame it with a raw eye/at camera.
 	Step 2 (tools/snapshot/render.mjs) draws the JSON with three.js in headless Chromium.
@@ -160,7 +161,7 @@ h:Advance(3)
 
 -- Client ---------------------------------------------------------------------------------
 
-local c = ClientHarness.new(h, me, { viewport = Vector2.new(1280, 720) })
+local c = ClientHarness.new(h, me, { viewport = Vector2.new(1280, 720), localeId = process.env.SNAPSHOT_LOCALE })
 c:Advance(4)
 
 -- Ride the rainbow Cometkit in front of the ranch (2.0 Riding), standing where physics

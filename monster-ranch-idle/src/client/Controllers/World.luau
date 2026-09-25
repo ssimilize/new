@@ -48,11 +48,11 @@ local World = {
 }
 
 local PLOT_COUNT = #WorldConfig.Plots
-local MAX_PENS = math.min(5, #WorldConfig.PenOffsets)
+local MAX_PENS = math.min(Config.Economy.Pens.max, #WorldConfig.PenOffsets)
 local MAX_PER_PEN = 10
 local MAX_PER_PEN_LOW = 5 -- other players' pens in low graphics
-local MAX_STATUES = 8
-local STATUE_SPACING = 7
+local MAX_STATUES = WorldConfig.StatueRow.count
+local STATUE_SPACING = WorldConfig.StatueRow.spacing
 local POOL_MAX = 40
 local TICK = 0.2
 local PEN_FLOOR_TOP = 0.4 -- fallback when Workspace.World is missing (see Build.luau)
@@ -447,7 +447,7 @@ local function syncStatues(view, data)
 				CanCollide = true,
 				CanQuery = false,
 				CanTouch = false,
-				Size = Vector3.new(4.4, 1.6, 4.4),
+				Size = Vector3.new(WorldConfig.StatueRow.pedestal, 1.6, WorldConfig.StatueRow.pedestal),
 				CFrame = cf * CFrame.new(0, 0.8, 0),
 				Color = PEDESTAL,
 				Material = Enum.Material.SmoothPlastic,
@@ -495,7 +495,8 @@ local function padTop(index: number): CFrame
 	return frame * CFrame.new(o[1], 0.8, o[3])
 end
 
-local EGG_SPOTS = { { -2.6, -2.6 }, { 2.6, -2.6 }, { -2.6, 2.6 }, { 2.6, 2.6 } }
+-- One spot per incubator slot (Config.Economy.Incubators.maxSlots): four corners and the middle.
+local EGG_SPOTS = { { -3, -3 }, { 3, -3 }, { -3, 3 }, { 3, 3 }, { 0, 0 } }
 
 local function syncEggs(view, data)
 	local list = data.incubators or {}
@@ -1023,10 +1024,8 @@ local function onMonsterTapped(entry)
 			end
 		end
 		local left = type(result) == "table" and tonumber(result.left)
-		local text = string.format("You petted %s!", tostring(entry.name or "a monster"))
-		if left then
-			text ..= string.format(" %d pets left today", left)
-		end
+		local name = tostring(entry.name or "a monster")
+		local text = if left then string.format("You petted %s! %d pets left today", name, left) else string.format("You petted %s!", name)
 		ctx:Toast(text, "success")
 	end)
 end

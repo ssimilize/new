@@ -17,6 +17,7 @@
 
 local T = require(script.Parent.T)
 local Config = require(script.Parent.Parent.Config)
+local Locale = require(script.Parent.Parent.Locale)
 
 local Api = {}
 
@@ -28,7 +29,16 @@ local eggType = T.key(Config.Eggs.ById)
 local regionId = T.key(Config.Regions.ById)
 local stage = T.integer(1, Config.Regions.MaxStages)
 local duration = T.enum({ "900", "3600", "14400", "28800" }) -- sent as strings (see note below)
-local squad = T.array(id, 4, 1)
+local function maxSquadSize(): number
+	local size = Config.Regions.SquadSize.base
+	for _, step in Config.Regions.SquadSize.steps do
+		size = math.max(size, step.size)
+	end
+	return size
+end
+local squad = T.array(id, maxSquadSize(), 1)
+local pen = T.integer(1, Config.Economy.Pens.max)
+local penOrZero = T.integer(0, Config.Economy.Pens.max) -- 0 = barn / storage
 
 -- NOTE on numbers used as keys: expedition durations are sent as strings ("3600") so they
 -- can be used as enum values; handlers convert with tonumber().
@@ -46,6 +56,8 @@ Api.Actions = {
 		rate = 4,
 		returns = "nil",
 	},
+	-- 3.2: "auto" follows the player's Roblox language (Shared/Locale).
+	["Settings.SetLanguage"] = { schema = T.struct({ language = T.enum(Locale.Choices) }), rate = 2, returns = "nil" },
 
 	-- Monsters (S2) ---------------------------------------------------------------
 	["Monsters.Rename"] = { schema = T.struct({ id = id, name = T.string(20) }), rate = 1, returns = "{ name: string } (filtered)" },
@@ -254,22 +266,22 @@ Api.Actions = {
 	["Shop.ClaimFreeEgg"] = { schema = T.none, rate = 1, returns = "{ egg: string }  -- rewarded ad" },
 
 	-- Ranch (S3) --------------------------------------------------------------------
-	["Ranch.Collect"] = { schema = T.struct({ pen = T.integer(1, 5) }), rate = 10, returns = "{ coins: number }" },
+	["Ranch.Collect"] = { schema = T.struct({ pen = pen }), rate = 10, returns = "{ coins: number }" },
 	["Ranch.CollectAll"] = { schema = T.none, rate = 4, returns = "{ coins: number }" },
-	["Ranch.Assign"] = { schema = T.struct({ id = id, pen = T.integer(0, 5) }), rate = 10, returns = "nil  -- pen 0 = barn" },
+	["Ranch.Assign"] = { schema = T.struct({ id = id, pen = penOrZero }), rate = 10, returns = "nil  -- pen 0 = barn" },
 	["Ranch.BuyPen"] = { schema = T.none, rate = 1, returns = "{ pen: number }" },
 	["Ranch.Upgrade"] = {
-		schema = T.struct({ target = T.enum({ "capacity", "jar", "incubatorSpeed", "barn", "garden" }), pen = T.optional(T.integer(1, 5)) }),
+		schema = T.struct({ target = T.enum({ "capacity", "jar", "incubatorSpeed", "barn", "garden" }), pen = T.optional(pen) }),
 		rate = 2,
 		returns = "{ level: number }",
 	},
 	["Ranch.PlaceDecor"] = {
-		schema = T.struct({ decor = T.key(Config.Decor.ById), pen = T.integer(0, 5) }),
+		schema = T.struct({ decor = T.key(Config.Decor.ById), pen = penOrZero }),
 		rate = 3,
 		returns = "nil  -- pen 0 = take back to storage",
 	},
 	["Ranch.SetPenTheme"] = {
-		schema = T.struct({ pen = T.integer(1, 5), theme = T.key(Config.Decor.PenThemeById) }),
+		schema = T.struct({ pen = pen, theme = T.key(Config.Decor.PenThemeById) }),
 		rate = 2,
 		returns = "nil",
 	},
@@ -478,7 +490,7 @@ Api.State = {
 	profile = {
 		Currency = "{ coins, gems, stardust, friendship, treats, ribbons, tokens = { [eventId]: n }, food = { sweet, spicy, savory, sour } }",
 		Progression = "{ level, xp }",
-		Settings = "{ music, sfx, lowGraphics, hideBroadcasts }",
+		Settings = "{ music, sfx, lowGraphics, hideBroadcasts, language }",
 		Monsters = "{ list = { [id]: Monster }, codex = { [lineId]: { forms = { [formId]: true }, variants = { [n]: true }, count } }, nextId }",
 		HallOfFame = "{ entries = { Statue }, legacy = { [element]: pct }, upgrades = { [upgradeId]: level }, starShards }",
 		Rebirth = "{ stars, skills = { [skillId]: level }, lastAt, dust }",

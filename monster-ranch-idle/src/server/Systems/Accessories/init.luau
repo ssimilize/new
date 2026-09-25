@@ -166,7 +166,7 @@ local function equip(player, id: string, accessoryId: string)
 	wardrobeMonster(player, id)
 	local def = Config.ById[accessoryId]
 	if (s.owned[def.id] or 0) < 1 then
-		ctx:Fail("You don't have a spare " .. def.name)
+		ctx:Fail(string.format("You don't have a spare %s", def.name))
 	end
 	store(player, s, def.id, -1)
 	local previous = Monsters:SetAccessory(player, id, def.slot, def.id)

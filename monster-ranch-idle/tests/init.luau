@@ -7,6 +7,7 @@
 	  t.Server(path)          require a server module ("Kernel.Kernel")
 	  t.TestKernel            boot the kernel with chosen systems (see runtime/TestKernel)
 	  t.ClientHarness         run the real client against a TestKernel (see runtime/ClientHarness)
+	  t.LocaleHarvest         the English text the game can show (see runtime/LocaleHarvest)
 ]]
 
 local fs = require("@lune/fs")
@@ -37,6 +38,7 @@ local TestKernel = require("@self/runtime/TestKernel")
 local MockAdapters = require("@self/runtime/MockAdapters")
 local ClientHarness = require("@self/runtime/ClientHarness")
 ClientHarness.init(ROOT)
+local LocaleHarvest = require("@self/runtime/LocaleHarvest")
 
 local filter = process.args[1]
 
@@ -51,6 +53,7 @@ local function runSpec(file: string)
 	t.TestKernel = TestKernel
 	t.MockAdapters = MockAdapters
 	t.ClientHarness = ClientHarness
+	t.LocaleHarvest = LocaleHarvest
 	t.Roblox = require("@lune/roblox")
 	t.Loader = Loader
 	t.Root = ROOT

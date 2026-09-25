@@ -845,6 +845,24 @@ Species.Lines = {
 		passive = "haste",
 		pools = { "raid" },
 	}),
+	-- Update 3.2 · Raid 3: its own line, hatched only from the Leviathan Egg (not the Raid Egg).
+	line({
+		id = "floelet",
+		elements = { "tide", "light" },
+		archetype = "slug",
+		raid = true,
+		added = "3.2",
+		forms = {
+			{ id = "floelet", name = "Floelet" },
+			{ id = "rimecoil", name = "Rimecoil" },
+			{ { id = "frostleviathan", name = "Frost Leviathan" } },
+		},
+		base = { hp = 175, atk = 42, def = 30, spd = 15, luck = 8 },
+		weight = 12.0,
+		special = "drain",
+		passive = "regen",
+		pools = { "leviathan" },
+	}),
 	-- ── Year Two regions (update 3.0) ────────────────────────────────────
 	-- Mirage Dunes
 	line({

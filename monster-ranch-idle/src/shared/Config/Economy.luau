@@ -46,9 +46,9 @@ end
 
 -- Ranch -----------------------------------------------------------------------
 Economy.Pens = {
-	max = 5,
-	unlocks = { "pen_1", "pen_2", "pen_3", "pen_4", "pen_5" },
-	buyCost = { 0, 15000, 500000, 15000000, 400000000 },
+	max = 6,
+	unlocks = { "pen_1", "pen_2", "pen_3", "pen_4", "pen_5", "pen_6" },
+	buyCost = { 0, 15000, 500000, 15000000, 400000000, 10000000000 },
 	startCapacity = 6,
 	maxCapacity = 10,
 	capacityCost = { [6] = 5000, [7] = 40000, [8] = 300000, [9] = 2000000 }, -- cost to go from n to n+1
@@ -63,9 +63,9 @@ Economy.VipJarBonusSeconds = 4 * 3600
 
 Economy.Incubators = {
 	baseSlots = 1,
-	slotUnlocks = { "incubator_1", "incubator_2", "incubator_3" }, -- earned slots
+	slotUnlocks = { "incubator_1", "incubator_2", "incubator_3", "incubator_4" }, -- earned slots
 	passSlots = 1, -- Extra Incubator pass
-	maxSlots = 4,
+	maxSlots = 5,
 	speedTiers = { 0, 0.1, 0.2, 0.3, 0.4 }, -- hatch time reduction
 	speedCost = { 0, 10000, 150000, 2000000, 30000000 },
 }

@@ -22,6 +22,7 @@ World.Plots = {
 }
 
 -- Pens inside a plot, relative to the plot centre (plot faces the hub along +x local).
+-- A 3 × 2 grid either side of the middle aisle (plot-local z = 0) that leads in from the gate.
 World.PenSize = { 34, 28 }
 World.PenOffsets = {
 	{ -38, 0, -24 },
@@ -29,11 +30,21 @@ World.PenOffsets = {
 	{ -38, 0, 18 },
 	{ 2, 0, 18 },
 	{ 42, 0, -24 },
+	{ 42, 0, 18 }, -- update 3.2: pen 6 completes the grid
 }
-World.IncubatorOffset = { 48, 0, 22 }
-World.BarnOffset = { 55, 0, 40 }
+-- Update 3.2: pen 6 took the incubator pad's old corner. The pad now closes the far end of
+-- the middle aisle, facing the gate; the barn moved back so its door clears pen 6's fence.
+World.IncubatorOffset = { -65, 0, -3 }
+World.BarnOffset = { 58, 0, 45 }
 World.StatueRowOffset = { -60, 0, 44 }
 World.GardenOffset = { 42, 0, 44 }
+
+-- Footprints on the plot floor ({ x, z } studs), used to build the pieces and by
+-- LevelSeventy.spec to prove that no two pieces overlap and all stay inside PlotSize.
+World.IncubatorPadSize = 15 -- diameter of the pad's rim
+World.BarnSize = { 14, 10, 12 } -- x, height, z (the door faces plot-local -z)
+World.GardenSize = { 10, 8 } -- reserved: the garden has no world model yet
+World.StatueRow = { count = 8, spacing = 7, pedestal = 4.4 } -- runs +x from StatueRowOffset
 
 -- Hub buildings (Market Square), relative to the origin.
 World.Hub = {

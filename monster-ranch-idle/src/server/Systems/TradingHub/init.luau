@@ -160,7 +160,7 @@ local function travel(player)
 	ctx:SaveNow(player)
 	local ok, err = ctx.Services.Teleport.ToPlace(player, target)
 	if not ok then
-		ctx:Fail("Couldn't reach the Trading Hub (" .. tostring(err) .. "). Try again!")
+		ctx:Fail(string.format("Couldn't reach the Trading Hub (%s). Try again!", tostring(err)))
 	end
 	ctx.Bus:Publish("HubTravel", player, { to = "hub" })
 	return { teleporting = true }
@@ -175,7 +175,7 @@ local function goBack(player)
 	ctx:SaveNow(player)
 	local ok, err = ctx.Services.Teleport.ToPlace(player, target)
 	if not ok then
-		ctx:Fail("Couldn't get back to your ranch (" .. tostring(err) .. "). Try again!")
+		ctx:Fail(string.format("Couldn't get back to your ranch (%s). Try again!", tostring(err)))
 	end
 	ctx.Bus:Publish("HubTravel", player, { to = "main" })
 	return { teleporting = true }
@@ -277,7 +277,7 @@ local function meet(player, adId: string)
 	end
 	local ok, err = ctx.Services.Teleport.ToServer(player, placeId("Hub"), target.jobId)
 	if not ok then
-		ctx:Fail("Couldn't join that server (" .. tostring(err) .. ")")
+		ctx:Fail(string.format("Couldn't join that server (%s)", tostring(err)))
 	end
 	ctx.Bus:Publish("HubTravel", player, { to = "server" })
 	return { teleporting = true }

@@ -285,7 +285,14 @@ end
 Regions.Durations = { 900, 3600, 14400, 28800 }
 Regions.DurationBonus = { [900] = 1.0, [3600] = 1.05, [14400] = 1.10, [28800] = 1.20 }
 Regions.Slots = { unlocks = { "expeditions", "expedition_slot_2", "expedition_slot_3" }, passSlots = 1, max = 4 }
-Regions.SquadSize = { base = 3, withUnlock = 4, unlock = "squad_4" }
+-- Squad size: `base`, raised by each unlocked step (Ranch Level 35 and 70).
+Regions.SquadSize = {
+	base = 3,
+	steps = {
+		{ unlock = "squad_4", size = 4 },
+		{ unlock = "squad_5", size = 5 },
+	},
+}
 
 -- Loot per minute on a cleared stage with global index g.
 function Regions.LootPerMinute(g: number)

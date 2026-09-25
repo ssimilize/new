@@ -9,7 +9,7 @@
 	  ctx.Net:Request(action, payload) -> ok, dataOrErr     ctx.Net:RequestOnce(...)
 	  ctx.Net:On(event, fn)
 	  ctx.Store:Get(path) / ctx.Store:Observe(path, fn) / ctx.Store:WhenReady(fn)
-	  ctx.Router:Open(screenName, params) / Close(name?) / IsOpen(name)
+	  ctx.Router:Open(screenName, params) / Close(name?) / IsOpen(name) / Root(name)
 	  ctx.UI.Hud / ctx.UI.Screens / ctx.UI.Overlay / ctx.UI.Top   (scaled layers)
 	  ctx.Bus:Publish(topic, ...) / ctx.Bus:Subscribe(topic, fn)  (client-only topics)
 	  ctx:GetController(name)

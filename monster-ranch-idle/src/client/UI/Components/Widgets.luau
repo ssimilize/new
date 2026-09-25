@@ -6,7 +6,8 @@
 	  Widgets.Chip({ Text, Color, Parent, TextSize? })               -> Frame
 	  Widgets.Scroll({ Size, Position, Parent, Cell = Vector2, Padding }) -> ScrollingFrame (grid)
 	  Widgets.List({ Size, Position, Parent, Padding })             -> ScrollingFrame (vertical list)
-	  Widgets.Tabs({ Tabs = { { id, text } }, Selected, OnChanged, Parent, Size }) -> { Root, Select(id) }
+	  Widgets.Tabs({ Tabs = { { id, text } }, Selected, OnChanged, Parent, Size }) -> { Root, Select(id), Step(delta) }
+	  Widgets.FindTabs(container) -> tabs?  the first shown Tabs inside container (gamepad LB / RB)
 	  Widgets.Countdown(label, getEndsAt, format?, onDone?)         -> disconnect fn
 	  Widgets.RarityChip(index, Parent) / Widgets.ElementChip(id, Parent) / Widgets.MutationChip(id, Parent)
 ]]
@@ -198,6 +199,10 @@ function Widgets.List(props)
 	}, { Create.List("y", props.Padding or 10), Create.Padding(4, 12, 10, 4) })
 end
 
+-- Every Tabs row by its Root, so the Gamepad controller can find and step the open
+-- screen's tabs without each screen wiring LB / RB itself. Weak keys: rows die with screens.
+local tabsByRoot = setmetatable({}, { __mode = "k" })
+
 function Widgets.Tabs(props)
 	local root = New("Frame", {
 		Name = "Tabs",
@@ -225,6 +230,7 @@ function Widgets.Tabs(props)
 				api:Select(tab.id)
 			end,
 		})
+		buttons[tab.id].Root.SelectionOrder = 1 -- a gamepad cursor lands on the content first
 	end
 	function api.Select(_, id: string)
 		api.Selected = id
@@ -233,8 +239,46 @@ function Widgets.Tabs(props)
 			props.OnChanged(id)
 		end
 	end
+	-- Selects the previous (-1) or next (+1) shown tab, wrapping; returns its button.
+	function api.Step(_, delta: number): GuiObject?
+		local shown = {}
+		for _, tab in props.Tabs do
+			if buttons[tab.id].Root.Visible then
+				table.insert(shown, tab.id)
+			end
+		end
+		if #shown == 0 then
+			return nil
+		end
+		local at = table.find(shown, api.Selected) or 1
+		local id = shown[(at - 1 + delta) % #shown + 1]
+		api:Select(id)
+		return buttons[id].Root
+	end
 	refresh()
+	tabsByRoot[root] = api
 	return api
+end
+
+local function shownWithin(gui: Instance, container: Instance): boolean
+	local cursor: Instance? = gui
+	while cursor and cursor ~= container do
+		if cursor:IsA("GuiObject") and not (cursor :: GuiObject).Visible then
+			return false
+		end
+		cursor = cursor.Parent
+	end
+	return cursor == container
+end
+
+function Widgets.FindTabs(container: Instance)
+	for _, d in container:GetDescendants() do
+		local api = tabsByRoot[d]
+		if api and shownWithin(d, container) then
+			return api
+		end
+	end
+	return nil
 end
 
 -- Keeps a label showing the time left until getEndsAt() (unix seconds). Returns a stop fn.

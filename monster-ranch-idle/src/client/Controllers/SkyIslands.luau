@@ -43,6 +43,7 @@ local function prompt(parent: Instance, action: string, object: string, distance
 	p.MaxActivationDistance = distance
 	p.RequiresLineOfSight = false
 	p.KeyboardKeyCode = Enum.KeyCode.E
+	p.GamepadKeyCode = Enum.KeyCode.ButtonX -- the pad hint shown by the default prompt
 	p.Parent = parent
 	p.Triggered:Connect(onTrigger)
 	return p

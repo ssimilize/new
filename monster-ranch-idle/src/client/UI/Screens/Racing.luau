@@ -5,8 +5,8 @@
 	        today, Racing Cup points and paid races left. "Pick a racer" (Monsters pick mode,
 	        Adults) → Racing.Start.
 	racing  a side view of the track: hurdles and mud slide toward your monster; a progress
-	        strip shows you and the three ghosts. Jump (Space / W / ↑) and Boost (Shift / B)
-	        are recorded as { t, a } at the local simulation's time (Logic/Racing.Step, the
+	        strip shows you and the three ghosts. Jump (Space / W / ↑, pad A / D-pad ↑) and Boost
+	        (Shift / B, pad RT / RB; never X, the world prompts' key) are recorded as { t, a } at the local simulation's time (Logic/Racing.Step, the
 	        same code the server replays).
 	result  Racing.Finish → the server's time, place, rewards and Cup points.
 	Opened from the Racetrack in the hub.
@@ -464,6 +464,9 @@ return {
 				return
 			end
 			Util.clear(body)
+			-- While running, the Gamepad controller clears its cursor (so A jumps instead of
+			-- pressing a button) and shows this legend.
+			panel.Root:SetAttribute("GamepadLegend", if mode == "racing" then "Ⓐ Jump · RT Boost · Ⓑ Close" else nil)
 			if mode == "racing" then
 				drawRacing()
 			elseif mode == "result" then
@@ -479,10 +482,19 @@ return {
 				isOpen = true
 				mode = if race and not race.done then "racing" elseif mode == "result" then "result" else "lobby"
 				inputConn = UserInputService.InputBegan:Connect(function(input, processed)
+					local key = input.KeyCode
+					-- Pad buttons: the gamepad cursor is cleared while racing, so nothing on
+					-- screen consumes them; `processed` only guards typing on a keyboard.
+					if key == Enum.KeyCode.ButtonA or key == Enum.KeyCode.DPadUp then
+						act("jump")
+						return
+					elseif key == Enum.KeyCode.ButtonR2 or key == Enum.KeyCode.ButtonR1 then
+						act("boost")
+						return
+					end
 					if processed then
 						return
 					end
-					local key = input.KeyCode
 					if key == Enum.KeyCode.Space or key == Enum.KeyCode.W or key == Enum.KeyCode.Up then
 						act("jump")
 					elseif key == Enum.KeyCode.LeftShift or key == Enum.KeyCode.B then
@@ -494,6 +506,7 @@ return {
 			Close = function()
 				isOpen = false
 				stopLoop()
+				panel.Root:SetAttribute("GamepadLegend", nil)
 				if race and not race.done then
 					race.done = true -- leaving the track ends the race without a time
 				end

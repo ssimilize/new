@@ -19,7 +19,9 @@
 	    tests control time and never sleep.
 	  · Services: Players, RunService, TweenService (tweens land at their end values when
 	    they finish), UserInputService, MarketplaceService (prompts are recorded), Debris,
-	    Lighting, GuiService, Workspace (camera, server time).
+	    Lighting, GuiService, Workspace (camera, server time), ContextActionService, and input
+	    devices in world.input (last input type, connected pads, action bindings; driven by
+	    ClientHarness:UseGamepad / :Press / :Stick).
 
 	Errors thrown in any game thread are collected in world.errors with a traceback instead
 	of crashing the test, the way they would print to Studio's output.
@@ -492,7 +494,16 @@ local function defaultFor(rec, key: string, prop)
 	end
 	local datatype = prop.Datatype
 	if string.sub(datatype, 1, 5) == "Enum." then
-		return Enum[string.sub(datatype, 6)]:GetEnumItems()[1]
+		-- Roblox's default is the item with the lowest value (AutomaticSize.None, TextTruncate.None).
+		-- GetEnumItems() comes back in a different order in different processes, so taking
+		-- the first item made unset enums (AutomaticSize, …) random between runs.
+		local best
+		for _, item in Enum[string.sub(datatype, 6)]:GetEnumItems() do
+			if best == nil or item.Value < best.Value then
+				best = item
+			end
+		end
+		return best
 	end
 	local simple = SIMPLE_TYPES[datatype]
 	if simple == "boolean" then
@@ -1714,13 +1725,25 @@ define("UserInputService", {
 		"JumpRequest",
 		"WindowFocused",
 		"WindowFocusReleased",
+		"GamepadConnected",
+		"GamepadDisconnected",
+	},
+	-- Input devices live in world.input (see newWorld); ClientHarness:UseGamepad / :Press
+	-- change them the way plugging in a pad or pressing a key would.
+	get = {
+		GamepadEnabled = function(rec)
+			return #rec.world.input.gamepads > 0
+		end,
 	},
 	methods = {
 		GetMouseLocation = function(self)
 			return recOf(self).world.viewport / 2
 		end,
-		GetLastInputType = function()
-			return Enum.UserInputType.Touch
+		GetLastInputType = function(self)
+			return recOf(self).world.input.lastType
+		end,
+		GetConnectedGamepads = function(self)
+			return table.clone(recOf(self).world.input.gamepads)
 		end,
 		IsKeyDown = function()
 			return false
@@ -1730,6 +1753,46 @@ define("UserInputService", {
 		end,
 	},
 })
+
+-- ContextActionService: bindings are recorded in world.input.actions; ClientHarness:Press
+-- routes a key through them (highest priority first, newest first on ties) before the GUI
+-- and UserInputService see it, the order the engine uses.
+local function bindAction(self, name, fn, createTouchButton, priority, inputs)
+	if type(name) ~= "string" or type(fn) ~= "function" or type(createTouchButton) ~= "boolean" or type(priority) ~= "number" then
+		error("BindAction(actionName: string, functionToBind: function, createTouchButton: bool, ...inputTypes)", 3)
+	end
+	for _, input in inputs do
+		if luneTypeof(input) ~= "EnumItem" or (input.EnumType ~= Enum.KeyCode and input.EnumType ~= Enum.UserInputType) then
+			error("BindAction: input types must be Enum.KeyCode or Enum.UserInputType items", 3)
+		end
+	end
+	local state = recOf(self).world.input
+	state.bindCount += 1
+	state.actions[name] = { name = name, fn = fn, priority = priority, inputs = inputs, order = state.bindCount }
+end
+
+define("ContextActionService", {
+	methods = {
+		BindAction = function(self, name, fn, createTouchButton, ...)
+			bindAction(self, name, fn, createTouchButton, Enum.ContextActionPriority.Default.Value, { ... })
+		end,
+		BindActionAtPriority = function(self, name, fn, createTouchButton, priority, ...)
+			bindAction(self, name, fn, createTouchButton, priority, { ... })
+		end,
+		UnbindAction = function(self, name)
+			recOf(self).world.input.actions[name] = nil
+		end,
+	},
+})
+
+-- A read-only InputObject as the engine hands to input events (they are not creatable).
+function RobloxMock.newInput(world, fields: { [string]: any })
+	local input = newInstance(world, "InputObject")
+	for key, value in fields do
+		RobloxMock.rawSet(input, key, value)
+	end
+	return input
+end
 
 define("GuiService", {
 	events = { "MenuOpened", "MenuClosed" },
@@ -1849,6 +1912,8 @@ function RobloxMock.newWorld(options)
 	world.renderBindings = {}
 	world.guid = 0
 	world.raycastResult = nil
+	-- Input devices: a touch phone with no pad until a test plugs one in.
+	world.input = { lastType = Enum.UserInputType.Touch, gamepads = {}, actions = {}, bindCount = 0 }
 	world.sched = Scheduler.new(world)
 	world.task = world.sched:taskLibrary()
 
@@ -1876,6 +1941,11 @@ function World:_warn(message: string)
 	table.insert(self.warnings, message)
 end
 
+local SERVICE_DEFAULTS = {
+	-- A pad moves and presses the selection out of the box (GuiService navigation is on).
+	GuiService = { GuiNavigationEnabled = true, AutoSelectGuiEnabled = true },
+}
+
 function World:_service(name: string)
 	local existing = self.services[name]
 	if existing then
@@ -1887,6 +1957,10 @@ function World:_service(name: string)
 	end
 	local service = newInstance(self, name)
 	RobloxMock.rawSet(service, "Name", name)
+	-- Live values the reflection database has no default for.
+	for key, value in SERVICE_DEFAULTS[name] or {} do
+		RobloxMock.rawSet(service, key, value)
+	end
 	records[service].parent = self.game
 	table.insert(records[self.game].children, service)
 	self.services[name] = service

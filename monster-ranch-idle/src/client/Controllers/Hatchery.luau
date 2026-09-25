@@ -25,6 +25,7 @@ local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
 local Anim = require(UI.Anim)
+local Focus = require(UI.Focus)
 local Button = require(UI.Components.Button)
 local Widgets = require(UI.Components.Widgets)
 local StoreKit = require(UI.Components.StoreKit)
@@ -76,6 +77,7 @@ local function build()
 		Size = UDim2.fromScale(1, 1),
 		Visible = false,
 		ZIndex = 50,
+		Selectable = false, -- the tap-to-skip backdrop; a gamepad skips with the Skip button
 		Parent = ctx.UI.Top,
 		Activated = function()
 			if showing then
@@ -300,6 +302,7 @@ local function reveal(entry)
 	ui.vm:SetZoom(1.35)
 	ui.root.Visible = true
 	Anim.popIn(ui.root, 0.2)
+	Focus.push(ui.root) -- a gamepad cursor stays on the reveal's buttons
 
 	-- 1. Wobble, getting stronger.
 	local skipped = animate(1.5, function(a)
@@ -350,6 +353,7 @@ end
 
 local function hide()
 	ui.root.Visible = false
+	Focus.remove(ui.root)
 	ui.vm:Clear()
 	showing = false
 end

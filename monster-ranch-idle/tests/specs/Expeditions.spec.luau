@@ -81,7 +81,8 @@ return function(t)
 			expect(h:Reject(p, "Expeditions.SetSquad", { ids = { "m999" } })).toContain("doesn't exist")
 			-- Ids are per ranch: the other player's m6 doesn't exist on this ranch.
 			expect(h:Reject(p, "Expeditions.SetSquad", { ids = { "m6" } })).toContain("doesn't exist")
-			expect(h:Invoke(p, "Expeditions.SetSquad", { ids = { "m1", "m2", "m3", "m4", "m5" } }).err).toBe("BadRequest")
+			-- 3.2: squads reach 5 at Ranch Level 70, so the schema refuses 6 ids.
+			expect(h:Invoke(p, "Expeditions.SetSquad", { ids = { "m1", "m2", "m3", "m4", "m5", "m6" } }).err).toBe("BadRequest")
 			h:Call(p, "Expeditions.SetSquad", { ids = { ids[1], ids[2], ids[3] } })
 			local E = h:System("Expeditions")
 			expect(E:GetSquad(p)).toEqual({ ids[1], ids[2], ids[3] })

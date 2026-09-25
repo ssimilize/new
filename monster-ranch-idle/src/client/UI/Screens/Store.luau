@@ -253,7 +253,7 @@ return {
 				Parent = parent,
 				OnClick = function()
 					if key and balance(key, event) < amount then
-						ctx:Toast("Not enough " .. (if key == "token" then "tokens" else key), "error")
+						ctx:Toast(string.format("Not enough %s", if key == "token" then "tokens" else key), "error")
 						return
 					end
 					onBuy()

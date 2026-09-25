@@ -22,6 +22,7 @@ local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
 local Anim = require(UI.Anim)
+local Focus = require(UI.Focus)
 local Button = require(UI.Components.Button)
 local Icon = require(UI.Components.Icon)
 local Widgets = require(UI.Components.Widgets)
@@ -329,6 +330,7 @@ local function showNextEvolve()
 		BackgroundTransparency = 0.4,
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = 20,
+		Selectable = false, -- a tap blocker, never a gamepad target
 		Parent = ctx.UI.Top,
 	})
 	local card = New("Frame", {
@@ -386,6 +388,7 @@ local function showNextEvolve()
 			return
 		end
 		closed = true
+		Focus.remove(dim)
 		dim:Destroy()
 		evolveShowing = false
 		showNextEvolve()
@@ -424,6 +427,7 @@ local function showNextEvolve()
 		OnClick = close,
 	})
 	ctx:Sound("Evolve")
+	Focus.push(dim, close) -- a gamepad cursor stays on the popup; B closes it like "Yay!"
 	Anim.popIn(card, 0.3)
 end
 

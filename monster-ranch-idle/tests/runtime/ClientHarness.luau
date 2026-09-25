@@ -8,6 +8,9 @@
 		c:Advance(2)                               -- server and client move together
 		c:Open("EggShop")                          -- Router:Open in a game thread
 		c:Click(c:Button("Buy", c:Screen("EggShop")))
+		c:UseGamepad(true)                         -- plug a pad in (false: back to touch)
+		c:Press("ButtonB")  c:Stick(-1, 0)         -- pad or keyboard keys; left stick
+		c:Selected()                               -- GuiService.SelectedObject
 		expect(c.world.errors).toEqual({})
 
 	Transport follows Roblox's remote rules: payloads are copied, and tables are checked
@@ -151,6 +154,7 @@ ClientHarness.remoteCopy = remoteCopy
 	  viewport = Vector2?,        -- default 1280×720 (use 568×320 for a small phone)
 	  touch = boolean?,           -- TouchEnabled (default true)
 	  noBoot = boolean?,          -- build the world but do not run Main.client.luau
+	  localeId = string?,         -- Player.LocaleId (default "en-us"), e.g. "es-mx", "pt-br"
 	}
 ]]
 function ClientHarness.new(testKernel, player, options)
@@ -225,6 +229,7 @@ function ClientHarness.new(testKernel, player, options)
 	RobloxMock.rawSet(lp, "Name", player.Name)
 	RobloxMock.rawSet(lp, "DisplayName", player.DisplayName or player.Name)
 	RobloxMock.rawSet(lp, "UserId", player.UserId)
+	RobloxMock.rawSet(lp, "LocaleId", options.localeId or "en-us")
 	world.localPlayer = lp
 	local playerGui = RobloxMock.newInstance(world, "PlayerGui")
 	RobloxMock.rawSet(playerGui, "Name", "PlayerGui")
@@ -496,6 +501,154 @@ end
 
 function ClientHarness:Trigger(prompt)
 	RobloxMock.fire(prompt, "Triggered", self.localPlayer)
+	self:Settle()
+end
+
+-- ─── Gamepad (update 3.2) ───────────────────────────────────────────────────────────
+-- A small stand-in for the engine's pad handling: the device state in world.input, the
+-- ContextActionService bindings, and GUI navigation (A presses GuiService.SelectedObject, the
+-- D-pad moves it). Navigation follows tree order rather than on-screen geometry, because the
+-- mock's layout pass ignores list and grid layouts; it honours Selectable, visibility and
+-- SelectionGroup + SelectionBehavior* = Stop, which is what scoping relies on.
+
+local Enum = roblox.Enum
+local NAV = { DPadUp = -1, DPadLeft = -1, DPadDown = 1, DPadRight = 1 }
+local NAV_SIDE = { DPadUp = "Up", DPadLeft = "Left", DPadDown = "Down", DPadRight = "Right" }
+
+function ClientHarness:_setLastInput(kind)
+	local state = self.world.input
+	if state.lastType ~= kind then
+		state.lastType = kind
+		RobloxMock.fire(self.world.game:GetService("UserInputService"), "LastInputTypeChanged", kind)
+	end
+end
+
+-- Plugs a pad in and makes it the last input (on), or unplugs it and touches the screen (off).
+function ClientHarness:UseGamepad(on: boolean)
+	local state = self.world.input
+	local uis = self.world.game:GetService("UserInputService")
+	local pad = Enum.UserInputType.Gamepad1
+	local plugged = #state.gamepads > 0 -- the harness only ever plugs in Gamepad1
+	if on and not plugged then
+		table.insert(state.gamepads, pad)
+		RobloxMock.fire(uis, "GamepadConnected", pad)
+	elseif not on and plugged then
+		table.clear(state.gamepads)
+		RobloxMock.fire(uis, "GamepadDisconnected", pad)
+	end
+	self:_setLastInput(if on then pad else Enum.UserInputType.Touch)
+	self:Settle()
+end
+
+function ClientHarness:Selected()
+	return self.world.game:GetService("GuiService").SelectedObject
+end
+
+function ClientHarness:_navigate(side: string, step: number)
+	local gs = self.world.game:GetService("GuiService")
+	local from = gs.SelectedObject
+	local scope = self.playerGui
+	local cursor = from.Parent
+	while cursor and cursor ~= self.playerGui do
+		if cursor:IsA("GuiBase2d") and cursor.SelectionGroup and cursor["SelectionBehavior" .. side] == Enum.SelectionBehavior.Stop then
+			scope = cursor
+			break
+		end
+		cursor = cursor.Parent
+	end
+	local list = {}
+	for _, d in scope:GetDescendants() do
+		if d:IsA("GuiObject") and d.Selectable and self:IsShown(d) then
+			table.insert(list, d)
+		end
+	end
+	local at = table.find(list, from)
+	local target = if at then list[at + step] else list[1]
+	if target then
+		gs.SelectedObject = target
+	end
+end
+
+-- One engine input phase: ContextActionService first, then GUI navigation, then
+-- UserInputService (which always sees the input; `processed` tells it someone used it).
+function ClientHarness:_input(keyCode, state, kind)
+	local world = self.world
+	local input = RobloxMock.newInput(world, { KeyCode = keyCode, UserInputType = kind, UserInputState = state })
+	local bound = {}
+	for _, action in world.input.actions do
+		for _, item in action.inputs do
+			if item == keyCode or item == kind then -- EnumItems compare by ==, not identity
+				table.insert(bound, action)
+				break
+			end
+		end
+	end
+	table.sort(bound, function(a, b)
+		if a.priority ~= b.priority then
+			return a.priority > b.priority
+		end
+		return a.order > b.order
+	end)
+	local processed = false
+	for _, action in bound do
+		local result
+		world:Run(function()
+			result = action.fn(action.name, state, input)
+		end)
+		if result == nil or result == Enum.ContextActionResult.Sink then
+			processed = true
+			break
+		end
+	end
+	local gs = world.game:GetService("GuiService")
+	local selected = gs.SelectedObject
+	if not processed and selected and gs.GuiNavigationEnabled then
+		if keyCode == Enum.KeyCode.ButtonA then
+			processed = true
+			if state == Enum.UserInputState.Begin and selected:IsA("GuiButton") then
+				RobloxMock.fire(selected, "Activated", input, 1)
+				RobloxMock.fire(selected, "MouseButton1Click")
+			end
+		elseif NAV[keyCode.Name] then
+			processed = true
+			if state == Enum.UserInputState.Begin then
+				self:_navigate(NAV_SIDE[keyCode.Name], NAV[keyCode.Name])
+			end
+		end
+	end
+	RobloxMock.fire(
+		world.game:GetService("UserInputService"),
+		if state == Enum.UserInputState.Begin then "InputBegan" else "InputEnded",
+		input,
+		processed
+	)
+	world.sched:runDeferred()
+end
+
+-- Presses and releases a key: a pad button ("ButtonB", Enum.KeyCode.DPadDown) or a keyboard key.
+function ClientHarness:Press(key)
+	local keyCode = if type(key) == "string" then Enum.KeyCode[key] else key
+	local name = keyCode.Name
+	local kind = if string.sub(name, 1, 6) == "Button" or string.sub(name, 1, 4) == "DPad"
+		then Enum.UserInputType.Gamepad1
+		else Enum.UserInputType.Keyboard
+	self:_setLastInput(kind)
+	self:_input(keyCode, Enum.UserInputState.Begin, kind)
+	self:_input(keyCode, Enum.UserInputState.End, kind)
+	self:Settle()
+end
+
+-- Moves the left stick to (x, y), each -1..1 (InputChanged, as the engine reports it).
+function ClientHarness:Stick(x: number, y: number)
+	local pad = Enum.UserInputType.Gamepad1
+	self:_setLastInput(pad)
+	local input = RobloxMock.newInput(self.world, {
+		KeyCode = Enum.KeyCode.Thumbstick1,
+		UserInputType = pad,
+		UserInputState = Enum.UserInputState.Change,
+		Position = roblox.Vector3.new(x, y, 0),
+	})
+	RobloxMock.fire(self.world.game:GetService("UserInputService"), "InputChanged", input, false)
 	self:Settle()
 end
 

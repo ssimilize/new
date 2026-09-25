@@ -147,4 +147,10 @@ function Router:Current(): string?
 	return self._current
 end
 
+-- The root of a screen that has been built (nil before its first open).
+function Router:Root(name: string): GuiObject?
+	local screen = self._screens[name]
+	return screen and screen.Root
+end
+
 return Router

@@ -3,7 +3,7 @@
 
 	lobby   rules, your best score and runs, Start (Surf.Start → seed)
 	surfing three lanes; rocks and seashells ride down to your surfer (Logic/Surf.Course from
-	        the seed). ◀ / ▶ (or A / D, ← / →) switch lanes; every switch is recorded as
+	        the seed). ◀ / ▶ (or A / D, ← / →, pad D-pad or left stick) switch lanes; every switch is recorded as
 	        { t, lane }. Hitting Config.Lives rocks or reaching Config.Duration ends the run.
 	result  Surf.Finish { run, inputs } → the server's score, shells, Seashells and best.
 	The screen only shows the run; the server replays the moves to decide the score.
@@ -33,6 +33,8 @@ local Cfg = Config.Surf
 
 local LOOKAHEAD = 2.4 -- seconds of course visible above the surfer
 local FIELD = Vector2.new(360, 330)
+local STICK_PUSH = 0.6 -- left stick X past this switches one lane
+local STICK_REARM = 0.3 -- and must come back inside this before the next switch
 
 return {
 	Name = "Surf",
@@ -52,6 +54,8 @@ return {
 		local lastResult = nil
 		local conn = nil
 		local inputConn = nil
+		local stickConn = nil
+		local stickArmed = true
 
 		local body = New("Frame", { Name = "SurfBody", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = panel.Body })
 
@@ -356,6 +360,9 @@ return {
 				return
 			end
 			clear()
+			-- While surfing, the Gamepad controller clears its cursor (so the D-pad switches
+			-- lanes instead of moving it) and shows this legend.
+			panel.Root:SetAttribute("GamepadLegend", if mode == "surfing" then "◀ ▶ Switch lanes · Ⓑ Close" else nil)
 			if mode == "surfing" then
 				drawSurfing()
 			elseif mode == "result" then
@@ -371,14 +378,37 @@ return {
 				isOpen = true
 				mode = if run and not run.done then "surfing" else "lobby"
 				inputConn = UserInputService.InputBegan:Connect(function(input, processed)
+					local key = input.KeyCode
+					-- The gamepad cursor is cleared while surfing, so nothing on screen consumes
+					-- the D-pad; `processed` only guards typing on a keyboard.
+					if key == Enum.KeyCode.DPadLeft then
+						move(-1)
+						return
+					elseif key == Enum.KeyCode.DPadRight then
+						move(1)
+						return
+					end
 					if processed then
 						return
 					end
-					local key = input.KeyCode
 					if key == Enum.KeyCode.A or key == Enum.KeyCode.Left then
 						move(-1)
 					elseif key == Enum.KeyCode.D or key == Enum.KeyCode.Right then
 						move(1)
+					end
+				end)
+				-- Left stick: one lane per push past the deadzone; it re-arms back near the centre.
+				stickArmed = true
+				stickConn = UserInputService.InputChanged:Connect(function(input)
+					if input.KeyCode ~= Enum.KeyCode.Thumbstick1 then
+						return
+					end
+					local x = input.Position.X
+					if math.abs(x) < STICK_REARM then
+						stickArmed = true
+					elseif stickArmed and math.abs(x) >= STICK_PUSH then
+						stickArmed = false
+						move(if x < 0 then -1 else 1)
 					end
 				end)
 				draw()
@@ -389,9 +419,14 @@ return {
 				if run and not run.done then
 					run.done = true -- leaving the shack ends the run without a score
 				end
+				panel.Root:SetAttribute("GamepadLegend", nil)
 				if inputConn then
 					inputConn:Disconnect()
 					inputConn = nil
+				end
+				if stickConn then
+					stickConn:Disconnect()
+					stickConn = nil
 				end
 			end,
 		}

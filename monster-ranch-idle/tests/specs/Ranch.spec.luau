@@ -245,7 +245,7 @@ return function(t)
 			expect(h:Session(p, "Ranch").rates[2]).toBe(0)
 			expect(h:Reject(p, "Ranch.Assign", { id = m.id, pen = 3 })).toContain("don't own")
 			expect(h:Reject(p, "Ranch.Assign", { id = "m999", pen = 1 })).toBe("That monster doesn't exist")
-			expect(h:Reject(p, "Ranch.Assign", { id = m.id, pen = 6 })).toBe("BadRequest")
+			expect(h:Reject(p, "Ranch.Assign", { id = m.id, pen = 7 })).toBe("BadRequest") -- 3.2: pens go to 6
 			-- Fill pen 1, then it refuses more.
 			for _ = 1, Economy.Pens.startCapacity do
 				spawn(h, p)

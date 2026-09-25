@@ -8,15 +8,15 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 |---|---|---|---|---|
 | Kernel (lifecycle, Data, Net, State, Bus, Scheduler) | K | 🟩 | `Kernel.spec` | session-locked DataStore, validation, rate limits |
 | Currency | S1 | 🔌 | `Economy.spec` | |
-| Progression | S1 | 🔌 | `Economy.spec` | |
+| Progression | S1 | 🔌 | `Economy.spec`, `LevelSeventy.spec` | 3.2: date-gated cap (`Unlocks.LevelCaps`: 60, then 70 from 11 Mar 2028); unlocks at 62 / 66 / 70 |
 | Rewards | S1 | 🔌 | `Economy.spec` | |
-| Settings | S1 | 🔌 | `Kernel.spec` | |
+| Settings | S1 | 🔌 | `Kernel.spec`, `LocaleClient.spec` | 3.2: `language` ("auto" / en / es / pt) through `Settings.SetLanguage` |
 | Monsters | S2 | 🔌 | `Economy.spec` | growth, feeding, levels, stars, codex |
-| Eggs | S3 | 🔌 | `Eggs.spec`, `RanchLogic.spec` | starter egg, 4 slots (unlocks + Extra Incubator pass), speed providers (cap 0.75, fixed at placement), Starlit pity / Royal lucky meter (`Logic/EggRoll`), Hatch Rush ad, offline-ready eggs → WelcomeItem; `Room()` for trade/shop caps |
+| Eggs | S3 | 🔌 | `Eggs.spec`, `RanchLogic.spec`, `LevelSeventy.spec` | 3.2: 5 slots (incubator 4 at Lv 62 + the pass), save v2 adds the 5th slot. Starter egg, slots from unlocks + Extra Incubator pass, speed providers (cap 0.75, fixed at placement), Starlit pity / Royal lucky meter (`Logic/EggRoll`), Hatch Rush ad, offline-ready eggs → WelcomeItem; `Room()` for trade/shop caps |
 | Shop | S3 | 🔌 | `Shop.spec`, `RanchLogic.spec` | deterministic global restock (`Logic/Restock`), per-player allowance per window, unlocks, event eggs, paid-random gate (Monetization → Policy fallback), storage cap, food, decor, themes, daily free egg ad |
-| Ranch | S3 | 🔌 | `Ranch.spec`, `RanchLogic.spec` | pens + jars (`Logic/Jar`, settle-on-change, offline at saved rates), modifiers/jar bonuses, passes (doubleCoins, vip, bigBarn, autoCollect), assign/busy auto-removal + return, upgrades, decor mood aura, themes, garden (rain ×2) |
+| Ranch | S3 | 🔌 | `Ranch.spec`, `RanchLogic.spec`, `LevelSeventy.spec` | 3.2: pen 6 (Lv 66, 10B). Pens + jars (`Logic/Jar`, settle-on-change, offline at saved rates), modifiers/jar bonuses, passes (doubleCoins, vip, bigBarn, autoCollect), assign/busy auto-removal + return, upgrades, decor mood aura, themes, garden (rain ×2) |
 | WelcomeBack | S3 | 🔌 | `WelcomeBack.spec` | buffers join WelcomeItems, ≥ 5 min away summary, claim ×1 / ×2 (ad); holds Auto-Collect until claimed |
-| Expeditions | S4 | 🔌 | `Expeditions.spec`, `BattleSim.spec` | stage fights (`Logic/BattleSim`), timed runs + offline finish (`Logic/Loot`), caravans; optional Monetization (explorer, stageRetry ad), Weather (night) |
+| Expeditions | S4 | 🔌 | `Expeditions.spec`, `BattleSim.spec`, `LevelSeventy.spec` | 3.2: squad 3 / 4 / 5 at Lv 1 / 35 / 70 (`Regions.SquadSize.steps`). Stage fights (`Logic/BattleSim`), timed runs + offline finish (`Logic/Loot`), caravans; optional Monetization (explorer, stageRetry ad), Weather (night) |
 | Boss | S4 | 🔌 | `Boss.spec` | Stampede schedule, cheer (≤ `Boss.MaxTapsPerSecond`), rewards; needs Expeditions; optional Weather (bossDamage) |
 | Breeding | S5 | 🔌 | `Breeding.spec` | pods (+pass), daily limits, seeded roll via `Logic/Breeding`, offline WelcomeItem, hybrid discovery → `Bred` |
 | Weather | S5 | 🔌 | `Weather.spec` | clock-aligned rolls + day/night (`Logic/WeatherRoll`), pen mutations, totems (queued behind running weather), heatwave egg speed, tutorial guarantee |
@@ -39,11 +39,11 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Riding | S5 | 🔌 | `LightAndVoid.spec` | 2.0: mount any Adult (Lv 16); speed from species SPD and rarity; riders replicated in `global.Riding`; dismount on busy / removed / leave |
 | Surf | S6 | 🔌 | `LightAndVoid.spec` | 2.0: Summer Splash surfing; seeded course, server replays lane changes to score; Seashells through the event's daily cap |
 | Arena | S5 | 🔌 | `ArenaRaids.spec` | 2.1: async PvP with normalized stats, defense snapshots across servers (`Services.Arena`), Elo for both sides, bots fill in, 5 battles a day, weekly tier rewards |
-| Raids | S5 | 🔌 | `ArenaRaids.spec` | 2.1: 4-player raid lobbies (2 Adults each), Stormcrag Titan and Umbral Wyrm, Raid Egg for the raid-only lines, 3 rewarded wins a day |
+| Raids | S5 | 🔌 | `ArenaRaids.spec`, `FrostLeviathan.spec` | 3.2: Raid 3, the Frost Leviathan (opens 11 Mar 2028, Lv 60), per-raid `opensAt` / `unlock`, Leviathan Egg for the Floelet line. 2.1: 4-player raid lobbies (2 Adults each), Stormcrag Titan and Umbral Wyrm, Raid Egg for the raid-only lines, 3 rewarded wins a day |
 | Racing | S5 | 🔌 | `YearTwo.spec` | 3.0: daily seeded track, fixed-step sim shared with the client, server replays jump/boost moves, 3 ghosts from the track's par, 10 paid races a day, Racing Cup points (weekly `racing` board) |
 | TradingHub | S5 | 🔌 | `YearTwo.spec`, `GoLive.spec` | 3.0.1: places found by name, hub place from `hub.project.json`, teleport retry. 3.0: Trading Hub place mode (`Config.TradingHub.Mode`), Travel / Return teleports, cross-server Trade Board (`Services.HubBoard`), Meet here (trade request) or on the poster's server (teleport); no plots on the hub |
 | Workshop | S6 | 🔌 | `YearTwo.spec`, `GoLive.spec` | 3.0.1: record / list cache, royalty ledger, moderation queue (Review). 3.0: player-made accessories (catalogue shape + palette colours + filtered name), cross-server designs (`Services.Designs`), copies for ribbons, royalties, likes, reports hide; worn designs encoded in `Monster.acc` |
-| World (geometry) | C1 | 🔌 | Studio + ClientHarness | `Systems/World` + `Build.luau`: ground, paths, plaza + fountain, the hub buildings of `Config.World.Hub` + the leaderboard board (HubId/Screen), the Sky Islands (2.0), 6 plots (PlotId) with 5 fenced pens (PenIndex), incubator pad, barn, gate; ~380 parts |
+| World (geometry) | C1 | 🔌 | Studio + ClientHarness, `LevelSeventy.spec` (footprints) | `Systems/World` + `Build.luau`: ground, paths, plaza + fountain, the hub buildings of `Config.World.Hub` + the leaderboard board (HubId/Screen), the Sky Islands (2.0), 6 plots (PlotId) with 6 fenced pens (PenIndex; a 3 × 2 grid since 3.2), incubator pad, barn, gate; ~380 parts |
 
 ## Client
 
@@ -63,8 +63,10 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Screen: Rebirth · controller: EggHunt | C3 | 🔌 | 1.4: rebirth requirements / keep / reset / gain, Heirloom pick + confirm, skill tree; Star Altar in the hub and a Hall of Fame link; hunt eggs with pick-up prompts; Pollen Storm particles in the Weather controller |
 | Screens: Wardrobe, Contests (Showtime) · controller: Showtime | C3 | 🔌 | 1.5: dress-up with a live 3D preview, owned / shop tabs; show phases, entry, runway stars, podium; Showtime Stage in the hub shows the walking monster; MonsterDetail Style button; accessory placeholders in `Visuals/MonsterModel` |
 | Screen: Surf · controllers: SkyIslands, Riding | C3 | 🔌 | 2.0: launch / return pads, Sky Gate, wind crystals; mounts under every rider, rider speed and hip height, Get off button, Ride on the monster screen; 3-lane surfing screen; Surf Shack and Sky Islands geometry; Light/Void monster touches and Beach Day / pollen-style weather |
-| Screens: Arena, Raids | C3 | 🔌 | 2.1: Battle / Defense / Rewards tabs; raid list and server lobbies; both play fights in Parts/BattleReplay; Champions Arena and Raid Portal buildings |
+| Screens: Arena, Raids | C3 | 🔌 | 3.2: three raid cards with date / level gates and a join gate on lobbies. 2.1: Battle / Defense / Rewards tabs; raid list and server lobbies; both play fights in Parts/BattleReplay; Champions Arena and Raid Portal buildings |
 | Screens: Racing, TradingHub, Workshop | C3 | 🔌 | 3.0: side-view race with Jump / Boost and a ghost strip; Trade Board / My ad (hub) or board preview + Travel (ranch); Design / Gallery / My copies; Racetrack, Trading Hub portal and Workshop buildings; Expeditions region tabs with opening dates |
+| Controller: Localize · `Shared/Locale` | 3.2 | 🔌 | Spanish and Portuguese (Brazil): catalogues keyed by the English text, every text in the PlayerGui and Workspace translated in place, longer text shrunk to fit, Settings → Language; `Locale.spec`, `LocaleClient.spec` |
+| Controller: Gamepad · `UI/Focus` | 3.2 | 🔌 | controller support: cursor scoped to the open screen or dialog, B back, LB/RB tabs, Y Monsters, Racing / Surf on the pad, key legend; `GamepadClient.spec` |
 | Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
 
 ## Studio test pass (not yet done)

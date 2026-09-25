@@ -9,6 +9,8 @@
 	  rewarded = raid wins paid with the raid reward today (≤ Config.DailyRewards)
 
 	Actions: Raids.Open { raid, ids }, Raids.Join { lobby, ids }, Raids.Leave, Raids.Launch.
+	Open refuses a raid before its `opensAt` (Config.IsOpen) and a host below the raid's unlock
+	(Config.UnlockFor, 3.2); Join refuses a member below the lobby raid's unlock.
 	Monster ids stay server-side. Launch (host) re-checks every member's monsters, drops
 	members who left or whose monsters are gone, simulates one battle (BattleSim, up to
 	MaxPlayers × PerPlayer allies against the boss and adds) and sends each member
@@ -19,6 +21,7 @@
 local Shared = game:GetService("ReplicatedStorage").Shared
 local BattleSim = require(Shared.Logic.BattleSim)
 local Formulas = require(Shared.Logic.Formulas)
+local Format = require(Shared.Logic.Format)
 
 local Raids = {
 	Name = "Raids",
@@ -158,6 +161,11 @@ end
 
 local function open(player, raidId: string, ids)
 	Progression:Require(player, Config.Unlock)
+	local raid = Config.ById[raidId]
+	if not Config.IsOpen(raid, ctx:Now()) then
+		ctx:Fail(string.format("%s opens on %s", raid.name, Format.date(raid.opensAt)))
+	end
+	Progression:Require(player, Config.UnlockFor(raid))
 	if memberOf[player.UserId] then
 		ctx:Fail("You're already in a raid lobby")
 	end
@@ -191,6 +199,7 @@ local function join(player, id: string, ids)
 	if #lobby.members >= Config.MaxPlayers then
 		ctx:Fail("That raid is full")
 	end
+	Progression:Require(player, Config.UnlockFor(lobby.raid))
 	local power = checkTeam(player, ids)
 	table.insert(lobby.members, { userId = player.UserId, name = player.DisplayName or player.Name, power = power })
 	teams[id][player.UserId] = table.clone(ids)

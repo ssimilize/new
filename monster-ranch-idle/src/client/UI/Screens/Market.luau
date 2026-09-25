@@ -1413,13 +1413,13 @@ function Market.Build(ctx)
 		mailButton:SetVisible(coins > 0 or items > 0)
 		local parts = {}
 		if coins > 0 then
-			table.insert(parts, Format.short(coins) .. " coins")
+			table.insert(parts, string.format("%s coins", Format.short(coins)))
 		end
 		if items > 0 then
 			table.insert(parts, string.format("%d item%s", items, if items == 1 then "" else "s"))
 		end
 		mailLine.Text = if #parts > 0
-			then "In your mailbox: " .. table.concat(parts, " and ") .. ". Make room, then Collect mail."
+			then string.format("In your mailbox: %s. Make room, then Collect mail.", table.concat(parts, ", "))
 			else "Coins from sales and items that come back arrive here automatically."
 		local m = StoreKit.tbl(store, "profile.Market")
 		local stats = StoreKit.asTable(m.stats)

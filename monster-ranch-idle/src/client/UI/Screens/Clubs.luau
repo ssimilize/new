@@ -423,7 +423,7 @@ function Clubs.Build(ctx)
 			})
 			chip.Position = UDim2.fromOffset(32, 12)
 			Util.text({
-				Text = (if isMe then "You" else tostring(m.name)) .. string.format("  ·  %s pts", Format.short(math.floor(m.points or 0))),
+				Text = string.format("%s  ·  %s pts", if isMe then "You" else tostring(m.name), Format.short(math.floor(m.points or 0))),
 				Font = if isMe then Theme.Fonts.Display else Theme.Fonts.Body,
 				Position = UDim2.fromOffset(130, 0),
 				Size = UDim2.new(1, -440, 1, 0),

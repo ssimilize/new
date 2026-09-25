@@ -5,7 +5,7 @@
 	BattleReplay, so the server simulates once and the client only draws the result.
 
 	BattleSim.Simulate(allies, enemies, seed, opts?) -> BattleReplay (ARCHITECTURE.md §7)
-	  allies / enemies: monster records (≤ 4 allies, ≤ 5 enemies). Extra optional fields:
+	  allies / enemies: monster records (≤ 5 allies, ≤ 5 enemies). Extra optional fields:
 	    statMult = n   multiplies HP/ATK/DEF/SPD (enemy bosses, see BuildEnemies)
 	    hpMult = n     multiplies HP only (raid bosses: long fights that don't one-shot)
 	    boss = true    drawn as a boss by the client
@@ -52,7 +52,7 @@ BattleSim.BaseCrit = 0.05
 BattleSim.CritMult = 1.5
 BattleSim.FrontShare = 0.5
 BattleSim.MaxShieldPct = 0.5 -- shields stack up to 50% of max HP
-BattleSim.MaxAllies = 4
+BattleSim.MaxAllies = 5 -- the largest squad (Config.Regions.SquadSize, Ranch Level 70)
 BattleSim.MaxEnemies = 5
 
 local Skills = Species.Skills

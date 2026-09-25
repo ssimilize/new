@@ -42,7 +42,24 @@ Run these with at least two servers of each place (a private server plus a publi
 | Frostfall rerun | Set `Flags.ActiveEvent = "frostfall"` in a private server | Event egg, decor, Snow boost and the Tinselkit line appear |
 | Market / Arena / Ads | See the `VERIFY` comments in `Adapters.luau` | Paging and quotas behave as the comments expect |
 
-## 3. After launch
+## 3. Update 3.2 (Frostbite Glacier + Level 70)
+
+- **Publish before Sat 4 Mar 2028, 15:00 UTC**, when Ranch Pass Season 8 starts. The Glacier,
+  the Frost Leviathan and the Level 70 cap switch on by themselves on 11 Mar.
+- **Languages:** the game ships its own Spanish and Portuguese (`docs/LOCALIZATION.md`). In
+  Creator Hub → Localization, leave automatic text capture and automatic translation **off**
+  for Spanish and Portuguese, so Roblox never translates a second time. It is safe to add
+  Spanish and Portuguese as supported languages for the experience's page.
+- **Live checks:**
+
+| Check | How | Pass |
+|---|---|---|
+| Language by locale | Join with a Roblox account set to Español, then to Português | Menus, toasts and signs are in that language; monster names stay English |
+| Language setting | Settings → Language → English, then rejoin | The choice sticks across servers |
+| Controller | Play with an Xbox or PlayStation pad in Studio or on console | The cursor stays in the open menu, B closes it, LB/RB change tabs, Y opens Monsters; racing and surfing work on the pad |
+| Controller legend | Look at the corner hint with a pad | The Ⓐ Ⓑ Ⓨ glyphs render in the font (if not, swap them for "A" / "B" / "Y") |
+
+## 4. After launch
 
 - Keep `Config.Workshop.Moderators` (or the moderator group) staffed: hidden designs wait in
   the Review queue until someone restores or removes them.
