@@ -3,6 +3,52 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 1.4 · Rebirth + Spring Bloom
+
+**For players**
+- **Ranch Rebirth** (Ranch Level 40, always optional). Visit the new Star Altar in the Market Square, or tap ★ Rebirth in the Hall of Fame.
+  - **Needs** 50M coins in hand for the first star (×3 for each star after that).
+  - **Resets:** coins, pens and every ranch upgrade, the garden and region progress. Placed decor goes back to storage.
+  - **Keeps:** Ranch Level, Codex, Hall of Fame, gems and other currencies, eggs, decor and themes, passes, and your Heirlooms: 3 monsters you choose, +1 per Rebirth Star.
+  - **Your other monsters become Stardust** at 50% of their Hall of Fame value (more for higher stars).
+  - **Gains:** a Rebirth Star (coins ×1.5 with one, ×2 with two, and so on), a new biome pen theme per star (Starfield Meadow, Crystal Tundra, Aurora Isle, Sunset Mesa, Nebula Drift), the Celestial Egg from the first star, and from 3 stars a 3rd visible trait on every monster.
+  - The confirmation shows exactly what you keep, what you lose and the Stardust you get.
+- **Stardust skill tree:** three branches of three skills.
+  - Ranch: Golden Touch (coins), Deep Pockets (jar time), Head Start (coins after each rebirth).
+  - Hatchery: Warm Hands (hatch speed), Twin Nests (+1 breed a day), Star Sifter (more Stardust from rebirths).
+  - Adventure: Trailblazer (expedition loot), War Paint (Stampede damage), Family Vault (more Heirlooms).
+  - Deeper skills need the one above them, and some need Rebirth Stars.
+- **Celestial Egg** (6M coins, needs a Rebirth Star): Rare or better, hatching three new lines:
+  - Cometkit → Meteorlynx → Supernova
+  - Moonmoth → Eclipsewing → Nebula Moth
+  - Orbiton → Asterock → Planetitan
+- **Spring Bloom event** (3–24 Apr 2027), with **Petals** as its token:
+  - **Pollen Storm:** daytime event weather that gives the new **Blossom** mutation (×3) and makes gardens grow 1.5× faster.
+  - **Egg hunt:** 4 painted eggs hide around the Market Square every 20 minutes. Each one pays 10 Petals, finding all 4 pays 20 more, and you can find up to 40 a day.
+  - **Bloom Egg** (400 Petals, always Blossom): Budling → Petalhop → Bloomhare, Pollenpuff → Buzzbloom → Pollen Monarch, and Tulipup → Dewfox → Rainbloom Fox.
+  - **Decor:** Tulip Patch and Bloom Arch, plus the Blossom Glade pen theme.
+- **Ranch Pass Season 2, "Spring Stars"** (3 Apr – 15 May 2027): Stardust, spring decor, a Celestial Egg, and a Legendary Budling at the top of the premium track.
+- **New achievements:** rebirth your ranch, find 20 hidden eggs, and get the Blossom mutation.
+
+**In the code**
+- **Rebirth** (`Systems/Rebirth`, `Config/Rebirth`):
+  - The whole rebirth runs in one handler with no yields, so it happens completely or not at all.
+  - Owners expose reset hooks: `Ranch:ResetForRebirth`, `Expeditions:ResetForRebirth` and `Shop:GrantTheme`.
+  - The skill tree and the stars feed the existing provider hooks, plus a new `Ranch:RegisterRateMultiplier`.
+  - `Monsters:AddVisibleTrait` adds the 3rd trait.
+  - `Shop.BuyEgg` honours an egg's new `rebirths` field.
+  - Pen themes can be `rebirth` rewards: never sold, and hidden from the Store.
+- **Spring Bloom:**
+  - A new `Config/Events` entry, plus `pollenstorm` weather (the new `dayOnly` flag in `WeatherRoll`), the `blossom` mutation, the `bloom` egg and three `springbloom` lines.
+  - `EggHunt` system with `Config/EggHunt` and `Logic/EggHunt`. Rounds are on the unix clock, so every server hides the same eggs, and the server checks how close the player's character is.
+- **Ranch Pass seasons:** `Config.Quests.Seasons`, with `Config.Quests.PassAt(now)` on the server and in the Quests and Store screens.
+- **Client:**
+  - A new Rebirth screen, and a Star Altar building in the hub.
+  - The Hall of Fame links to it.
+  - A new `EggHunt` controller draws this round's eggs.
+  - The Weather controller has a pollen particle layer.
+- **Tests:** `Rebirth.spec`, `SpringBloom.spec` and `RebirthClient.spec` (the rebirth and a hunt pick-up, played through the real client).
+
 ## 1.3 · Market Day
 
 **For players**

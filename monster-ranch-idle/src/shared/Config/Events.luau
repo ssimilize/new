@@ -33,6 +33,14 @@ Events.List = {
 		token = { name = "Lantern Coins", glyph = "✺", color = "#FF7A45" },
 		color = "#E5484D",
 	},
+	{
+		id = "springbloom",
+		name = "Spring Bloom",
+		startsAt = 1806764400, -- Sat 3 Apr 2027, 15:00 UTC (update 1.4)
+		endsAt = 1808578800, -- Sat 24 Apr 2027
+		token = { name = "Petals", glyph = "✿", color = "#FF9EC7" },
+		color = "#FF7AB6",
+	},
 }
 
 -- Tokens earned by playing while an event runs (all capped by `dailyCap` per UTC day).

@@ -3,7 +3,7 @@
 
 	Daily: today's quests with progress bars and Claim (Quests.ClaimDaily { index }).
 	Achievements: every achievement with progress and Claim (Quests.ClaimAchievement { id }).
-	Ranch Pass: tiers from Config.Quests.Pass with free and premium tracks, the pass XP bar,
+	Ranch Pass: tiers from Config.Quests.PassAt(now) with free and premium tracks, the pass XP bar,
 	Claim (Quests.ClaimPass { tier, track }) and a premium lock with "Get Ranch Pass", which
 	prompts the `ranchPass` developer product.
 
@@ -28,7 +28,6 @@ local Util = require(script.Parent.Parts.Util)
 local New = Create.New
 local C = Theme.Colors
 local Q = Config.Quests
-local Pass = Q.Pass
 
 local DAILY_BY_ID = {}
 for _, def in Q.DailyPool do
@@ -248,6 +247,7 @@ return {
 		end
 
 		local function drawPass()
+			local Pass = Q.PassAt(ctx:Now())
 			local pass = quests().pass
 			pass = if type(pass) == "table" then pass else {}
 			local sameSeason = pass.season == nil or pass.season == Pass.season
@@ -263,7 +263,7 @@ return {
 			if now < Pass.startsAt then
 				seasonText = string.format("Season %d starts in %s", Pass.season, Format.duration(Pass.startsAt - now))
 			elseif now < Pass.endsAt then
-				seasonText = string.format("Season %d · ends in %s", Pass.season, Format.duration(Pass.endsAt - now))
+				seasonText = string.format("Season %d: %s · ends in %s", Pass.season, Pass.name or "", Format.duration(Pass.endsAt - now))
 			else
 				seasonText = string.format("Season %d has ended", Pass.season)
 			end

@@ -18,7 +18,8 @@
 	have loaded when the player comes back.
 
 	Rate of a pen = Σ Formulas.CoinRate(m) × (1 + Σ rate modifiers(player, elements of m))
-	                × (Double Coins pass ? Economy.DoubleCoinsMult : 1)      (busy monsters: 0)
+	                × (Double Coins pass ? Economy.DoubleCoinsMult : 1) × Π rate multipliers(player)
+	                (busy monsters: 0)
 	Jar cap (s)   = JarTiers[jarTier] + VIP bonus + Hoarder minutes × 60 of the pen's monsters
 	                + Σ jar-bonus providers
 
@@ -30,6 +31,8 @@
 	  Ranch:JarTotal(player) -> coins                         -- what CollectAll would pay (×1)
 	  Ranch:RegisterRateModifier(key, fn(player, elements) -> additive pct)
 	  Ranch:RegisterJarBonus(key, fn(player) -> seconds)
+	  Ranch:RegisterRateMultiplier(key, fn(player) -> factor)  -- e.g. Rebirth Stars (×1.5, ×2, …)
+	  Ranch:ResetForRebirth(player, theme?)                   -- one fresh pen, tiers 1, decor back to storage
 	  Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id } } }
 	  Ranch:Refresh(player)                                   -- recompute after an input changed
 	  Ranch:HoldAutoCollect(player, hold)                     -- WelcomeBack keeps jars for its claim
@@ -57,6 +60,7 @@ local Currency, Progression, Monsters
 
 local rateModifiers = {} -- [key] = fn(player, elements) -> pct
 local jarBonuses = {} -- [key] = fn(player) -> seconds
+local rateMultipliers = {} -- [key] = fn(player) -> factor (> 0)
 local joined = {} -- [player] = true once PlayerAdded finished (offline accrual applied)
 local quiet = {} -- [player] = true while a batch of monster changes is applied
 local holdAuto = {} -- [player] = true while WelcomeBack is waiting for its claim
@@ -168,6 +172,12 @@ end
 local function compute(player): ({ number }, { number })
 	local s = section(player)
 	local mult = if hasPass(player, "doubleCoins") then Economy.DoubleCoinsMult else 1
+	for _, fn in rateMultipliers do
+		local factor = numberFrom(fn, player)
+		if factor > 0 then
+			mult *= factor
+		end
+	end
 	local vip = hasPass(player, "vip")
 	local bonus = 0
 	for _, fn in jarBonuses do
@@ -340,8 +350,70 @@ function Ranch:RegisterJarBonus(key: string, fn)
 	end
 end
 
+function Ranch:RegisterRateMultiplier(key: string, fn)
+	rateMultipliers[key] = fn
+	for _, player in ctx:Players() do
+		refresh(player)
+	end
+end
+
 function Ranch:Refresh(player)
 	refresh(player)
+end
+
+-- Rebirth: every building back to its first tier, one fresh pen (optionally in `theme`),
+-- placed decor back to storage, jar and garden contents dropped. Monsters that are home
+-- fill the new pen (sorted by id), the rest wait in the barn.
+function Ranch:ResetForRebirth(player, theme: string?): boolean
+	local s = section(player)
+	if not s then
+		return false
+	end
+	local Shop = ctx:GetSystem("Shop")
+	for _, pen in s.pens do
+		for _, decorId in pen.decor do
+			if Shop then
+				Shop:ReturnDecor(player, decorId)
+			end
+		end
+	end
+	local pen = newPen(ctx:Now())
+	if theme and Config.Decor.PenThemeById[theme] then
+		pen.theme = theme
+	end
+	s.pens = { pen }
+	s.incubatorTier = 1
+	s.barnTier = 1
+	s.garden = { tier = 1, plots = plots(Economy.Garden.plots[1]) }
+	s.offline = { rates = {}, caps = {} }
+	returnTo[player] = nil
+	local sess = ctx:Session(player)
+	if sess then
+		sess.rates, sess.caps = {}, {}
+	end
+	local ids = {}
+	for id in Monsters:All(player) do
+		table.insert(ids, id)
+	end
+	table.sort(ids)
+	quiet[player] = true
+	for _, id in ids do
+		local m = Monsters:Get(player, id)
+		if m and not m.busy and #pen.monsters < pen.capacity then
+			putInPen(player, s, id, 1)
+		elseif m and (m.loc ~= "barn" or (m.pen or 0) ~= 0) then
+			Monsters:SetLocation(player, id, "barn", 0)
+		end
+	end
+	quiet[player] = nil
+	ctx:Dirty(player)
+	local Eggs = ctx:GetSystem("Eggs")
+	if Eggs then
+		Eggs:RefreshSpeed(player)
+	end
+	penChanged(player, 1)
+	refresh(player)
+	return true
 end
 
 function Ranch:IncomePerSecond(player): number

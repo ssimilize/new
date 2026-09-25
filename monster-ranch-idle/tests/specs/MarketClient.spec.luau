@@ -43,6 +43,9 @@ return function(t)
 		h:System("Currency"):Add(player, "coins", 1e9, "test")
 		local ids = {}
 		for i, line in Config.Species.Lines do
+			if i > 28 then
+				break -- leave room in the ranch (barn + first pen) for purchases
+			end
 			local stage = (i % 3) + 1
 			local spec = { line = line.id, rarity = 2, stage = stage }
 			if stage == 3 then

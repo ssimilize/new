@@ -39,6 +39,9 @@ return {
 		"Quests",
 		"HallOfFame",
 		"Events",
+		-- 1.4 · Rebirth + Spring Bloom
+		"Rebirth",
+		"EggHunt",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

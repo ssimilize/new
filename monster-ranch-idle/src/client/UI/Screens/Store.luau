@@ -301,6 +301,9 @@ return {
 			if decorMode == "themes" then
 				local themes = shop.themes or {}
 				for i, t in Config.Decor.PenThemes do
+					if t.rebirth then
+						continue -- Rebirth biomes are earned, never sold
+					end
 					local cell = Util.card({ LayoutOrder = i, Parent = grid })
 					New("Frame", {
 						BackgroundColor3 = Color3.fromHex(t.ground),
@@ -481,7 +484,7 @@ return {
 						product.key == "ranchPass"
 						and type(pass) == "table"
 						and pass.premium == true
-						and pass.season == Config.Quests.Pass.season
+						and pass.season == Config.Quests.PassAt(ctx:Now()).season
 					)
 				if bought then
 					Util.text({

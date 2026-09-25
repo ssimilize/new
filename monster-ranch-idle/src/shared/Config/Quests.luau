@@ -190,6 +190,29 @@ Quests.Achievements = {
 		target = 1,
 		reward = { { kind = "gems", amount = 150 } },
 	},
+	-- Update 1.4 · Rebirth + Spring Bloom
+	{
+		id = "rebirth_1",
+		text = "Rebirth your ranch",
+		topic = "Rebirthed",
+		target = 1,
+		reward = { { kind = "gems", amount = 200 }, { kind = "stardust", amount = 100 } },
+	},
+	{
+		id = "egghunt_20",
+		text = "Find 20 hidden eggs in the Spring Bloom egg hunt",
+		topic = "EggFound",
+		target = 20,
+		reward = { { kind = "gems", amount = 100 }, { kind = "decor", id = "tulip_patch", amount = 1 } },
+	},
+	{
+		id = "blossom_mutation",
+		text = "Get the Blossom mutation in a Pollen Storm",
+		topic = "Mutated",
+		filter = { mutation = "blossom" },
+		target = 1,
+		reward = { { kind = "gems", amount = 100 } },
+	},
 	{
 		id = "retire_1",
 		text = "Retire a monster to the Hall of Fame",
@@ -206,36 +229,80 @@ Quests.Achievements = {
 	},
 }
 
--- Ranch Pass (6-week season). Pass XP comes from dailies and achievements.
--- premium rewards need the Ranch Pass product for the current season.
+-- Ranch Pass (6-week seasons). Pass XP comes from dailies and achievements; premium
+-- rewards need the Ranch Pass product bought for that season. `PassAt(now)` is the season
+-- that counts at `now`: the latest one that has started (the first before any has), so
+-- earned tiers stay claimable in the gap after a season ends until the next one starts.
 local function tier(free, premium)
 	return { free = free, premium = premium }
 end
-Quests.Pass = {
-	season = 1,
-	startsAt = 1797292800, -- 2026-12-15 00:00 UTC
-	endsAt = 1800921600, -- 2027-01-26 00:00 UTC
-	xpPerTier = 300,
-	xpPerDaily = 100,
-	xpPerAchievement = 200,
-	tiers = {
-		tier({ { kind = "coins", amount = 2000 } }, { { kind = "gems", amount = 30 } }),
-		tier({ { kind = "food", id = "random", amount = 10 } }, { { kind = "egg", id = "grove", amount = 2 } }),
-		tier({ { kind = "treats", amount = 10 } }, { { kind = "decor", id = "flower_bed", amount = 1 } }),
-		tier({ { kind = "egg", id = "grove", amount = 1 } }, { { kind = "gems", amount = 40 } }),
-		tier({ { kind = "gems", amount = 15 } }, { { kind = "egg", id = "crystal", amount = 1 } }),
-		tier({ { kind = "coins", amount = 20000 } }, { { kind = "treats", amount = 30 } }),
-		tier({ { kind = "friendship", amount = 30 } }, { { kind = "decor", id = "lantern", amount = 1 } }),
-		tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 60 } }),
-		tier({ { kind = "treats", amount = 20 } }, { { kind = "egg", id = "crystal", amount = 2 } }),
-		tier({ { kind = "gems", amount = 25 } }, { { kind = "egg", id = "royal", amount = 1 } }),
-		tier({ { kind = "coins", amount = 150000 } }, { { kind = "decor", id = "rainbow_arch", amount = 1 } }),
-		tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 80 } }),
-		tier({ { kind = "food", id = "random", amount = 30 } }, { { kind = "egg", id = "stampede", amount = 1 } }),
-		tier({ { kind = "gems", amount = 30 } }, { { kind = "stardust", amount = 100 } }),
-		tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "monster", id = "snowmitt", rarity = 5, amount = 1 } }),
+Quests.Seasons = {
+	{
+		season = 1,
+		name = "Frostfall Ranch",
+		startsAt = 1797292800, -- 2026-12-15 00:00 UTC
+		endsAt = 1800921600, -- 2027-01-26 00:00 UTC
+		xpPerTier = 300,
+		xpPerDaily = 100,
+		xpPerAchievement = 200,
+		tiers = {
+			tier({ { kind = "coins", amount = 2000 } }, { { kind = "gems", amount = 30 } }),
+			tier({ { kind = "food", id = "random", amount = 10 } }, { { kind = "egg", id = "grove", amount = 2 } }),
+			tier({ { kind = "treats", amount = 10 } }, { { kind = "decor", id = "flower_bed", amount = 1 } }),
+			tier({ { kind = "egg", id = "grove", amount = 1 } }, { { kind = "gems", amount = 40 } }),
+			tier({ { kind = "gems", amount = 15 } }, { { kind = "egg", id = "crystal", amount = 1 } }),
+			tier({ { kind = "coins", amount = 20000 } }, { { kind = "treats", amount = 30 } }),
+			tier({ { kind = "friendship", amount = 30 } }, { { kind = "decor", id = "lantern", amount = 1 } }),
+			tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 60 } }),
+			tier({ { kind = "treats", amount = 20 } }, { { kind = "egg", id = "crystal", amount = 2 } }),
+			tier({ { kind = "gems", amount = 25 } }, { { kind = "egg", id = "royal", amount = 1 } }),
+			tier({ { kind = "coins", amount = 150000 } }, { { kind = "decor", id = "rainbow_arch", amount = 1 } }),
+			tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 80 } }),
+			tier({ { kind = "food", id = "random", amount = 30 } }, { { kind = "egg", id = "stampede", amount = 1 } }),
+			tier({ { kind = "gems", amount = 30 } }, { { kind = "stardust", amount = 100 } }),
+			tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "monster", id = "snowmitt", rarity = 5, amount = 1 } }),
+		},
+	},
+	-- Update 1.4 · Season 2 "Spring Stars": Stardust for the skill tree, spring decor and a
+	-- Legendary Budling at the top of the premium track.
+	{
+		season = 2,
+		name = "Spring Stars",
+		startsAt = 1806764400, -- Sat 3 Apr 2027, 15:00 UTC (update 1.4)
+		endsAt = 1810393200, -- Sat 15 May 2027, 15:00 UTC
+		xpPerTier = 300,
+		xpPerDaily = 100,
+		xpPerAchievement = 200,
+		tiers = {
+			tier({ { kind = "coins", amount = 5000 } }, { { kind = "gems", amount = 30 } }),
+			tier({ { kind = "stardust", amount = 30 } }, { { kind = "egg", id = "grove", amount = 3 } }),
+			tier({ { kind = "treats", amount = 15 } }, { { kind = "decor", id = "tulip_patch", amount = 1 } }),
+			tier({ { kind = "egg", id = "grove", amount = 2 } }, { { kind = "stardust", amount = 80 } }),
+			tier({ { kind = "gems", amount = 20 } }, { { kind = "egg", id = "crystal", amount = 1 } }),
+			tier({ { kind = "food", id = "random", amount = 20 } }, { { kind = "treats", amount = 40 } }),
+			tier({ { kind = "stardust", amount = 50 } }, { { kind = "gems", amount = 60 } }),
+			tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "decor", id = "bloom_arch", amount = 1 } }),
+			tier({ { kind = "friendship", amount = 40 } }, { { kind = "egg", id = "crystal", amount = 2 } }),
+			tier({ { kind = "gems", amount = 25 } }, { { kind = "stardust", amount = 150 } }),
+			tier({ { kind = "coins", amount = 250000 } }, { { kind = "egg", id = "royal", amount = 1 } }),
+			tier({ { kind = "stardust", amount = 80 } }, { { kind = "gems", amount = 80 } }),
+			tier({ { kind = "egg", id = "stampede", amount = 1 } }, { { kind = "egg", id = "celestial", amount = 1 } }),
+			tier({ { kind = "gems", amount = 30 } }, { { kind = "stardust", amount = 250 } }),
+			tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "monster", id = "budling", rarity = 5, amount = 1 } }),
+		},
 	},
 }
+Quests.Pass = Quests.Seasons[1] -- kept for older call sites; prefer Quests.PassAt(now)
+
+function Quests.PassAt(now: number)
+	local current = Quests.Seasons[1]
+	for _, season in Quests.Seasons do
+		if now >= season.startsAt and season.startsAt >= current.startsAt then
+			current = season
+		end
+	end
+	return current
+end
 
 -- Codes (case-insensitive). `expires` is a Unix time or nil.
 Quests.Codes = {

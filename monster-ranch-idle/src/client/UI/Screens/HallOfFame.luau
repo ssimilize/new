@@ -5,6 +5,7 @@
 	Config.HallOfFame.LegacyCapPerElement), the Stardust upgrades list (HallOfFame.BuyUpgrade)
 	and the Retire flow: Monsters pick mode filtered to Adults at their level cap, then a
 	confirmation showing the Stardust, Star Shards and Legacy you get → HallOfFame.Retire.
+	A ★ Rebirth button in the header opens the Rebirth screen (update 1.4).
 
 	Reads: profile.HallOfFame, profile.Currency.stardust, profile.Monsters.list,
 	profile.Progression.level (all tolerated nil).
@@ -49,6 +50,21 @@ return {
 		})
 		local stardustPill = Widgets.Pill({ Icon = "stardust", Text = "0", Parent = panel.HeaderRight })
 		stardustPill.Root.LayoutOrder = 1
+		-- Update 1.4: Ranch Rebirth lives next door (also reached from the Star Altar).
+		Button.new({
+			Name = "RebirthLink",
+			Text = "★ Rebirth",
+			Color = C.Orange,
+			TextSize = Theme.TextSize.Small,
+			Size = UDim2.fromOffset(120, 36),
+			LayoutOrder = 2,
+			Parent = panel.HeaderRight,
+			OnClick = function()
+				if ctx.Router:Has("Rebirth") then
+					ctx.Router:Open("Rebirth")
+				end
+			end,
+		})
 
 		local isOpen = false
 		local bag = Util.bag()

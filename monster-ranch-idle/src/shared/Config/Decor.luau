@@ -35,6 +35,17 @@ Decor.List = {
 		event = "lunarlanterns",
 	},
 	{ id = "moon_gate", name = "Moon Gate", price = { token = 350 }, mood = 4, color = "#C98B2E", event = "lunarlanterns" },
+	-- Update 1.4 · Spring Bloom event decor
+	{
+		id = "tulip_patch",
+		name = "Tulip Patch",
+		price = { token = 150 },
+		mood = 3,
+		color = "#FF6FA5",
+		shape = "disc",
+		event = "springbloom",
+	},
+	{ id = "bloom_arch", name = "Bloom Arch", price = { token = 350 }, mood = 4, color = "#FFB3D1", shape = "tall", event = "springbloom" },
 	-- Update 1.1 · Coral Depths beach set
 	{ id = "sandcastle", name = "Sandcastle", price = { coins = 40000 }, mood = 2, color = "#EFD08A", set = "beach" },
 	{
@@ -70,6 +81,20 @@ Decor.PenThemes = {
 		ground = "#F6E7C8",
 		event = "lunarlanterns",
 	},
+	{
+		id = "blossom_glade",
+		name = "Blossom Glade",
+		price = { token = 600 },
+		fence = "#F7A8C8",
+		ground = "#C9EDA8",
+		event = "springbloom",
+	},
+	-- Update 1.4 · Rebirth biomes: never sold; each Rebirth Star grants one (Config.Rebirth.Biomes).
+	{ id = "starfield", name = "Starfield Meadow", rebirth = 1, fence = "#6B5BD6", ground = "#2E3A78" },
+	{ id = "crystal_tundra", name = "Crystal Tundra", rebirth = 2, fence = "#9FE3FF", ground = "#E4F4FF" },
+	{ id = "aurora_isle", name = "Aurora Isle", rebirth = 3, fence = "#3DDC97", ground = "#1F4E5F" },
+	{ id = "sunset_mesa", name = "Sunset Mesa", rebirth = 4, fence = "#D9653B", ground = "#F2B880" },
+	{ id = "nebula", name = "Nebula Drift", rebirth = 5, fence = "#FF7AC8", ground = "#3A2D55" },
 }
 Decor.PenThemeById = {}
 for _, t in Decor.PenThemes do

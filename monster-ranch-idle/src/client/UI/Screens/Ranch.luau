@@ -157,8 +157,8 @@ function Ranch.Build(ctx)
 		local list = Widgets.List({ Size = UDim2.fromScale(1, 1), Padding = 8, Parent = popup.Body })
 		local owned = StoreKit.tbl(store, "profile.Shop.themes")
 		for i, theme in Config.Decor.PenThemes do
-			local has = theme.price == nil or owned[theme.id] == true
-			if has or not theme.event or theme.event == StoreKit.activeEvent() then
+			local has = (theme.price == nil and not theme.rebirth) or owned[theme.id] == true
+			if has or (not theme.rebirth and (not theme.event or theme.event == StoreKit.activeEvent())) then
 				local row = Tiles.card({ Size = UDim2.new(1, -12, 0, 60), LayoutOrder = i, Parent = list })
 				New("Frame", {
 					BackgroundColor3 = Color3.fromHex(theme.ground),

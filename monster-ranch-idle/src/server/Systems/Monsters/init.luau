@@ -22,6 +22,7 @@
 	  Monsters:Changed(player, id, fields?)
 	  Monsters:AddMutation(player, id, mutationId) -> "added"|"combined"|"duplicate"|"full"|"missing"
 	  Monsters:AddMood(player, id, amount)
+	  Monsters:AddVisibleTrait(player, id) -> traitId?                  -- Rebirth's 3rd trait slot
 	  Monsters:CoinRate(player, id) -> number
 	  Monsters:Stats(player, id) -> stats?
 	  Monsters:Appearance(player, id) -> Appearance?
@@ -237,6 +238,30 @@ function Monsters:Remove(player, id: string, reason: string)
 	ctx:Dirty(player, "list", id)
 	ctx.Bus:Publish("MonsterRemoved", player, { id = id, reason = reason, pen = m.pen, loc = m.loc })
 	return m
+end
+
+-- Rolls one more visible trait (never hidden-only, never one it already has). Returns the
+-- trait id, or nil when the monster is missing or has no trait left to roll.
+function Monsters:AddVisibleTrait(player, id: string): number?
+	local m = Monsters:Get(player, id)
+	if not m then
+		return nil
+	end
+	m.traits = m.traits or {}
+	local taken = {}
+	for _, t in m.traits do
+		taken[t] = true
+	end
+	if m.hidden and m.hidden ~= 0 then
+		taken[m.hidden] = true
+	end
+	local ok, trait = pcall(MonsterGen.PickTrait, ctx.Rng, taken, false)
+	if not ok or trait == nil then
+		return nil
+	end
+	table.insert(m.traits, trait)
+	Monsters:Changed(player, id, { "traits" })
+	return trait
 end
 
 function Monsters:SetBusy(player, id: string, tag: string | false)
