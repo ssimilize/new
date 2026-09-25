@@ -1,0 +1,6 @@
+{
+  "ai_model": "nano-banana",
+  "prompt": "A cozy cartoon ranch barn building for monsters: red plank walls (#C8473C) with white trim, a big X-braced double door at the front, a dark brown gabled roof (#6B3A2A), a small round hay-loft window above the door, a stone base. Wider than it is tall. Stylized 3D render for a cozy monster-collecting game. Chunky, rounded, toy-like shapes, smooth matte surfaces, bright saturated colours, a simple readable silhouette. Full body, three-quarter front view, centred, plain white background, soft even lighting, no text, no ground shadow.",
+  "aspect_ratio": "1:1",
+  "remove_background": true
+}

@@ -1,0 +1,16 @@
+{
+  "should_texture": true,
+  "texture_resolution": "4k",
+  "enable_pbr": true,
+  "image_enhancement": false,
+  "target_formats": [
+    "glb",
+    "fbx"
+  ],
+  "ai_model": "meshy-6",
+  "should_remesh": true,
+  "topology": "triangle",
+  "target_polycount": 6000,
+  "pose_mode": "",
+  "remove_lighting": true
+}

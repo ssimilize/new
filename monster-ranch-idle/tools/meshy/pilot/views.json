@@ -1,0 +1,6 @@
+{
+  "ai_model": "nano-banana",
+  "prompt": "Turnaround views of this exact character: the same design, proportions, colours and markings, standing on all fours. Plain white background, soft even lighting, no text.",
+  "generate_multi_view": true,
+  "remove_background": true
+}

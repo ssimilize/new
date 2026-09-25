@@ -1,0 +1,12 @@
+{
+  "should_texture": true,
+  "texture_resolution": "4k",
+  "enable_pbr": true,
+  "target_formats": [
+    "glb",
+    "fbx"
+  ],
+  "model_type": "smart-topology",
+  "ai_model": "meshy-t2",
+  "target_polycount": 6000
+}
