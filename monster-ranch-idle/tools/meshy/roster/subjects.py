@@ -237,6 +237,16 @@ SUBJECTS = {
     "nightbloom": "Nightbloom: a graceful sprite with a large crown of a night-blooming flower with pale "
     "glowing purple petals, a long smooth solid wispy tail with a few small glowing flower buds growing "
     "along it.",
+    # ── Batch 5 (2026-09-25): line 26, the last credits (line 25's four forms did not fit) ──
+    # 26 jellow (blob, spark). Jellyfish are usually drawn see-through: here the jelly is solid and
+    # opaque, and tentacles are short, thick and attached (thin loose ones model badly).
+    "jellow": "Jellow, a baby jelly blob: a round wobbly body of solid, opaque, glossy yellow jelly, a small "
+    "jellyfish-like dome on top of its head with a wavy frilled rim, a few tiny bright spark spots.",
+    "glimmerjel": "Glimmerjel: a bigger jelly blob with a larger glowing dome on its head, short thick frilly "
+    "tendrils along the dome's rim, bright sparkle spots on its solid opaque jelly body.",
+    "voltmedusa": "Voltmedusa: a big regal jellyfish blob with a large glowing dome crown, a ring of short "
+    "thick curling tentacles around the crown's rim like a mane, lightning-bolt markings on its solid "
+    "opaque body.",
 }
 
 

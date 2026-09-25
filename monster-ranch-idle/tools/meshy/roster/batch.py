@@ -145,8 +145,18 @@ def matte(image: Image.Image, hovering: bool = False) -> Image.Image:
     gaps = np.zeros_like(exact)
     for i in range(1, count + 1):
         patch = labels == i
-        if patch.sum() >= 0.002 * h * w and rgb[patch].std(axis=0).max() < 4:
+        size, flat = patch.sum(), rgb[patch].std(axis=0).max()
+        if size >= 0.002 * h * w and flat < 4:
             gaps |= patch
+        elif size >= 100 and flat < 5:
+            # Smaller ones overlap eye glints in size and flatness (Staticat's 519 and 227 px, to
+            # keep; Voltmedusa's background caught under tentacle curls, 152-1896 px, to cut), but
+            # a glint touches its near-black eye (8% and 33% of the ring below value 60) and
+            # trapped background is ringed by body colour only (0%). The ring's MEDIAN does not
+            # separate them: a glint also borders the white highlight and grey sheen.
+            ring = ndimage.binary_dilation(patch, iterations=4) & ~patch
+            if (value[ring] < 60).mean() < 0.02:
+                gaps |= patch
     background = outside | gaps
     if hovering:
         background |= floating_shadow(rgb, ~background, bg)
