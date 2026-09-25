@@ -327,7 +327,8 @@ function ClientHarness:_buildWorld()
 	build.Parent = folder
 	local Config = self:require(world.game:GetService("ReplicatedStorage").Shared.Config)
 	local Build = self:require(build)
-	local worldFolder = Build.world(Config)
+	local adapters = self.server.adapters
+	local worldFolder = Build.world(Config, Config.TradingHub.Mode(adapters.PlaceId, adapters.PlaceMode))
 	worldFolder.Parent = world.workspace
 	self.Config = Config
 	self.Build = Build

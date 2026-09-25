@@ -52,6 +52,10 @@ return {
 		-- 2.1 · Arena & Raids
 		"Arena",
 		"Raids",
+		-- 3.0 · Year Two
+		"Racing",
+		"TradingHub",
+		"Workshop",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

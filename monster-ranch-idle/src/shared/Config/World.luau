@@ -85,6 +85,35 @@ table.insert(World.Hub, {
 	screen = "Raids",
 })
 
+-- Update 3.0 · Year Two: the Racetrack and the Trading Hub portal stand just outside the
+-- Market Square on the way to plots 2 and 4 (mirroring the 2.1 buildings).
+table.insert(World.Hub, {
+	id = "racetrack",
+	name = "Racetrack",
+	position = { -58, 0, 128 },
+	size = { 30, 8, 22 },
+	color = "#FF8A3D",
+	screen = "Racing",
+})
+table.insert(World.Hub, {
+	id = "hubPortal",
+	name = "Trading Hub",
+	position = { 58, 0, 128 },
+	size = { 18, 20, 14 },
+	color = "#4FB6F2",
+	screen = "TradingHub",
+})
+
+-- Update 3.0: the Accessory Workshop, west of the plaza between the paths to plots 1 and 2.
+table.insert(World.Hub, {
+	id = "workshop",
+	name = "Workshop",
+	position = { -112, 0, 0 },
+	size = { 22, 14, 18 },
+	color = "#FF7AC8",
+	screen = "Workshop",
+})
+
 -- Update 2.0 · Sky Islands: floating islands high above the map, joined by cloud bridges.
 -- The launch pad in the Market Square flies players to the landing island's return pad;
 -- the Sky Gate there opens the Sky Islands expeditions. Island `center` is the top of the

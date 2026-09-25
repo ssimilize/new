@@ -190,6 +190,37 @@ Quests.Achievements = {
 		target = 1,
 		reward = { { kind = "gems", amount = 150 } },
 	},
+	-- Update 3.0 · Year Two
+	{
+		id = "clear_dunes",
+		text = "Clear the Mirage Dunes",
+		topic = "StageCleared",
+		filter = { region = "dunes", stage = 20 },
+		target = 1,
+		reward = { { kind = "gems", amount = 250 }, { kind = "egg", id = "dunes", amount = 2 } },
+	},
+	{
+		id = "race_win_10",
+		text = "Win 10 monster races",
+		topic = "RaceFinished",
+		filter = { place = 1 },
+		target = 10,
+		reward = { { kind = "gems", amount = 100 }, { kind = "ribbons", amount = 40 } },
+	},
+	{
+		id = "design_first",
+		text = "Publish a Workshop design",
+		topic = "DesignPublished",
+		target = 1,
+		reward = { { kind = "ribbons", amount = 40 } },
+	},
+	{
+		id = "hub_ad",
+		text = "Post an ad on the Trade Board",
+		topic = "HubAdPosted",
+		target = 1,
+		reward = { { kind = "gems", amount = 20 } },
+	},
 	-- Update 2.1 · Arena & Raids
 	{
 		id = "arena_win_10",
@@ -467,6 +498,33 @@ Quests.Seasons = {
 			tier({ { kind = "accessory", id = "halo", amount = 1 } }, { { kind = "monster", id = "pumpkit", rarity = 5, amount = 1 } }),
 		},
 	},
+	-- Update 3.0 · Season 6 "Year Two": Dune Eggs, ribbons for the Workshop, a Legendary Sandskip.
+	{
+		season = 6,
+		name = "Year Two",
+		startsAt = 1828537200, -- Sat 11 Dec 2027, 15:00 UTC (update 3.0)
+		endsAt = 1832166000, -- Sat 22 Jan 2028, 15:00 UTC
+		xpPerTier = 300,
+		xpPerDaily = 100,
+		xpPerAchievement = 200,
+		tiers = {
+			tier({ { kind = "coins", amount = 25000 } }, { { kind = "gems", amount = 30 } }),
+			tier({ { kind = "ribbons", amount = 20 } }, { { kind = "accessory", id = "party_hat", amount = 1 } }),
+			tier({ { kind = "treats", amount = 25 } }, { { kind = "egg", id = "dunes", amount = 1 } }),
+			tier({ { kind = "gems", amount = 20 } }, { { kind = "stardust", amount = 120 } }),
+			tier({ { kind = "egg", id = "grove", amount = 2 } }, { { kind = "ribbons", amount = 40 } }),
+			tier({ { kind = "ribbons", amount = 30 } }, { { kind = "gems", amount = 60 } }),
+			tier({ { kind = "food", id = "random", amount = 30 } }, { { kind = "egg", id = "raid", amount = 1 } }),
+			tier({ { kind = "ribbons", amount = 25 } }, { { kind = "egg", id = "dunes", amount = 1 } }),
+			tier({ { kind = "gems", amount = 25 } }, { { kind = "egg", id = "royal", amount = 1 } }),
+			tier({ { kind = "coins", amount = 750000 } }, { { kind = "stardust", amount = 200 } }),
+			tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 80 } }),
+			tier({ { kind = "stardust", amount = 80 } }, { { kind = "egg", id = "dunes", amount = 1 } }),
+			tier({ { kind = "gems", amount = 30 } }, { { kind = "egg", id = "celestial", amount = 1 } }),
+			tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "egg", id = "dunes", amount = 2 } }),
+			tier({ { kind = "ribbons", amount = 60 } }, { { kind = "monster", id = "sandskip", rarity = 5, amount = 1 } }),
+		},
+	},
 }
 Quests.Pass = Quests.Seasons[1] -- kept for older call sites; prefer Quests.PassAt(now)
 
@@ -485,7 +543,8 @@ Quests.Codes = {
 	RANCH = { reward = { { kind = "gems", amount = 50 } } },
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
 	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
-	-- Update 1.1 launch code (expires 6 Feb 2027).
+	-- Update 3.0 launch code (expires 1 Jan 2028).
+	YEARTWO = { reward = { { kind = "egg", id = "dunes", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1830351600 },
 	-- Update 2.1 launch code (expires 30 Oct 2027).
 	ARENAANDRAIDS = { reward = { { kind = "egg", id = "raid", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1824908400 },
 	-- Update 2.0 launch code (expires 14 Aug 2027).
@@ -495,6 +554,7 @@ Quests.Codes = {
 		reward = { { kind = "accessory", id = "party_hat", amount = 1 }, { kind = "ribbons", amount = 25 } },
 		expires = 1814022000,
 	},
+	-- Update 1.1 launch code (expires 6 Feb 2027).
 	CORALDEPTHS = { reward = { { kind = "egg", id = "pearl", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1801872000 },
 }
 Quests.GroupId = 0 -- set to the Roblox group id for the GROUP code

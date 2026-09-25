@@ -3,6 +3,52 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.0 · Year Two
+
+The four "Year 2" items from the roadmap, in one update (launch Sat 11 Dec 2027).
+
+**For players**
+- **A new region every quarter:**
+  - **Mirage Dunes** (Ranch Level 50) opens with the update. It has 20 stages of Ember/Stone enemies, the Riddling Sphinx and Sunken Pharaoh bosses, and a **Dune Egg** for three new lines: Sandskip → Dunehopper → Sirocco / Oasis Hare, Cactling → Pricklord → Saguardian, and Scarabit → Sunscarab → Pharaoh Beetle.
+  - **Frostbite Glacier** (Ranch Level 55) is already in the game and opens on **11 Mar 2028**; until then its tab shows the date. It has Tide/Light enemies, the Glacier Egg, and three lines: Pengling, Yetikit and Aurowl.
+  - Region tabs now use short names so seven regions fit on a phone.
+- **Monster Racing** at the new **Racetrack** (Ranch Level 16):
+  - Race one of your Adults 600 m against three ghosts on the day's track; everyone gets the same track each day.
+  - Faster species run faster, but timing wins races: **Jump** hurdles (a stumble costs 1 s), **Boost** with stamina, and avoid mud.
+  - Your first 10 races each day pay Contest Ribbons and coins by place, plus **Racing Cup** points for the new weekly leaderboard (title: *Speed Demon*).
+- **Trading Hub**, a separate place for traders from every server (Ranch Level 8, same as trading):
+  - Travel there from the Trading Hub portal just outside the Market Square. Your monsters come with you.
+  - Post an ad on the **Trade Board**: up to 4 monsters or eggs, what you want (Legendary+, Mythic, Shiny, Mutated, Light, Void…) and a preset note (never free text).
+  - The board shows ads from every hub server. **Meet** sends a trade request when the poster is on your server, or takes you to their server. Trades still run through the usual trade window.
+  - "Back to ranch" takes you home.
+- **Accessory Workshop** (Ranch Level 12), a new building west of the plaza and a Workshop button in the Wardrobe:
+  - Design an accessory from any catalogue shape (its slot comes with it) in two of 16 colours, and give it a name (checked by the text filter).
+  - Publishing costs 40 Contest Ribbons, 3 designs a week. You get the first copy.
+  - Browse the **Gallery** (Top, New, Mine): like designs and buy copies for 15 ribbons. The designer earns 5 ribbons for every copy someone else buys; collect royalties in the Gallery.
+  - Players can report designs; 3 reports hide one from the gallery until moderators look at it.
+  - Worn designs show up on your monsters everywhere, and Contest judges count them like any accessory.
+- **Ranch Pass Season 6, "Year Two"** (11 Dec 2027 – 22 Jan 2028): Dune Eggs, ribbons for the Workshop, and a Legendary Sandskip.
+- **New achievements:** clear the Mirage Dunes, win 10 races, publish a design, and post a Trade Board ad.
+- **Code:** `YEARTWO` gives a Dune Egg and 50 gems. It expires on 1 Jan 2028.
+
+**In the code**
+- **Regions:** `Regions.opensAt`, `Regions.IsOpen` and `Regions.NextOpening`. Expeditions refuses a region before its date and the screen shows the date. `Format.date` formats it.
+- **Racing:** `Config/Racing`, `Logic/Racing` (track from the day's seed, fixed-step simulation shared by client and server; the server replays the `{ t, a }` moves) and the `Racing` system. The Leaderboards `racing` board reads `Racing:CupPoints`.
+- **Trading Hub:**
+  - `Config/TradingHub`, which holds the place ids (`VERIFY`: fill in when publishing) and decides the mode.
+  - The `TradingHub` system; the new `Services.Teleport` and `Services.HubBoard` (a MemoryStore sorted map) adapters.
+  - On the hub place, `Plots` hands out no plots and `World/Build` builds the hub layout (`Build.world(Config, "hub")`).
+- **Workshop:**
+  - `Config/Workshop` and the `Workshop` system, with `Services.Designs` (design records, a likes index and a recent feed).
+  - A worn design is encoded in `Monster.acc` (`Config.Accessories.Encode/Decode/Resolve`), so every client draws it from the monster record.
+  - `Accessories:Return` / `RegisterReturn` hand designs back to Workshop storage.
+- **Content:** 6 lines, 2 eggs, Season 6, the code and 4 achievements.
+- **World:** the Racetrack, Trading Hub portal and Workshop buildings.
+- **Tests:**
+  - `YearTwo.spec` (9): regions by date and level, the race rules and replay, paid races and the Cup, the hub trip and no plots, ads shared across hub servers with Meet here or there, posting only from the hub, board outages and expiry, publishing and wearing a design, and copies and royalties across servers with likes and reports.
+  - `YearTwoClient.spec` (5): a race through the UI, posting an ad and starting a trade from it, the board preview from the ranch, designing and wearing an accessory, and region tabs with dates.
+- **Snapshots:** `docs/snapshots/3.0-*.png`. The snapshot tool gains `SNAPSHOT_PLACE=hub`.
+
 ## 2.1 · Arena & Raids
 
 **For players**

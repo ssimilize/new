@@ -57,7 +57,11 @@ function Leaderboards.Build(ctx)
 
 	local tabList = {}
 	for _, board in Boards.Boards do
-		table.insert(tabList, { id = board.id, text = board.name, width = 152 })
+		-- Short labels at an even width so every board fits in one row (6 boards since 3.0).
+		table.insert(
+			tabList,
+			{ id = board.id, text = board.short or board.name, width = math.floor((812 - 8 * (#Boards.Boards - 1)) / #Boards.Boards) }
+		)
 	end
 	local tabs = Widgets.Tabs({
 		Tabs = tabList,

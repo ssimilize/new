@@ -16,6 +16,8 @@
 	at most one per Config.Social.PlotRefreshSeconds per player (a late change is never lost:
 	a trailing rebuild is scheduled).
 
+	On the Trading Hub place (Config.TradingHub.Mode, update 3.0) nobody gets a plot.
+
 	Public API:
 	  Plots:GetPlot(player) -> 1..6 | nil   (nil when the server has more players than plots)
 	  Plots:Refresh(player)                 -- throttled rebuild
@@ -127,6 +129,10 @@ end
 
 local function assign(player)
 	if plotOf[player] then
+		return
+	end
+	-- The Trading Hub place (3.0) has no ranch plots.
+	if Config.TradingHub.Mode(ctx.Services.PlaceId, ctx.Services.PlaceMode) == "hub" then
 		return
 	end
 	for index = 1, PLOT_COUNT do

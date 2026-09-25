@@ -14,6 +14,10 @@ node render.mjs scene.json ranch.png                     # HUD + ranch overview
 node render.mjs scene.json pen.png "eye=x,y,z&at=x,y,z&fov=40&noui=1"   # close-up
 ```
 
+`SNAPSHOT_PLACE=hub lune run tools/snapshot/scene out.json TradingHub` builds the Trading Hub
+place instead (update 3.0: hub layout, no plots, ads on the Trade Board); frame it with a raw
+`eye`/`at` camera.
+
 The fourth argument frames the camera: `toHub,side,up,look` (studs around the player's plot)
 or a raw query with `eye`, `at`, `fov` and `noui`.
 

@@ -51,6 +51,10 @@ Unlocks.Features = {
 	riding = 16,
 	region_sky = 45,
 	rebirth = 40,
+	region_dunes = 50,
+	racing = 16,
+	workshop = 12,
+	region_glacier = 55,
 }
 
 -- Player-facing names for the level-up popup.
@@ -88,6 +92,10 @@ Unlocks.Names = {
 	riding = "Riding",
 	region_sky = "Sky Islands",
 	rebirth = "Ranch Rebirth",
+	region_dunes = "Mirage Dunes",
+	racing = "Monster Racing",
+	workshop = "Accessory Workshop",
+	region_glacier = "Frostbite Glacier",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

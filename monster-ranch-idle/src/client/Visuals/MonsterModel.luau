@@ -661,7 +661,7 @@ function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: numbe
 	-- Accessories (1.5): one placeholder per worn slot.
 	if type(appearance.acc) == "table" then
 		for _, id in appearance.acc do
-			local def = Config.Accessories and Config.Accessories.ById[id]
+			local def = Config.Accessories and Config.Accessories.Resolve(id) -- Workshop designs too (3.0)
 			if def then
 				addAccessory(model, root, def, { s = s, top = top, bodyY = bodyY, bodySize = bodySize, eyeY = eyeY, eyeZ = eyeZ })
 			end

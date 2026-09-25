@@ -1,7 +1,8 @@
 --[[
 	World (C1): builds the static, server-side world geometry from Config.World under
 	Workspace.World (ground, paths, plaza and fountain, six hub buildings, six ranch plots
-	with pens, fences, incubator pads, barns and gates, and the SpawnLocation).
+	with pens, fences, incubator pads, barns and gates, and the SpawnLocation). On the Trading
+	Hub place (update 3.0) it builds the hub layout (Config.TradingHub.World) instead.
 
 	This is the one system allowed to create Roblox Instances; it reaches the Workspace only
 	through ctx.Services.Workspace. It has no profile, no actions and no public methods.
@@ -30,7 +31,8 @@ function World.Init(context)
 	if old then
 		old:Destroy()
 	end
-	local folder, parts = Build.world(ctx.Config)
+	local mode = ctx.Config.TradingHub.Mode(ctx.Services.PlaceId, ctx.Services.PlaceMode)
+	local folder, parts = Build.world(ctx.Config, mode)
 	-- Parent last so clients receive the finished tree in one replication step.
 	folder.Parent = workspace
 	ctx:Log("built %d parts", parts)

@@ -50,13 +50,15 @@ end
 	  systems = { "Name", ... },       -- folders under src/server/Systems
 	  stubs = { Name = api, ... },     -- fake dependencies
 	  startTime = number?,
+	  network = MockAdapters.network()?, -- share cross-server stores between kernels
+	  placeMode = "hub"?,              -- run as the Trading Hub place (3.0)
 	  verbose = boolean?,
 	}
 ]]
 function TestKernel.new(options)
 	Loader.reset("src/server/Systems")
 	local Kernel = Loader.get("Server.Kernel.Kernel")
-	local adapters = MockAdapters.new({ startTime = options.startTime, network = options.network })
+	local adapters = MockAdapters.new({ startTime = options.startTime, network = options.network, placeMode = options.placeMode })
 	local kernel = Kernel.new({ adapters = adapters, verbose = options.verbose })
 	for name, api in options.stubs or {} do
 		kernel:Stub(name, api)

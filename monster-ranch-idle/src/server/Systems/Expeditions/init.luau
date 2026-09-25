@@ -127,6 +127,9 @@ local function requireRegion(player, regionId: string)
 	if not region then
 		ctx:Fail("That region doesn't exist")
 	end
+	if not Regions.IsOpen(region, ctx:Now()) then
+		ctx:Fail(string.format("%s opens on %s", region.name, Format.date(region.opensAt)))
+	end
 	if not Progression:IsUnlocked(player, region.unlock) then
 		ctx:Fail(string.format("%s unlocks at Ranch Level %d", region.name, Progression:UnlockLevel(region.unlock)))
 	end

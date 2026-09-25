@@ -37,10 +37,16 @@ function MockAdapters.network()
 		marketDown = false,
 		arena = {}, -- Arena records by userId (2.1)
 		arenaDown = false,
+		hubBoard = {}, -- Trade Board ads by id (3.0)
+		hubDown = false,
+		teleports = {}, -- { { userId, placeId, jobId? } } in call order (3.0)
+		designs = {}, -- Workshop design records by id (3.0)
+		designFeed = {}, -- design ids, newest first
+		designsDown = false,
 	}
 end
 
-function MockAdapters.new(options: { startTime: number?, network: any? }?)
+function MockAdapters.new(options: { startTime: number?, network: any?, placeMode: string? }?)
 	local opts = options or {}
 	local network = opts.network or MockAdapters.network()
 	local now = opts.startTime or 1790000000 -- a Thursday in Sept 2026 (UTC)
@@ -51,6 +57,7 @@ function MockAdapters.new(options: { startTime: number?, network: any? }?)
 	jobCounter += 1
 	a.JobId = "test-job-" .. tostring(jobCounter)
 	a.PlaceId = 0
+	a.PlaceMode = opts.placeMode -- "hub" runs this server as the Trading Hub (3.0)
 	a.IsStudio = false
 	a.OfflineMaxSeconds = 7 * 24 * 3600
 
@@ -314,6 +321,123 @@ function MockAdapters.new(options: { startTime: number?, network: any? }?)
 				table.remove(list)
 			end
 			return true, list
+		end,
+	}
+
+	-- Trading Hub (3.0): the Trade Board and teleports, shared through options.network.
+	-- Teleports are only recorded; set network.hubDown to fail the board.
+	a.Teleport = {
+		ToPlace = function(player, placeId)
+			table.insert(network.teleports, { userId = player.UserId, placeId = placeId })
+			return true, nil
+		end,
+		ToServer = function(player, placeId, jobId)
+			table.insert(network.teleports, { userId = player.UserId, placeId = placeId, jobId = jobId })
+			return true, nil
+		end,
+	}
+	a.HubBoard = {
+		Post = function(ad, ttl)
+			if network.hubDown then
+				return false
+			end
+			local copy = deepCopy(ad)
+			copy._expires = now + ttl
+			network.hubBoard[ad.id] = copy
+			return true
+		end,
+		Remove = function(id)
+			if network.hubDown then
+				return false
+			end
+			network.hubBoard[id] = nil
+			return true
+		end,
+		List = function(limit)
+			if network.hubDown then
+				return false, {}
+			end
+			local list = {}
+			for id, ad in network.hubBoard do
+				if ad._expires > now then
+					local copy = deepCopy(ad)
+					copy._expires = nil
+					table.insert(list, copy)
+				else
+					network.hubBoard[id] = nil
+				end
+			end
+			table.sort(list, function(x, y)
+				if x.postedAt ~= y.postedAt then
+					return x.postedAt > y.postedAt
+				end
+				return x.id < y.id
+			end)
+			while #list > limit do
+				table.remove(list)
+			end
+			return true, list
+		end,
+	}
+
+	-- Workshop designs (3.0), shared through options.network; designsDown fails every call.
+	a.Designs = {
+		Create = function(record)
+			if network.designsDown or network.designs[record.id] ~= nil then
+				return false
+			end
+			network.designs[record.id] = deepCopy(record)
+			table.insert(network.designFeed, 1, record.id)
+			return true
+		end,
+		Get = function(id)
+			if network.designsDown then
+				return false, nil
+			end
+			return true, deepCopy(network.designs[id])
+		end,
+		Update = function(id, transform)
+			if network.designsDown then
+				return false, nil
+			end
+			local result = transform(deepCopy(network.designs[id]))
+			if result ~= nil then
+				network.designs[id] = deepCopy(result)
+			end
+			return true, deepCopy(result)
+		end,
+		Index = function(_id, _likes)
+			return not network.designsDown
+		end,
+		Top = function(count)
+			if network.designsDown then
+				return false, {}
+			end
+			local list = {}
+			for id, record in network.designs do
+				table.insert(list, { id = id, likes = record.likes or 0 })
+			end
+			table.sort(list, function(x, y)
+				if x.likes ~= y.likes then
+					return x.likes > y.likes
+				end
+				return x.id < y.id
+			end)
+			local ids = {}
+			for i = 1, math.min(count, #list) do
+				ids[i] = list[i].id
+			end
+			return true, ids
+		end,
+		Recent = function(count)
+			if network.designsDown then
+				return false, {}
+			end
+			local ids = {}
+			for i = 1, math.min(count, #network.designFeed) do
+				ids[i] = network.designFeed[i]
+			end
+			return true, ids
 		end,
 	}
 

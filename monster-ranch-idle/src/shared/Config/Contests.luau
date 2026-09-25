@@ -122,7 +122,7 @@ function Contests.JudgeScore(acc, theme): number
 	local J = Contests.Judge
 	local score = J.base
 	for _, id in (if type(acc) == "table" then acc else {}) do
-		local def = Accessories.ById[id]
+		local def = Accessories.Resolve(id) -- catalogue items and Workshop designs (3.0)
 		if def then
 			score += J.perWorn
 			for _, tag in def.tags do

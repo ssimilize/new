@@ -190,6 +190,27 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Raids**: per-server lobbies in `global.Raids.lobbies` (monster ids stay server-side), up to 4 players × 2 Adults against a raid boss and adds (BattleSim with `maxAllies = 8`; bosses use the new `hpMult` record field). Every member gets `Raids.Result` with the replay. Actions `Raids.Open/Join/Leave/Launch`. Publishes `RaidFinished`.
 - **BattleSim** records accept `look` (drawn instead of the record's own appearance) and `hpMult`; `opts.maxAllies` raises the ally cap.
 
+### 3.0: Racing, TradingHub, Workshop
+- **Regions** may carry `opensAt` (a new region every quarter): `Regions.IsOpen(region, now)` gates Expeditions on top of the unlock level.
+- **Racing**: `Racing.Start { id }` → `{ race, day, speed, ghosts }`; the client builds the same track (`Logic/Racing.Track(Rng.seed("racing", day))`) and steps `Logic/Racing.Step` locally; `Racing.Finish { race, inputs = { { t, a } } }` is replayed with `Logic/Racing.Simulate` (wall-clock checked). `Racing:CupPoints(player)` feeds the `racing` leaderboard. Publishes `RaceFinished`.
+- **TradingHub**: one codebase, two places. `Config.TradingHub.Mode(Services.PlaceId, Services.PlaceMode)` is `"hub"` on the Trading Hub place (or with Workspace attribute `PlaceMode = "hub"`). On the hub, Plots assigns nothing and World builds `Config.TradingHub.World`. `global.TradingHub = { mode, ads, refreshedAt }`.
+  ```lua
+  Services.Teleport = { ToPlace(player, placeId) -> ok, err?, ToServer(player, placeId, jobId) -> ok, err? }
+  Services.HubBoard = { Post(ad, ttl) -> ok, Remove(id) -> ok, List(limit) -> ok, { ad } }  -- newest first
+  ```
+  Actions `TradingHub.Travel/Return/Post/Remove/Refresh/Meet`. Publishes `HubTravel`, `HubAdPosted`.
+- **Workshop**: designs are records in `Services.Designs`:
+  ```lua
+  Services.Designs = {
+    Create(record) -> ok            -- fails if the id exists; adds it to the recent feed
+    Get(id) -> ok, record?
+    Update(id, transform) -> ok, record?   -- atomic
+    Index(id, likes) -> ok          -- OrderedDataStore for the Top gallery
+    Top(count) -> ok, { id }        Recent(count) -> ok, { id }
+  }
+  ```
+  A worn design is stored on the monster as `"ugc:<designId>:<shape>:<RRGGBB>:<RRGGBB>"` (`Config.Accessories.Encode`); `Config.Accessories.Resolve(id)` returns a catalogue item or a design definition, so MonsterModel, the Wardrobe and the Contest judge handle both. Taking a design off goes through `Accessories:Return`, which hands `ugc:` ids to the Workshop (`Accessories:RegisterReturn`). Actions `Workshop.Create/Browse/Like/Report/Buy/Equip/Claim`. Publishes `DesignPublished`, `DesignBought`.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 

@@ -620,6 +620,152 @@ function Adapters.Roblox()
 		end,
 	}
 
+	-- Trading Hub (update 3.0). PlaceMode is the Studio override (Workspace attribute
+	-- PlaceMode = "hub"); the TradingHub config decides the mode from it and PlaceId.
+	adapters.PlaceMode = workspace:GetAttribute("PlaceMode")
+	local TeleportService = game:GetService("TeleportService")
+	adapters.Teleport = {
+		-- To a public server of another place in this universe.
+		ToPlace = function(player, placeId: number): (boolean, string?)
+			local ok, err = pcall(function()
+				TeleportService:TeleportAsync(placeId, { player })
+			end)
+			return ok, if ok then nil else tostring(err)
+		end,
+		-- To one running server (JobId) of a place.
+		ToServer = function(player, placeId: number, jobId: string): (boolean, string?)
+			local ok, err = pcall(function()
+				local options = Instance.new("TeleportOptions")
+				options.ServerInstanceId = jobId
+				TeleportService:TeleportAsync(placeId, { player }, options)
+			end)
+			return ok, if ok then nil else tostring(err)
+		end,
+	}
+	-- The Trade Board: one MemoryStore sorted map, ad id -> ad, sorted by post time.
+	-- VERIFY in a live server: MemoryStore quotas with many hub servers.
+	local boardOk, board = pcall(function()
+		return MemoryStoreService:GetSortedMap("MonsterRanch_HubBoard_v1")
+	end)
+	adapters.HubBoard = {
+		Post = function(ad, ttl: number): boolean
+			if not boardOk then
+				return false
+			end
+			return (pcall(function()
+				board:SetAsync(ad.id, ad, math.clamp(ttl, 60, 3600), ad.postedAt)
+			end))
+		end,
+		Remove = function(id: string): boolean
+			if not boardOk then
+				return false
+			end
+			return (pcall(function()
+				board:RemoveAsync(id)
+			end))
+		end,
+		List = function(limit: number): (boolean, { any })
+			if not boardOk then
+				return false, {}
+			end
+			local ok, items = pcall(function()
+				return board:GetRangeAsync(Enum.SortDirection.Descending, math.clamp(limit, 1, 200))
+			end)
+			if not ok then
+				return false, {}
+			end
+			local ads = {}
+			for _, item in items do
+				table.insert(ads, item.value)
+			end
+			return true, ads
+		end,
+	}
+
+	-- Workshop designs (update 3.0): one DataStore record per design, a likes index for the
+	-- Top gallery (OrderedDataStore) and a "recent" feed key (newest first, capped).
+	local designStore = storeOf("MonsterRanch_Designs_v1")
+	local feedStore = storeOf("MonsterRanch_DesignFeed_v1")
+	local likesOk, likesIndex = pcall(function()
+		return DataStoreService:GetOrderedDataStore("MonsterRanch_DesignLikes_v1")
+	end)
+	adapters.Designs = {
+		Create = function(record): boolean
+			local created = false
+			local ok = atomic(designStore, record.id, function(current)
+				if current ~= nil then
+					return nil
+				end
+				created = true
+				return record
+			end)
+			if ok and created then
+				atomic(feedStore, "recent", function(current)
+					local list = if type(current) == "table" then current else {}
+					table.insert(list, 1, record.id)
+					while #list > 100 do
+						table.remove(list)
+					end
+					return list
+				end)
+			end
+			return ok and created
+		end,
+		Get = function(id: string): (boolean, any)
+			if not designStore then
+				return false, nil
+			end
+			local ok, record = pcall(function()
+				return designStore:GetAsync(id)
+			end)
+			return ok, if ok then record else nil
+		end,
+		Update = function(id: string, transform): (boolean, any)
+			return atomic(designStore, id, transform)
+		end,
+		Index = function(id: string, likes: number): boolean
+			if not likesOk then
+				return false
+			end
+			return (pcall(function()
+				likesIndex:SetAsync(id, math.max(0, math.floor(likes)))
+			end))
+		end,
+		Top = function(count: number): (boolean, { string })
+			if not likesOk then
+				return false, {}
+			end
+			local ok, ids = pcall(function()
+				local page = likesIndex:GetSortedAsync(false, math.clamp(count, 1, 100)):GetCurrentPage()
+				local list = {}
+				for _, entry in page do
+					table.insert(list, entry.key)
+				end
+				return list
+			end)
+			return ok, if ok then ids else {}
+		end,
+		Recent = function(count: number): (boolean, { string })
+			if not feedStore then
+				return false, {}
+			end
+			local ok, list = pcall(function()
+				return feedStore:GetAsync("recent")
+			end)
+			if not ok then
+				return false, {}
+			end
+			local ids = {}
+			for i, id in (if type(list) == "table" then list else {}) do
+				if i > count then
+					break
+				end
+				table.insert(ids, id)
+			end
+			return true, ids
+		end,
+	}
+
 	adapters.Workspace = workspace
 	return adapters
 end

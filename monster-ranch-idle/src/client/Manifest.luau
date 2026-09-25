@@ -57,6 +57,9 @@ return {
 		"Contests",
 		-- 2.0 · Summer Splash
 		"Surf",
+		"Racing",
+		"TradingHub",
+		"Workshop",
 		-- 2.1 · Arena & Raids
 		"Arena",
 		"Raids",

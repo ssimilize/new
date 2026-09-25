@@ -10,6 +10,8 @@
 	    lune run tools/snapshot/scene [out.json] [screen]
 
 	`screen` optionally opens one screen (e.g. Wardrobe) on top of the HUD.
+	SNAPSHOT_PLACE=hub runs the server as the Trading Hub place (update 3.0): the hub layout,
+	no plots, and a few ads on the Trade Board. Frame it with a raw eye/at camera.
 	Step 2 (tools/snapshot/render.mjs) draws the JSON with three.js in headless Chromium.
 	The result shows the procedural placeholder art, not final art.
 ]]
@@ -48,7 +50,8 @@ for _, name in Manifest.Systems do
 end
 -- A spring afternoon during Spring Bloom (daytime, clear or blooming weather).
 local START = Config.Events.ById.springbloom.startsAt + 2 * 3600
-local h = TestKernel.new({ systems = systems, startTime = START })
+local PLACE = process.env.SNAPSHOT_PLACE
+local h = TestKernel.new({ systems = systems, startTime = START, placeMode = if PLACE == "hub" then "hub" else nil })
 
 local function levelTo(p, level: number)
 	local P = h:System("Progression")
@@ -137,6 +140,12 @@ local cast = build(me, 4, {
 	{ line = "pollenpuff", rarity = 3, spec = {}, pen = 4, acc = { "fairy_wings" } },
 })
 h:Call(me, "Ranch.SetPenTheme", { pen = 2, theme = "starfield" })
+-- Update 3.0: a Workshop design worn in pen 2.
+do
+	local design = h:Call(me, "Workshop.Create", { name = "Violet Wings", shape = "wings", color = "#8B6AD8", color2 = "#FFD447" })
+	h:Call(me, "Workshop.Equip", { id = cast[5], design = design.design })
+	h:Advance(0.5)
+end
 build(friend, 2, {
 	{ line = "lanternling", rarity = 4, spec = {}, acc = { "top_hat", "monocle" } },
 	{ line = "snowmitt", rarity = 3, spec = {} },
@@ -161,7 +170,21 @@ for i, plot in h:Client(me).global.Plots or {} do
 		plotIndexNow = i
 	end
 end
-do
+if PLACE == "hub" then
+	-- Ads from both players on the Trade Board; stand in front of it.
+	for _, x in { { friend, "bubblin" }, { me, "cindlet" } } do
+		local ids = {}
+		for id, m in h:Section(x[1], "Monsters").list do
+			if #ids < 3 and m.stage == 3 then
+				table.insert(ids, { kind = "monster", id = id })
+			end
+		end
+		h:Call(x[1], "TradingHub.Post", { items = ids, wants = { "mythic", "variant" }, note = 3 })
+		h:Advance(1)
+	end
+	c.character:PivotTo(roblox.CFrame.new(0, 3, -30))
+	c:Advance(1)
+else
 	local plotDef = Config.World.Plots[plotIndexNow]
 	local cx, cz = plotDef.center[1], plotDef.center[3]
 	local len = math.sqrt(cx * cx + cz * cz)
@@ -176,17 +199,45 @@ do
 	c:Advance(0.5)
 end
 -- Some screens show more after a request (e.g. the Arena lists opponents after Refresh).
+-- A PREPARE that returns true has opened the screen itself.
 local PREPARE = {
 	Arena = function()
 		c:Request("Arena.Refresh")
 	end,
+	-- Update 3.0: a race in progress (picked through the real UI, a few jumps in).
+	Racing = function()
+		local screen = c:Open("Racing")
+		c:Advance(1)
+		c:Click(screen:FindFirstChild("PickRacer", true))
+		c:Advance(0.5)
+		local cell = c:Screen("Monsters"):FindFirstChild(cast[3], true)
+		c:Click(cell:FindFirstChild("Tap"))
+		c:Advance(1)
+		for i = 1, 16 do
+			local b = screen:FindFirstChild(if i % 4 == 0 then "Boost" else "Jump", true)
+			if b then
+				c:Click(b)
+			end
+			c:Advance(0.4, 0.05)
+		end
+		return true
+	end,
+	Workshop = function()
+		c:Request("Workshop.Browse", { tab = "new" })
+	end,
+	TradingHub = function()
+		c:Request("TradingHub.Refresh")
+	end,
 }
 if SCREEN then
+	local opened = false
 	if PREPARE[SCREEN] then
-		PREPARE[SCREEN]()
+		opened = PREPARE[SCREEN]() == true
 		c:Advance(1)
 	end
-	c:Open(SCREEN)
+	if not opened then
+		c:Open(SCREEN)
+	end
 	c:Advance(2)
 end
 
