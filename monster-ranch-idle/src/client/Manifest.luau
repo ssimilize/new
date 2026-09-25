@@ -57,5 +57,8 @@ return {
 		"Contests",
 		-- 2.0 · Summer Splash
 		"Surf",
+		-- 2.1 · Arena & Raids
+		"Arena",
+		"Raids",
 	},
 }

@@ -410,6 +410,65 @@ function Adapters.Roblox()
 
 	-- Global leaderboards: one OrderedDataStore per board per week (key from
 	-- Config.Leaderboards.Key). Values are whole numbers; failures return false / nil.
+	-- Arena (update 2.1): one record per player { userId, name, rating, team, wins, losses,
+	-- updatedAt } in a DataStore (atomic Update), and ratings in an OrderedDataStore for
+	-- matchmaking. VERIFY in a live server: GetSortedAsync min/max paging.
+	local arenaStore = storeOf("MonsterRanch_Arena_v1")
+	local arenaIndex = nil
+	local function ratings()
+		if arenaIndex == nil then
+			local ok, store = pcall(function()
+				return DataStoreService:GetOrderedDataStore("MonsterRanch_ArenaRatings_v1")
+			end)
+			arenaIndex = if ok then store else false
+		end
+		return arenaIndex or nil
+	end
+	adapters.Arena = {
+		Get = function(userId: number): (boolean, any)
+			if not arenaStore then
+				return false, nil
+			end
+			local ok, record = pcall(function()
+				return arenaStore:GetAsync(tostring(userId))
+			end)
+			return ok, if ok then record else nil
+		end,
+		Update = function(userId: number, transform): (boolean, any)
+			return atomic(arenaStore, tostring(userId), transform)
+		end,
+		Index = function(userId: number, rating: number): boolean
+			local store = ratings()
+			if not store then
+				return false
+			end
+			local ok = pcall(function()
+				store:SetAsync(tostring(userId), math.floor(rating))
+			end)
+			return ok
+		end,
+		-- Players rated within `window` of `rating` (closest first is up to the caller).
+		Near = function(rating: number, window: number, count: number): (boolean, { { userId: number, rating: number } })
+			local store = ratings()
+			if not store then
+				return false, {}
+			end
+			local ok, list = pcall(function()
+				local pages =
+					store:GetSortedAsync(false, math.clamp(count, 1, 100), math.floor(rating - window), math.floor(rating + window))
+				local out = {}
+				for _, entry in pages:GetCurrentPage() do
+					local userId = tonumber(entry.key)
+					if userId then
+						table.insert(out, { userId = userId, rating = entry.value })
+					end
+				end
+				return out
+			end)
+			return ok, if ok then list else {}
+		end,
+	}
+
 	adapters.Leaderboards = {
 		Submit = function(key: string, userId: number, value: number): boolean
 			local ok = pcall(function()

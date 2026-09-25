@@ -185,6 +185,11 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Riding**: `Riding.Mount { id }` / `Riding.Dismount`. `global.Riding.riders` tells every client which mount to draw under each rider; `session.Riding.speed` is the rider's walk speed (`Config.Riding.SpeedFor`). Dismounts when the monster leaves, becomes busy, or the player leaves. Publishes `Mounted`. `MonsterModel.Build` takes `opts.scale` (mounts are 1.8×).
 - **Surf**: `Surf.Start` → seed; `Surf.Finish { run, inputs }` replays the lane changes with `Logic/Surf.Simulate` (the client never reports a score). Wall-clock checks against the simulated run; Seashells through `Events:Grant`. Publishes `SurfRun`.
 
+### 2.1: Arena, Raids
+- **Arena**: cross-server records through `ctx.Services.Arena` (`Get`, atomic `Update`, `Index`, `Near`); one record per player `{ userId, name, rating, team, wins, losses, updatedAt }`. Fighters are normalized (`Logic/Arena.Normalize`: species, form and look only; rarity, level and stars fixed by `Config.Arena.Normal`), fights run in BattleSim, ratings move by Elo for both sides. Bots fill the candidate list. Actions `Arena.SetDefense/Refresh/Attack/ClaimWeekly`. Publishes `ArenaBattle`.
+- **Raids**: per-server lobbies in `global.Raids.lobbies` (monster ids stay server-side), up to 4 players × 2 Adults against a raid boss and adds (BattleSim with `maxAllies = 8`; bosses use the new `hpMult` record field). Every member gets `Raids.Result` with the replay. Actions `Raids.Open/Join/Leave/Launch`. Publishes `RaidFinished`.
+- **BattleSim** records accept `look` (drawn instead of the record's own appearance) and `hpMult`; `opts.maxAllies` raises the ally cap.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 

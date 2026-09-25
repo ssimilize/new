@@ -214,6 +214,36 @@ table.insert(Eggs.List, {
 	pattern = "band",
 })
 
+-- Update 2.1 · Raids: won from raids only; hatches the three raid lines.
+table.insert(Eggs.List, {
+	id = "raid",
+	name = "Raid Egg",
+	order = 14,
+	price = nil,
+	hatchSeconds = 3600,
+	unlock = "raids",
+	odds = { 0, 0, 40, 40, 17, 3 },
+	pool = "raid",
+	colors = { shell = "#3A2D55", spots = "#F5C630" },
+	pattern = "cracks",
+})
+
+-- Update 2.1 · Harvest Moon event egg (bought with Moon Candy while the event runs).
+table.insert(Eggs.List, {
+	id = "harvest",
+	name = "Harvest Egg",
+	order = 15,
+	event = "harvestmoon",
+	price = { token = 400 },
+	hatchSeconds = 900,
+	unlock = "egg_meadow",
+	odds = { 0, 40, 35, 18, 6, 1 },
+	pool = "harvestmoon",
+	stock = { unlimited = true },
+	colors = { shell = "#F08A4B", spots = "#3A2D55" },
+	pattern = "band",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e

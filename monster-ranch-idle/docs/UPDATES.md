@@ -3,6 +3,38 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 2.1 · Arena & Raids
+
+**For players**
+- **Champions Arena** (Ranch Level 20), just outside the Market Square:
+  - **Fair fights:** every arena monster fights as a Lv 50, 3★ Epic of its species, with no traits, mutations, Legacy or upgrades. Species, element, skill and team order decide the fight, not spending.
+  - **Defense:** set a team of three Adults, and players on any server can challenge it.
+  - **Attacks:** up to 5 a day, against opponents near your rating. Bots fill in when few players are near. A win pays some coins.
+  - **Ratings and tiers:** Elo ratings for both sides, with tiers Bronze, Silver, Gold, Crystal and Champion. Your best tier each week pays a reward once the week ends (Saturday 15:00 UTC).
+- **Raid Portal** (Ranch Level 30): 4-player raids on your server.
+  - Open a lobby with up to two Adults, and friends join with theirs. The host starts the raid, and everyone watches the battle.
+  - **Stormcrag Titan:** needs a full team of Legendaries or better.
+  - **Umbral Wyrm:** needs a full team of maxed Mythics.
+  - **Rewards:** wins pay a **Raid Egg**, the only way to hatch the three raid lines (Titanling → Thundercrag → Stormcrag Colossus, Wyrmlet → Ashwyrm → Umbral Wyrm, and Tempestray → Squallwing → Maelstrom Ray), for your first 3 raid wins each day.
+- **Harvest Moon event** (2–30 Oct 2027), with **Moon Candy** as its token:
+  - Blood Moon is 3× as likely.
+  - **Harvest Egg:** Pumpkit → Gourdling → Jack o' Lord, Scarecrowl → Strawhoot → Harvest Warden, and Batterfly → Duskflutter → Nightreaper.
+  - **Decor:** the Jack-o'-Lantern and Haunted Tree, plus the Haunted Hollow pen theme.
+- **Ranch Pass Season 5, "Harvest Moon"** (2 Oct – 13 Nov 2027): spooky accessories, Raid Eggs, and a Legendary Pumpkit.
+- **New achievements:** win 10 arena battles, beat a raid boss, and beat the Umbral Wyrm.
+- **Code:** `ARENAANDRAIDS` gives a Raid Egg and 50 gems. It expires on 30 Oct 2027.
+
+**In the code**
+- **Arena:** the `Arena` system (`Config/Arena`, `Logic/Arena`), plus `Services.Arena`, a DataStore record per player with an OrderedDataStore rating index. The mock shares it through `MockAdapters.network()`.
+- **Raids:** the `Raids` system (`Config/Raids`). Raid lines are marked `raid = true`, and the `raid` egg pool is used only by the Raid Egg.
+- **BattleSim:** records take `look` and `hpMult`, and `opts.maxAllies` lifts the ally cap. Raid bosses were tuned by simulation.
+- **Content:** Harvest Moon adds entries to `Config/Events`, `Species`, `Eggs` and `Decor`, and Season 5 is added.
+- **Client:** Arena and Raids screens, and the Champions Arena and Raid Portal buildings (outside the plaza, clear of the plot paths).
+- **Tests:**
+  - `ArenaRaids.spec` (9): normalization, Elo, two servers sharing the arena, bots, limits, weekly tier, arena outage, a 4-player raid win, a weak-team loss, the daily cap, leaving and expiry, the Raid Egg, and Harvest Moon.
+  - `ArenaRaidsClient.spec` (2): defense and an arena fight through the UI; a two-player raid where both players watch.
+- **Snapshots:** `docs/snapshots/2.1-*.png`.
+
 ## 2.0 · Light & Void
 
 **For players**

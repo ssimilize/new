@@ -106,6 +106,37 @@ Api.Actions = {
 		returns = "{ stars: number }  -- again = change your vote",
 	},
 
+	-- Arena (2.1) -------------------------------------------------------------------------
+	["Arena.SetDefense"] = {
+		schema = T.struct({ ids = T.array(id, Config.Arena.TeamSize, Config.Arena.TeamSize) }),
+		rate = 1,
+		returns = "{ rating: number }",
+	},
+	["Arena.Refresh"] = { schema = T.none, rate = 0.5, returns = "{ candidates: number }" },
+	["Arena.Attack"] = {
+		schema = T.struct({
+			candidate = T.integer(1, Config.Arena.Candidates),
+			ids = T.array(id, Config.Arena.TeamSize, Config.Arena.TeamSize),
+		}),
+		rate = 1,
+		returns = "{ replay: BattleReplay, win, delta, rating, tier, rewards }",
+	},
+	["Arena.ClaimWeekly"] = { schema = T.none, rate = 1, returns = "{ tier: string, rewards: { Reward } }" },
+
+	-- Raids (2.1) -------------------------------------------------------------------------
+	["Raids.Open"] = {
+		schema = T.struct({ raid = T.key(Config.Raids.ById), ids = T.array(id, Config.Raids.PerPlayer, 1) }),
+		rate = 1,
+		returns = "{ lobby: string }",
+	},
+	["Raids.Join"] = {
+		schema = T.struct({ lobby = T.string(12, 2), ids = T.array(id, Config.Raids.PerPlayer, 1) }),
+		rate = 1,
+		returns = "{ members: number }",
+	},
+	["Raids.Leave"] = { schema = T.none, rate = 1, returns = "nil" },
+	["Raids.Launch"] = { schema = T.none, rate = 0.5, returns = "{ win: boolean }  -- every member also gets Raids.Result" },
+
 	-- Surf Shack (2.0, Summer Splash) ----------------------------------------------------
 	["Surf.Start"] = { schema = T.none, rate = 0.5, returns = "{ run: number, seed: number, duration: number }" },
 	["Surf.Finish"] = {
@@ -363,6 +394,7 @@ Api.Events = {
 	["Trade.Completed"] = "{ received: { { kind: string, appearance: Appearance? } } }",
 	["Quests.StepDone"] = "{ step: string, rewards: { Reward } }",
 	["HallOfFame.Retired"] = "{ appearance: Appearance, stardust: number }",
+	["Raids.Result"] = "{ raid: string, replay: BattleReplay, win: boolean, rewards: { Reward } }",
 	["Market.MailCollected"] = "{ coins: number, items: { { kind, id } }, sold: { { key, price, proceeds, name? } }, returned: number }",
 }
 
@@ -397,6 +429,8 @@ Api.State = {
 		Contests = "{ shows, wins, podiums, best, votes }",
 		SkyIslands = "{ taken = { [crystalIndex as string]: unix }, day, count, total }",
 		Surf = "{ best, runs }",
+		Arena = "{ defense = { id }, attempts = { day, n }, week, bestTier, lastTier, claimed }",
+		Raids = "{ day, rewarded, wins, runs }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n } }",
 	},
@@ -414,6 +448,8 @@ Api.State = {
 		Market = "{ mail = { coins, items } }  -- mail waiting that could not be collected yet (e.g. ranch full)",
 		Contests = "{ entered: monsterId|false, votes = { [entryIndex]: stars } }  -- this show",
 		Riding = "{ mount: monsterId|false, speed: number }",
+		Raids = "{ lobby: string|false }",
+		Arena = "{ rating, tier, attemptsLeft, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
@@ -423,6 +459,7 @@ Api.State = {
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
 		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",
 		EggHunt = "{ active: boolean, round, endsAt, spots = { spotIndex } }  -- eggs hidden this round (Config.EggHunt.Spots)",
+		Raids = "{ lobbies = { [lobbyId]: { id, raid, host, hostName, expiresAt, members = { { userId, name, power } } } } }",
 		Riding = "{ riders = { ['u'..userId]: { appearance, speed } } }",
 		Contests = "{ state: 'idle'|'entry'|'runway'|'results', show, theme, endsAt, nextAt, entries = { { userId, name, appearance } }, current, results = { { userId, name, appearance, score, votes, rank } } }",
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open } } }  -- club tags of players here",
@@ -468,6 +505,8 @@ Api.Topics = {
 	CrystalCollected = "(player, { crystal: number })",
 	Mounted = "(player, { id: string, speed: number })",
 	SurfRun = "(player, { score: number, shells: number })",
+	ArenaBattle = "(player, { won: boolean, rating: number })",
+	RaidFinished = "(player, { raid: string, win: boolean })",
 	ContestEntered = "(player, { show: number, theme: string })",
 	ContestVoted = "(player, {})",
 	ContestPlaced = "(player, { rank: number, entries: number, theme: string, score: number })",

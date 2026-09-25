@@ -38,6 +38,8 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | SkyIslands | S5 | 🔌 | `LightAndVoid.spec` | 2.0: 13 wind crystals on 5 floating islands, 1 h per-player respawn, daily cap 60, distance-checked, one Loot roll each (coins, treats, Stardust or a Sky Egg) |
 | Riding | S5 | 🔌 | `LightAndVoid.spec` | 2.0: mount any Adult (Lv 16); speed from species SPD and rarity; riders replicated in `global.Riding`; dismount on busy / removed / leave |
 | Surf | S6 | 🔌 | `LightAndVoid.spec` | 2.0: Summer Splash surfing; seeded course, server replays lane changes to score; Seashells through the event's daily cap |
+| Arena | S5 | 🔌 | `ArenaRaids.spec` | 2.1: async PvP with normalized stats, defense snapshots across servers (`Services.Arena`), Elo for both sides, bots fill in, 5 battles a day, weekly tier rewards |
+| Raids | S5 | 🔌 | `ArenaRaids.spec` | 2.1: 4-player raid lobbies (2 Adults each), Stormcrag Titan and Umbral Wyrm, Raid Egg for the raid-only lines, 3 rewarded wins a day |
 | World (geometry) | C1 | 🔌 | Studio + ClientHarness | `Systems/World` + `Build.luau`: ground, paths, plaza + fountain, the hub buildings of `Config.World.Hub` + the leaderboard board (HubId/Screen), the Sky Islands (2.0), 6 plots (PlotId) with 5 fenced pens (PenIndex), incubator pad, barn, gate; ~380 parts |
 
 ## Client
@@ -58,6 +60,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Screen: Rebirth · controller: EggHunt | C3 | 🔌 | 1.4: rebirth requirements / keep / reset / gain, Heirloom pick + confirm, skill tree; Star Altar in the hub and a Hall of Fame link; hunt eggs with pick-up prompts; Pollen Storm particles in the Weather controller |
 | Screens: Wardrobe, Contests (Showtime) · controller: Showtime | C3 | 🔌 | 1.5: dress-up with a live 3D preview, owned / shop tabs; show phases, entry, runway stars, podium; Showtime Stage in the hub shows the walking monster; MonsterDetail Style button; accessory placeholders in `Visuals/MonsterModel` |
 | Screen: Surf · controllers: SkyIslands, Riding | C3 | 🔌 | 2.0: launch / return pads, Sky Gate, wind crystals; mounts under every rider, rider speed and hip height, Get off button, Ride on the monster screen; 3-lane surfing screen; Surf Shack and Sky Islands geometry; Light/Void monster touches and Beach Day / pollen-style weather |
+| Screens: Arena, Raids | C3 | 🔌 | 2.1: Battle / Defense / Rewards tabs; raid list and server lobbies; both play fights in Parts/BattleReplay; Champions Arena and Raid Portal buildings |
 | Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
 
 ## Studio test pass (not yet done)

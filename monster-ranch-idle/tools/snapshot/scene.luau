@@ -175,7 +175,17 @@ do
 	c.character:PivotTo(roblox.CFrame.lookAt(at, roblox.Vector3.new(cx, hip + 1, cz)))
 	c:Advance(0.5)
 end
+-- Some screens show more after a request (e.g. the Arena lists opponents after Refresh).
+local PREPARE = {
+	Arena = function()
+		c:Request("Arena.Refresh")
+	end,
+}
 if SCREEN then
+	if PREPARE[SCREEN] then
+		PREPARE[SCREEN]()
+		c:Advance(1)
+	end
 	c:Open(SCREEN)
 	c:Advance(2)
 end
