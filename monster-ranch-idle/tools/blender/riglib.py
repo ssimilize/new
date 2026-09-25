@@ -146,11 +146,14 @@ def components(points: np.ndarray, cell: float, min_size: int = 3):
 def footprints(P: np.ndarray, H: float, want: int, cell: float, slices=(0.08, 0.06, 0.045, 0.03, 0.02), floor: float = 0.0):
     """The blobs of points near the ground (or `floor`), seen from above: (feet points, blobs).
     Feet that touch at the first slice height merge into one blob there, so thinner slices are
-    tried until `want` blobs appear."""
+    tried until `want` blobs appear. A speck under a tenth of the biggest blob (a few points of belly
+    dipping as low as the feet) is not a foot: Seraphly's made up the sixth "leg" at the first slice,
+    where two real legs had merged."""
     feet, blobs = P[:0], []
     for slice_height in slices:
         feet = P[P[:, 2] < floor + slice_height * H]
         blobs = components(feet[:, :2], cell)
+        blobs = [b for b in blobs if len(b) >= 0.1 * len(blobs[0])]
         if len(blobs) >= want:
             break
     return feet, blobs

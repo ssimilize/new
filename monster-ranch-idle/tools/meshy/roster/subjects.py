@@ -323,6 +323,76 @@ SUBJECTS = {
     "patterns on its fur.",
     "bloomhare": "Bloomhare: an elegant hare with long petal-shaped ears, a crown of blooming flowers, a "
     "flowery round tail.",
+    # ── Batch 7 (2026-09-25): lines 35-42 ──
+    # 35 pollenpuff (moth, sprout + spark)
+    "pollenpuff": "Pollenpuff, a baby pollen moth: a round fluffy body like a ball of yellow pollen, four small "
+    "rounded leaf-green wings with yellow dots, two short antennae tipped with little pollen balls.",
+    "buzzbloom": "Buzzbloom: bigger wings shaped like flower petals with yellow pollen spots, a fluffy yellow "
+    "collar, longer antennae tipped with small flowers.",
+    "pollenmonarch": "Pollen Monarch: a majestic moth with large wings patterned like a monarch butterfly's in "
+    "green and gold with bright yellow spots, a thick fluffy yellow mane, long elegant antennae tipped with "
+    "small blossoms.",
+    # 36 tulipup (fox, tide + sprout)
+    "tulipup": "Tulipup, a baby tulip fox standing on all four legs like a real fox kit: a small blue fox with a "
+    "closed tulip bud on the tip of its tail, two small green leaves on its head like a sprout, round shiny "
+    "water-drop spots on its back.",
+    "dewfox": "Dewfox: a bigger fox with the tulip on its tail opening into a flower, leaf-shaped ears, small "
+    "shiny blue dewdrop beads on its leaves.",
+    "rainbloomfox": "Rainbloom Fox: a graceful fox with a big fluffy tail ending in a blooming tulip, a crown of "
+    "small flowers and leaves on its head, blue raindrop markings on its fur.",
+    # 37 lumipup (fox, light). Light is solid parts (tufts, marks, glowing tips), never loose rays: thin
+    # streaks around a body model badly (Zappip's first concept).
+    "lumipup": "Lumipup, a baby light pup standing on all four legs like a real puppy: a small golden puppy "
+    "with floppy ears, a glowing white star mark on its forehead, a fluffy tail with a softly glowing tip.",
+    "beamhound": "Beamhound: a bigger, sleek hound with pointed ears, glowing white stripes along its back like "
+    "beams of light, a longer tail with a bright glowing tip.",
+    # The adults branch from Beamhound.
+    "sunfang": "Sunfang: a fierce but friendly wolf with a solid mane of short pointed tufts like the rays of "
+    "the sun around its neck, two small fangs, glowing golden stripes on its legs.",
+    "dawnmane": "Dawnmane: a gentle, noble wolf with a long flowing soft mane in dawn colours of gold and pale "
+    "pink, a small glowing sunrise mark on its forehead, a long fluffy tail.",
+    # 38 halobee (bug, light). The word "halo" drew a floating ring on a post whatever else the text
+    # said (first concept): the baby was re-drawn from Glintwing with a dome instead.
+    "halobee": "Halobee, a baby light bee: a round golden shell with soft cream stripes, a small round glowing "
+    "golden dome on top of its head, two short antennae with little glowing tips.",
+    "glintwing": "Glintwing: a bigger bee with shiny glittering white-gold wings folded on its back, "
+    "sparkle-shaped markings on its shell, longer antennae with glowing tips.",
+    "seraphly": "Seraphly: a graceful, holy-looking beetle with two feathered white wings folded flat on its "
+    "back, a solid glowing golden crest on its head, shining golden patterns on its shell.",
+    # 39 dawnling (sprite, light). Daybreak Seraph is also the region boss "The Sunlit Warden". No wings on
+    # a sprite (the rig reads side parts as arms): the seraph's glory is a sun crest behind its head.
+    "dawnling": "Dawnling, a baby dawn sprite: a small round golden body, a tiny solid sunrise-shaped crest on "
+    "top of its head, soft pink blush on its cheeks.",
+    # Aurelle's first concept wore a soft glow all round its outline, which the cutout keeps as part of
+    # the body: its markings are painted on, and the outline is clean.
+    "aurelle": "Aurelle: a bigger sprite with a small solid golden crown of pointed rays on its head, white "
+    "sunbeam stripes painted on its body, a longer wispy tail, a clean outline with no glow around it.",
+    "daybreakseraph": "Daybreak Seraph: a noble, shining sprite with a large solid golden sun-disc crest rising "
+    "behind its head, a flowing white-gold hood-like mane, a long elegant wispy tail.",
+    # 40 nullkit (fox, void)
+    "nullkit": "Nullkit, a baby void kitten standing on all four legs like a real kitten: a small dark indigo "
+    "kitten with big pointed ears tipped in cyan, tiny cyan star speckles on its fur, a fluffy tail.",
+    "voidlynx": "Voidlynx: a sleek lynx with tufted ears, fur speckled with cyan stars like a night sky, "
+    "glowing cyan bands around its paws.",
+    "eventidelynx": "Eventide Lynx: a majestic lynx with long ear tufts, a starry night-sky pattern across its "
+    "back, a glowing cyan crescent-moon mark on its forehead, a long fluffy tail with a starry tip.",
+    # 41 hollowisp (sprite, void)
+    "hollowisp": "Hollowisp, a baby void sprite: a small round dark indigo body, a tiny cyan star on its "
+    "forehead, glowing cyan spots on its cheeks.",
+    "riftshade": "Riftshade: a bigger shadowy sprite with glowing cyan crack-like markings across its body like "
+    "rifts in space, two small pointed tufts on its head, a longer wispy tail.",
+    # "Guardian" drew big clawed arms and a vortex tail of thin loose strands (first concept).
+    "abysswarden": "Abyss Warden: a larger, calm, cute sprite wearing a solid dark indigo hood over its head "
+    "with two small curved horns poking out, glowing cyan rune markings on its body, still tiny stubby arms, "
+    "a long smooth solid wispy tail.",
+    # 42 gravitoad (blob, void). Event Horizon is also the region boss "Umbra, the Hungry Star". A black
+    # hole's disc is a solid band worn like a belt (as Planetitan's ring), and nothing orbits it loose.
+    "gravitoad": "Gravitoad, a baby space toad: a round squishy dark indigo toad with a pale lavender belly, "
+    "tiny cyan star speckles on its back.",
+    "singulatoad": "Singulatoad: a bigger, heavier toad with a swirling cyan galaxy spiral on its back, a solid "
+    "glowing cyan band around its middle like a belt.",
+    "eventhorizon": "Event Horizon: a huge round toad like a hungry black hole, a swirling dark galaxy pattern "
+    "on its back, a thick solid glowing cyan disc band around its middle like a belt, a wide grinning mouth.",
 }
 
 
