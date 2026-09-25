@@ -94,7 +94,9 @@ return function(t)
 			h.kernel.Bus:Publish("StageCleared", p, { region = "meadow", stage = 3, first = false })
 			h.kernel.Bus:Publish("EggHatched", p, { id = "m1", egg = "meadow", rarity = 1, variant = 0 })
 			local earned = tokens(h, p) - start
-			expect(earned).toBe(Events.Earn.bossJoined + 4 * Events.Earn.expeditionPerHour + Events.Earn.stageFirstClear + Events.Earn.hatch)
+			expect(earned).toBe(
+				Events.Earn.bossJoined + 4 * Events.Earn.expeditionPerHour + Events.Earn.stageFirstClear + Events.Earn.hatch
+			)
 			for _ = 1, 100 do
 				h.kernel.Bus:Publish("BossJoined", p, {})
 			end

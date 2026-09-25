@@ -31,6 +31,7 @@ return {
 		"Trade",
 		"Plots",
 		"Leaderboards",
+		"Clubs",
 		-- S6 · Live-ops & money
 		"Monetization",
 		"Quests",

@@ -20,14 +20,27 @@ local function deepCopy(v)
 end
 MockAdapters.deepCopy = deepCopy
 
-function MockAdapters.new(options: { startTime: number? }?)
+--[[
+	options.network: a table shared by several MockAdapters to act as one Roblox universe
+	(tests for cross-server features create it with MockAdapters.network()). It carries the
+	club store and MessagingService subscribers.
+]]
+local jobCounter = 0
+
+function MockAdapters.network()
+	return { clubs = {}, subscribers = {}, clubsDown = false }
+end
+
+function MockAdapters.new(options: { startTime: number?, network: any? }?)
 	local opts = options or {}
+	local network = opts.network or MockAdapters.network()
 	local now = opts.startTime or 1790000000 -- a Thursday in Sept 2026 (UTC)
 	local precise = 0
 
 	local a = {}
 	a.log = { kicks = {}, events = {}, states = {}, analytics = {}, published = {}, ads = {} }
-	a.JobId = "test-job"
+	jobCounter += 1
+	a.JobId = "test-job-" .. tostring(jobCounter)
 	a.PlaceId = 0
 	a.IsStudio = false
 	a.OfflineMaxSeconds = 7 * 24 * 3600
@@ -218,7 +231,7 @@ function MockAdapters.new(options: { startTime: number? }?)
 		end,
 	}
 
-	a._subscribers = {}
+	a._subscribers = network.subscribers -- shared across servers on the same network
 	a.Messaging = {
 		Publish = function(topic, data)
 			table.insert(a.log.published, { topic = topic, data = deepCopy(data) })
@@ -229,6 +242,27 @@ function MockAdapters.new(options: { startTime: number? }?)
 		Subscribe = function(topic, fn)
 			a._subscribers[topic] = a._subscribers[topic] or {}
 			table.insert(a._subscribers[topic], fn)
+		end,
+	}
+
+	-- Clubs store (shared through options.network). Set network.clubsDown to fail calls.
+	a.network = network
+	a.Clubs = {
+		Get = function(id)
+			if network.clubsDown then
+				return false, nil
+			end
+			return true, deepCopy(network.clubs[id])
+		end,
+		Update = function(id, transform)
+			if network.clubsDown then
+				return false, nil
+			end
+			local result = transform(deepCopy(network.clubs[id]))
+			if result ~= nil then
+				network.clubs[id] = deepCopy(result)
+			end
+			return true, deepCopy(result)
 		end,
 	}
 

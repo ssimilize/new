@@ -3,6 +3,42 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 1.2 · Clubs + Lunar Lanterns
+
+**For players**
+- **Clubs** (Ranch Level 8, 50K coins to start one):
+  - Up to 30 members across every server. Join with a 6-letter code, or tap Join on an open club of someone on your server.
+  - Roles: the owner promotes, demotes or hands over the club; officers can remove members and change settings.
+  - Each club picks a name, a tag, a colour and an emblem, and its tag shows above members' heads.
+  - Open the Club Plaza in the Market Square, or tap the Clubs button on the HUD.
+- **Weekly club goals:** three goals each week, drawn from hatching, stage clears, Stampedes, expedition hours, breeding, petting and feeding. Targets grow with the club. Every member claims each finished goal once: 30 gems, then a Grove Egg with 20 Treats, then a Crystal Egg.
+- **Weekly club boss:** everyone gets 3 attacks a day. Damage grows with the square root of squad power, so newer players still count. When it falls, everyone who attacked claims a Stampede Egg and 50 gems.
+- **Lunar Lanterns event** (6–27 Feb 2027):
+  - **Lantern Coins:** earned by playing (daily login, Stampedes, expeditions, first stage clears, hatches), up to 300 a day.
+  - **Lantern Egg** (400 coins, always Glow): hatches the Lantern Dragon line (Lanternling → Lanternwyrm → Lantern Dragon), Mochibun and Wickit.
+  - **Lantern Night:** night-only event weather that gives the new **Glow** mutation (×3).
+  - **Decor:** Paper Lantern and Moon Gate, plus the Lantern Garden pen theme.
+- **Nameplates:** club tags and leaderboard champion titles now appear together above players.
+
+**In the code**
+- **Events:**
+  - `Config/Events` is the event calendar. `Flags.ActiveEvent` now overrides it: an id forces that event, `false` turns events off.
+  - Everything reads the running event through `Config.Events.ActiveId(now)`. On the client that goes through `StoreKit.activeEvent()`.
+  - The `Events` system publishes `global.Events` and pays tokens for play, with a daily cap.
+- **Clubs:**
+  - The `Clubs` system keeps records in their own DataStore through `Services.Clubs`, which uses atomic Update. The rules are pure functions in `Systems/Clubs/Record.luau`.
+  - Contributions are batched and written every 60 s, and each write is announced over Messaging (`Clubs`) so other servers re-read that club.
+  - Players see `session.Clubs` (their club view) and `global.Clubs.here` (club tags of players on this server).
+- **Client:**
+  - A new Clubs screen, a Club Plaza building, and a Clubs button on the HUD's right stack.
+  - A new Nameplates controller draws both club tags and champion titles. The Leaderboards controller now only draws the board.
+  - `WeatherRoll` skips weather marked `event` unless that event is running.
+- **Tests:**
+  - `Clubs.spec`: record rules, and two servers sharing one club store.
+  - `LunarLanterns.spec`
+  - Client tests: the UI during the event, and a two-player club flow.
+  - Mock servers can now share a network (`MockAdapters.network()`) for cross-server tests.
+
 ## 1.1 · Coral Depths
 
 **For players**

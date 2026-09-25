@@ -76,7 +76,7 @@ return function(t)
 			-- Steal happens after Data.StealAfterAttempts; with a fresh lock we still eventually load.
 			local p = h:Join(555)
 			expect(h.kernel:IsReady(p)).toBe(true)
-			expect(h.adapters.store["player_555"].lock.job).toBe("test-job")
+			expect(h.adapters.store["player_555"].lock.job).toBe(h.adapters.JobId)
 		end)
 
 		it("disables a system whose required dependency is missing", function()

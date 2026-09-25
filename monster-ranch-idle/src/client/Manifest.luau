@@ -19,6 +19,7 @@ return {
 		"Broadcasts",
 		"TradeRequests",
 		"Leaderboards",
+		"Nameplates",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -39,5 +40,6 @@ return {
 		"Store",
 		"Settings",
 		"Leaderboards",
+		"Clubs",
 	},
 }
