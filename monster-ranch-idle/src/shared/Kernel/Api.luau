@@ -80,6 +80,32 @@ Api.Actions = {
 		returns = "{ level: number }",
 	},
 
+	-- Accessories (1.5, Showtime) -------------------------------------------------------
+	["Accessories.Buy"] = {
+		schema = T.struct({ accessory = T.key(Config.Accessories.ById) }),
+		rate = 3,
+		returns = "{ owned: number }",
+	},
+	["Accessories.Equip"] = {
+		schema = T.struct({ id = id, accessory = T.key(Config.Accessories.ById) }),
+		rate = 6,
+		returns = "{ slot: string, previous: string|false }",
+	},
+	["Accessories.Unequip"] = {
+		schema = T.struct({ id = id, slot = T.enum(Config.Accessories.Slots) }),
+		rate = 6,
+		returns = "{ accessory: string }",
+	},
+
+	-- Monster Contests (1.5, Showtime) -------------------------------------------------
+	["Contests.Enter"] = { schema = T.struct({ id = id }), rate = 2, returns = "{ entries: number }  -- again = switch monster" },
+	["Contests.Withdraw"] = { schema = T.none, rate = 2, returns = "nil" },
+	["Contests.Vote"] = {
+		schema = T.struct({ entry = T.integer(1, Config.Contests.MaxEntries), stars = T.integer(1, 5) }),
+		rate = 4,
+		returns = "{ stars: number }  -- again = change your vote",
+	},
+
 	-- Egg hunt (1.4, Spring Bloom) -----------------------------------------------------
 	["EggHunt.Find"] = {
 		schema = T.struct({ spot = T.integer(1, #Config.EggHunt.Spots) }),
@@ -325,7 +351,7 @@ Api.Events = {
 ]]
 Api.State = {
 	profile = {
-		Currency = "{ coins, gems, stardust, friendship, treats, tokens = { [eventId]: n }, food = { sweet, spicy, savory, sour } }",
+		Currency = "{ coins, gems, stardust, friendship, treats, ribbons, tokens = { [eventId]: n }, food = { sweet, spicy, savory, sour } }",
 		Progression = "{ level, xp }",
 		Settings = "{ music, sfx, lowGraphics, hideBroadcasts }",
 		Monsters = "{ list = { [id]: Monster }, codex = { [lineId]: { forms = { [formId]: true }, variants = { [n]: true }, count } }, nextId }",
@@ -342,6 +368,8 @@ Api.State = {
 		Leaderboards = "{ week, stampede }  -- this week's Stampede damage",
 		Events = "{ event, day, earned, login }  -- event tokens earned today (daily cap)",
 		EggHunt = "{ round, found = { spotIndex }, day, finds, total }",
+		Accessories = "{ owned = { [accessoryId]: n } }  -- in storage; worn ones are Monster.acc",
+		Contests = "{ shows, wins, podiums, best, votes }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n } }",
 	},
@@ -357,6 +385,7 @@ Api.State = {
 		Boss = "{ joined: boolean, damage, cheer }",
 		Clubs = "{ club: ClubView | false }  -- see Systems/Clubs header",
 		Market = "{ mail = { coins, items } }  -- mail waiting that could not be collected yet (e.g. ranch full)",
+		Contests = "{ entered: monsterId|false, votes = { [entryIndex]: stars } }  -- this show",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
@@ -366,6 +395,7 @@ Api.State = {
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
 		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",
 		EggHunt = "{ active: boolean, round, endsAt, spots = { spotIndex } }  -- eggs hidden this round (Config.EggHunt.Spots)",
+		Contests = "{ state: 'idle'|'entry'|'runway'|'results', show, theme, endsAt, nextAt, entries = { { userId, name, appearance } }, current, results = { { userId, name, appearance, score, votes, rank } } }",
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open } } }  -- club tags of players here",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 	},
@@ -383,7 +413,7 @@ Api.Topics = {
 	RanchXP = "(player, { amount: number, reason: string })",
 	LevelUp = "(player, { level: number })",
 	MonsterCreated = "(player, { id: string, source: 'hatch'|'breed'|'trade'|'reward'|'starter' })",
-	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth' })",
+	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth', acc: { [slot]: accessoryId }? })",
 	MonsterChanged = "(player, { id: string, fields: { string }? })",
 	MonsterFed = "(player, { id: string, flavor: string })",
 	MonsterLeveled = "(player, { id: string, lv: number })",
@@ -405,6 +435,10 @@ Api.Topics = {
 	Retired = "(player, { rarity: number, element: string })",
 	Rebirthed = "(player, { stars: number, dust: number, kept: number })",
 	EggFound = "(player, { spot: number, round: number, complete: boolean })",
+	AccessoryGained = "(player, { id: string, amount: number, source: 'shop'|'reward' })",
+	ContestEntered = "(player, { show: number, theme: string })",
+	ContestVoted = "(player, {})",
+	ContestPlaced = "(player, { rank: number, entries: number, theme: string, score: number })",
 	PetGiven = "(player, { owner: number })",
 	PetReceived = "(player, { from: number, id: string })",
 	TradeCompleted = "(player, { partner: number })",
@@ -422,7 +456,7 @@ Api.Topics = {
 
 -- Shared shapes (documentation) -----------------------------------------------------
 Api.Shapes = {
-	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster', id: string?, amount: number, rarity: number? }",
+	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'ribbons'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster'|'accessory', id: string?, amount: number, rarity: number? }",
 	Monster = "see ARCHITECTURE.md → Monster record",
 	Listing = "see ARCHITECTURE.md §8 → Listing (client view)",
 	Appearance = "see Logic/Appearance.luau",

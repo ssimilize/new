@@ -42,6 +42,9 @@ return {
 		-- 1.4 · Rebirth + Spring Bloom
 		"Rebirth",
 		"EggHunt",
+		-- 1.5 · Showtime
+		"Accessories",
+		"Contests",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

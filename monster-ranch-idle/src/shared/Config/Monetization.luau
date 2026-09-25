@@ -39,6 +39,7 @@ Monetization.Products = {
 			{ kind = "egg", id = "crystal", amount = 1 },
 			{ kind = "gems", amount = 300 },
 			{ kind = "decor", id = "hay_bale", amount = 1 },
+			{ kind = "accessory", id = "sprout_cap", amount = 1 },
 		},
 	},
 	{ key = "gems100", name = "100 Gems", price = 49, productId = 0, grant = { { kind = "gems", amount = 100 } } },

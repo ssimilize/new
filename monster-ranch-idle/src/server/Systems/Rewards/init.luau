@@ -2,7 +2,7 @@
 	Rewards (S1): grants mixed reward lists in one call and tells the client.
 
 	Reward item: { kind, id?, amount, rarity?, seconds? }
-	  coins/gems/stardust/friendship/treats  → Currency
+	  coins/gems/stardust/friendship/treats/ribbons → Currency
 	  coins with `seconds`                    → that many seconds of ranch income (needs Ranch)
 	  food (id = flavor or "random")          → Currency food
 	  token (id = eventId, default active)    → Currency token
@@ -10,6 +10,7 @@
 	  egg (id = egg type)                     → Eggs
 	  decor (id = decor id)                   → Shop
 	  monster (id = line id, rarity)          → Monsters
+	  accessory (id = accessory id)           → Accessories (1.5)
 
 	Public API:
 	  Rewards:Grant(player, items, source, options?) -> resolvedItems
@@ -20,13 +21,13 @@
 local Rewards = {
 	Name = "Rewards",
 	Dependencies = { "Currency", "Progression" },
-	OptionalDependencies = { "Eggs", "Shop", "Monsters", "Ranch" },
+	OptionalDependencies = { "Eggs", "Shop", "Monsters", "Ranch", "Accessories" },
 }
 
 local ctx
 local Currency, Progression
 
-local SIMPLE = { coins = true, gems = true, stardust = true, friendship = true, treats = true }
+local SIMPLE = { coins = true, gems = true, stardust = true, friendship = true, treats = true, ribbons = true }
 
 function Rewards.Init(context)
 	ctx = context
@@ -83,6 +84,13 @@ function Rewards:Grant(player, items, source: string, options: { silent: boolean
 			local Shop = ctx:GetSystem("Shop")
 			if Shop then
 				Shop:AddDecor(player, item.id, item.amount)
+			else
+				ok = false
+			end
+		elseif item.kind == "accessory" then
+			local Accessories = ctx:GetSystem("Accessories")
+			if Accessories and ctx.Config.Accessories.ById[item.id] then
+				Accessories:Add(player, item.id, item.amount)
 			else
 				ok = false
 			end

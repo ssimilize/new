@@ -55,7 +55,7 @@ end
 
 -- Currency -------------------------------------------------------------------------
 
--- key: coins | gems | treats | stardust | friendship | food.<flavor> | token.<event>
+-- key: coins | gems | treats | stardust | ribbons | friendship | food.<flavor> | token.<event>
 function StoreKit.balance(store, key: string): number
 	local cur = StoreKit.tbl(store, "profile.Currency")
 	local head, tail = string.match(key, "^(%w+)%.(.+)$")
@@ -95,6 +95,7 @@ function StoreKit.iconFor(key: string): string
 		gems = "gem",
 		treats = "treat",
 		stardust = "stardust",
+		ribbons = "ribbon",
 		friendship = "friendship",
 		token = "token",
 		food = "food",

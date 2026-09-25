@@ -1,6 +1,6 @@
 --[[
 	Icon: small currency/resource icons drawn with shapes (or Theme.Images when set).
-	Kinds: coin · gem · food · treat · stardust · friendship · token · xp · egg · star · lock · trophy
+	Kinds: coin · gem · food · treat · stardust · friendship · token · ribbon · xp · egg · star · lock · trophy
 
 		Icon.new("coin", 28)       -- returns a Frame (size × size)
 ]]
@@ -14,8 +14,16 @@ local C = Theme.Colors
 
 local Icon = {}
 
-local IMAGE_KEYS =
-	{ coin = "Coin", gem = "Gem", food = "Food", treat = "Treat", stardust = "Stardust", friendship = "Friendship", token = "Token" }
+local IMAGE_KEYS = {
+	coin = "Coin",
+	gem = "Gem",
+	food = "Food",
+	treat = "Treat",
+	stardust = "Stardust",
+	friendship = "Friendship",
+	token = "Token",
+	ribbon = "Ribbon",
+}
 
 local function glyph(parent, text: string, color: Color3, scale: number?)
 	return Create.Text({
@@ -105,6 +113,10 @@ function Icon.new(kind: string, size: number?): Frame
 	elseif kind == "stardust" then
 		local d = disc(C.Stardust)
 		glyph(d, "✦", C.White, 0.7)
+	elseif kind == "ribbon" then
+		-- Contest Ribbons (1.5): a rosette.
+		local d = disc(C.Ribbon)
+		glyph(d, "✪", C.White, 0.7)
 	elseif kind == "friendship" then
 		local d = disc(C.Friendship)
 		glyph(d, "♥", C.White, 0.62)
@@ -168,6 +180,10 @@ end
 function Icon.forReward(kind: string): string
 	if kind == "egg" or kind == "monster" or kind == "decor" then
 		return "egg"
+	elseif kind == "ribbons" then
+		return "ribbon"
+	elseif kind == "accessory" then
+		return "star"
 	end
 	return kind
 end
