@@ -9,7 +9,8 @@
 	  • every other part is welded to Root, CanCollide = false, CanQuery = false
 	  • attachments on Root: "Head" (above the head, for name tags / effects), "Feet"
 	  • attributes: Line, Form, Stage, Rarity, Variant, Rainbow (bool), Height (studs)
-	  • Build must be cheap: ≤ 20 parts; no scripts inside
+	  • Build must be cheap: ≤ 20 parts (+ ≤ 3 per worn accessory); no scripts inside
+	  • appearance.acc { [slot] = accessoryId } draws Config.Accessories placeholders (1.5)
 	To use authored models later: look up a model by appearance.form in
 	ReplicatedStorage.Assets.Monsters (if present), clone it, and keep the contract above.
 ]]
@@ -85,6 +86,255 @@ local function wedge(model, root, name, size: Vector3, color, offset)
 	weld.Parent = p
 	p.Parent = model
 	return p
+end
+
+local function cylinder(model, root, name, size: Vector3, color, offset, material)
+	return part(model, root, name, Enum.PartType.Cylinder, size, color, offset, material)
+end
+
+-- Accessories (update 1.5): placeholder shapes per Config.Accessories `shape`, placed by
+-- slot on the body measured in Build (`d`). Cylinders run along X, so they are turned to
+-- stand up (Z 90°) or face forward (Y 90°). Art replaces these with authored meshes later.
+local UP = CFrame.Angles(0, 0, math.rad(90))
+local FORWARD = CFrame.Angles(0, math.rad(90), 0)
+
+local function addAccessory(model, root, def, d)
+	local s, top, body = d.s, d.top, d.bodySize
+	local c1 = Color3.fromHex(def.color)
+	local c2 = Color3.fromHex(def.color2 or def.color)
+	local name = "Acc_" .. def.slot
+	local shape = def.shape
+	local neckY = d.bodyY - body.Y * 0.18
+	local front = -body.Z * 0.48
+	local back = body.Z * 0.5
+	if def.slot == "head" then
+		if shape == "cap" or shape == "beanie" then
+			ball(model, root, name, Vector3.new(s * 0.62, s * 0.3, s * 0.62), c1, CFrame.new(0, top - s * 0.02, 0))
+			if shape == "cap" then
+				ball(model, root, name .. "Brim", Vector3.new(s * 0.4, s * 0.06, s * 0.36), c2, CFrame.new(0, top - s * 0.06, -s * 0.3))
+			else
+				ball(model, root, name .. "Pom", Vector3.new(s * 0.16, s * 0.16, s * 0.16), c2, CFrame.new(0, top + s * 0.15, 0))
+			end
+		elseif shape == "tophat" or shape == "chef" then
+			local h = if shape == "tophat" then s * 0.45 else s * 0.3
+			cylinder(model, root, name, Vector3.new(h, s * 0.36, s * 0.36), c1, CFrame.new(0, top + h / 2, 0) * UP)
+			if shape == "tophat" then
+				cylinder(model, root, name .. "Brim", Vector3.new(s * 0.04, s * 0.56, s * 0.56), c1, CFrame.new(0, top + s * 0.02, 0) * UP)
+				cylinder(model, root, name .. "Band", Vector3.new(s * 0.07, s * 0.37, s * 0.37), c2, CFrame.new(0, top + s * 0.08, 0) * UP)
+			else
+				ball(model, root, name .. "Puff", Vector3.new(s * 0.5, s * 0.3, s * 0.5), c1, CFrame.new(0, top + h + s * 0.08, 0))
+			end
+		elseif shape == "crown" then
+			cylinder(
+				model,
+				root,
+				name,
+				Vector3.new(s * 0.16, s * 0.44, s * 0.44),
+				c1,
+				CFrame.new(0, top + s * 0.06, 0) * UP,
+				Enum.Material.Metal
+			)
+			ball(
+				model,
+				root,
+				name .. "Gem",
+				Vector3.new(s * 0.1, s * 0.1, s * 0.06),
+				c2,
+				CFrame.new(0, top + s * 0.07, -s * 0.22),
+				Enum.Material.Neon
+			)
+		elseif shape == "cone" or shape == "wizard" then
+			local tall = if shape == "wizard" then s * 0.75 else s * 0.55
+			ball(model, root, name, Vector3.new(s * 0.34, tall, s * 0.34), c1, CFrame.new(0, top + tall * 0.35, 0))
+			if shape == "wizard" then
+				cylinder(model, root, name .. "Brim", Vector3.new(s * 0.04, s * 0.7, s * 0.7), c1, CFrame.new(0, top, 0) * UP)
+			end
+			ball(
+				model,
+				root,
+				name .. "Tip",
+				Vector3.new(s * 0.12, s * 0.12, s * 0.12),
+				c2,
+				CFrame.new(0, top + tall * 0.82, 0),
+				Enum.Material.Neon
+			)
+		elseif shape == "flowers" then
+			for i = 0, 2 do
+				local a = math.rad(i * 120)
+				ball(
+					model,
+					root,
+					name,
+					Vector3.new(s * 0.16, s * 0.16, s * 0.16),
+					if i == 1 then c2 else c1,
+					CFrame.new(math.cos(a) * s * 0.2, top + s * 0.02, math.sin(a) * s * 0.2)
+				)
+			end
+		elseif shape == "halo" then
+			local halo = cylinder(
+				model,
+				root,
+				name,
+				Vector3.new(s * 0.05, s * 0.55, s * 0.55),
+				c1,
+				CFrame.new(0, top + s * 0.35, 0) * UP,
+				Enum.Material.Neon
+			)
+			halo.Transparency = 0.2
+		elseif shape == "ears" or shape == "horns" then
+			for _, x in { -1, 1 } do
+				local size = if shape == "ears" then Vector3.new(s * 0.14, s * 0.5, s * 0.1) else Vector3.new(s * 0.12, s * 0.26, s * 0.12)
+				ball(model, root, name, size, c1, CFrame.new(x * s * 0.2, top + size.Y * 0.4, 0) * CFrame.Angles(0, 0, math.rad(-x * 15)))
+			end
+		elseif shape == "brim" then
+			cylinder(model, root, name, Vector3.new(s * 0.04, s * 0.85, s * 0.85), c1, CFrame.new(0, top - s * 0.02, 0) * UP)
+			ball(model, root, name .. "Top", Vector3.new(s * 0.42, s * 0.24, s * 0.42), c1, CFrame.new(0, top + s * 0.06, 0))
+			cylinder(model, root, name .. "Band", Vector3.new(s * 0.06, s * 0.43, s * 0.43), c2, CFrame.new(0, top + s * 0.02, 0) * UP)
+		elseif shape == "helmet" then
+			ball(model, root, name, Vector3.new(body.X * 0.82, s * 0.4, body.Z * 0.82), c1, CFrame.new(0, top - s * 0.08, 0))
+			block(model, root, name .. "Stripe", Vector3.new(s * 0.08, s * 0.12, body.Z * 0.7), c2, CFrame.new(0, top + s * 0.1, 0))
+		elseif shape == "bubble" then
+			local bubble = ball(
+				model,
+				root,
+				name,
+				Vector3.new(body.X * 1.05, body.Y * 0.8, body.Z * 1.05),
+				c1,
+				CFrame.new(0, top - body.Y * 0.2, 0),
+				Enum.Material.Glass
+			)
+			bubble.Transparency = 0.6
+		end
+	elseif def.slot == "face" then
+		local y, z = d.eyeY, d.eyeZ - s * 0.08
+		if shape == "glasses" or shape == "shades" or shape == "goggles" then
+			for _, x in { -0.22, 0.22 } do
+				local lens = cylinder(model, root, name, Vector3.new(s * 0.04, s * 0.28, s * 0.28), c1, CFrame.new(x * s, y, z) * FORWARD)
+				if shape == "glasses" then
+					lens.Transparency = 0.5
+				end
+			end
+			block(model, root, name .. "Bridge", Vector3.new(s * 0.16, s * 0.04, s * 0.04), c1, CFrame.new(0, y, z))
+		elseif shape == "monocle" then
+			local lens = cylinder(
+				model,
+				root,
+				name,
+				Vector3.new(s * 0.04, s * 0.3, s * 0.3),
+				c1,
+				CFrame.new(s * 0.22, y, z) * FORWARD,
+				Enum.Material.Metal
+			)
+			lens.Transparency = 0.3
+		elseif shape == "mask" then
+			block(model, root, name, Vector3.new(body.X * 0.8, s * 0.18, s * 0.06), c1, CFrame.new(0, y, z + s * 0.02))
+		elseif shape == "mustache" then
+			for _, x in { -1, 1 } do
+				ball(
+					model,
+					root,
+					name,
+					Vector3.new(s * 0.22, s * 0.08, s * 0.06),
+					c1,
+					CFrame.new(x * s * 0.1, y - s * 0.22, z) * CFrame.Angles(0, 0, math.rad(x * 12))
+				)
+			end
+		elseif shape == "blush" then
+			for _, x in { -0.34, 0.34 } do
+				ball(model, root, name, Vector3.new(s * 0.14, s * 0.08, s * 0.03), c1, CFrame.new(x * s, y - s * 0.12, z + s * 0.04))
+			end
+		end
+	elseif def.slot == "neck" then
+		if shape == "scarf" or shape == "lei" then
+			ball(model, root, name, Vector3.new(body.X * 0.98, s * 0.14, body.Z * 0.98), c1, CFrame.new(0, neckY, 0))
+			if shape == "scarf" then
+				block(
+					model,
+					root,
+					name .. "Tail",
+					Vector3.new(s * 0.14, s * 0.3, s * 0.05),
+					c1,
+					CFrame.new(s * 0.18, neckY - s * 0.15, front)
+				)
+			else
+				ball(model, root, name .. "Bloom", Vector3.new(s * 0.14, s * 0.14, s * 0.14), c2, CFrame.new(0, neckY, front))
+			end
+		elseif shape == "bowtie" then
+			for _, x in { -1, 1 } do
+				ball(model, root, name, Vector3.new(s * 0.2, s * 0.14, s * 0.08), c1, CFrame.new(x * s * 0.09, neckY, front))
+			end
+		elseif shape == "medal" then
+			cylinder(
+				model,
+				root,
+				name,
+				Vector3.new(s * 0.04, s * 0.2, s * 0.2),
+				c1,
+				CFrame.new(0, neckY - s * 0.1, front) * FORWARD,
+				Enum.Material.Metal
+			)
+		elseif shape == "bell" then
+			ball(
+				model,
+				root,
+				name,
+				Vector3.new(s * 0.16, s * 0.16, s * 0.16),
+				c1,
+				CFrame.new(0, neckY - s * 0.06, front),
+				Enum.Material.Metal
+			)
+			ball(model, root, name .. "Collar", Vector3.new(body.X * 0.95, s * 0.06, body.Z * 0.95), c2, CFrame.new(0, neckY, 0))
+		end
+	elseif def.slot == "back" then
+		if shape == "cape" then
+			block(
+				model,
+				root,
+				name,
+				Vector3.new(body.X * 0.85, body.Y * 0.85, s * 0.04),
+				c1,
+				CFrame.new(0, d.bodyY - body.Y * 0.05, back) * CFrame.Angles(math.rad(-10), 0, 0)
+			)
+			if def.color2 then
+				block(
+					model,
+					root,
+					name .. "Trim",
+					Vector3.new(body.X * 0.87, s * 0.06, s * 0.05),
+					c2,
+					CFrame.new(0, d.bodyY + body.Y * 0.36, back - s * 0.02)
+				)
+			end
+		elseif shape == "wings" then
+			for _, x in { -1, 1 } do
+				ball(
+					model,
+					root,
+					name,
+					Vector3.new(s * 0.6, s * 0.4, s * 0.06),
+					if x < 0 then c1 else c2,
+					CFrame.new(x * s * 0.32, d.bodyY + s * 0.1, back) * CFrame.Angles(0, math.rad(x * 25), math.rad(x * 20))
+				)
+			end
+		elseif shape == "pack" or shape == "jetpack" then
+			block(model, root, name, Vector3.new(body.X * 0.55, body.Y * 0.55, s * 0.24), c1, CFrame.new(0, d.bodyY, back + s * 0.06))
+			if shape == "jetpack" then
+				for _, x in { -1, 1 } do
+					cylinder(
+						model,
+						root,
+						name .. "Jet",
+						Vector3.new(s * 0.34, s * 0.14, s * 0.14),
+						c2,
+						CFrame.new(x * s * 0.16, d.bodyY - s * 0.2, back + s * 0.2) * UP,
+						Enum.Material.Neon
+					)
+				end
+			end
+		elseif shape == "board" then
+			ball(model, root, name, Vector3.new(s * 0.3, body.Y * 1.2, s * 0.06), c1, CFrame.new(0, d.bodyY + s * 0.1, back + s * 0.04))
+		end
+	end
 end
 
 local function colorsFor(appearance)
@@ -370,6 +620,15 @@ function MonsterModel.Build(appearance, opts: { anchored: boolean? }?)
 			smoke.Opacity = 0.08
 			smoke.RiseVelocity = 2
 			smoke.Parent = bodyPart
+		end
+	end
+	-- Accessories (1.5): one placeholder per worn slot.
+	if type(appearance.acc) == "table" then
+		for _, id in appearance.acc do
+			local def = Config.Accessories and Config.Accessories.ById[id]
+			if def then
+				addAccessory(model, root, def, { s = s, top = top, bodyY = bodyY, bodySize = bodySize, eyeY = eyeY, eyeZ = eyeZ })
+			end
 		end
 	end
 	if appearance.variant == 1 then

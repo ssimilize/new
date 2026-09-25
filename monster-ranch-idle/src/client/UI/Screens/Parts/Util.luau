@@ -219,6 +219,11 @@ function Util.rewardText(item): string
 		return if item.rarity then string.format("%s %s", Theme.RarityName(item.rarity), name) else name
 	elseif kind == "token" then
 		return Format.short(amount) .. " tokens"
+	elseif kind == "accessory" then
+		local a = item.id and Config.Accessories and Config.Accessories.ById[item.id]
+		return if a then a.name else "Accessory"
+	elseif kind == "ribbons" then
+		return Format.short(amount) .. " Ribbons"
 	end
 	return Format.short(amount)
 end

@@ -23,6 +23,8 @@
 	  Monsters:AddMutation(player, id, mutationId) -> "added"|"combined"|"duplicate"|"full"|"missing"
 	  Monsters:AddMood(player, id, amount)
 	  Monsters:AddVisibleTrait(player, id) -> traitId?                  -- Rebirth's 3rd trait slot
+	  Monsters:SetAccessory(player, id, slot, accessoryId?) -> previous? -- Accessories (1.5)
+	MonsterRemoved's detail carries the removed record's `acc` (it is stripped from the record).
 	  Monsters:CoinRate(player, id) -> number
 	  Monsters:Stats(player, id) -> stats?
 	  Monsters:Appearance(player, id) -> Appearance?
@@ -211,6 +213,7 @@ function Monsters:Insert(player, record, source: string)
 	copy.traits = table.clone(record.traits or {})
 	copy.meals = table.clone(record.meals or {})
 	copy.loc, copy.pen, copy.busy, copy.locked = "barn", 0, false, false
+	copy.acc = nil
 	return insert(player, copy, source)
 end
 
@@ -235,8 +238,12 @@ function Monsters:Remove(player, id: string, reason: string)
 	if growing[player] then
 		growing[player][id] = nil
 	end
+	-- Accessories never leave with the monster (Accessories returns them to storage), so a
+	-- traded, listed or retired record carries none.
+	local acc = m.acc
+	m.acc = nil
 	ctx:Dirty(player, "list", id)
-	ctx.Bus:Publish("MonsterRemoved", player, { id = id, reason = reason, pen = m.pen, loc = m.loc })
+	ctx.Bus:Publish("MonsterRemoved", player, { id = id, reason = reason, pen = m.pen, loc = m.loc, acc = acc })
 	return m
 end
 
@@ -262,6 +269,20 @@ function Monsters:AddVisibleTrait(player, id: string): number?
 	table.insert(m.traits, trait)
 	Monsters:Changed(player, id, { "traits" })
 	return trait
+end
+
+-- Puts `accessoryId` (or nothing) in `slot` and returns what was there. Accessories only.
+function Monsters:SetAccessory(player, id: string, slot: string, accessoryId: string?): string?
+	local m = Monsters:Get(player, id)
+	if not m then
+		return nil
+	end
+	local acc = m.acc or {}
+	local previous = acc[slot]
+	acc[slot] = accessoryId
+	m.acc = if next(acc) then acc else nil
+	Monsters:Changed(player, id, { "acc" })
+	return previous
 end
 
 function Monsters:SetBusy(player, id: string, tag: string | false)

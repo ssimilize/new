@@ -120,6 +120,7 @@ Rules:
 | `name` | string | "" = use the form name |
 | `locked` | boolean | player lock (can't sell or fuse) |
 | `born`, `gen` | number | |
+| `acc` | {[slot]: accessoryId}? | worn accessories (1.5). Set only by Accessories through `Monsters:SetAccessory`; `Monsters:Remove` strips it (the detail of `MonsterRemoved` carries it) and `Monsters:Insert` clears it, so accessories never travel with a traded, listed or retired monster |
 
 All derived numbers (coin rate, stats, power, value, level cap, grow time) come from `Logic/Formulas.luau`. Never store them.
 
@@ -173,6 +174,10 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 ### 1.4: Rebirth, EggHunt
 - **Rebirth**: `Rebirth:Stars(player) -> n`, `:SkillLevel(player, id)`, `:SkillEffect(player, id, key)`, `:Heirlooms(player)`. `Rebirth.Rebirth { keep }` runs in one step with no yields and calls the owners' reset hooks: `Ranch:ResetForRebirth(player, theme?)`, `Expeditions:ResetForRebirth(player)`, `Shop:GrantTheme(player, themeId)`, `Monsters:Remove(..., "rebirth")`. In `Start()` registers: Ranch rate multiplier `rebirth_stars` (new: `Ranch:RegisterRateMultiplier(key, fn(player) -> factor)`, multiplied into every pen's rate), Ranch rate modifier and jar bonus `rebirth_skill`, Eggs speed, Breeding per-day, Expeditions loot and Boss damage `rebirth_skill`. From `Config.Rebirth.ThirdTraitStars` stars it adds a 3rd visible trait to every monster (`Monsters:AddVisibleTrait`). Publishes `Rebirthed`. `Shop.BuyEgg` checks an egg's `rebirths` through `Rebirth:Stars`.
 - **EggHunt**: `EggHunt.Find { spot }` (Spring Bloom). Round maths in `Logic/EggHunt` (`Round(now)`, `SpotsFor(round)`, deterministic on every server); the server checks the player's character stands within `Config.EggHunt.Reach` of the spot. Publishes `EggFound` and `global.EggHunt`.
+
+### 1.5: Accessories, Contests
+- **Accessories**: `Accessories:Add(player, id, n?)` (Rewards kind `accessory`), `:Count(player, id)`, `:Collection(player)`. Storage is `profile.Accessories.owned`; worn items are `Monster.acc`. Returns items to storage on `MonsterRemoved`. Publishes `AccessoryGained`. Prices use gems or the new `ribbons` currency (Contest Ribbons, a Currency key and a Rewards kind).
+- **Contests**: clock-driven shows (`Config.Contests.Show(now)`, `ThemeFor(show)`, `JudgeScore(acc, theme)`); per-server state in `global.Contests`, votes in server memory only. Actions `Contests.Enter/Withdraw/Vote`. Prizes through `Rewards:Grant`. Publishes `ContestEntered`, `ContestVoted`, `ContestPlaced`.
 
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.

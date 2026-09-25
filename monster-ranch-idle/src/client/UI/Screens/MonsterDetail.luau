@@ -115,6 +115,17 @@ function MonsterDetail.Build(ctx)
 		Parent = panel.HeaderRight,
 	})
 
+	-- Update 1.5: dress this monster up in the Wardrobe.
+	local styleButton = Button.new({
+		Name = "Style",
+		Text = "Style",
+		Color = C.Pink,
+		Size = UDim2.fromOffset(84, 44),
+		TextSize = 18,
+		LayoutOrder = 4,
+		Parent = panel.HeaderRight,
+	})
+
 	-- Left: portrait ----------------------------------------------------------------
 	local portrait = New("Frame", {
 		Name = "Portrait",
@@ -764,6 +775,11 @@ function MonsterDetail.Build(ctx)
 
 	feedButton:SetOnClick(openFeed)
 	renameButton:SetOnClick(openRename)
+	styleButton:SetOnClick(function()
+		if currentId and ctx.Router:Has("Wardrobe") then
+			ctx.Router:Open("Wardrobe", { id = currentId })
+		end
+	end)
 	lockButton:SetOnClick(function()
 		local m = monster()
 		if m then

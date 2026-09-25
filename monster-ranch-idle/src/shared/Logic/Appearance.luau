@@ -24,6 +24,7 @@ export type Appearance = {
 	archetype: string,
 	lv: number,
 	stars: number,
+	acc: { [string]: string }?, -- worn accessories { [slot] = accessoryId } (1.5)
 }
 
 function Appearance.Of(m): Appearance
@@ -41,6 +42,7 @@ function Appearance.Of(m): Appearance
 		archetype = def.archetype,
 		lv = m.lv or 1,
 		stars = m.stars or 1,
+		acc = if type(m.acc) == "table" and next(m.acc) then table.clone(m.acc) else nil,
 	}
 end
 

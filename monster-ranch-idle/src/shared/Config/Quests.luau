@@ -190,6 +190,36 @@ Quests.Achievements = {
 		target = 1,
 		reward = { { kind = "gems", amount = 150 } },
 	},
+	-- Update 1.5 · Showtime
+	{
+		id = "contest_win",
+		text = "Win a Monster Contest",
+		topic = "ContestPlaced",
+		filter = { rank = 1 },
+		target = 1,
+		reward = { { kind = "gems", amount = 100 }, { kind = "accessory", id = "halo", amount = 1 } },
+	},
+	{
+		id = "contest_enter_10",
+		text = "Enter 10 Monster Contests",
+		topic = "ContestEntered",
+		target = 10,
+		reward = { { kind = "ribbons", amount = 50 } },
+	},
+	{
+		id = "contest_vote_25",
+		text = "Vote on 25 runway walks",
+		topic = "ContestVoted",
+		target = 25,
+		reward = { { kind = "ribbons", amount = 30 }, { kind = "gems", amount = 50 } },
+	},
+	{
+		id = "accessories_10",
+		text = "Collect 10 accessories",
+		topic = "AccessoryGained",
+		target = 10,
+		reward = { { kind = "accessory", id = "flower_crown", amount = 1 } },
+	},
 	-- Update 1.4 · Rebirth + Spring Bloom
 	{
 		id = "rebirth_1",
@@ -291,6 +321,33 @@ Quests.Seasons = {
 			tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "monster", id = "budling", rarity = 5, amount = 1 } }),
 		},
 	},
+	-- Update 1.5 · Season 3 "Showtime": accessories (two pass-only), Contest Ribbons and gems.
+	{
+		season = 3,
+		name = "Showtime",
+		startsAt = 1810393200, -- Sat 15 May 2027, 15:00 UTC (update 1.5)
+		endsAt = 1814022000, -- Sat 26 Jun 2027, 15:00 UTC
+		xpPerTier = 300,
+		xpPerDaily = 100,
+		xpPerAchievement = 200,
+		tiers = {
+			tier({ { kind = "ribbons", amount = 20 } }, { { kind = "gems", amount = 30 } }),
+			tier({ { kind = "coins", amount = 10000 } }, { { kind = "accessory", id = "party_hat", amount = 1 } }),
+			tier({ { kind = "accessory", id = "mustache", amount = 1 } }, { { kind = "egg", id = "crystal", amount = 1 } }),
+			tier({ { kind = "treats", amount = 20 } }, { { kind = "ribbons", amount = 40 } }),
+			tier({ { kind = "gems", amount = 20 } }, { { kind = "accessory", id = "sunglasses", amount = 1 } }),
+			tier({ { kind = "ribbons", amount = 25 } }, { { kind = "gems", amount = 50 } }),
+			tier({ { kind = "egg", id = "grove", amount = 2 } }, { { kind = "accessory", id = "royal_cape", amount = 1 } }),
+			tier({ { kind = "accessory", id = "red_scarf", amount = 1 } }, { { kind = "egg", id = "crystal", amount = 2 } }),
+			tier({ { kind = "friendship", amount = 40 } }, { { kind = "ribbons", amount = 60 } }),
+			tier({ { kind = "gems", amount = 25 } }, { { kind = "accessory", id = "rainbow_wings", amount = 1 } }),
+			tier({ { kind = "ribbons", amount = 30 } }, { { kind = "egg", id = "royal", amount = 1 } }),
+			tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 80 } }),
+			tier({ { kind = "coins", amount = 300000 } }, { { kind = "accessory", id = "top_hat", amount = 1 } }),
+			tier({ { kind = "gems", amount = 30 } }, { { kind = "ribbons", amount = 100 } }),
+			tier({ { kind = "accessory", id = "bow_tie", amount = 1 } }, { { kind = "accessory", id = "starlight_crown", amount = 1 } }),
+		},
+	},
 }
 Quests.Pass = Quests.Seasons[1] -- kept for older call sites; prefer Quests.PassAt(now)
 
@@ -310,12 +367,17 @@ Quests.Codes = {
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
 	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
 	-- Update 1.1 launch code (expires 6 Feb 2027).
+	-- Update 1.5 launch code (expires 26 Jun 2027).
+	SHOWTIME = {
+		reward = { { kind = "accessory", id = "party_hat", amount = 1 }, { kind = "ribbons", amount = 25 } },
+		expires = 1814022000,
+	},
 	CORALDEPTHS = { reward = { { kind = "egg", id = "pearl", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1801872000 },
 }
 Quests.GroupId = 0 -- set to the Roblox group id for the GROUP code
 
 -- Topics whose detail carries a count (progress += detail[field]); every other topic counts 1.
-Quests.CountField = { EggBought = "amount" }
+Quests.CountField = { EggBought = "amount", AccessoryGained = "amount" }
 
 -- Scripted first-session rain (Flags.TutorialScriptedRain): when `step` becomes current the
 -- server starts `weather` for `seconds` if the sky is clear, and guarantees `mutation`.
