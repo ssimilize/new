@@ -171,6 +171,72 @@ SUBJECTS = {
     "softly glowing lilac eyes, a small crown of curved wispy horns, a long trailing tail.",
     "moonveil": "Moonveil: a gentle, graceful sprite with a solid flowing veil-like hood draped over its head, a "
     "small crescent moon on its forehead, pale star speckles, a long elegant wispy tail.",
+    # ── Batch 4 (2026-09-25): lines 17-24 ──
+    # 17 wisplet (sprite, gloom). Lanternshade is also the region boss "Lantern Wraith".
+    "wisplet": "Wisplet, a baby will-o'-the-wisp sprite: a small round body with pale glowing spots on its round "
+    "cheeks, a tiny solid lilac flame burning on the tip of its curled tail.",
+    "wispkin": "Wispkin: a bigger wisp with two small flame-shaped tufts on its head, glowing spots along its "
+    "back, a longer curling tail carrying a brighter solid lilac flame at its tip.",
+    "lanternshade": "Lanternshade, a lantern wraith: a larger, spooky-cute wisp with a tall pointed hood, calm "
+    "glowing eyes, its long curling tail swelling at the tip into a big round glowing lantern of lilac light "
+    "with a little pointed cap.",
+    # 18 gloomcap (blob, gloom)
+    "gloomcap": "Gloomcap, a baby mushroom blob: a round body wearing a big purple mushroom cap on its head, "
+    "the cap dotted with pale glowing lilac spots.",
+    "shadeshroom": "Shadeshroom: a bigger mushroom blob with a wide drooping cap with a frilly underside, small "
+    "mushrooms sprouting from its shoulders, glowing lilac spots.",
+    "umbracap": "Umbracap: a large, wise mushroom blob with a huge umbrella-like cap covered in glowing lilac "
+    "spots, a ring of small mushrooms around its feet, a gentle sleepy face.",
+    # 19 steamling (blob, ember + tide). Steam as SOLID white puffs: a grey or see-through wisp is cut
+    # out with the background.
+    "steamling": "Steamling, a baby steam blob: a round body, warm orange on top fading to cool blue below, "
+    "a solid puff of white steam curling up from the top of its head like a little cloud, rosy cheeks.",
+    "vaporkin": "Vaporkin: a bigger steam blob with a crest of solid puffy white steam clouds along its head and "
+    "back, small bubbles on its blue side and ember spots on its orange side.",
+    "geyserdrake": "Geyserdrake: a big dragon-like blob with two stubby horns, a tall solid spout of white "
+    "steam and blue water rising from the top of its head, orange and blue scales, a short thick tail.",
+    # 20 mudpuff (blob, tide + stone)
+    # Mudpuff's first concept drew TWO creatures, a brown one and a blue one (one per element); its
+    # teen and adult came out one blue toad, so the baby was re-drawn from Bogtoad's concept.
+    "mudpuff": "Mudpuff, a baby toad blob, one single creature: a soft round body with small mud-brown "
+    "patches and pebbles stuck to it, a little green lily pad on its head.",
+    "bogtoad": "Bogtoad: a chubby toad-like blob with a wide smiling mouth, bumpy muddy skin with blue spots, "
+    "a lily pad with a tiny flower on its head.",
+    "mireback": "Mireback: a big old swamp toad blob with a mossy mound of mud and stones on its back like a "
+    "little island with a few short reeds, a wide friendly grin.",
+    # 21 thornbolt (bug, spark + sprout). Keep what grows on the shell low: the bug rig reads anything
+    # rising well above the shell as wings or antennae.
+    "thornbolt": "Thornbolt, a baby thorn beetle: a round green shell with small yellow lightning-bolt markings, "
+    "two short antennae with little leaf-shaped tips, a tiny thorn horn on its nose.",
+    "voltvine": "Voltvine: a bigger beetle with thin vines wrapped flat around its shell, small glowing yellow "
+    "spark spots, a stronger thorn horn on its nose.",
+    "thundergrove": "Thundergrove: a big stag beetle with a mossy shell covered in small leaves and tiny glowing "
+    "yellow flowers, two thorny antler-like horns on its head, yellow lightning veins on its shell.",
+    # 22 lavashell (golem, ember + stone)
+    "lavashell": "Lavashell, a baby lava golem: a chunky stone body with glowing orange lava cracks, a little "
+    "rocky shell on its back, a tiny glowing ember on top of its head.",
+    "magmatle": "Magmatle: a sturdier lava golem with a bigger domed rock shell on its back with glowing magma "
+    "seams, rocky shoulder plates, fists glowing orange.",
+    "volcanoise": "Volcanoise: a huge tortoise-like golem carrying a small volcano on its back with glowing "
+    "orange lava in its crater, massive stone fists with magma cracks.",
+    # 23 eclipsette (moth, gloom + spark)
+    "eclipsette": "Eclipsette, a baby eclipse moth: a round fluffy purple body, rounded purple wings each with a "
+    "golden ring like a solar eclipse, two feathery antennae.",
+    "umbravolt": "Umbravolt: bigger wings with golden eclipse rings and small lightning-bolt shaped edges, a "
+    "fluffy golden collar, longer antennae tipped with little sparks.",
+    "eclipsior": "Eclipsior: a majestic moth with large wings each showing a glowing golden eclipse ring around a "
+    "deep purple disc, a thick fluffy golden mane, long elegant antennae.",
+    # 24 mirebloom (sprite, gloom + sprout)
+    "mirebloom": "Mirebloom, a baby swamp-flower sprite: a small round body, a closed purple flower bud with two "
+    "green leaves on top of its head, a short wispy tail like a trailing vine.",
+    # "Vine-like" tails came out as bare twigs with loose leaves, and a tangle of thin vines around a
+    # see-through wisp (first concepts): the tail is now a smooth solid one with a few leaves or buds.
+    "bogblossom": "Bogblossom: the bud has opened into a purple flower on its head, small lily-pad-shaped "
+    "leaves on its shoulders, a longer smooth solid wispy tail like the baby's with two small leaves "
+    "growing on it.",
+    "nightbloom": "Nightbloom: a graceful sprite with a large crown of a night-blooming flower with pale "
+    "glowing purple petals, a long smooth solid wispy tail with a few small glowing flower buds growing "
+    "along it.",
 }
 
 
