@@ -206,6 +206,12 @@ Api.Actions = {
 	["Workshop.Buy"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 1, returns = "{ owned: number }" },
 	["Workshop.Equip"] = { schema = T.struct({ id = id, design = T.string(40, 3) }), rate = 2, returns = "{ slot: string }" },
 	["Workshop.Claim"] = { schema = T.none, rate = 0.5, returns = "{ ribbons: number }" },
+	["Workshop.ModQueue"] = { schema = T.none, rate = 0.5, returns = "{ count: number }" },
+	["Workshop.Moderate"] = {
+		schema = T.struct({ design = T.string(40, 3), verdict = T.enum({ "restore", "remove" }) }),
+		rate = 2,
+		returns = "{ verdict: string }",
+	},
 
 	-- Riding (2.0) ------------------------------------------------------------------------
 	["Riding.Mount"] = { schema = T.struct({ id = id }), rate = 2, returns = "{ speed: number }" },
@@ -508,7 +514,7 @@ Api.State = {
 		Riding = "{ mount: monsterId|false, speed: number }",
 		Raids = "{ lobby: string|false }",
 		TradingHub = "{ ad: adId|false, postedAt }",
-		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } } }",
+		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } }, moderator: boolean, queue = { view + reports, creatorId } }",
 		Arena = "{ rating, tier, attemptsLeft, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
 	},
 	global = {

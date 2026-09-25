@@ -40,8 +40,12 @@ function MockAdapters.network()
 		hubBoard = {}, -- Trade Board ads by id (3.0)
 		hubDown = false,
 		teleports = {}, -- { { userId, placeId, jobId? } } in call order (3.0)
+		placesDown = false, -- fail Places.List (3.0.1)
 		designs = {}, -- Workshop design records by id (3.0)
 		designFeed = {}, -- design ids, newest first
+		royalties = {}, -- [userId] = ribbons owed (3.0.1)
+		reported = {}, -- design ids hidden by reports, oldest first (3.0.1)
+		designReads = 0, -- Designs.Get calls, to check caching (3.0.1)
 		designsDown = false,
 	}
 end
@@ -103,6 +107,7 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 	a._onAdded, a._onRemoving = nil, nil
 	a.friends = {} -- [userId] = { [userId] = true }
 	a.groups = {} -- [userId] = { [groupId] = true }
+	a.ranks = {} -- [userId] = { [groupId] = rank } (3.0.1)
 	a.Players = {
 		OnAdded = function(fn)
 			a._onAdded = fn
@@ -124,6 +129,10 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 		IsInGroup = function(player, groupId)
 			local g = a.groups[player.UserId]
 			return g ~= nil and g[groupId] == true
+		end,
+		RankInGroup = function(player, groupId)
+			local r = a.ranks[player.UserId]
+			return r and r[groupId] or 0
 		end,
 		NameOf = function(userId)
 			return a.names[userId]
@@ -336,6 +345,16 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 			return true, nil
 		end,
 	}
+	-- The universe's places (3.0.1). Tests fill a.places with { name, placeId }.
+	a.places = {}
+	a.Places = {
+		List = function()
+			if network.placesDown then
+				return false, {}
+			end
+			return true, deepCopy(a.places)
+		end,
+	}
 	a.HubBoard = {
 		Post = function(ad, ttl)
 			if network.hubDown then
@@ -394,7 +413,52 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 			if network.designsDown then
 				return false, nil
 			end
+			network.designReads += 1
 			return true, deepCopy(network.designs[id])
+		end,
+		Owe = function(userId, amount)
+			if network.designsDown then
+				return false
+			end
+			network.royalties[userId] = (network.royalties[userId] or 0) + amount
+			return true
+		end,
+		Collect = function(userId)
+			if network.designsDown then
+				return false, 0
+			end
+			local owed = network.royalties[userId] or 0
+			network.royalties[userId] = nil
+			return true, owed
+		end,
+		Flag = function(id)
+			if network.designsDown then
+				return false
+			end
+			if not table.find(network.reported, id) then
+				table.insert(network.reported, id)
+			end
+			return true
+		end,
+		Unflag = function(id)
+			if network.designsDown then
+				return false
+			end
+			local at = table.find(network.reported, id)
+			if at then
+				table.remove(network.reported, at)
+			end
+			return true
+		end,
+		Flagged = function(count)
+			if network.designsDown then
+				return false, {}
+			end
+			local ids = {}
+			for i = 1, math.min(count, #network.reported) do
+				ids[i] = network.reported[i]
+			end
+			return true, ids
 		end,
 		Update = function(id, transform)
 			if network.designsDown then

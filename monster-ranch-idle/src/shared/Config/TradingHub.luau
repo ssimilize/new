@@ -9,15 +9,18 @@
 	`Wants`) and a preset note (`Notes`, never free text). "Meet" sends a trade request when
 	the poster is on your hub server, or teleports you to theirs.
 
-	PlaceIds: fill in the real place ids when publishing (0 = not published yet; Travel and
-	Return then refuse). A server runs in hub mode when its PlaceId is PlaceIds.Hub, or when
-	Workspace has the attribute PlaceMode = "hub" (Studio testing).
+	Places (3.0.1): the hub place is built from hub.project.json, which sets the Workspace
+	attribute PlaceMode = "hub", so a hub server knows its mode without any ids. Travel and
+	Return find the target place by name (`PlaceNames`) in the universe's place list, so no ids
+	need copying; `PlaceIds` (0 = look it up) can still pin one. Nothing found: Travel and
+	Return refuse politely. A server also runs in hub mode when its PlaceId is PlaceIds.Hub.
 ]]
 
 local TradingHub = {}
 
 TradingHub.Unlock = "trading"
-TradingHub.PlaceIds = { Main = 0, Hub = 0 } -- VERIFY: set when the places are published
+TradingHub.PlaceIds = { Main = 0, Hub = 0 } -- optional pins; 0 = find the place by name
+TradingHub.PlaceNames = { Main = "Monster Ranch Idle", Hub = "Trading Hub" }
 TradingHub.AdSeconds = 30 * 60 -- an ad lives this long unless its poster leaves or trades
 TradingHub.PostCooldown = 30
 TradingHub.MaxOffer = 4

@@ -53,6 +53,7 @@ local function runSpec(file: string)
 	t.ClientHarness = ClientHarness
 	t.Roblox = require("@lune/roblox")
 	t.Loader = Loader
+	t.Root = ROOT
 	t.Shared = function(path: string)
 		return Loader.get("Shared." .. path)
 	end

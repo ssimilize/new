@@ -28,6 +28,12 @@ Workshop.ReportsToHide = 3
 Workshop.GallerySize = 24
 Workshop.MaxDesignsKept = 50 -- design ids remembered per designer
 Workshop.MaxLiked = 500
+Workshop.CacheSeconds = 60 -- design records cached per server (3.0.1, DataStore budget)
+Workshop.ListCacheSeconds = 30 -- Top / New id lists
+-- Moderators (3.0.1) review designs hidden by reports: listed user ids, or anyone with at least
+-- `minRank` in the group (id 0 = no group).
+Workshop.Moderators = {} :: { number }
+Workshop.ModeratorGroup = { id = 0, minRank = 200 }
 
 Workshop.Palette = {
 	"#FFFFFF",

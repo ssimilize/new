@@ -7,6 +7,10 @@
 	  · its event weather (Config.Weather entries with `event = id`) can roll, and
 	    Weather.EventBoosts[id] multiplies other weather.
 
+	reruns (update 3.0.1): later windows { startsAt, endsAt } for the same event. A returning
+	event keeps its id, token and content, so everything tagged with it comes back. Events.Active
+	and Events.Next return the event with the running (or next) window's startsAt / endsAt.
+
 	Flags.ActiveEvent overrides the calendar: an event id forces that event, `false` turns
 	events off, nil (default) follows the calendar. Everything reads the running event
 	through Events.Active(now) / Events.ActiveId(now), so server and client always agree.
@@ -24,6 +28,10 @@ Events.List = {
 		endsAt = 1799506800, -- Sat 9 Jan 2027
 		token = { name = "Snowflakes", glyph = "❄", color = "#7CC7FF" },
 		color = "#7CC7FF",
+		reruns = {
+			-- Year 2 (update 3.0.1): Frostfall returns with a fourth winter line (Tinselkit).
+			{ startsAt = 1829142000, endsAt = 1831561200 }, -- Sat 18 Dec 2027 → Sat 15 Jan 2028
+		},
 	},
 	{
 		id = "lunarlanterns",
@@ -74,7 +82,26 @@ for _, e in Events.List do
 	Events.ById[e.id] = e
 end
 
--- The running event's definition, or nil.
+-- Every window of an event: its first run, then its reruns.
+function Events.Windows(e)
+	local list = { { startsAt = e.startsAt, endsAt = e.endsAt } }
+	for _, w in e.reruns or {} do
+		table.insert(list, { startsAt = w.startsAt, endsAt = w.endsAt })
+	end
+	return list
+end
+
+-- The event as seen in one window: the same definition with that window's dates.
+local function inWindow(e, w)
+	if w.startsAt == e.startsAt then
+		return e
+	end
+	local view = table.clone(e)
+	view.startsAt, view.endsAt = w.startsAt, w.endsAt
+	return view
+end
+
+-- The running event's definition (with the running window's dates), or nil.
 function Events.Active(now: number)
 	local forced = Flags.ActiveEvent
 	if forced == false then
@@ -83,8 +110,10 @@ function Events.Active(now: number)
 		return Events.ById[forced]
 	end
 	for _, e in Events.List do
-		if now >= e.startsAt and now < e.endsAt then
-			return e
+		for _, w in Events.Windows(e) do
+			if now >= w.startsAt and now < w.endsAt then
+				return inWindow(e, w)
+			end
 		end
 	end
 	return nil
@@ -99,8 +128,10 @@ end
 function Events.Next(now: number)
 	local best = nil
 	for _, e in Events.List do
-		if e.startsAt > now and (best == nil or e.startsAt < best.startsAt) then
-			best = e
+		for _, w in Events.Windows(e) do
+			if w.startsAt > now and (best == nil or w.startsAt < best.startsAt) then
+				best = inWindow(e, w)
+			end
 		end
 	end
 	return best

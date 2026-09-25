@@ -3,6 +3,48 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.0.1 · Go live + Frostfall returns
+
+Launch Sat 18 Dec 2027: the Trading Hub goes live, the Workshop gets moderation, and
+Frostfall comes back for its second winter.
+
+**For players**
+- **Frostfall returns** (18 Dec 2027 – 15 Jan 2028): Snowflakes, the Frostfall Egg, the winter
+  decor and pen theme, and the Snow boost come back. The egg now also hatches a fourth winter
+  line: **Tinselkit → Garlandfox → Yuletail** (Spark/Light). Snowflakes left from last winter
+  still count.
+- **Code:** `FROSTFALL27` gives 150 Snowflakes. It expires on 15 Jan 2028.
+- **Trading Hub:** travel and return now retry a failed teleport up to twice instead of
+  leaving you stuck.
+- **Workshop:** designs hidden by reports are reviewed by moderators, who restore them or
+  remove them for good. Royalties are collected in one go however many designs you have.
+
+**For the team**
+- **Publishing:** see `docs/GO_LIVE.md`. Build the hub place from `hub.project.json` (it sets
+  the Workspace attribute `PlaceMode = "hub"`) and name the places "Monster Ranch Idle" and
+  "Trading Hub". No place ids need copying into code. CI now builds both place files.
+- **Moderators:** add user ids to `Config.Workshop.Moderators` or set
+  `Config.Workshop.ModeratorGroup` (group id and minimum rank).
+
+**In the code**
+- **Events:** `reruns` windows per event; `Events.Windows`, and `Events.Active` / `Next`
+  return the event with the running window's dates. Nothing else changes, so every item tagged
+  with the event comes back.
+- **Trading Hub:** `Services.Places.List` (AssetService) resolves `Config.TradingHub.PlaceNames`,
+  with `PlaceIds` as optional pins and a "not the hub" fallback for the ranch. The Teleport
+  adapter retries `TeleportInitFailed` (Flooded / Failure) twice.
+- **Workshop:**
+  - Design records and the Top / New lists are cached per server (`CacheSeconds` 60,
+    `ListCacheSeconds` 30); purchases still read fresh.
+  - Royalties go to a per-designer ledger (`Services.Designs.Owe` / `Collect`).
+  - A design hidden by reports joins a moderation feed (`Flag` / `Flagged` / `Unflag`).
+    New actions `Workshop.ModQueue` and `Workshop.Moderate`, and a Review view in the gallery
+    for moderators. `Services.Players.RankInGroup` checks the moderator group.
+- **Tests:** `GoLive.spec` (8): the rerun window, the rerun shop and code, the hub project file,
+  places by name (outage, fallback, pinned id), the design cache, the royalty ledger, the
+  moderation queue, and moderators by group rank. `YearTwoClient.spec` gains the Review queue
+  through the UI.
+
 ## 3.0 · Year Two
 
 The four "Year 2" items from the roadmap, in one update (launch Sat 11 Dec 2027).

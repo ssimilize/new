@@ -201,6 +201,45 @@ return function(t)
 		end)
 	end)
 
+	describe("Workshop moderation client", function()
+		it("lets a moderator restore a reported design from the Review queue (3.0.1)", function()
+			local W = Config.Workshop
+			local h = TestKernel.new({ systems = allSystems() })
+			local maker = h:Join(8101, "Maker")
+			levelTo(h, maker, 12)
+			h:System("Currency"):Add(maker, "ribbons", 100, "test")
+			local id =
+				h:Call(maker, "Workshop.Create", { name = "Odd Hat", shape = "cap", color = W.Palette[1], color2 = W.Palette[2] }).design
+			for i = 1, W.ReportsToHide do
+				h:Call(h:Join(8200 + i), "Workshop.Report", { design = id })
+			end
+			table.insert(W.Moderators, 8300)
+			local ok, err = pcall(function()
+				local mod = h:Join(8300, "Mod")
+				local c = ClientHarness.new(h, mod)
+				c:Advance(1)
+				local screen = c:Open("Workshop")
+				c:Advance(0.5)
+				c:Click(c:Button("Gallery", screen))
+				c:Advance(1)
+				c:Click(screen:FindFirstChild("Gallery_review", true))
+				c:Advance(1)
+				local card = screen:FindFirstChild("Design_" .. id, true)
+				expect(card ~= nil).toBe(true)
+				expect(c:HasText("3 reports", card)).toBe(true)
+				c:Click(card:FindFirstChild("Mod_restore", true))
+				c:Advance(1)
+				expect(h:Session(mod, "Workshop").queue[1]).toBeNil()
+				expect(c:HasText("Nothing to review.", screen)).toBe(true)
+				expectClean(c)
+			end)
+			table.remove(W.Moderators)
+			if not ok then
+				error(err, 0)
+			end
+		end)
+	end)
+
 	describe("Expeditions region tabs", function()
 		it("shows a region's opening date until it opens", function()
 			local h = TestKernel.new({ systems = allSystems(), startTime = LAUNCH - 86400 })

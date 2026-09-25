@@ -211,6 +211,13 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
   ```
   A worn design is stored on the monster as `"ugc:<designId>:<shape>:<RRGGBB>:<RRGGBB>"` (`Config.Accessories.Encode`); `Config.Accessories.Resolve(id)` returns a catalogue item or a design definition, so MonsterModel, the Wardrobe and the Contest judge handle both. Taking a design off goes through `Accessories:Return`, which hands `ugc:` ids to the Workshop (`Accessories:RegisterReturn`). Actions `Workshop.Create/Browse/Like/Report/Buy/Equip/Claim`. Publishes `DesignPublished`, `DesignBought`.
 
+### 3.0.1: go live
+- **Events** may list `reruns = { { startsAt, endsAt } }`; `Events.Active(now)` returns the event with the running window's dates.
+- **Places**: `Services.Places.List() -> ok, { { name, placeId } }`. TradingHub resolves the target place by `Config.TradingHub.PlaceNames` (pins in `PlaceIds` win). The hub place is built from `hub.project.json` (Workspace attribute `PlaceMode = "hub"`).
+- **Teleport**: `ToPlace` / `ToServer` retry transient `TeleportInitFailed` results twice.
+- **Designs** adds `Owe(userId, n)`, `Collect(userId) -> ok, n` (royalty ledger) and `Flag(id)`, `Unflag(id)`, `Flagged(count) -> ok, { id }` (moderation feed). The Workshop caches records for `CacheSeconds` and lists for `ListCacheSeconds`.
+- **Players** adds `RankInGroup(player, groupId) -> number`.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 

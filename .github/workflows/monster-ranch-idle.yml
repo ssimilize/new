@@ -51,5 +51,7 @@ jobs:
       - name: Formatting
         run: stylua --check src tests
 
-      - name: Build place file
-        run: rojo build -o build.rbxl
+      - name: Build place files (ranch and Trading Hub)
+        run: |
+          rojo build -o build.rbxl
+          rojo build hub.project.json -o hub.rbxl

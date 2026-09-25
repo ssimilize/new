@@ -5,6 +5,8 @@
 	         Publish (Workshop.Create, SubmitCost ribbons; you get the first copy).
 	Gallery  Top / New / Mine (Workshop.Browse → session.Workshop.gallery): Like, Buy a copy
 	         (CopyPrice), Report. "Collect" pays your royalties (Workshop.Claim).
+	Review   moderators only (3.0.1): designs hidden by reports (Workshop.ModQueue), each with
+	         Restore / Remove (Workshop.Moderate).
 	Copies   your stored copies (profile.Workshop.copies): Wear → Monsters pick mode →
 	         Workshop.Equip. Take them off in the Wardrobe as usual.
 	Opened from the Workshop in the hub and from the Wardrobe.
@@ -78,6 +80,7 @@ return {
 		local refresh
 		local tab = "design"
 		local draft = { shape = SHAPES[1], color = Cfg.Palette[5], color2 = Cfg.Palette[3], name = "" }
+		local reviewing = false -- moderators: the gallery shows the review queue
 
 		Widgets.Tabs({
 			Tabs = { { id = "design", text = "Design" }, { id = "gallery", text = "Gallery" }, { id = "copies", text = "My copies" } },
@@ -232,13 +235,31 @@ return {
 				Button.new({
 					Name = "Gallery_" .. t[1],
 					Text = t[2],
-					Color = if sess.tab == t[1] then C.Orange else C.Blue,
+					Color = if sess.tab == t[1] and not reviewing then C.Orange else C.Blue,
 					TextSize = Theme.TextSize.Small,
 					Size = UDim2.fromOffset(120, 40),
 					LayoutOrder = i,
 					Parent = bar,
 					OnClick = function()
+						reviewing = false
 						Util.requestOnce(ctx, "Workshop.Browse", { tab = t[1] })
+						refresh()
+					end,
+				})
+			end
+			if sess.moderator == true then
+				Button.new({
+					Name = "Gallery_review",
+					Text = "Review",
+					Color = if reviewing then C.Orange else C.Red,
+					TextSize = Theme.TextSize.Small,
+					Size = UDim2.fromOffset(120, 40),
+					LayoutOrder = 4,
+					Parent = bar,
+					OnClick = function()
+						reviewing = true
+						Util.requestOnce(ctx, "Workshop.ModQueue")
+						refresh()
 					end,
 				})
 			end
@@ -271,9 +292,12 @@ return {
 				Parent = content,
 			})
 			local gallery = if type(sess.gallery) == "table" then sess.gallery else {}
+			if reviewing then
+				gallery = if type(sess.queue) == "table" then sess.queue else {}
+			end
 			if #gallery == 0 then
 				Util.text({
-					Text = "Nothing here yet. Design something!",
+					Text = if reviewing then "Nothing to review." else "Nothing here yet. Design something!",
 					TextColor3 = C.TextMuted,
 					Size = UDim2.fromOffset(400, 40),
 					Parent = grid,
@@ -319,6 +343,31 @@ return {
 					Size = UDim2.new(1, -16, 0, 40),
 					Parent = card,
 				}, { Create.List("x", 6, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
+				if reviewing then
+					for j, verdict in { { "restore", "Restore", C.Green }, { "remove", "Remove", C.Red } } do
+						Button.new({
+							Name = "Mod_" .. verdict[1],
+							Text = verdict[2],
+							Color = verdict[3],
+							TextSize = Theme.TextSize.Small - 2,
+							Size = UDim2.fromOffset(100, 38),
+							LayoutOrder = j,
+							Parent = row,
+							OnClick = function()
+								Util.requestOnce(ctx, "Workshop.Moderate", { design = d.id, verdict = verdict[1] })
+							end,
+						})
+					end
+					Util.text({
+						Text = string.format("%d reports", d.reports or 0),
+						TextColor3 = C.Red,
+						TextSize = Theme.TextSize.Small - 2,
+						Size = UDim2.fromOffset(80, 38),
+						LayoutOrder = 3,
+						Parent = row,
+					})
+					continue
+				end
 				Button.new({
 					Name = "Like",
 					Text = "♥",

@@ -158,6 +158,16 @@ function Adapters.Roblox()
 			end)
 			return ok and result == true
 		end,
+		-- The player's rank in a group (0 = not a member or unknown).
+		RankInGroup = function(player, groupId: number): number
+			if groupId == 0 then
+				return 0
+			end
+			local ok, result = pcall(function()
+				return player:GetRankInGroup(groupId)
+			end)
+			return if ok and type(result) == "number" then result else 0
+		end,
 		-- Display name for any user id (players who are not on this server). Cached.
 		NameOf = function(userId: number): string?
 			local cached = nameCache[userId]
@@ -624,22 +634,71 @@ function Adapters.Roblox()
 	-- PlaceMode = "hub"); the TradingHub config decides the mode from it and PlaceId.
 	adapters.PlaceMode = workspace:GetAttribute("PlaceMode")
 	local TeleportService = game:GetService("TeleportService")
+	-- A teleport can still fail after TeleportAsync returns (TeleportInitFailed): retry the
+	-- same target up to twice for transient failures (3.0.1).
+	local pendingTeleports = {} -- [player] = { placeId, options?, tries }
+	local function teleport(player, placeId: number, options): (boolean, string?)
+		pendingTeleports[player] = { placeId = placeId, options = options, tries = 0 }
+		local ok, err = pcall(function()
+			TeleportService:TeleportAsync(placeId, { player }, options)
+		end)
+		if not ok then
+			pendingTeleports[player] = nil
+		end
+		return ok, if ok then nil else tostring(err)
+	end
+	TeleportService.TeleportInitFailed:Connect(function(player, result, message)
+		local pending = pendingTeleports[player]
+		local transient = result == Enum.TeleportResult.Flooded or result == Enum.TeleportResult.Failure
+		if not pending or not transient or pending.tries >= 2 then
+			pendingTeleports[player] = nil
+			warn("[Adapters] teleport failed: " .. tostring(result) .. " " .. tostring(message))
+			return
+		end
+		pending.tries += 1
+		task.delay(2 * pending.tries, function()
+			if player.Parent then
+				pcall(function()
+					TeleportService:TeleportAsync(pending.placeId, { player }, pending.options)
+				end)
+			end
+		end)
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		pendingTeleports[player] = nil
+	end)
 	adapters.Teleport = {
 		-- To a public server of another place in this universe.
 		ToPlace = function(player, placeId: number): (boolean, string?)
-			local ok, err = pcall(function()
-				TeleportService:TeleportAsync(placeId, { player })
-			end)
-			return ok, if ok then nil else tostring(err)
+			return teleport(player, placeId, nil)
 		end,
 		-- To one running server (JobId) of a place.
 		ToServer = function(player, placeId: number, jobId: string): (boolean, string?)
-			local ok, err = pcall(function()
-				local options = Instance.new("TeleportOptions")
-				options.ServerInstanceId = jobId
-				TeleportService:TeleportAsync(placeId, { player }, options)
+			local options = Instance.new("TeleportOptions")
+			options.ServerInstanceId = jobId
+			return teleport(player, placeId, options)
+		end,
+	}
+	-- The places of this universe { { name, placeId } } (3.0.1: the Trading Hub finds its
+	-- place ids by name, so nobody has to copy ids into Config).
+	local AssetService = game:GetService("AssetService")
+	adapters.Places = {
+		List = function(): (boolean, { any })
+			local ok, list = pcall(function()
+				local out = {}
+				local pages = AssetService:GetGamePlacesAsync()
+				while true do
+					for _, place in pages:GetCurrentPage() do
+						table.insert(out, { name = place.Name, placeId = place.PlaceId })
+					end
+					if pages.IsFinished or #out >= 50 then
+						break
+					end
+					pages:AdvanceToNextPageAsync()
+				end
+				return out
 			end)
-			return ok, if ok then nil else tostring(err)
+			return ok, if ok then list else {}
 		end,
 	}
 	-- The Trade Board: one MemoryStore sorted map, ad id -> ad, sorted by post time.
@@ -685,6 +744,7 @@ function Adapters.Roblox()
 	-- Workshop designs (update 3.0): one DataStore record per design, a likes index for the
 	-- Top gallery (OrderedDataStore) and a "recent" feed key (newest first, capped).
 	local designStore = storeOf("MonsterRanch_Designs_v1")
+	local royaltyStore = storeOf("MonsterRanch_Royalties_v1")
 	local feedStore = storeOf("MonsterRanch_DesignFeed_v1")
 	local likesOk, likesIndex = pcall(function()
 		return DataStoreService:GetOrderedDataStore("MonsterRanch_DesignLikes_v1")
@@ -744,6 +804,69 @@ function Adapters.Roblox()
 				return list
 			end)
 			return ok, if ok then ids else {}
+		end,
+		-- Royalty ledger (3.0.1): ribbons owed to a designer, one key per designer, so a
+		-- claim is a single write however many designs they have.
+		Owe = function(userId: number, amount: number): boolean
+			return (atomic(royaltyStore, tostring(userId), function(current)
+				return (tonumber(current) or 0) + amount
+			end))
+		end,
+		Collect = function(userId: number): (boolean, number)
+			local taken = 0
+			local ok = atomic(royaltyStore, tostring(userId), function(current)
+				taken = tonumber(current) or 0
+				return if taken > 0 then 0 else nil
+			end)
+			return ok, if ok then taken else 0
+		end,
+		-- Moderation feed (3.0.1): designs hidden by reports, oldest first.
+		Flag = function(id: string): boolean
+			return (
+				atomic(feedStore, "reported", function(current)
+					local list = if type(current) == "table" then current else {}
+					if table.find(list, id) then
+						return nil
+					end
+					table.insert(list, id)
+					while #list > 200 do
+						table.remove(list, 1)
+					end
+					return list
+				end)
+			)
+		end,
+		Unflag = function(id: string): boolean
+			return (
+				atomic(feedStore, "reported", function(current)
+					local list = if type(current) == "table" then current else {}
+					local at = table.find(list, id)
+					if not at then
+						return nil
+					end
+					table.remove(list, at)
+					return list
+				end)
+			)
+		end,
+		Flagged = function(count: number): (boolean, { string })
+			if not feedStore then
+				return false, {}
+			end
+			local ok, list = pcall(function()
+				return feedStore:GetAsync("reported")
+			end)
+			if not ok then
+				return false, {}
+			end
+			local ids = {}
+			for i, id in (if type(list) == "table" then list else {}) do
+				if i > count then
+					break
+				end
+				table.insert(ids, id)
+			end
+			return true, ids
 		end,
 		Recent = function(count: number): (boolean, { string })
 			if not feedStore then
