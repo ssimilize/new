@@ -1,0 +1,28 @@
+{
+  "name": "MonsterRanchIdleTradingHub",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "Server": { "$path": "src/server" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": { "$path": "src/client" }
+      }
+    },
+    "Workspace": {
+      "$properties": { "StreamingEnabled": false },
+      "$attributes": { "PlaceMode": "hub" }
+    },
+    "Lighting": {
+      "$properties": {
+        "Ambient": [0.45, 0.45, 0.5],
+        "Brightness": 2.5,
+        "ClockTime": 13
+      }
+    }
+  }
+}

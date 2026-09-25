@@ -3,8 +3,18 @@
 
 	Cross-server records (ctx.Services.Designs), one per design:
 	  { id, creator, creatorName, name, shape, slot, color, color2, likes, copies,
-	    earned, paid, reports = { userId }, hidden, createdAt }
-	`earned` counts Royalty ribbons owed to the designer; Workshop.Claim pays earned − paid.
+	    earned, reports = { userId }, hidden, removed?, reviewed?, createdAt }
+	`earned` counts the Royalty ribbons a design has made (stats). What a designer is owed sits
+	in a per-designer ledger (Services.Designs.Owe / Collect, 3.0.1), so Workshop.Claim is one
+	write however many designs they have.
+
+	Budgets (3.0.1): design records and the Top / New id lists are cached on the server
+	(Config.CacheSeconds / ListCacheSeconds); writes refresh the cache with what they wrote.
+
+	Moderation (3.0.1): a design hidden by ReportsToHide reports joins the moderation feed
+	(Services.Designs.Flag). Moderators (Config.Moderators user ids, or ModeratorGroup rank)
+	see it in session.Workshop.queue and restore it (reports cleared) or remove it for good
+	(`removed`, renamed "Removed design"; copies already bought keep working).
 
 	Save section (profile.Workshop):
 	  designs = { designId }                 -- this player's designs (newest last)
@@ -12,7 +22,7 @@
 	  copies  = { [designId] = { n, name, shape, slot, color, color2, creatorName } }  -- storage
 	  liked   = { [designId] = true }
 	  next                                   -- counter for this player's design ids
-	Session (session.Workshop): { tab, gallery = { DesignView } }
+	Session (session.Workshop): { tab, gallery = { DesignView }, moderator, queue = { DesignView + reports } }
 	  DesignView = { id, name, creatorName, shape, slot, color, color2, likes, copies, mine }
 
 	Actions:
@@ -22,6 +32,8 @@
 	  Workshop.Buy { design }        -- a copy into storage for CopyPrice; the designer earns Royalty
 	  Workshop.Equip { id, design }  -- a stored copy onto a monster (encoded acc id)
 	  Workshop.Claim -> { ribbons }  -- royalties from your designs
+	  Workshop.ModQueue              -- moderators: fills session.queue from the feed
+	  Workshop.Moderate { design, verdict = "restore"|"remove" }
 	Worn copies come back to storage through Accessories:Return ("ugc:" handler).
 	Publishes DesignPublished (player, { design }), DesignBought (player, { design, creator }).
 ]]
@@ -43,6 +55,9 @@ local Config -- Config.Workshop
 local Acc -- Config.Accessories
 local Currency, Progression, Monsters, Accessories, Rewards
 
+local records = {} -- [designId] = { at, record } (server cache)
+local lists = {} -- [tab] = { at, ids }
+
 local function mustSection(player)
 	local s = ctx:Section(player)
 	if not s then
@@ -63,8 +78,29 @@ local function week(): number
 	return ctx.Config.Leaderboards.Week(ctx:Now())
 end
 
-local function getDesign(id: string)
+-- Remembers a record just read or written.
+local function remember(record)
+	if type(record) == "table" and record.id then
+		records[record.id] = { at = ctx:Now(), record = record }
+	end
+	return record
+end
+
+-- A design record, from the cache when it is at most `maxAge` seconds old.
+local function fetch(id: string, maxAge: number?): (boolean, any)
+	local hit = records[id]
+	if hit and ctx:Now() - hit.at <= (maxAge or Config.CacheSeconds) then
+		return true, hit.record
+	end
 	local ok, record = service().Get(id)
+	if ok and type(record) == "table" then
+		remember(record)
+	end
+	return ok, record
+end
+
+local function getDesign(id: string)
+	local ok, record = fetch(id, -1) -- purchases always read fresh
 	if not ok then
 		ctx:Fail("The Workshop is busy. Try again in a moment")
 	end
@@ -72,6 +108,17 @@ local function getDesign(id: string)
 		ctx:Fail("That design doesn't exist")
 	end
 	return record
+end
+
+local function isModerator(player): boolean
+	if table.find(Config.Moderators, player.UserId) then
+		return true
+	end
+	local group = Config.ModeratorGroup
+	if group.id ~= 0 and ctx.Services.Players.RankInGroup then
+		return ctx.Services.Players.RankInGroup(player, group.id) >= group.minRank
+	end
+	return false
 end
 
 local function view(record, userId: number)
@@ -182,7 +229,6 @@ local function create(player, payload)
 		likes = 0,
 		copies = 0,
 		earned = 0,
-		paid = 0,
 		reports = {},
 		hidden = false,
 		createdAt = ctx:Now(),
@@ -195,6 +241,8 @@ local function create(player, payload)
 		ctx:Fail("The Workshop is busy. Try again in a moment")
 	end
 	svc.Index(id, 0)
+	remember(record)
+	lists.new = nil
 	s.next += 1
 	s.made.n += 1
 	table.insert(s.designs, id)
@@ -218,18 +266,24 @@ local function browse(player, tab: string)
 			table.insert(ids, s.designs[i])
 		end
 	else
-		local ok, list = (if tab == "top" then svc.Top else svc.Recent)(Config.GallerySize * 2)
-		if not ok then
-			ctx:Fail("The Workshop is busy. Try again in a moment")
+		local cached = lists[tab]
+		if cached and ctx:Now() - cached.at <= Config.ListCacheSeconds then
+			ids = cached.ids
+		else
+			local ok, list = (if tab == "top" then svc.Top else svc.Recent)(Config.GallerySize * 2)
+			if not ok then
+				ctx:Fail("The Workshop is busy. Try again in a moment")
+			end
+			ids = list
+			lists[tab] = { at = ctx:Now(), ids = list }
 		end
-		ids = list
 	end
 	local gallery = {}
 	for _, id in ids do
 		if #gallery >= Config.GallerySize then
 			break
 		end
-		local ok, record = svc.Get(id)
+		local ok, record = fetch(id)
 		if ok and type(record) == "table" and (not record.hidden or record.creator == player.UserId) then
 			local v = view(record, player.UserId)
 			v.liked = s.liked[id] == true
@@ -280,6 +334,7 @@ local function like(player, id: string)
 	if not ok or type(record) ~= "table" then
 		ctx:Fail("That design doesn't exist")
 	end
+	remember(record)
 	svc.Index(id, record.likes)
 	s.liked[id] = true
 	ctx:Dirty(player, "liked", id)
@@ -300,13 +355,18 @@ local function report(player, id: string)
 		if not table.find(current.reports, player.UserId) and #current.reports < 50 then
 			table.insert(current.reports, player.UserId)
 		end
-		if #current.reports >= Config.ReportsToHide then
+		if #current.reports >= Config.ReportsToHide and not current.hidden then
 			current.hidden = true
+			current.flagged = true
 		end
 		return current
 	end)
 	if not ok or type(record) ~= "table" then
 		ctx:Fail("That design doesn't exist")
+	end
+	remember(record)
+	if record.flagged and not record.removed then
+		svc.Flag(id)
 	end
 	-- Hide it from the reporter's gallery right away.
 	local sess = ctx:Session(player)
@@ -332,6 +392,9 @@ local function buy(player, id: string)
 		ctx:Fail(string.format("You can keep %d copies of a design", Config.MaxCopies))
 	end
 	Currency:Charge(player, Config.CopyPrice, "workshop_copy")
+	if record.removed then
+		ctx:Fail("That design isn't available")
+	end
 	local royalty = if record.creator ~= player.UserId then Config.Royalty else 0
 	local ok, updated = service().Update(id, function(current)
 		if type(current) ~= "table" then
@@ -346,6 +409,10 @@ local function buy(player, id: string)
 			Currency:Add(player, key, amount, "workshop_refund")
 		end
 		ctx:Fail("The Workshop is busy. Try again in a moment")
+	end
+	remember(updated)
+	if royalty > 0 and not service().Owe(record.creator, royalty) then
+		ctx:Log("royalty for %s not recorded (%d ribbons)", tostring(record.creator), royalty)
 	end
 	storeCopy(player, s, updated, 1)
 	patchView(player, updated)
@@ -377,32 +444,83 @@ local function equip(player, monsterId: string, id: string)
 end
 
 local function claim(player)
-	local s = mustSection(player)
-	local svc = service()
-	local total = 0
-	for _, id in s.designs do
-		local owed = 0
-		local ok = svc.Update(id, function(current)
-			if type(current) ~= "table" or current.creator ~= player.UserId then
-				return nil
-			end
-			owed = (current.earned or 0) - (current.paid or 0)
-			if owed <= 0 then
-				owed = 0
-				return nil
-			end
-			current.paid = current.earned
-			return current
-		end)
-		if ok then
-			total += owed
-		end
+	mustSection(player)
+	local ok, total = service().Collect(player.UserId)
+	if not ok then
+		ctx:Fail("The Workshop is busy. Try again in a moment")
 	end
 	if total > 0 then
 		Rewards:Grant(player, { { kind = "ribbons", amount = total } }, "workshop_royalty")
 		ctx:RequestSave(player)
 	end
 	return { ribbons = total }
+end
+
+-- Moderation ---------------------------------------------------------------------------
+
+local function mustModerate(player)
+	if not isModerator(player) then
+		ctx:Fail("Only moderators can do that")
+	end
+end
+
+local function modQueue(player)
+	mustModerate(player)
+	local svc = service()
+	local ok, ids = svc.Flagged(Config.GallerySize)
+	if not ok then
+		ctx:Fail("The Workshop is busy. Try again in a moment")
+	end
+	local queue = {}
+	for _, id in ids do
+		local got, record = fetch(id, -1)
+		if got and type(record) == "table" then
+			local v = view(record, player.UserId)
+			v.reports = #(record.reports or {})
+			v.creatorId = record.creator
+			table.insert(queue, v)
+		end
+	end
+	local sess = ctx:Session(player)
+	sess.queue = queue
+	ctx:DirtySession(player)
+	return { count = #queue }
+end
+
+local function moderate(player, id: string, verdict: string)
+	mustModerate(player)
+	local svc = service()
+	local ok, record = svc.Update(id, function(current)
+		if type(current) ~= "table" then
+			return nil
+		end
+		current.flagged = false
+		current.reviewed = true
+		if verdict == "restore" then
+			current.hidden = false
+			current.reports = {}
+		else
+			current.hidden = true
+			current.removed = true
+			current.name = "Removed design"
+		end
+		return current
+	end)
+	if not ok or type(record) ~= "table" then
+		ctx:Fail("That design doesn't exist")
+	end
+	remember(record)
+	svc.Unflag(id)
+	local sess = ctx:Session(player)
+	for i, v in sess.queue or {} do
+		if v.id == id then
+			table.remove(sess.queue, i)
+			ctx:DirtySession(player)
+			break
+		end
+	end
+	ctx:Log("design %s %s by moderator %d", id, verdict, player.UserId)
+	return { verdict = verdict }
 end
 
 -- Lifecycle ----------------------------------------------------------------------------
@@ -416,6 +534,8 @@ function Workshop.Init(context)
 	Monsters = ctx:GetSystem("Monsters")
 	Accessories = ctx:GetSystem("Accessories")
 	Rewards = ctx:GetSystem("Rewards")
+	table.clear(records)
+	table.clear(lists)
 
 	Accessories:RegisterReturn(Acc.UgcPrefix, returnWorn)
 
@@ -436,12 +556,18 @@ function Workshop.Init(context)
 		return equip(player, payload.id, payload.design)
 	end)
 	ctx.Net:Handle("Workshop.Claim", claim)
+	ctx.Net:Handle("Workshop.ModQueue", modQueue)
+	ctx.Net:Handle("Workshop.Moderate", function(player, payload)
+		return moderate(player, payload.design, payload.verdict)
+	end)
 end
 
 function Workshop.PlayerAdded(player)
 	local sess = ctx:Session(player)
 	sess.tab = "new"
 	sess.gallery = {}
+	sess.moderator = isModerator(player)
+	sess.queue = {}
 	ctx:DirtySession(player)
 end
 

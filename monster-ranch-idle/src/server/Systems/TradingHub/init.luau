@@ -112,12 +112,43 @@ end
 
 -- Actions ------------------------------------------------------------------------------
 
+-- The target place's id: a pinned Config id, else the universe place with that name (the main
+-- place also falls back to "any place that isn't the hub"). Found ids are cached.
+local resolved = {} -- [which] = placeId
 local function placeId(which: string): number
-	local id = Config.PlaceIds[which]
-	if not id or id == 0 then
-		ctx:Fail("The Trading Hub isn't open yet")
+	local pinned = Config.PlaceIds[which]
+	if pinned and pinned ~= 0 then
+		return pinned
 	end
-	return id
+	if resolved[which] then
+		return resolved[which]
+	end
+	local places = ctx.Services.Places
+	local ok, list = false, {}
+	if places then
+		ok, list = places.List()
+	end
+	if ok then
+		local want = string.lower(Config.PlaceNames[which] or "")
+		local hubName = string.lower(Config.PlaceNames.Hub)
+		local fallback = nil
+		for _, place in list do
+			local name = string.lower(tostring(place.name))
+			if name == want then
+				resolved[which] = place.placeId
+				return place.placeId
+			end
+			if which == "Main" and name ~= hubName and place.placeId ~= ctx.Services.PlaceId and not fallback then
+				fallback = place.placeId
+			end
+		end
+		if fallback then
+			resolved[which] = fallback
+			return fallback
+		end
+	end
+	ctx:Fail(if which == "Hub" then "The Trading Hub isn't open yet" else "Couldn't find your ranch. Try again!")
+	return 0
 end
 
 local function travel(player)
@@ -262,6 +293,7 @@ function TradingHub.Init(context)
 	Eggs = ctx:GetSystem("Eggs")
 	table.clear(myAd)
 	table.clear(lastPost)
+	table.clear(resolved)
 	nextAd = 0
 	reading = false
 	mode = Config.Mode(ctx.Services.PlaceId, ctx.Services.PlaceMode)

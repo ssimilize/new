@@ -543,6 +543,8 @@ Quests.Codes = {
 	RANCH = { reward = { { kind = "gems", amount = 50 } } },
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
 	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
+	-- Frostfall returns (3.0.1): Snowflakes for the rerun (expires 15 Jan 2028).
+	FROSTFALL27 = { reward = { { kind = "token", id = "frostfall", amount = 150 } }, expires = 1831561200 },
 	-- Update 3.0 launch code (expires 1 Jan 2028).
 	YEARTWO = { reward = { { kind = "egg", id = "dunes", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1830351600 },
 	-- Update 2.1 launch code (expires 30 Oct 2027).

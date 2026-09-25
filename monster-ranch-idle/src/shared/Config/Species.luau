@@ -1041,6 +1041,24 @@ Species.Lines = {
 		passive = "haste",
 		pools = { "frostfall" },
 	}),
+	-- Frostfall returns (update 3.0.1): a fourth winter line.
+	line({
+		id = "tinselkit",
+		elements = { "spark", "light" },
+		archetype = "fox",
+		event = "frostfall",
+		added = "3.0.1",
+		forms = {
+			{ id = "tinselkit", name = "Tinselkit" },
+			{ id = "garlandfox", name = "Garlandfox" },
+			{ { id = "yuletail", name = "Yuletail" } },
+		},
+		base = { hp = 130, atk = 38, def = 20, spd = 22, luck = 10 },
+		weight = 2.6,
+		special = "stun",
+		passive = "lucky",
+		pools = { "frostfall" },
+	}),
 }
 
 -- Lookups ---------------------------------------------------------------
