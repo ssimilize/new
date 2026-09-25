@@ -24,6 +24,8 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Trade | S5 | 🔌 | `Trade.spec` | request → offer → ready → confirm countdown; atomic swap with capacity/egg caps, rollback, private log |
 | Plots | S5 | 🔌 | `Plots.spec` | 6 public plots, lowest free on PlayerReady, throttled rebuilds (≤ 1 / 2 s) |
 | Clubs | S5 | 🔌 | `Clubs.spec` | 1.2: clubs of ≤ 30 across servers (`Services.Clubs`, atomic Update), roles, weekly goals + club boss, batched sync every 60 s + Messaging refresh; rules in `Record.luau` |
+| Market | S5 | 🔌 | `Market.spec` | 1.3: listings with escrow across servers (`Services.Market`), 8% tax (4% club post), one winner per sale, two-phase deduplicated mailbox; every cross-server step saves an intent task first (`ctx:SaveNow`) so crashes and lost replies never duplicate or lose items or coins |
+| PriceHistory | S5 | 🔌 | `PriceHistory.spec` | 1.3: daily buckets per item key (`Logic/PriceHistory`), `PriceHistory.Get` with a suggested price, retried writes; club sales excluded |
 | Events | S6 | 🔌 | `LunarLanterns.spec` | 1.2: event calendar (`Config/Events`, `Flags.ActiveEvent` override), `global.Events`, event tokens for play with a daily cap |
 | Leaderboards | S5 | 🔌 | `Leaderboards.spec` | 5 weekly boards (heaviest, codex, stampede, halloffame, stage): live per-server rows, global rows via `Services.Leaderboards` (OrderedDataStore per board per week), last week's #1 → nameplate title; weeks start Saturday 15:00 UTC |
 | Monetization | S6 | 🔌 | `Monetization.spec` | pass cache on join + live/RefreshPasses, idempotent ProcessReceipt (private `receipts`, newest 200), `RegisterProduct` handlers, oncePerAccount, capped rewarded ads (UTC-day reset), paid-random policy (fails closed) |
@@ -44,6 +46,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Screens: EggShop, Incubators, Monsters, MonsterDetail, Ranch, WelcomeBack, Codex | C2 | 🔌 | lint/selene/rojo clean. Monsters pick mode per §5 (returnTo opens before `onPick`; cancel returns without it). New C2 components: `StoreKit`, `Tiles`, `InsetPopup`, `StatBar`, `ViewportMonster` |
 | Controllers: Tutorial, Broadcasts, TradeRequests | C3 | 🔌 | lint/selene/rojo clean. Broadcasts also shows the `Boss.Result` popup and maps `Settings.lowGraphics` → `Anim.enabled` |
 | Screens: Expeditions, Breeding, Trade, Boss, HallOfFame, Quests, Store, Settings | C3 | 🔌 | helpers in `UI/Screens/Parts/` (Util, Dialog, BattleReplay); needs C2 `Monsters` pick mode; lazy `Logic/BattleSim` + `Logic/Breeding` with local fallbacks |
+| Screen: Market · component: PriceChart | C3 | 🔌 | 1.3: Browse / Sell / My listings / Club post, price chart, mail toast; HUD Market button (Settings moved to a gear by the level bar) |
 | Screen: Clubs · controller: Nameplates | C3 | 🔌 | 1.2: create / join / members / goals / boss / settings; Club Plaza building + HUD button; nameplates show club tags and champion titles |
 | Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
 
@@ -64,6 +67,7 @@ Client code and the World geometry run in Lune through `tests/runtime/RobloxMock
 - [ ] AdService flow verified in a live server (see `Kernel/Adapters.luau`)
 - [ ] `Config.Quests.GroupId` set; codes reviewed
 - [ ] Studio API access enabled and DataStore name final (`MonsterRanch_Profiles_v1`)
+- [ ] Market DataStores (`MonsterRanch_Market_v1`, `MonsterRanch_Mail_v1`, `MonsterRanch_Prices_v1`) and MemoryStore browse maps (`mk_*`) checked in live servers: quotas, `GetRangeAsync` paging, listing expiry
 - [ ] Clubs DataStore (`MonsterRanch_Clubs_v1`) and the `Clubs` MessagingService topic checked across two live servers
 - [ ] Leaderboard OrderedDataStores (`LB_<board>_w<week>`) checked in a live server, and `Config.Leaderboards.WeekAnchor` lined up with the Saturday update time
 - [ ] Sound ids in `Config/Sounds.luau`; art swapped in `Visuals/*` and `UI/Theme.Images`

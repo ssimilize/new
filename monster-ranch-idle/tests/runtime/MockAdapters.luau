@@ -28,7 +28,14 @@ MockAdapters.deepCopy = deepCopy
 local jobCounter = 0
 
 function MockAdapters.network()
-	return { clubs = {}, subscribers = {}, clubsDown = false }
+	return {
+		clubs = {},
+		subscribers = {},
+		clubsDown = false,
+		market = { listings = {}, mail = {} }, -- listings[id] = record (item included)
+		prices = {}, -- price history records by item key
+		marketDown = false,
+	}
 end
 
 function MockAdapters.new(options: { startTime: number?, network: any? }?)
@@ -261,6 +268,136 @@ function MockAdapters.new(options: { startTime: number?, network: any? }?)
 			local result = transform(deepCopy(network.clubs[id]))
 			if result ~= nil then
 				network.clubs[id] = deepCopy(result)
+			end
+			return true, deepCopy(result)
+		end,
+	}
+
+	-- Market and price history (shared through options.network). Set network.marketDown to
+	-- fail every call. Browse returns open listings only, like the MemoryStore index.
+	local market = network.market
+	local function marketUp()
+		return not network.marketDown
+	end
+	a.Market = {
+		Create = function(listing)
+			if not marketUp() or market.listings[listing.id] ~= nil then
+				return false
+			end
+			market.listings[listing.id] = deepCopy(listing)
+			return true
+		end,
+		Get = function(id)
+			if not marketUp() then
+				return false, nil
+			end
+			return true, deepCopy(market.listings[id])
+		end,
+		Update = function(id, transform)
+			if not marketUp() then
+				return false, nil
+			end
+			local result = transform(deepCopy(market.listings[id]))
+			if result ~= nil then
+				market.listings[id] = deepCopy(result)
+			end
+			return true, deepCopy(result)
+		end,
+		Browse = function(query)
+			if not marketUp() then
+				return false, nil
+			end
+			local scope = query.scope or "all"
+			local list = {}
+			for _, l in market.listings do
+				local inScope = if scope == "all" then not l.club else l.club == scope
+				if
+					l.state == "open"
+					and inScope
+					and (query.kind == nil or l.kind == query.kind)
+					and (query.key == nil or l.key == query.key)
+				then
+					local copy = deepCopy(l)
+					copy.item = nil
+					table.insert(list, copy)
+				end
+			end
+			table.sort(list, function(x, y)
+				if x.price ~= y.price then
+					return if query.sort == "-price" then x.price > y.price else x.price < y.price
+				end
+				return x.id < y.id
+			end)
+			return true, list
+		end,
+		-- Two-phase, deduplicated mailbox (see Adapters.luau): mail[userId] = { entries, acked }.
+		MailAdd = function(userId, entry)
+			if not marketUp() then
+				return false
+			end
+			local box = market.mail[userId] or { entries = {}, acked = {} }
+			market.mail[userId] = box
+			if entry.id ~= nil then
+				if table.find(box.acked, entry.id) then
+					return true
+				end
+				for _, e in box.entries do
+					if e.id == entry.id then
+						return true
+					end
+				end
+			end
+			table.insert(box.entries, deepCopy(entry))
+			return true
+		end,
+		MailPeek = function(userId)
+			if not marketUp() then
+				return false, nil
+			end
+			local box = market.mail[userId]
+			return true, deepCopy(if box then box.entries else {})
+		end,
+		MailAck = function(userId, ids)
+			if not marketUp() then
+				return false
+			end
+			local box = market.mail[userId]
+			if not box then
+				return true
+			end
+			local drop = {}
+			for _, id in ids do
+				drop[id] = true
+			end
+			local kept = {}
+			for _, e in box.entries do
+				if e.id ~= nil and drop[e.id] then
+					table.insert(box.acked, e.id)
+				else
+					table.insert(kept, e)
+				end
+			end
+			box.entries = kept
+			while #box.acked > 200 do
+				table.remove(box.acked, 1)
+			end
+			return true
+		end,
+	}
+	a.PriceHistory = {
+		Get = function(key)
+			if not marketUp() then
+				return false, nil
+			end
+			return true, deepCopy(network.prices[key])
+		end,
+		Update = function(key, transform)
+			if not marketUp() then
+				return false, nil
+			end
+			local result = transform(deepCopy(network.prices[key]))
+			if result ~= nil then
+				network.prices[key] = deepCopy(result)
 			end
 			return true, deepCopy(result)
 		end,

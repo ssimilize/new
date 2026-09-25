@@ -2,9 +2,10 @@
 	Hud (C2): the always-on ranch HUD in ctx.UI.Hud.
 
 	  top-left      coins / gems / food pills (count-up; gems → Store "gems", food → Store "food")
-	  top-right     Ranch Level + XP bar (Config.Unlocks.XPToNext)
+	  top-right     Ranch Level + XP bar (Config.Unlocks.XPToNext) · ⚙ Settings button beside it
 	  top-centre    server weather banner (global.Weather) with mutation hint and countdown
-	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex
+	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market
+	                (locked until Config.Market.Unlock)
 	  right stack   Expeditions (finished badge) · Stampede card · Quests (claimable badge)
 	                · Breeding · Hall of Fame (locked until their Ranch Level)
 	  bottom-centre Ranch · "Collect all +X" (live jar total, session.Ranch) · Store
@@ -14,6 +15,7 @@
 	                                      expeditions, weather, quests (+ any button name)
 	Client bus: "Hud.Flash" (buttonName | targetName) pulses that button.
 	The centre (weather banner, bottom bar) hides while a modal screen is open.
+	Market.MailCollected (update 1.3) shows as a toast ("Your Rare Cindlet sold for 12K!").
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -383,6 +385,22 @@ local function build()
 	level.bar = Widgets.Bar({ Color = C.Blue, Position = UDim2.fromOffset(0, 28), Size = UDim2.new(1, 0, 0, 16), Parent = lvFrame })
 	targets.level = lvFrame
 
+	-- Settings: a small gear left of the level bar (its old left-stack slot is the Market's).
+	local settingsButton = Button.new({
+		Name = "Settings",
+		Text = "⚙",
+		Color = C.Gray,
+		Size = UDim2.fromOffset(46, 46),
+		TextSize = 26,
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -246, 0, 10),
+		Parent = root,
+		OnClick = function()
+			openScreen("Settings")
+		end,
+	})
+	buttons.Settings = { gui = settingsButton.Root, button = settingsButton, color = C.Gray }
+
 	-- Weather (top-centre)
 	local banner = New("Frame", {
 		Name = "Weather",
@@ -452,9 +470,9 @@ local function build()
 	sideButton(left, "Codex", "Codex", C.Blue, previewIcon("zappip", 32), 4, function()
 		openScreen("Codex")
 	end)
-	sideButton(left, "Settings", "Settings", C.Gray, Icon.new("star", 26), 5, function()
-		openScreen("Settings")
-	end)
+	sideButton(left, "Market", "Market", C.Orange, Icon.new("coin", 28), 5, function()
+		openScreen("Market")
+	end, Config.Market.Unlock)
 
 	-- Right stack
 	local right = Tiles.col({
@@ -600,6 +618,61 @@ local function build()
 	centre = { bottom }
 end
 
+-- Market mail -------------------------------------------------------------------------
+
+-- "m:<line>:<rarity>:<variant>" / "e:<eggType>" (Config.Market.ItemKey) → "Rare Golden Cindlet".
+local function marketItemName(key: string?): string
+	local eggType = string.match(tostring(key), "^e:(.+)$")
+	if eggType then
+		local def = Config.Eggs.ById[eggType]
+		return if def then def.name else "egg"
+	end
+	local line, rarity, variant = string.match(tostring(key), "^m:([^:]+):(%d+):(%d+)$")
+	local def = line and Config.Species.ById[line]
+	if not def then
+		return "item"
+	end
+	local first = def.forms[1]
+	local v = Config.Rarities.Variants[tonumber(variant) or 0]
+	local parts = { Theme.RarityName(tonumber(rarity) or 1) }
+	if v and (tonumber(variant) or 0) > 0 then
+		table.insert(parts, v.name)
+	end
+	table.insert(parts, if first and first.name then first.name else line)
+	return table.concat(parts, " ")
+end
+
+local function onMailCollected(payload)
+	if type(payload) ~= "table" then
+		return
+	end
+	local sold = if type(payload.sold) == "table" then payload.sold else {}
+	local coins = tonumber(payload.coins) or 0
+	if #sold == 1 and type(sold[1]) == "table" then
+		local sale = sold[1]
+		ctx:Toast(
+			string.format(
+				"Your %s sold for %s! +%s coins",
+				if type(sale.name) == "string" and sale.name ~= "" then sale.name else marketItemName(sale.key),
+				Format.short(tonumber(sale.price) or 0),
+				Format.short(tonumber(sale.proceeds) or coins)
+			),
+			"reward"
+		)
+	elseif #sold > 1 then
+		ctx:Toast(string.format("%d market sales! +%s coins", #sold, Format.short(coins)), "reward")
+	elseif coins > 0 then
+		ctx:Toast("+" .. Format.short(coins) .. " coins from the market", "reward")
+	end
+	if #sold > 0 or coins > 0 then
+		ctx:Sound("CoinCollect")
+	end
+	local returned = tonumber(payload.returned) or 0
+	if returned > 0 then
+		ctx:Toast(string.format("%d market item%s came back to you", returned, if returned == 1 then "" else "s"), "info")
+	end
+end
+
 -- Public -----------------------------------------------------------------------------
 
 function Hud:GetTarget(name: string): GuiObject?
@@ -629,6 +702,7 @@ function Hud.Init(context)
 	ctx.Store:Observe("profile.Expeditions.slots", refreshBadges)
 	ctx.Store:Observe("profile.Eggs.slots", refreshBadges)
 	ctx.Bus:Subscribe("Hud.Flash", flash)
+	ctx.Net:On("Market.MailCollected", onMailCollected)
 	ctx.Router.Opened:Connect(refreshCentre)
 	ctx.Router.Closed:Connect(refreshCentre)
 	refreshLevel()

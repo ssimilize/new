@@ -3,6 +3,33 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 1.3 · Market Day
+
+**For players**
+- **Market** (Ranch Level 10). Open it from the Market stall next to the Trading Plaza, or with the Market button on the HUD. Settings is now the ⚙ next to your level bar.
+- **Sell:** list a monster or a stored egg for coins. It leaves your ranch while it is listed. Listings last 48 hours, and you can have 8 at a time.
+- **Buy:** buy from any player on any server. The seller gets the price minus an 8% market tax, delivered to a mailbox you collect from anywhere. Unsold or cancelled items come back the same way.
+- **Club trading post:** list to your club only, at a lower 4% tax.
+- **Price history:** a 30-day chart for every item, and a suggested price when you sell.
+
+**In the code**
+- **Built by three parallel workstreams** against a contract fixed first (ARCHITECTURE §8):
+  - M1: the `Market` server system
+  - M2: `Logic/PriceHistory` and the `PriceHistory` system
+  - M3: the Market screen, the `PriceChart` component and the HUD changes
+- **An adversarial review found edge cases, now fixed:**
+  - players leaving while a request waits on the market
+  - writes that land but report failure
+  - retried mail paying twice
+  - crashes between the market write and the profile save
+  - club posts used to move coins without tax
+- **How the fixes work:**
+  - Every cross-server step now saves an intent task first (`ctx:SaveNow`, new).
+  - A write whose outcome is unknown is settled by a fresh read.
+  - The mailbox is two-phase and deduplicated (`MailPeek` / `MailAck` replace `MailTake`).
+  - Club sales pay a 4% tax and stay out of public price history.
+- **Tests:** `Market.spec` (with a "Failure safety" group that simulates crashes and lost replies), `PriceHistory.spec` and `MarketClient.spec`.
+
 ## 1.2 · Clubs + Lunar Lanterns
 
 **For players**

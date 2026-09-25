@@ -225,6 +225,189 @@ function Adapters.Roblox()
 		end,
 	}
 
+	-- Market (update 1.3). Listing records (with the escrowed item) live in a DataStore
+	-- keyed by listing id; open listings are also indexed in MemoryStore sorted maps for
+	-- browsing (one map per scope and kind, sorted by price, expiring with the listing).
+	-- Mailboxes (sale proceeds, returned items) are one DataStore key per user.
+	-- VERIFY in a live server: MemoryStore quotas and GetRangeAsync paging.
+	local MemoryStoreService = game:GetService("MemoryStoreService")
+	local function storeOf(name: string)
+		local ok, store = pcall(function()
+			return DataStoreService:GetDataStore(name)
+		end)
+		return if ok then store else nil
+	end
+	local listingStore = storeOf("MonsterRanch_Market_v1")
+	local mailStore = storeOf("MonsterRanch_Mail_v1")
+	local historyStore = storeOf("MonsterRanch_Prices_v1")
+	local function indexName(scope: string, kind: string): string
+		return if scope == "all" then "mk_all_" .. kind else "mk_club_" .. scope
+	end
+	local function indexOf(listing)
+		local scope = if listing.club then listing.club else "all"
+		return MemoryStoreService:GetSortedMap(indexName(scope, listing.kind))
+	end
+	local function summary(listing)
+		local copy = table.clone(listing)
+		copy.item = nil -- the escrowed record stays in the DataStore
+		return copy
+	end
+	local function atomic(store, key: string, transform)
+		if not store then
+			return false, nil
+		end
+		local result = nil
+		local ok = pcall(function()
+			store:UpdateAsync(key, function(current)
+				result = transform(current)
+				return result
+			end)
+		end)
+		return ok, result
+	end
+	local function normalizeBox(current)
+		if type(current) ~= "table" then
+			return { entries = {}, acked = {} }
+		end
+		if current.entries == nil then -- an old plain list of entries
+			return { entries = current, acked = {} }
+		end
+		current.acked = current.acked or {}
+		return current
+	end
+	local function isKnownMail(box, id): boolean
+		if id == nil then
+			return false
+		end
+		if table.find(box.acked, id) then
+			return true
+		end
+		for _, e in box.entries do
+			if e.id == id then
+				return true
+			end
+		end
+		return false
+	end
+	local function ackBox(box, ids)
+		local drop = {}
+		for _, id in ids do
+			drop[id] = true
+		end
+		local kept = {}
+		for _, e in box.entries do
+			if e.id ~= nil and drop[e.id] then
+				table.insert(box.acked, e.id)
+			else
+				table.insert(kept, e)
+			end
+		end
+		box.entries = kept
+		while #box.acked > 200 do
+			table.remove(box.acked, 1)
+		end
+		return box
+	end
+	adapters.Market = {
+		Create = function(listing): boolean
+			local ok = atomic(listingStore, listing.id, function(current)
+				if current ~= nil then
+					return nil
+				end
+				return listing
+			end)
+			if ok then
+				pcall(function()
+					local ttl = math.clamp(listing.expiresAt - os.time(), 60, 45 * 86400)
+					indexOf(listing):SetAsync(listing.id, summary(listing), ttl, listing.price)
+				end)
+			end
+			return ok
+		end,
+		Get = function(id: string): (boolean, any)
+			if not listingStore then
+				return false, nil
+			end
+			local ok, record = pcall(function()
+				return listingStore:GetAsync(id)
+			end)
+			return ok, if ok then record else nil
+		end,
+		Update = function(id: string, transform): (boolean, any)
+			local ok, result = atomic(listingStore, id, transform)
+			if ok and result and result.state ~= "open" then
+				pcall(function()
+					indexOf(result):RemoveAsync(id)
+				end)
+			end
+			return ok, result
+		end,
+		Browse = function(query): (boolean, any)
+			local ok, result = pcall(function()
+				local scope = query.scope or "all"
+				local kinds = if query.kind then { query.kind } elseif scope == "all" then { "monster", "egg" } else { "" }
+				local list = {}
+				for _, kind in kinds do
+					local map = MemoryStoreService:GetSortedMap(indexName(scope, kind))
+					local direction = if query.sort == "-price" then Enum.SortDirection.Descending else Enum.SortDirection.Ascending
+					for _, entry in map:GetRangeAsync(direction, 200) do
+						local v = entry.value
+						if type(v) == "table" and (query.key == nil or v.key == query.key) then
+							table.insert(list, v)
+						end
+					end
+				end
+				return list
+			end)
+			return ok, if ok then result else nil
+		end,
+		-- Mailbox record: { entries = { entry }, acked = { entry id } }. Every entry has an `id`;
+		-- MailAdd skips ids already in the box or acknowledged recently, so retries never
+		-- deliver twice. Reading is two-phase: MailPeek, apply + save, then MailAck.
+		MailAdd = function(userId: number, entry): boolean
+			local ok = atomic(mailStore, "mail_" .. tostring(userId), function(current)
+				local box = normalizeBox(current)
+				if isKnownMail(box, entry.id) then
+					return nil
+				end
+				table.insert(box.entries, entry)
+				return box
+			end)
+			return ok
+		end,
+		MailPeek = function(userId: number): (boolean, any)
+			if not mailStore then
+				return false, nil
+			end
+			local seen = nil
+			local ok = atomic(mailStore, "mail_" .. tostring(userId), function(current)
+				seen = normalizeBox(current).entries
+				return nil -- read the latest value without writing
+			end)
+			return ok, if ok then (seen or {}) else nil
+		end,
+		MailAck = function(userId: number, ids: { string }): boolean
+			local ok = atomic(mailStore, "mail_" .. tostring(userId), function(current)
+				return ackBox(normalizeBox(current), ids)
+			end)
+			return ok
+		end,
+	}
+	adapters.PriceHistory = {
+		Get = function(key: string): (boolean, any)
+			if not historyStore then
+				return false, nil
+			end
+			local ok, record = pcall(function()
+				return historyStore:GetAsync(key)
+			end)
+			return ok, if ok then record else nil
+		end,
+		Update = function(key: string, transform): (boolean, any)
+			return atomic(historyStore, key, transform)
+		end,
+	}
+
 	-- Global leaderboards: one OrderedDataStore per board per week (key from
 	-- Config.Leaderboards.Key). Values are whole numbers; failures return false / nil.
 	adapters.Leaderboards = {

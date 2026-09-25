@@ -50,6 +50,8 @@ World.Hub = {
 		screen = "HallOfFame",
 	},
 	{ id = "arena", name = "Stampede Arena", position = { 35, 0, 55 }, size = { 30, 12, 30 }, color = "#E5484D", screen = "Boss" },
+	-- Update 1.3: market stalls beside the Trading Plaza.
+	{ id = "market", name = "Market", position = { -62, 0, -34 }, size = { 18, 12, 16 }, color = "#F2A93B", screen = "Market" },
 	-- Update 1.2: the Club Plaza between the Hall of Fame and the Arena.
 	{ id = "clubPlaza", name = "Club Plaza", position = { 0, 0, 62 }, size = { 16, 12, 14 }, color = "#2BA89A", screen = "Clubs" },
 }

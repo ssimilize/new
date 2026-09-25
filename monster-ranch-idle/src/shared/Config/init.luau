@@ -28,6 +28,7 @@ local Config = {
 	Leaderboards = require(script.Leaderboards),
 	Events = require(script.Events),
 	Clubs = require(script.Clubs),
+	Market = require(script.Market),
 	World = require(script.World),
 	Sounds = require(script.Sounds),
 	Flags = require(script.Flags),

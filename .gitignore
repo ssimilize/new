@@ -4,3 +4,6 @@
 *.rbxlx
 *.rbxl.lock
 *.rbxlx.lock
+
+# Claude Code local state (agent worktrees)
+.claude/

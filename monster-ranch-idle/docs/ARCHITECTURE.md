@@ -89,6 +89,7 @@ Rules:
 | `ctx:Fail(message)` | abort the request with a player-facing message |
 | `ctx:Notify(player, text, kind)` | toast (`info`, `success`, `error`, `reward`) |
 | `ctx:RequestSave(player)` | save soon (after purchases and trades) |
+| `ctx:SaveNow(player) -> ok` | save now and wait (before a cross-server write that must not get ahead of the profile) |
 | `ctx.Rng` | server RNG (`Logic/Rng`); use `Rng.new(seed)` for reproducible rolls |
 | `ctx.Services` | adapters: `Players`, `Marketplace`, `Policy`, `Ads`, `Messaging`, `Text`, `Analytics`, `Leaderboards`, `Clubs`, `Workspace`, `Spawn`, `Wait` |
 | `ctx.Analytics` | `Custom(player, name, value, fields)`, `Economy(...)`, `Onboarding(player, step, name)` |
@@ -347,3 +348,116 @@ BattleReplay = {
 
 ### Season pass
 `Config.Quests.Pass = { season, startsAt, endsAt, xpPerTier, xpPerDaily, xpPerAchievement, tiers = { { free = { Reward }, premium = { Reward } } } }`. Claim with `Quests.ClaimPass { tier, track }`. Tier `n` needs pass XP ≥ `n × xpPerTier`.
+
+## 8. Update 1.3 · Market Day contract (fixed before parallel work)
+
+Three workstreams build against this section at the same time. Each owns only its own
+files; shared files (`Api.luau`, `Config/Market.luau`, `Adapters.luau`, `MockAdapters.luau`,
+both Manifests, docs) are changed by the integrator only.
+
+| Workstream | Owns | Plugs in as |
+|---|---|---|
+| M1 · Market server | `src/server/Systems/Market/**`, `tests/specs/Market.spec.luau` | server system `Market` |
+| M2 · Price history | `src/shared/Logic/PriceHistory.luau`, `src/server/Systems/PriceHistory/**`, `tests/specs/PriceHistory.spec.luau` | server system `PriceHistory` |
+| M3 · Market client | `src/client/UI/Screens/Market.luau`, `src/client/UI/Components/PriceChart.luau`, the Market entry in `Controllers/Hud.luau`, `tests/specs/MarketClient.spec.luau` | screen `Market` |
+
+### Listing record (server, `Services.Market`)
+```lua
+{
+  id = string,                    -- "L" .. JobId-independent unique id (e.g. userId .. "-" .. counter .. "-" .. now)
+  seller = userId, sellerName = string,
+  kind = "monster" | "egg",
+  item = record,                  -- the escrowed Monster record or egg record { type, source, t }
+  key = Config.Market.ItemKey(kind, item),
+  price = number,                 -- whole coins
+  createdAt = unix, expiresAt = unix,   -- createdAt + Config.Market.DurationSeconds
+  club = clubId | false,          -- club trading post listing (members of that club only)
+  state = "open" | "sold" | "cancelled" | "expired",
+  buyer = userId?, buyerName = string?, closedAt = unix?,
+}
+```
+State only moves from `"open"` to one closed state, always inside `Services.Market.Update`
+(atomic), which is what makes a sale happen at most once across all servers.
+
+### Listing (client view, returned by Market.Browse / Market.Mine / Market.List)
+```lua
+{ id, seller, sellerName, kind, key, price, createdAt, expiresAt, club = boolean, mine = boolean, state,
+  item = { appearance = Appearance | false, egg = eggType | false, name, rarity, variant, stage, lv,
+           stars, weight, muts = { string }, traits = { traitId } } }   -- no hidden trait, no ids
+```
+
+### Adapters (`ctx.Services`)
+```lua
+Services.Market = {
+  Create(listing) -> ok                          -- stores a new open listing (+ browse index)
+  Get(id) -> ok, listing?
+  Update(id, transform) -> ok, listing?          -- atomic; transform(current) returns new or nil
+                                                 -- (no change); closed listings leave the index
+  Browse({ scope = "all" | clubId, kind?, key?, sort = "price" | "-price" | "new" }) -> ok, { listing }
+                                                 -- open listings without `item`; may include expired
+                                                 -- ones (callers filter by expiresAt); ≤ 200 per kind
+  MailAdd(userId, entry) -> ok                   -- atomic append; skips an entry.id it has seen
+  MailPeek(userId) -> ok, { entry }              -- fresh read, nothing removed
+  MailAck(userId, { entryId }) -> ok             -- removes applied entries (ids remembered)
+}
+Services.PriceHistory = { Get(key) -> ok, record?, Update(key, transform) -> ok, record? }
+```
+Every call can fail (`ok == false`); systems must fail the action politely
+("The market is busy. Try again") and never lose or duplicate an item.
+
+Mail entry: `{ id, kind = "coins", amount, listing, key, price, name? }` (a sale, id `sale:<listing>`) or
+`{ id, kind = "item", itemKind = "monster" | "egg", item = record, listing, reason }` (ids `return:<listing>`,
+`bought:<listing>`). Ids are deterministic, so a retried delivery is skipped by the mailbox.
+
+**Failure safety (after review).** Every cross-server step saves its intent first: the system
+adds a task to the player's private `outbox` (`list` holding the escrowed item, `settle` holding
+the charge, `close`), calls `ctx:SaveNow(player)`, then writes, then settles the task. An outcome
+that is unknown (the write may have landed) is settled by a fresh read (an `Update` whose
+transform writes nothing); if that fails too, the task stays saved and is settled on the next
+sync, on any server, after a crash or a rejoin. Mail is collected in two phases (peek → apply and
+remember ids → SaveNow → ack). See the header of `Systems/Market/init.luau`.
+
+### Flows (M1)
+- **List:** unlock `market` (Lv 10); ≤ `MaxListings` open listings (`profile.Market.listings`);
+  monster must exist, not be busy or locked; egg must be in storage (not incubating);
+  club listings need a club (`Clubs:ClubOf`). Remove the item from the profile
+  (`Monsters:Remove(p, id, "market")` / `Eggs:Remove`) → `Services.Market.Create`; if that fails,
+  put the item straight back (`Insert`) and fail. Publish `MarketListed`; save soon.
+- **Buy:** listing must be open, unexpired, not the buyer's own, the price must match, club
+  listings need the buyer in that club, the buyer needs room (`Monsters:Capacity` / `Eggs:Room`)
+  and the coins. Order: check → `Currency:Charge` → `Update(id, open → sold)`; if the update does
+  not win (sold elsewhere, failure) refund the coins and fail. Then insert the item into the
+  buyer (`Monsters:Insert(p, item, "market")` / `Eggs:Insert`), `MailAdd(seller, coins entry with
+  Config.Market.Proceeds(price, club))`, publish `MarketBought` (buyer) and `MarketSold` (nil),
+  save the buyer now. If `MailAdd` fails, keep the entry in a retry queue (never drop proceeds).
+- **Cancel / expiry:** `Update(id, open → cancelled | expired)` by the seller; the item goes back
+  to the profile if there is room, otherwise to the mailbox. The seller's server expires its
+  players' own listings (checked on join and every `MailSyncSeconds`).
+- **Mail:** collected for players on the server on join and every `MailSyncSeconds`
+  (`MailTake`); coins added with reason `"market_sale"`, items inserted if there is room —
+  items that don't fit go back with `MailAdd` and show in `session.Market.mail`.
+  Fires `Market.MailCollected` when anything arrived.
+- **Browse:** `Services.Market.Browse`, filtered by `expiresAt > now`, sorted, paged by
+  `PageSize`; club scope = the player's club. A server may cache a browse result for
+  `BrowseCacheSeconds`. `mine = listing.seller == player.UserId`.
+
+### Price history (M2)
+- `Logic/PriceHistory`: pure bucket math on a record `{ key, days = { { day, count, low, high, sum } } }`
+  (UTC day numbers, oldest first, at most `Config.Market.HistoryDays`): `Add(record, price, day)`,
+  `Series(record, today) -> { { day, count, low, high, avg } }` (days without sales omitted),
+  `Last(record) -> price?`, `Suggest(record) -> price?` (recent average, for the sell screen).
+- System `PriceHistory`: subscribes to `MarketSold` and writes `Services.PriceHistory.Update(key, …)`
+  (failures are retried later, not dropped); `PriceHistory.Get { key }` returns `Series` + `last`,
+  cached per key for 60 s. Public: `PriceHistory:Suggest(key) -> price?`.
+
+### Client (M3)
+- Screen `Market` with tabs: **Browse** (kind, species/egg filter, sort, pages, Buy with a confirm
+  showing price and the price chart), **Sell** (pick a monster through `Monsters` pick mode or an
+  egg from storage, price box, the tax and "you get" line, suggested price from
+  `PriceHistory.Get`, "post to my club only" when in a club), **My listings** (cancel, time left),
+  **Club post** (club scope browse; hidden when not in a club).
+- `UI/Components/PriceChart`: `PriceChart.new({ Size, Parent }) -> { Root, SetSeries(days) }`,
+  bars or a line from `{ { day, count, low, high, avg } }`, drawn with Frames only.
+- Entry points: the HUD (make room in the left stack by moving Settings to a small gear button
+  next to the level bar) and the `market` hub building (`Config.World.Hub`, screen `Market`).
+- Show `Market.MailCollected` as a toast ("Your Blazefang sold for 12K!").
