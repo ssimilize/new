@@ -7,6 +7,7 @@
 
 local Theme = require(script.Parent.Parent.Theme)
 local Create = require(script.Parent.Parent.Create)
+local Config = require(game:GetService("ReplicatedStorage").Shared.Config)
 
 local New = Create.New
 local C = Theme.Colors
@@ -108,8 +109,11 @@ function Icon.new(kind: string, size: number?): Frame
 		local d = disc(C.Friendship)
 		glyph(d, "♥", C.White, 0.62)
 	elseif kind == "token" then
-		local d = disc(C.Token)
-		glyph(d, "❄", C.White, 0.7)
+		-- The running event's token (❄ Snowflakes, ✺ Lantern Coins, …).
+		local event = Config.Events.Active(workspace:GetServerTimeNow())
+		local token = event and event.token
+		local d = disc(if token then Color3.fromHex(token.color) else C.Token)
+		glyph(d, if token then token.glyph else "❄", C.White, 0.7)
 	elseif kind == "xp" then
 		local d = disc(C.Xp)
 		glyph(d, "XP", C.White, 0.6)

@@ -158,7 +158,7 @@ function Ranch.Build(ctx)
 		local owned = StoreKit.tbl(store, "profile.Shop.themes")
 		for i, theme in Config.Decor.PenThemes do
 			local has = theme.price == nil or owned[theme.id] == true
-			if has or not theme.event or theme.event == Config.Flags.ActiveEvent then
+			if has or not theme.event or theme.event == StoreKit.activeEvent() then
 				local row = Tiles.card({ Size = UDim2.new(1, -12, 0, 60), LayoutOrder = i, Parent = list })
 				New("Frame", {
 					BackgroundColor3 = Color3.fromHex(theme.ground),

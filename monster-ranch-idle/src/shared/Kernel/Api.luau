@@ -240,6 +240,7 @@ Api.State = {
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true } }",
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true } }",
 		Leaderboards = "{ week, stampede }  -- this week's Stampede damage",
+		Events = "{ event, day, earned, login }  -- event tokens earned today (daily cap)",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -258,6 +259,7 @@ Api.State = {
 		Boss = "{ state: 'idle'|'lobby'|'active', bossId, startsAt, endsAt, hp, maxHp, board = { { userId, name, damage } } }",
 		Plots = "{ ['1'..'6' as numbers]: PublicPlot }  -- array of 6",
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
+		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 	},
 }

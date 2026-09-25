@@ -15,6 +15,7 @@ Mutations.List = {
 	{ id = "starstruck", name = "Starstruck", mult = 3, color = "#FFD447", statPct = 0.03 },
 	{ id = "shadow", name = "Shadow", mult = 4, color = "#3A2D55", statPct = 0.03 },
 	{ id = "prismatic", name = "Prismatic", mult = 8, color = "#FF7AC8", statPct = 0.05 },
+	{ id = "glow", name = "Glow", mult = 3, color = "#FFB547", statPct = 0.03 }, -- Lantern Night (1.2)
 	-- Combos (never rolled directly)
 	{ id = "frozen", name = "Frozen", mult = 3.5, color = "#9FE3FF", statPct = 0.04, combo = { "soaked", "frosted" } },
 	{ id = "plasma", name = "Plasma", mult = 4, color = "#C06BFF", statPct = 0.04, combo = { "scorched", "charged" } },

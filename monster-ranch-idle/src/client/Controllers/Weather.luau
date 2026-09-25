@@ -123,6 +123,17 @@ local PROFILES = {
 		sky = hex("#B9A8FF"),
 		stars = 14,
 	},
+	-- Lunar Lanterns (1.2): warm lantern light over a dark night sky.
+	lanternnight = {
+		tint = hex("#FFD9B8"),
+		saturation = 0.2,
+		bloom = 0.8,
+		bloomSize = 36,
+		density = 0.2,
+		haze = 0.6,
+		sky = hex("#4A1F3A"),
+		stars = 8,
+	},
 	aurora = {
 		saturation = 0.25,
 		bloom = 0.6,

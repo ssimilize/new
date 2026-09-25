@@ -75,10 +75,15 @@ function StoreKit.foodTotal(store): number
 	return total
 end
 
+-- The running seasonal event's id (Config.Events calendar on the server clock), or nil.
+function StoreKit.activeEvent(): string?
+	return Config.Events.ActiveId(workspace:GetServerTimeNow())
+end
+
 -- Currency key for one entry of a price table ({ coins = n }, { token = n }, …).
 function StoreKit.costKey(key: string, eventId: string?): string
 	if key == "token" then
-		return "token." .. tostring(eventId or Config.Flags.ActiveEvent or "")
+		return "token." .. tostring(eventId or StoreKit.activeEvent() or "")
 	end
 	return key
 end

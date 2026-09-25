@@ -47,7 +47,7 @@ local function resolve(player, item, multiplier: number)
 		out.id = ctx.Rng:Pick(ctx.Config.Food.Ids)
 	end
 	if item.kind == "token" and item.id == nil then
-		out.id = ctx.Config.Flags.ActiveEvent
+		out.id = ctx.Config.Events.ActiveId(ctx:Now())
 	end
 	out.amount = math.floor(amount)
 	return out

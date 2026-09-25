@@ -35,6 +35,7 @@ return {
 		"Monetization",
 		"Quests",
 		"HallOfFame",
+		"Events",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

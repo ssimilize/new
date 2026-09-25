@@ -130,6 +130,23 @@ table.insert(Eggs.List, {
 	pattern = "band",
 })
 
+-- Update 1.2 · Lunar Lanterns event egg (bought with Lantern Coins while the event runs).
+table.insert(Eggs.List, {
+	id = "lantern",
+	name = "Lantern Egg",
+	order = 9,
+	event = "lunarlanterns",
+	price = { token = 400 },
+	hatchSeconds = 900,
+	unlock = "egg_meadow",
+	odds = { 0, 40, 35, 18, 6, 1 },
+	pool = "lunarlanterns",
+	forcedMutation = "glow",
+	stock = { unlimited = true },
+	colors = { shell = "#E5484D", spots = "#FFD447" },
+	pattern = "band",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e

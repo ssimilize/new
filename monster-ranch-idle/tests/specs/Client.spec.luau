@@ -417,5 +417,35 @@ return function(t)
 			expect(screen:FindFirstChild("Stage30", true) ~= nil).toBe(true)
 			expectClean(c)
 		end)
+
+		it("shows the Lunar Lanterns event across the UI while it runs", function()
+			local Events = t.Shared("Config").Events
+			local h = TestKernel.new({ systems = allSystems(), startTime = Events.ById.lunarlanterns.startsAt + 3600 })
+			local player = h:Join()
+			veteran(h, player)
+			h:System("Currency"):Add(player, "token.lunarlanterns", 1000, "test")
+			local c = ClientHarness.new(h, player)
+			c:Advance(1)
+			local shop = c:Open("EggShop")
+			c:Advance(0.5)
+			expect(c:HasText("Lantern", shop)).toBe(true)
+			local glyphs = {}
+			for _, d in shop:GetDescendants() do
+				if d:IsA("TextLabel") and d.Text == "✺" then
+					table.insert(glyphs, d)
+				end
+			end
+			expect(#glyphs).toBeGreaterThan(0)
+			c:Close("EggShop")
+			local manifest = c:require(c.clientFolder.Manifest)
+			for _, name in manifest.Screens do
+				if name ~= "MonsterDetail" then
+					c:Open(name)
+					c:Advance(0.3)
+					c:Close(name)
+				end
+			end
+			expectClean(c)
+		end)
 	end)
 end

@@ -87,7 +87,7 @@ function Codex.Build(ctx)
 
 	local function isShown(def): boolean
 		if def.event then
-			return def.event == Config.Flags.ActiveEvent or next(StoreKit.asTable(codexOf(def.id).forms)) ~= nil
+			return def.event == StoreKit.activeEvent() or next(StoreKit.asTable(codexOf(def.id).forms)) ~= nil
 		end
 		return true
 	end
