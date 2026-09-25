@@ -94,6 +94,7 @@ function Adapters.Roblox()
 	local AnalyticsService = game:GetService("AnalyticsService")
 
 	local isStudio = RunService:IsStudio()
+	local nameCache = {}
 
 	local adapters = {}
 	adapters.JobId = if game.JobId ~= "" then game.JobId else "studio-" .. tostring(math.random(1, 1e9))
@@ -157,10 +158,56 @@ function Adapters.Roblox()
 			end)
 			return ok and result == true
 		end,
+		-- Display name for any user id (players who are not on this server). Cached.
+		NameOf = function(userId: number): string?
+			local cached = nameCache[userId]
+			if cached then
+				return cached
+			end
+			local online = Players:GetPlayerByUserId(userId)
+			if online then
+				nameCache[userId] = online.DisplayName
+				return online.DisplayName
+			end
+			local ok, name = pcall(function()
+				return Players:GetNameFromUserIdAsync(userId)
+			end)
+			if ok and type(name) == "string" then
+				nameCache[userId] = name
+				return name
+			end
+			return nil
+		end,
 	}
 
 	adapters.Transport = makeTransport()
 	adapters.DataStore = makeDataStore()
+
+	-- Global leaderboards: one OrderedDataStore per board per week (key from
+	-- Config.Leaderboards.Key). Values are whole numbers; failures return false / nil.
+	local DataStoreService = game:GetService("DataStoreService")
+	adapters.Leaderboards = {
+		Submit = function(key: string, userId: number, value: number): boolean
+			local ok = pcall(function()
+				DataStoreService:GetOrderedDataStore("LB_" .. key):SetAsync(tostring(userId), math.floor(value))
+			end)
+			return ok
+		end,
+		Top = function(key: string, count: number): { { userId: number, value: number } }?
+			local ok, result = pcall(function()
+				local pages = DataStoreService:GetOrderedDataStore("LB_" .. key):GetSortedAsync(false, count)
+				local list = {}
+				for _, entry in pages:GetCurrentPage() do
+					local userId = tonumber(entry.key)
+					if userId then
+						table.insert(list, { userId = userId, value = entry.value })
+					end
+				end
+				return list
+			end)
+			return if ok then result else nil
+		end,
+	}
 
 	adapters.Marketplace = {
 		OwnsPass = function(player, gamePassId: number): boolean

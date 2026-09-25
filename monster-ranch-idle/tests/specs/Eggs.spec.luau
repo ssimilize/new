@@ -95,6 +95,16 @@ return function(t)
 			expect(Eggs:PublicSlots(p)).toEqual({})
 		end)
 
+		it("lets the player choose the starter's line", function()
+			local h, p = boot()
+			h:Advance(Config.Eggs.Starter.hatchSeconds)
+			expect(h:Reject(p, "Eggs.HatchAll")).toContain("starter")
+			expect(h:Reject(p, "Eggs.Hatch", { slot = 1, starter = "blazefang" })).toBeTruthy()
+			local monster = h:Call(p, "Eggs.Hatch", { slot = 1, starter = "bubblin" }).monster
+			expect(monster.line).toBe("bubblin")
+			expect(monster.rarity).toBe(Config.Eggs.Starter.rarity)
+		end)
+
 		it("gives the starter egg only once", function()
 			local h, p = boot()
 			hatchStarter(h, p)

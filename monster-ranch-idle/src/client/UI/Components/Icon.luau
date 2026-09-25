@@ -1,6 +1,6 @@
 --[[
 	Icon: small currency/resource icons drawn with shapes (or Theme.Images when set).
-	Kinds: coin · gem · food · treat · stardust · friendship · token · xp · egg · star · lock
+	Kinds: coin · gem · food · treat · stardust · friendship · token · xp · egg · star · lock · trophy
 
 		Icon.new("coin", 28)       -- returns a Frame (size × size)
 ]]
@@ -115,6 +115,35 @@ function Icon.new(kind: string, size: number?): Frame
 		glyph(d, "XP", C.White, 0.6)
 	elseif kind == "star" then
 		glyph(frame, "★", C.Gold, 1)
+	elseif kind == "trophy" then
+		-- Cup, handles and base drawn from rounded frames.
+		local stroke = math.max(1.5, px / 14)
+		New("Frame", {
+			BackgroundColor3 = C.Gold,
+			Size = UDim2.fromScale(0.6, 0.5),
+			Position = UDim2.fromScale(0.2, 0.08),
+			Parent = frame,
+		}, { Create.Corner(UDim.new(0.35, 0)), Create.Stroke(stroke) })
+		for _, x in { 0.08, 0.72 } do
+			New("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.fromScale(0.2, 0.26),
+				Position = UDim2.fromScale(x, 0.14),
+				Parent = frame,
+			}, { Create.Round(), Create.Stroke(stroke, C.Gold) })
+		end
+		New("Frame", {
+			BackgroundColor3 = C.Gold,
+			Size = UDim2.fromScale(0.14, 0.2),
+			Position = UDim2.fromScale(0.43, 0.56),
+			Parent = frame,
+		})
+		New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#C58508"),
+			Size = UDim2.fromScale(0.5, 0.16),
+			Position = UDim2.fromScale(0.25, 0.76),
+			Parent = frame,
+		}, { Create.Corner(px / 10), Create.Stroke(stroke) })
 	elseif kind == "lock" then
 		local d = disc(C.Gray)
 		glyph(d, "🔒", C.White, 0.6)

@@ -30,6 +30,7 @@ return {
 		"Social",
 		"Trade",
 		"Plots",
+		"Leaderboards",
 		-- S6 · Live-ops & money
 		"Monetization",
 		"Quests",

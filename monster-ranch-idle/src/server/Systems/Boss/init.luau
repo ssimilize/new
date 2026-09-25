@@ -27,7 +27,7 @@
 	End: everyone who joined and is still on the server gets the participation chest (players
 	below minDamageShare only if they cheered). The top 3 by damage get a Stampede Egg; others
 	with ≥ shareForEggChance of the damage have an eggChance roll. Fires Boss.Result per
-	participant and publishes BossEnded.
+	participant, publishes BossDamage per participant and then BossEnded.
 
 	Public API:
 	  Boss:State() -> global.Boss table (read-only)
@@ -226,6 +226,7 @@ local function finish(now: number)
 				egg = gotEgg,
 			})
 			ctx.Analytics.Custom(player, "boss_reward", rank, { boss = G.bossId, egg = tostring(gotEgg) })
+			ctx.Bus:Publish("BossDamage", player, { damage = math.floor(p.damage), rank = rank })
 			setSession(player, false, p.damage, 0)
 		end
 	end

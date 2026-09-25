@@ -259,6 +259,40 @@ local function buildHub(World, root: Instance)
 		body:SetAttribute("Screen", def.screen)
 		model.Parent = buildings
 	end
+
+	-- Leaderboard: a framed board on two posts. Clients draw the rows onto Body's front face
+	-- (Controllers/Leaderboards); the prompt comes from the Screen attribute like the buildings.
+	if World.Board then
+		local def = World.Board
+		local model = Instance.new("Model")
+		model.Name = "leaderboard"
+		local size = v3(def.size)
+		local pos = v3(def.position)
+		local lift = 2.5
+		local center = Vector3.new(pos.X, y + 0.3 + lift + size.Y / 2, pos.Z)
+		local toHub = Vector3.new(0, center.Y, 0)
+		local cf = if (toHub - center).Magnitude > 0.1 then CFrame.lookAt(center, toHub) else CFrame.new(center)
+		local frameColor = hex(def.color)
+		local body = block("Body", size, cf, COLORS.sign, model)
+		block("Frame", size + Vector3.new(1.2, 1.2, -0.4), cf * CFrame.new(0, 0, 0.5), frameColor, model)
+		for _, side in { -1, 1 } do
+			block(
+				"Post",
+				Vector3.new(1, size.Y + lift, 1),
+				cf * CFrame.new(side * (size.X / 2 + 0.2), -lift / 2, 0.9),
+				frameColor:Lerp(Color3.new(0, 0, 0), 0.3),
+				model
+			)
+		end
+		billboardSign(body, "Leaderboards", frameColor, size.Y / 2 + 3)
+		model.PrimaryPart = body
+		model:SetAttribute("HubId", "leaderboard")
+		model:SetAttribute("Screen", "Leaderboards")
+		model:SetAttribute("DisplayName", "Leaderboards")
+		body:SetAttribute("HubId", "leaderboard")
+		body:SetAttribute("Screen", "Leaderboards")
+		model.Parent = buildings
+	end
 end
 
 local function buildPen(plotId: number, penIndex: number, plotCf: CFrame, World, parent: Instance)

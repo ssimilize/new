@@ -71,7 +71,11 @@ Api.Actions = {
 	-- Eggs & incubators (S3) --------------------------------------------------------
 	["Eggs.Place"] = { schema = T.struct({ egg = id, slot = slot }), rate = 6, returns = "{ endsAt: number }" },
 	["Eggs.PlaceAuto"] = { schema = T.none, rate = 2, returns = "{ placed: number }  -- fills empty slots with the best eggs" },
-	["Eggs.Hatch"] = { schema = T.struct({ slot = slot }), rate = 6, returns = "{ monster: Monster }" },
+	["Eggs.Hatch"] = {
+		schema = T.struct({ slot = slot, starter = T.optional(T.enum(Config.Eggs.Starter.lines)) }),
+		rate = 6,
+		returns = "{ monster: Monster }  -- `starter` picks the starter egg's line",
+	},
 	["Eggs.HatchAll"] = { schema = T.none, rate = 2, returns = "{ monsters: { Monster } }" },
 	["Eggs.HatchRush"] = { schema = T.struct({ slot = slot }), rate = 1, returns = "{ endsAt: number }  -- rewarded ad" },
 
@@ -235,6 +239,7 @@ Api.State = {
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true } }",
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true } }",
+		Leaderboards = "{ week, stampede }  -- this week's Stampede damage",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -253,6 +258,7 @@ Api.State = {
 		Boss = "{ state: 'idle'|'lobby'|'active', bossId, startsAt, endsAt, hp, maxHp, board = { { userId, name, damage } } }",
 		Plots = "{ ['1'..'6' as numbers]: PublicPlot }  -- array of 6",
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
+		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 	},
 }
 
@@ -283,6 +289,7 @@ Api.Topics = {
 	ExpeditionClaimed = "(player, { slot: number, duration: number })",
 	BossJoined = "(player, {})",
 	BossEnded = "(nil, { bossId: string, won: boolean })",
+	BossDamage = "(player, { damage: number, rank: number })  -- per participant when a Stampede ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",

@@ -18,6 +18,7 @@ return {
 		"Tutorial",
 		"Broadcasts",
 		"TradeRequests",
+		"Leaderboards",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -37,5 +38,6 @@ return {
 		"Quests",
 		"Store",
 		"Settings",
+		"Leaderboards",
 	},
 }

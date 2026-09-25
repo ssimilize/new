@@ -23,10 +23,11 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Social | S5 | 🔌 | `Social.spec` | friend boost (`friends` rate modifier), pets/likes, server + global broadcasts (MessagingService) |
 | Trade | S5 | 🔌 | `Trade.spec` | request → offer → ready → confirm countdown; atomic swap with capacity/egg caps, rollback, private log |
 | Plots | S5 | 🔌 | `Plots.spec` | 6 public plots, lowest free on PlayerReady, throttled rebuilds (≤ 1 / 2 s) |
+| Leaderboards | S5 | 🔌 | `Leaderboards.spec` | 5 weekly boards (heaviest, codex, stampede, halloffame, stage): live per-server rows, global rows via `Services.Leaderboards` (OrderedDataStore per board per week), last week's #1 → nameplate title; weeks start Saturday 15:00 UTC |
 | Monetization | S6 | 🔌 | `Monetization.spec` | pass cache on join + live/RefreshPasses, idempotent ProcessReceipt (private `receipts`, newest 200), `RegisterProduct` handlers, oncePerAccount, capped rewarded ads (UTC-day reset), paid-random policy (fails closed) |
 | Quests | S6 | 🔌 | `Quests.spec` | tutorial state machine + onboarding funnel + scripted rain (optional Weather), deterministic dailies, achievements, codes (expiry, group), Ranch Pass (season window, `Quests.RanchPass` product) |
 | HallOfFame | S6 | 🔌 | `HallOfFame.spec` | retire → statue, legacy (capped per element), Stardust + Star Shards, upgrades; providers for Ranch, Eggs, Monsters, Boss, Breeding, Expeditions |
-| World (geometry) | C1 | 🔌 | Studio | `Systems/World` + `Build.luau`: ground, paths, plaza + fountain, 6 hub buildings (HubId/Screen), 6 plots (PlotId) with 5 fenced pens (PenIndex), incubator pad, barn, gate; ~380 parts |
+| World (geometry) | C1 | 🔌 | Studio | `Systems/World` + `Build.luau`: ground, paths, plaza + fountain, 6 hub buildings + the leaderboard board (HubId/Screen), 6 plots (PlotId) with 5 fenced pens (PenIndex), incubator pad, barn, gate; ~380 parts |
 
 ## Client
 
@@ -41,10 +42,11 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Screens: EggShop, Incubators, Monsters, MonsterDetail, Ranch, WelcomeBack, Codex | C2 | 🔌 | lint/selene/rojo clean. Monsters pick mode per §5 (returnTo opens before `onPick`; cancel returns without it). New C2 components: `StoreKit`, `Tiles`, `InsetPopup`, `StatBar`, `ViewportMonster` |
 | Controllers: Tutorial, Broadcasts, TradeRequests | C3 | 🔌 | lint/selene/rojo clean. Broadcasts also shows the `Boss.Result` popup and maps `Settings.lowGraphics` → `Anim.enabled` |
 | Screens: Expeditions, Breeding, Trade, Boss, HallOfFame, Quests, Store, Settings | C3 | 🔌 | helpers in `UI/Screens/Parts/` (Util, Dialog, BattleReplay); needs C2 `Monsters` pick mode; lazy `Logic/BattleSim` + `Logic/Breeding` with local fallbacks |
+| Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
 
 ## Studio test pass (not yet done)
 
-Client code and the World system pass syntax, lint and the Rojo build, but have not run in Studio. First pass:
+Client code and the World geometry run in Lune through `tests/runtime/RobloxMock` (see `Client.spec.luau`): every controller boots, every screen opens, every button is clicked, and every Instance property set is checked against Roblox's API database. What the mock cannot show is rendering, physics, input feel and real networking, so Studio still needs a first pass:
 
 - [ ] Join: starter egg in slot 1, hatch reveal, starter walks into pen 1, character spawns on its own plot
 - [ ] HUD on a phone-sized emulator (tap targets, safe area, overlays not colliding)
@@ -59,5 +61,6 @@ Client code and the World system pass syntax, lint and the Rojo build, but have 
 - [ ] AdService flow verified in a live server (see `Kernel/Adapters.luau`)
 - [ ] `Config.Quests.GroupId` set; codes reviewed
 - [ ] Studio API access enabled and DataStore name final (`MonsterRanch_Profiles_v1`)
+- [ ] Leaderboard OrderedDataStores (`LB_<board>_w<week>`) checked in a live server, and `Config.Leaderboards.WeekAnchor` lined up with the Saturday update time
 - [ ] Sound ids in `Config/Sounds.luau`; art swapped in `Visuals/*` and `UI/Theme.Images`
 - [ ] Analytics funnel checked in the Creator Dashboard

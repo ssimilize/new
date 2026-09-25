@@ -90,7 +90,7 @@ Rules:
 | `ctx:Notify(player, text, kind)` | toast (`info`, `success`, `error`, `reward`) |
 | `ctx:RequestSave(player)` | save soon (after purchases and trades) |
 | `ctx.Rng` | server RNG (`Logic/Rng`); use `Rng.new(seed)` for reproducible rolls |
-| `ctx.Services` | adapters: `Players`, `Marketplace`, `Policy`, `Ads`, `Messaging`, `Text`, `Analytics`, `Workspace`, `Spawn`, `Wait` |
+| `ctx.Services` | adapters: `Players`, `Marketplace`, `Policy`, `Ads`, `Messaging`, `Text`, `Analytics`, `Leaderboards`, `Workspace`, `Spawn`, `Wait` |
 | `ctx.Analytics` | `Custom(player, name, value, fields)`, `Economy(...)`, `Onboarding(player, step, name)` |
 | `ctx:Log(fmt, …)` | debug log (printed when the kernel is verbose) |
 
@@ -159,6 +159,7 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Social**: `Social:GetFriendBoost(player) -> pct`, `:Broadcast(kind, text, player?, appearance?, scope)`. Registers the Ranch rate modifier `friends`. Subscribes to `EggHatched`, `Bred`, `Mutated`, `WeatherChanged` for broadcasts.
 - **Trade**: all `Trade.*` actions; atomic two-sided transfer through `Monsters:Remove/Insert` and `Eggs:Remove/Insert`; `ctx:RequestSave` for both players; private `log`.
 - **Plots**: `Plots:GetPlot(player) -> 1..6`, `:Refresh(player)`. Publishes `global.Plots[i]` (see Api.State). Throttles refreshes (≤ 1 per 2 s per player).
+- **Leaderboards**: `Leaderboards:Value(player, boardId) -> (value, label?)`, `:Titles(userId) -> { boardId }`. Reads `Monsters:All`/`:CodexCount`, `HallOfFame:RetiredCount`, `Expeditions:Cleared` (all optional) and the `BossDamage` topic. Publishes `global.Leaderboards` (see Api.State); global IO through `ctx.Services.Leaderboards.Submit/Top` and `Services.Players.NameOf`, inside `Services.Spawn`.
 
 ### S6: Monetization, Quests, HallOfFame
 - **Monetization**: `Monetization:HasPass(player, key) -> bool`, `:RegisterProduct(handlerKey, fn(player, product, receiptInfo) -> bool)`, `:WatchAd(player, placement) -> bool` (yields; enforces daily caps), `:AdsLeft(player, placement) -> n`, `:PaidRandomAllowed(player) -> bool`. ProcessReceipt is idempotent (private `receipts`). Publishes `PassesChanged`, `RateModifiersChanged`, `Purchase`, `AdWatched`.
@@ -337,6 +338,8 @@ BattleReplay = {
 - `Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id } } }`
 - `Eggs:PublicSlots(player) -> { { type, endsAt } }` (only filled slots)
 - `Social:GetLikes(player) -> number`
+- `Monsters:CodexCount(player) -> number` and `HallOfFame:RetiredCount(player) -> number` (for Leaderboards)
+- `Eggs.Hatch { slot, starter? }`: `starter` is one of `Config.Eggs.Starter.lines` and only valid on the starter egg; `Eggs.HatchAll` skips the starter so the player always chooses.
 - Client: the `Hud` controller exposes `Hud:GetTarget(name) -> GuiObject?` for the Tutorial arrow (`incubator`, `jar`, `shop`, `monster`, `expeditions`, `weather`, `quests`).
 
 ### Season pass

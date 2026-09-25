@@ -13,6 +13,7 @@
 	  Monsters:Get(player, id) -> record?                               -- live table: call Changed after edits
 	  Monsters:All(player) -> { [id]: record }
 	  Monsters:Count(player) -> number
+	  Monsters:CodexCount(player) -> number                             -- forms discovered
 	  Monsters:Capacity(player) -> number
 	  Monsters:Remove(player, id, reason) -> record?                    -- refuses busy monsters
 	  Monsters:Available(player, id) -> record?, why?                   -- exists and not busy
@@ -141,6 +142,21 @@ function Monsters:Count(player): number
 	local n = 0
 	for _ in s.list do
 		n += 1
+	end
+	return n
+end
+
+-- Forms discovered across every line (the Codex completion count).
+function Monsters:CodexCount(player): number
+	local s = section(player)
+	if not s then
+		return 0
+	end
+	local n = 0
+	for _, entry in s.codex do
+		for _ in entry.forms or {} do
+			n += 1
+		end
 	end
 	return n
 end

@@ -14,6 +14,10 @@
 	placement: `endsAt = now + hatchSeconds × (1 − speed)`. Eggs that finish while the
 	player is offline wait in their slot; the Welcome Back screen lists them.
 
+	The starter egg lets the player choose its line: Eggs.Hatch { slot, starter = lineId }
+	with a line from Config.Eggs.Starter.lines (random when omitted). Eggs.HatchAll skips
+	the starter so the choice is never made for the player.
+
 	Public API (other systems):
 	  Eggs:Add(player, eggType, source, amount?) -> { eggId }   -- grants never drop eggs (no cap)
 	  Eggs:Insert(player, record, source) -> eggId               -- trade receive (new id)
@@ -321,14 +325,14 @@ end
 
 -- Hatches one ready slot. Returns the monster, or nil and the reason (nothing is changed
 -- on failure, so a full ranch never burns pity or the egg).
-local function hatch(player, index: number)
+local function hatch(player, index: number, starterLine: string?)
 	local s = section(player)
 	local slot = s.slots[index]
 	local eggType = slot.type
 	local lucky = hasPass(player, "luckyHatcher")
 	local spec, result, source
 	if eggType == "starter" then
-		spec = EggRoll.starter(ctx.Rng, { lucky = lucky })
+		spec = EggRoll.starter(ctx.Rng, { lucky = lucky, line = starterLine })
 		source = "starter"
 	else
 		local def = Config.Eggs.ById[eggType]
@@ -422,7 +426,10 @@ function Eggs.Init(context)
 		if not isReady(slot, ctx:Now()) then
 			ctx:Fail("That egg isn't ready yet")
 		end
-		local monster, err = hatch(player, payload.slot)
+		if payload.starter ~= nil and slot.type ~= "starter" then
+			ctx:Fail("Only the starter egg lets you choose")
+		end
+		local monster, err = hatch(player, payload.slot, payload.starter)
 		if not monster then
 			ctx:Fail(err :: string)
 		end
@@ -435,9 +442,12 @@ function Eggs.Init(context)
 		local now = ctx:Now()
 		local monsters = {}
 		local anyReady = false
+		local starterReady = false
 		local failure
 		for index = 1, SLOTS do
-			if isReady(s.slots[index], now) then
+			if isReady(s.slots[index], now) and s.slots[index].type == "starter" then
+				starterReady = true
+			elseif isReady(s.slots[index], now) then
 				anyReady = true
 				local monster, err = hatch(player, index)
 				if not monster then
@@ -448,7 +458,7 @@ function Eggs.Init(context)
 			end
 		end
 		if not anyReady then
-			ctx:Fail("No eggs are ready yet")
+			ctx:Fail(if starterReady then "Tap your starter egg to choose your first monster" else "No eggs are ready yet")
 		end
 		if #monsters == 0 then
 			ctx:Fail(failure :: string)
