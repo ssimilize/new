@@ -36,6 +36,7 @@ lune run tests
 - `src/client`: client kernel, UI kit (`UI/Theme`, `UI/Create`, `UI/Components`), screens (`UI/Screens`, listed in `src/client/Manifest.luau`), controllers, placeholder visuals.
 - `tests/specs/*.spec.luau`: `TestKernel` boots real systems on mocks; `ClientHarness` runs the real client in a reflection-checked Roblox mock. `Client.spec` clicks every button on every screen and checks a 568×320 phone fit.
 - `tools/snapshot`: renders a picture of the game without Studio (see its README).
+- `monster-ranch-idle/tools/meshy` + `tools/blender`: the 3D monsters. Meshy concept → model per form, a Blender rig per body type (all eight), then each mesh is published as a Roblox asset and drawn by `Visuals/MeshMonster` (ids in `MeshMonsterAssets.luau`; forms without both ids keep the placeholder). Workflow in each folder's README.
 
 ## Building an update (the pattern every update so far followed)
 

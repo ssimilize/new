@@ -22,9 +22,14 @@
 	caller) cycle their "Body" part colour through a precomputed hue table.
 	Near animators also squash and stretch the "Body" part: through its SpecialMesh Scale when
 	it has one (cheap, no physics update), otherwise through its Size (never welds).
+	Skinned models (attribute Skinned, built by MeshMonster) play their authored clips instead: walk
+	while moving, idle at rest (slowed for sleep), hop for happy and attack. Their hop-walk bounce is
+	dropped (the walk clip bobs) and "happy" keeps only its spin.
 ]]
 
 local RunService = game:GetService("RunService")
+
+local MeshMonster = require(script.Parent.MeshMonster)
 
 local MonsterAnimator = {}
 MonsterAnimator.__index = MonsterAnimator
@@ -98,6 +103,7 @@ function MonsterAnimator.new(model: Model)
 		_hueOffset = math.random(1, HUE_STEPS),
 		_rainbow = model:GetAttribute("Rainbow") == true,
 		_prismatic = model:GetAttribute("Prismatic") == true,
+		_skinned = model:GetAttribute("Skinned") == true,
 		_target = nil :: Vector3?,
 		_onArrive = nil :: (() -> ())?,
 		_speed = 5 + (if type(height) == "number" then height else 3) * 0.6,
@@ -331,6 +337,23 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 		offset = CFrame.new(0, -h + hop, 0) * CFrame.Angles(angle * cos(phase), 0, angle * sin(phase)) * CFrame.new(0, h, 0)
 	else
 		offset = CFrame.identity
+	end
+
+	if self._skinned then
+		local clip, time, loop = "idle", t + phase, true
+		if state == "walk" then
+			clip, time = "walk", t
+			offset = CFrame.identity
+		elseif state == "happy" or state == "attack" then
+			clip, time, loop = "hop", t, false
+			offset = if state == "happy" then CFrame.Angles(0, smooth(min(t / ONE_SHOT.happy, 1)) * TAU, 0) else offset
+		elseif state == "idle" then
+			offset = CFrame.identity
+		elseif state == "sleep" then
+			time = (t + phase) * 0.4
+			offset = CFrame.identity
+		end
+		MeshMonster.Pose(self.model, clip, time, loop)
 	end
 
 	local body = self._body

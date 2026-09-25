@@ -3,3 +3,16 @@
 *.rbxm
 roblox.yml
 sourcemap.json
+
+# Generated art (7 GB): Meshy task records hold signed URLs, and models, rigs and renders are
+# large. Kept local until the art pipeline picks a home. The game needs none of it: it loads the
+# published meshes and textures by id (src/client/Visuals/MeshMonsterAssets.luau), and
+# art/export is re-made from the rigs by tools/blender/pipeline.py.
+art/meshy/
+art/rigs/
+art/blender/
+art/compare/
+art/export/
+
+# Python bytecode from the art tools.
+__pycache__/

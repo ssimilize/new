@@ -13,10 +13,14 @@
 	  • appearance.acc { [slot] = accessoryId } draws Config.Accessories placeholders (1.5)
 	To use authored models later: look up a model by appearance.form in
 	ReplicatedStorage.Assets.Monsters (if present), clone it, and keep the contract above.
+	3D monsters: a form with a rig module in Visuals/MeshMonsters and a published mesh and texture
+	(Visuals/MeshMonsterAssets) is built by MeshMonster instead (a skinned mesh; MonsterAnimator
+	plays its clips). A failed mesh build falls back to the placeholder.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
+local MeshMonster = require(script.Parent.MeshMonster)
 
 local MonsterModel = {}
 
@@ -367,6 +371,13 @@ end
 function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: number? }?)
 	local options = opts or {}
 	local s = BASE_SIZE * MonsterModel.ScaleFor(appearance) * (options.scale or 1)
+	if MeshMonster.Has(appearance.form) then
+		local ok, meshModel = pcall(MeshMonster.Build, appearance, s, options.anchored ~= false)
+		if ok then
+			return meshModel
+		end
+		warn("[MonsterModel] mesh build failed for " .. tostring(appearance.form) .. ": " .. tostring(meshModel))
+	end
 	local element, body, belly, accent = colorsFor(appearance)
 	local archetype = appearance.archetype or "blob"
 
