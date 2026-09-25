@@ -84,10 +84,11 @@ local function recommendedPower(regionId: string, stage: number): number
 	if not r then
 		return 0
 	end
-	local t = (stage - 1) / math.max(1, Regions.StagesPerRegion - 1)
-	local lv = math.floor(r.levels[1] + (r.levels[2] - r.levels[1]) * t + 0.5)
-	local rarity = math.floor(r.rarity[1] + (r.rarity[2] - r.rarity[1]) * t + 0.5)
-	local per = powerOf({ line = r.enemyLines[1], stage = 3, rarity = rarity, lv = lv, stars = 1, traits = {}, hidden = 0, muts = {} })
+	local band = Regions.Band(regionId, stage)
+	local t = (stage - band.first) / math.max(1, band.last - band.first)
+	local lv = math.floor(band.levels[1] + (band.levels[2] - band.levels[1]) * t + 0.5)
+	local rarity = math.floor(band.rarity[1] + (band.rarity[2] - band.rarity[1]) * t + 0.5)
+	local per = powerOf({ line = band.enemyLines[1], stage = 3, rarity = rarity, lv = lv, stars = 1, traits = {}, hidden = 0, muts = {} })
 	if per <= 0 then
 		per = 100
 	end
@@ -142,12 +143,21 @@ return {
 			local s = exp().squad
 			return if type(s) == "table" then s else {}
 		end
+		-- The last stage this player can reach in a region (deeper bands have their own unlock).
+		local function maxStage(regionId: string): number
+			local r = Regions.ById[regionId]
+			local d = r and r.depths
+			if d and not Util.unlocked(ctx, d.unlock) then
+				return d.from - 1
+			end
+			return Regions.Stages(regionId)
+		end
 		local function currentStage(): number
-			return math.min(cleared(region) + 1, Regions.StagesPerRegion)
+			return math.min(cleared(region) + 1, maxStage(region))
 		end
 		local function stage(): number
 			local s = selectedStage or currentStage()
-			return math.clamp(s, 1, math.min(cleared(region) + 1, Regions.StagesPerRegion))
+			return math.clamp(s, 1, math.min(cleared(region) + 1, maxStage(region)))
 		end
 		local function farmStage(): number
 			return math.min(stage(), cleared(region))
@@ -227,6 +237,35 @@ return {
 			Position = UDim2.fromOffset(14, 60),
 			Size = UDim2.new(1, -28, 0, 130),
 			Parent = mapCard,
+		})
+		-- Page switch for regions with a deeper band (Coral Coast → Coral Depths).
+		local pageRow = New("Frame", {
+			Name = "Pages",
+			BackgroundTransparency = 1,
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -8, 0, 6),
+			Size = UDim2.fromOffset(212, 40),
+			Visible = false,
+			ZIndex = 4,
+			Parent = mapCard,
+		}, { Create.List("x", 6, Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Center) })
+		local coastButton = Button.new({
+			Name = "Coast",
+			Text = "Coast",
+			Color = C.Orange,
+			TextSize = Theme.TextSize.Small + 1,
+			Size = UDim2.fromOffset(96, 36),
+			LayoutOrder = 1,
+			Parent = pageRow,
+		})
+		local depthsButton = Button.new({
+			Name = "Depths",
+			Text = "Depths",
+			Color = C.Gray,
+			TextSize = Theme.TextSize.Small + 1,
+			Size = UDim2.fromOffset(110, 36),
+			LayoutOrder = 2,
+			Parent = pageRow,
 		})
 
 		local slotsCard = Util.card({
@@ -416,7 +455,7 @@ return {
 			local nextStage = stageNumber + 1
 			local win = res.win == true
 			if win then
-				selectedStage = math.min(nextStage, Regions.StagesPerRegion)
+				selectedStage = math.min(nextStage, maxStage(region))
 			end
 			local adsLeft = nil
 			local adCap = Config.Monetization.Ads.stageRetry and Config.Monetization.Ads.stageRetry.cap
@@ -441,7 +480,7 @@ return {
 					end
 					else nil,
 				nextText = string.format("Fight stage %d", nextStage),
-				onNext = if nextStage <= Regions.StagesPerRegion
+				onNext = if nextStage <= maxStage(region)
 					then function()
 						fight(nextStage)
 					end
@@ -451,6 +490,28 @@ return {
 				end,
 			})
 		end
+
+		coastButton:SetOnClick(function()
+			local d = Regions.ById[region] and Regions.ById[region].depths
+			if d then
+				selectedStage = math.min(cleared(region) + 1, d.from - 1)
+				refresh()
+			end
+		end)
+		depthsButton:SetOnClick(function()
+			local d = Regions.ById[region] and Regions.ById[region].depths
+			if not d then
+				return
+			end
+			if not Util.unlocked(ctx, d.unlock) then
+				ctx:Toast(Util.unlockText(d.unlock), "info")
+			elseif cleared(region) < d.from - 1 then
+				ctx:Toast(string.format("Clear stage %d to dive into the %s", d.from - 1, d.name), "info")
+			else
+				selectedStage = math.max(d.from, currentStage())
+				refresh()
+			end
+		end)
 
 		fightButton:SetOnClick(function()
 			local r = Regions.ById[region]
@@ -514,11 +575,13 @@ return {
 
 		-- Stage map ------------------------------------------------------------------------
 
+		-- Up to 20 stages per map page, in two rows that snake back (1–10 → 11–20).
 		local NODE = 44
-		local function nodeCentre(s: number): Vector2
+		local function nodeCentre(s: number, first: number): Vector2
+			local i = s - first + 1
 			local spacing = (532 - NODE) / 9
-			local row = if s <= 10 then 1 else 2
-			local col = if row == 1 then s - 1 else 20 - s
+			local row = if i <= 10 then 1 else 2
+			local col = if row == 1 then i - 1 else 20 - i
 			return Vector2.new(NODE / 2 + col * spacing, if row == 1 then 26 else 96)
 		end
 
@@ -528,8 +591,10 @@ return {
 			local cur = currentStage()
 			local sel = stage()
 			local unlocked = regionUnlocked(r)
-			for s = 1, Regions.StagesPerRegion - 1 do
-				local a, b = nodeCentre(s), nodeCentre(s + 1)
+			local band = Regions.Band(r.id, sel)
+			local first, last = band.first, band.last
+			for s = first, last - 1 do
+				local a, b = nodeCentre(s, first), nodeCentre(s + 1, first)
 				local done = s < c + 1 and s + 1 <= c + 1
 				New("Frame", {
 					BackgroundColor3 = C.White,
@@ -541,8 +606,8 @@ return {
 					Parent = nodes,
 				})
 			end
-			for s = 1, Regions.StagesPerRegion do
-				local centre = nodeCentre(s)
+			for s = first, last do
+				local centre = nodeCentre(s, first)
 				local isBoss = r.bosses[s] ~= nil
 				local color, textColor = C.Gray, C.White
 				if s <= c then
@@ -1248,22 +1313,27 @@ return {
 				return
 			end
 
-			-- Map
-			local sky = Color3.fromHex(r.colors and r.colors.sky or "#8FD3FF")
-			local ground = Color3.fromHex(r.colors and r.colors.ground or "#A6DD73")
+			-- Map (the page follows the selected stage: main band or the Depths)
+			local band = Regions.Band(r.id, stage())
+			local sky = Color3.fromHex(band.colors and band.colors.sky or "#8FD3FF")
+			local ground = Color3.fromHex(band.colors and band.colors.ground or "#A6DD73")
 			mapCard.BackgroundColor3 = C.White
 			mapGrad.Color = ColorSequence.new(sky, ground)
-			mapTitle.Text = r.name
+			mapTitle.Text = band.name
 			local enemyNames = {}
 			for _, e in r.elements do
 				table.insert(enemyNames, elementName(e))
 			end
-			mapInfo.Text = string.format(
-				"Stage %d / %d · %s enemies",
-				math.min(cleared(region) + 1, Regions.StagesPerRegion),
-				Regions.StagesPerRegion,
-				table.concat(enemyNames, " & ")
-			)
+			mapInfo.Text =
+				string.format("Stage %d / %d · %s enemies", currentStage(), Regions.Stages(r.id), table.concat(enemyNames, " & "))
+			local depths = r.depths
+			pageRow.Visible = depths ~= nil
+			if depths then
+				local onDepths = band.depths
+				coastButton:SetColor(if onDepths then C.Gray else C.Orange)
+				depthsButton:SetColor(if onDepths then C.Orange else C.Gray)
+				depthsButton:SetText(if Util.unlocked(ctx, depths.unlock) then "Depths" else "Depths 🔒")
+			end
 			for _, child in mapCard:GetChildren() do
 				if child.Name == "Lock" then
 					child:Destroy()
@@ -1296,7 +1366,7 @@ return {
 			drawLoot(r)
 
 			local cur = currentStage()
-			local allCleared = cleared(region) >= Regions.StagesPerRegion
+			local allCleared = cleared(region) >= maxStage(region)
 			fightButton:SetText(if allCleared and s == cur then "Replay stage " .. s else "Fight stage " .. s)
 			fightButton:SetDisabled(not unlocked or #ids == 0)
 			startButton:SetText(string.format("Start %s expedition", durationText(duration)))

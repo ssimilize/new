@@ -7,7 +7,7 @@
 	  codex       forms discovered (Monsters:CodexCount)
 	  stampede    Stampede damage dealt this week (BossDamage topic, saved here)
 	  halloffame  monsters retired (HallOfFame:RetiredCount)
-	  stage       highest global stage cleared (Expeditions:Cleared, regions in order)
+	  stage       highest global stage index cleared (Expeditions:Cleared + Regions.GlobalIndex)
 
 	Save section (profile.Leaderboards): { week, stampede }  -- stampede resets each week
 
@@ -92,10 +92,10 @@ local function highestStage(player): number
 		return 0
 	end
 	local best = 0
-	for index, region in Config.Regions.List do
+	for _, region in Config.Regions.List do
 		local cleared = Expeditions:Cleared(player, region.id)
 		if cleared > 0 then
-			best = math.max(best, (index - 1) * Config.Regions.StagesPerRegion + cleared)
+			best = math.max(best, Config.Regions.GlobalIndex(region.id, cleared))
 		end
 	end
 	return best

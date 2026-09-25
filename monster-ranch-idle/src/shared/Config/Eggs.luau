@@ -115,6 +115,21 @@ Eggs.List = {
 	},
 }
 
+-- Update 1.1 · Coral Depths: dropped by Coral Depths expeditions (stages 21+) and by
+-- the Depths bosses the first time they fall; hatches the three Depths lines only.
+table.insert(Eggs.List, {
+	id = "pearl",
+	name = "Pearl Egg",
+	order = 8,
+	price = nil,
+	hatchSeconds = 1800,
+	unlock = "coral_depths",
+	odds = { 0, 30, 42, 22, 5.5, 0.5 },
+	pool = "pearl",
+	colors = { shell = "#F4EFE4", spots = "#7CC7E8" },
+	pattern = "band",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e

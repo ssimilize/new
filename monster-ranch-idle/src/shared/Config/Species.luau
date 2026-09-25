@@ -10,6 +10,7 @@
 	weight: average adult weight in kg (rolled 0.5×–2× at birth).
 	special / passive: ids from Species.Skills / Species.Passives (used by BattleSim).
 	pools: which egg pools this line can hatch from.
+	added: the update that introduced the line (lines without it shipped at launch).
 ]]
 
 local Species = {}
@@ -417,6 +418,58 @@ Species.Lines = {
 		special = "heal",
 		passive = "regen",
 		pools = { "hybrid" },
+	}),
+	-- ── Coral Depths (update 1.1) · hatch only from Pearl Eggs ─────────────
+	line({
+		id = "shellsnap",
+		elements = { "tide" },
+		archetype = "bug",
+		added = "1.1",
+		forms = {
+			{ id = "shellsnap", name = "Shellsnap" },
+			{ id = "clawcrest", name = "Clawcrest" },
+			{
+				{ id = "tidecrusher", name = "Tidecrusher", diet = "sour" },
+				{ id = "pearlguard", name = "Pearlguard", diet = "sweet" },
+			},
+		},
+		base = { hp = 150, atk = 30, def = 30, spd = 9, luck = 4 },
+		weight = 7.5,
+		special = "taunt",
+		passive = "thorns",
+		pools = { "pearl" },
+	}),
+	line({
+		id = "jellow",
+		elements = { "spark" },
+		archetype = "blob",
+		added = "1.1",
+		forms = {
+			{ id = "jellow", name = "Jellow" },
+			{ id = "glimmerjel", name = "Glimmerjel" },
+			{ { id = "voltmedusa", name = "Voltmedusa" } },
+		},
+		base = { hp = 100, atk = 38, def = 14, spd = 20, luck = 7 },
+		weight = 0.9,
+		special = "stun",
+		passive = "haste",
+		pools = { "pearl" },
+	}),
+	line({
+		id = "anglit",
+		elements = { "tide", "spark" },
+		archetype = "slug",
+		added = "1.1",
+		forms = {
+			{ id = "anglit", name = "Anglit" },
+			{ id = "lanternfin", name = "Lanternfin" },
+			{ { id = "abyssangler", name = "Abyssangler" } },
+		},
+		base = { hp = 130, atk = 36, def = 20, spd = 13, luck = 10 },
+		weight = 5.0,
+		special = "drain",
+		passive = "lucky",
+		pools = { "pearl" },
 	}),
 	-- ── Frostfall event (winter 2026) ─────────────────────────────────────
 	line({

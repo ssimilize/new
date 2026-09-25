@@ -623,27 +623,51 @@ local function syncDecor(view, pen: number, decorList)
 		local def = Config.Decor.ById[id]
 		local spot = DECOR_SPOTS[i]
 		if def and spot then
-			local round = id == "fountain" or id == "snow_globe" or id == "crystal_cluster" or id == "mud_puddle"
-			local size = if id == "mud_puddle" then Vector3.new(0.3, 5, 5) else Vector3.new(2.6, 2.4, 2.6)
-			local cf = area * CFrame.new(spot[1] * hx, size.Y / 2, spot[2] * hz)
-			if id == "mud_puddle" then
-				cf = area * CFrame.new(spot[1] * hx, 0.1, spot[2] * hz) * CFrame.Angles(0, 0, math.rad(90))
+			-- Placeholder shapes from Config.Decor (`shape`); art replaces these later.
+			local shape = def.shape or "block"
+			local base = area * CFrame.new(spot[1] * hx, 0, spot[2] * hz)
+			local color = Color3.fromHex(def.color)
+			local glow = id == "lantern" or id == "rainbow_arch"
+			local function piece(name: string, partShape: Enum.PartType, size: Vector3, cf: CFrame, pieceColor: Color3?)
+				local part = New("Part", {
+					Name = name,
+					Anchored = true,
+					CanCollide = false,
+					CanQuery = false,
+					CanTouch = false,
+					CastShadow = false,
+					Shape = partShape,
+					Size = size,
+					CFrame = cf,
+					Color = pieceColor or color,
+					Material = if glow then Enum.Material.Neon else Enum.Material.SmoothPlastic,
+					Parent = view.folder,
+				})
+				table.insert(parts, part)
+				return part
 			end
-			local part = New("Part", {
-				Name = "Decor_" .. id,
-				Anchored = true,
-				CanCollide = false,
-				CanQuery = false,
-				CanTouch = false,
-				CastShadow = false,
-				Shape = if id == "mud_puddle" then Enum.PartType.Cylinder elseif round then Enum.PartType.Ball else Enum.PartType.Block,
-				Size = size,
-				CFrame = cf,
-				Color = Color3.fromHex(def.color),
-				Material = if id == "lantern" or id == "rainbow_arch" then Enum.Material.Neon else Enum.Material.SmoothPlastic,
-				Parent = view.folder,
-			})
-			table.insert(parts, part)
+			if shape == "disc" then
+				-- Cylinders lie along X, so turn it upright: a flat puddle on the ground.
+				piece(
+					"Decor_" .. id,
+					Enum.PartType.Cylinder,
+					Vector3.new(0.3, 5, 5),
+					base * CFrame.new(0, 0.1, 0) * CFrame.Angles(0, 0, math.rad(90))
+				)
+			elseif shape == "ball" then
+				piece("Decor_" .. id, Enum.PartType.Ball, Vector3.new(2.6, 2.6, 2.6), base * CFrame.new(0, 1.3, 0))
+			elseif shape == "tall" then
+				piece(
+					"Decor_" .. id,
+					Enum.PartType.Block,
+					Vector3.new(0.4, 3.6, 0.4),
+					base * CFrame.new(0, 1.8, 0),
+					Color3.fromHex("#EDE3D3")
+				)
+				piece("Decor_" .. id .. "_Top", Enum.PartType.Ball, Vector3.new(1.8, 1.8, 1.8), base * CFrame.new(0, 3.8, 0))
+			else
+				piece("Decor_" .. id, Enum.PartType.Block, Vector3.new(2.6, 2.4, 2.6), base * CFrame.new(0, 1.2, 0))
+			end
 		end
 	end
 	view.decor[pen] = parts

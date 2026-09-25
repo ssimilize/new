@@ -18,6 +18,8 @@ Mutations.List = {
 	-- Combos (never rolled directly)
 	{ id = "frozen", name = "Frozen", mult = 3.5, color = "#9FE3FF", statPct = 0.04, combo = { "soaked", "frosted" } },
 	{ id = "plasma", name = "Plasma", mult = 4, color = "#C06BFF", statPct = 0.04, combo = { "scorched", "charged" } },
+	-- Update 1.1 · Coral Depths
+	{ id = "pearl", name = "Pearl", mult = 5, color = "#F3EEE2", statPct = 0.05, combo = { "soaked", "starstruck" } },
 }
 
 Mutations.ById = {}

@@ -132,6 +132,17 @@ local function requireRegion(player, regionId: string)
 	return region
 end
 
+-- A stage must exist in the region, and deeper bands (Coral Depths) have their own unlock.
+local function requireStage(player, regionId: string, stage: number)
+	if stage > Regions.Stages(regionId) then
+		ctx:Fail("That stage doesn't exist")
+	end
+	local band = Regions.Band(regionId, stage)
+	if band.depths and not Progression:IsUnlocked(player, band.unlock) then
+		ctx:Fail(string.format("%s unlocks at Ranch Level %d", band.name, Progression:UnlockLevel(band.unlock)))
+	end
+end
+
 -- Checks a squad the client sent: size, duplicates, ownership, busy. Returns (records?, why?).
 local function checkSquad(player, ids: { string }): ({ any }?, string?)
 	local size = Expeditions:SquadSize(player)
@@ -424,6 +435,7 @@ function Expeditions.Init(context)
 		local s = section(player)
 		local region = requireRegion(player, payload.region)
 		local stage = payload.stage
+		requireStage(player, payload.region, stage)
 		local cleared = Expeditions:Cleared(player, payload.region)
 		if stage > cleared + 1 then
 			ctx:Fail(string.format("Clear stage %d first", cleared + 1))
@@ -464,7 +476,12 @@ function Expeditions.Init(context)
 				s.cleared[payload.region] = stage
 				ctx:Dirty(player, "cleared", payload.region)
 				local g = Regions.GlobalIndex(payload.region, stage)
-				rewards = Rewards:Grant(player, Regions.FirstClearReward(g, isBoss), "stage_clear", { silent = true })
+				local items = Regions.FirstClearReward(g, isBoss)
+				local boss = region.bosses and region.bosses[stage]
+				for _, item in (boss and boss.firstClear) or {} do
+					table.insert(items, table.clone(item))
+				end
+				rewards = Rewards:Grant(player, items, "stage_clear", { silent = true })
 				ctx.Bus:Publish("RanchXP", player, { amount = Config.Unlocks.XP.stageClearBase + stage, reason = "stage_clear" })
 			end
 			ctx.Bus:Publish("StageCleared", player, { region = payload.region, stage = stage, first = first })
@@ -489,6 +506,7 @@ function Expeditions.Init(context)
 			ctx:Fail("That slot is saved for your caravan")
 		end
 		requireRegion(player, payload.region)
+		requireStage(player, payload.region, payload.stage)
 		local cleared = Expeditions:Cleared(player, payload.region)
 		if payload.stage > cleared and payload.stage ~= 1 then
 			ctx:Fail("Clear this stage before exploring it")

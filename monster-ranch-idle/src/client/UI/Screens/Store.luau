@@ -364,6 +364,9 @@ return {
 				if d.event then
 					local chip = Widgets.Chip({ Text = "EVENT", Color = C.Token, Parent = cell })
 					chip.Position = UDim2.fromOffset(8, 8)
+				elseif d.set == "beach" then
+					local chip = Widgets.Chip({ Text = "BEACH", Color = C.Blue, Parent = cell })
+					chip.Position = UDim2.fromOffset(8, 8)
 				end
 				buyButton(cell, d.price, d.event, false, function()
 					local ok = Util.requestOnce(ctx, "Shop.BuyDecor", { decor = d.id })

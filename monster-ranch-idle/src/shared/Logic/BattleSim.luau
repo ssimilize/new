@@ -383,14 +383,13 @@ local function lifeStageFor(level: number): number
 	return 3
 end
 
--- Level and rarity for a stage, interpolated across the region's ranges.
+-- Level and rarity for a stage, interpolated across its band's ranges (Regions.Band).
 function BattleSim.StageScaling(regionId: string, stage: number): (number, number)
-	local region = Regions.ById[regionId]
-	assert(region, "unknown region " .. tostring(regionId))
-	local t = if Regions.StagesPerRegion > 1 then (stage - 1) / (Regions.StagesPerRegion - 1) else 0
+	local band = Regions.Band(regionId, stage)
+	local t = if band.last > band.first then (stage - band.first) / (band.last - band.first) else 0
 	t = math.clamp(t, 0, 1)
-	local level = round(region.levels[1] + (region.levels[2] - region.levels[1]) * t)
-	local lo, hi = region.rarity[1], region.rarity[2]
+	local level = round(band.levels[1] + (band.levels[2] - band.levels[1]) * t)
+	local lo, hi = band.rarity[1], band.rarity[2]
 	local rarity = math.clamp(lo + math.floor(t * (hi - lo + 1)), lo, hi)
 	return level, rarity
 end
@@ -448,9 +447,10 @@ function BattleSim.BuildEnemies(regionId: string, stage: number, seed: number)
 		return { bossRecord(boss, level, rarity) }
 	end
 	local rng = Rng.new(Rng.seed("wave", regionId, stage, seed))
+	local lines = Regions.Band(regionId, stage).enemyLines
 	local wave = {}
 	for _ = 1, Regions.WaveSize do
-		local lineId = rng:Pick(region.enemyLines)
+		local lineId = rng:Pick(lines)
 		local adults = Species.ById[lineId].forms[3]
 		local record = enemyRecord(lineId, level, rarity, rng:Pick(adults).id)
 		table.insert(wave, record)
@@ -474,10 +474,11 @@ function BattleSim.RecommendedPower(regionId: string, stage: number): number
 		return scaledPower(bossRecord(boss, level, rarity))
 	end
 	local total = 0
-	for _, lineId in region.enemyLines do
+	local lines = Regions.Band(regionId, stage).enemyLines
+	for _, lineId in lines do
 		total += scaledPower(enemyRecord(lineId, level, rarity, nil))
 	end
-	return math.floor(total / #region.enemyLines * Regions.WaveSize + 0.5)
+	return math.floor(total / #lines * Regions.WaveSize + 0.5)
 end
 
 return BattleSim
