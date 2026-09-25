@@ -94,8 +94,16 @@ const avatarAt = new THREE.Vector3(cx, 0, cz).addScaledVector(toHub, 58).addScal
   part(1, 2, 1, [164, 189, 71], 0.5, 1, 0);
   const head = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.2, 20), new THREE.MeshStandardMaterial({ color: srgb([245, 205, 48]) }));
   head.position.set(0, 4.6, 0); head.castShadow = true; g.add(head);
-  g.position.copy(avatarAt);
-  g.lookAt(new THREE.Vector3(cx, 0, cz));
+  if (scene.avatar) {
+    // The harness character's root part: the blocky body stands 3 studs below it.
+    const [x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22] = scene.avatar;
+    g.matrixAutoUpdate = false;
+    g.matrix.set(r00, r01, r02, x, r10, r11, r12, y - 3, r20, r21, r22, z, 0, 0, 0, 1);
+    g.rotation.setFromRotationMatrix(g.matrix);
+  } else {
+    g.position.copy(avatarAt);
+    g.lookAt(new THREE.Vector3(cx, 0, cz));
+  }
   world.add(g);
 }
 

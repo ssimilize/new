@@ -106,6 +106,31 @@ Api.Actions = {
 		returns = "{ stars: number }  -- again = change your vote",
 	},
 
+	-- Surf Shack (2.0, Summer Splash) ----------------------------------------------------
+	["Surf.Start"] = { schema = T.none, rate = 0.5, returns = "{ run: number, seed: number, duration: number }" },
+	["Surf.Finish"] = {
+		schema = T.struct({
+			run = T.integer(1),
+			inputs = T.array(
+				T.struct({ t = T.number(0, Config.Surf.Duration), lane = T.integer(1, Config.Surf.Lanes) }),
+				Config.Surf.MaxInputs
+			),
+		}),
+		rate = 1,
+		returns = "{ score, shells, hits, survived, tokens, best }",
+	},
+
+	-- Riding (2.0) ------------------------------------------------------------------------
+	["Riding.Mount"] = { schema = T.struct({ id = id }), rate = 2, returns = "{ speed: number }" },
+	["Riding.Dismount"] = { schema = T.none, rate = 2, returns = "nil" },
+
+	-- Sky Islands (2.0) -----------------------------------------------------------------
+	["SkyIslands.Collect"] = {
+		schema = T.struct({ crystal = T.integer(1, #Config.SkyIslands.Crystals) }),
+		rate = 2,
+		returns = "{ rewards: { Reward }, nextAt: number }",
+	},
+
 	-- Egg hunt (1.4, Spring Bloom) -----------------------------------------------------
 	["EggHunt.Find"] = {
 		schema = T.struct({ spot = T.integer(1, #Config.EggHunt.Spots) }),
@@ -370,6 +395,8 @@ Api.State = {
 		EggHunt = "{ round, found = { spotIndex }, day, finds, total }",
 		Accessories = "{ owned = { [accessoryId]: n } }  -- in storage; worn ones are Monster.acc",
 		Contests = "{ shows, wins, podiums, best, votes }",
+		SkyIslands = "{ taken = { [crystalIndex as string]: unix }, day, count, total }",
+		Surf = "{ best, runs }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n } }",
 	},
@@ -386,6 +413,7 @@ Api.State = {
 		Clubs = "{ club: ClubView | false }  -- see Systems/Clubs header",
 		Market = "{ mail = { coins, items } }  -- mail waiting that could not be collected yet (e.g. ranch full)",
 		Contests = "{ entered: monsterId|false, votes = { [entryIndex]: stars } }  -- this show",
+		Riding = "{ mount: monsterId|false, speed: number }",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
@@ -395,6 +423,7 @@ Api.State = {
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
 		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",
 		EggHunt = "{ active: boolean, round, endsAt, spots = { spotIndex } }  -- eggs hidden this round (Config.EggHunt.Spots)",
+		Riding = "{ riders = { ['u'..userId]: { appearance, speed } } }",
 		Contests = "{ state: 'idle'|'entry'|'runway'|'results', show, theme, endsAt, nextAt, entries = { { userId, name, appearance } }, current, results = { { userId, name, appearance, score, votes, rank } } }",
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open } } }  -- club tags of players here",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
@@ -436,6 +465,9 @@ Api.Topics = {
 	Rebirthed = "(player, { stars: number, dust: number, kept: number })",
 	EggFound = "(player, { spot: number, round: number, complete: boolean })",
 	AccessoryGained = "(player, { id: string, amount: number, source: 'shop'|'reward' })",
+	CrystalCollected = "(player, { crystal: number })",
+	Mounted = "(player, { id: string, speed: number })",
+	SurfRun = "(player, { score: number, shells: number })",
 	ContestEntered = "(player, { show: number, theme: string })",
 	ContestVoted = "(player, {})",
 	ContestPlaced = "(player, { rank: number, entries: number, theme: string, score: number })",

@@ -119,6 +119,30 @@ Regions.List = {
 		eggs = { { egg = "crystal", perMinute = 0.004, fromStage = 1 }, { egg = "royal", perMinute = 0.0004, fromStage = 10 } },
 		colors = { sky = "#3B2F5C", ground = "#4D4466" },
 	},
+	-- Update 2.0 · Sky Islands: the Light & Void region, reached through the Sky Islands.
+	{
+		id = "sky",
+		name = "Sky Islands",
+		order = 5,
+		unlock = "region_sky",
+		elements = { "light", "void" },
+		enemyLines = { "lumipup", "halobee", "dawnling", "nullkit", "hollowisp", "gravitoad" },
+		levels = { 48, 64 },
+		rarity = { 5, 6 },
+		bosses = {
+			[10] = { name = "The Sunlit Warden", line = "dawnling", form = "daybreakseraph" },
+			[20] = {
+				name = "Umbra, the Hungry Star",
+				line = "gravitoad",
+				form = "eventhorizon",
+				firstClear = { { kind = "egg", id = "sky", amount = 2 } },
+			},
+		},
+		food = "sweet",
+		eggs = { { egg = "sky", perMinute = 0.003, fromStage = 1 }, { egg = "royal", perMinute = 0.0005, fromStage = 10 } },
+		colors = { sky = "#BFE3FF", ground = "#F4F7FF" },
+		added = "2.0",
+	},
 }
 
 Regions.ById = {}

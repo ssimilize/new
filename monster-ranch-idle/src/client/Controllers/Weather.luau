@@ -145,6 +145,14 @@ local PROFILES = {
 		sky = hex("#FFD6E8"),
 		pollen = 120,
 	},
+	-- Summer Splash (2.0): a bright, warm beach day.
+	beachday = {
+		tint = hex("#FFF4DE"),
+		brightness = 0.05,
+		saturation = 0.3,
+		bloom = 0.5,
+		sky = hex("#7FD4FF"),
+	},
 	aurora = {
 		saturation = 0.25,
 		bloom = 0.6,

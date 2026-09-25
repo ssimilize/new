@@ -17,6 +17,10 @@
 	    Barn                         Model (attr PlotId) with Body, Roof*, Door
 	    Gate                         Model with PostL, PostR, Sign (client adds the owner name)
 	  SpawnLocation
+	  Sky/Islands/<id>               Model: Top (walkable grass disc), Rock* underside, Tree*
+	  Sky/Bridges/Bridge<i>          cloud bridges between island edges
+	  Sky/LaunchPad, Sky/ReturnPad   pads (attr SkyPad = "launch"|"return"); the client adds prompts
+	  Sky/Gate                       arch (attr Screen = "Expeditions", Region = "sky")
 
 	Plot frame: plot-local +X points at the hub (Config.World.Plots[i].facing is the compass
 	heading of that direction, 0 = +Z, 90 = +X). Pen, incubator, barn and statue offsets are
@@ -426,6 +430,100 @@ local function buildSpawn(World, root: Instance)
 	count += 1
 end
 
+-- Update 2.0 · Sky Islands --------------------------------------------------------------
+
+local SKY = {
+	rock = hex("#B7A993"),
+	rockDark = hex("#8E7F6A"),
+	cloud = hex("#F4FAFF"),
+	pad = hex("#8EC9FF"),
+	padRim = hex("#FFFFFF"),
+	gate = hex("#F2C94C"),
+	trunk = hex("#9C6130"),
+	leaves = hex("#7FD18B"),
+}
+
+local function buildSky(World, root: Instance)
+	local Sky = World.Sky
+	if not Sky then
+		return
+	end
+	local sky = Instance.new("Folder")
+	sky.Name = "Sky"
+	sky.Parent = root
+	local islands = Instance.new("Folder")
+	islands.Name = "Islands"
+	islands.Parent = sky
+	local byId = {}
+	for _, def in Sky.islands do
+		byId[def.id] = def
+		local model = Instance.new("Model")
+		model.Name = def.id
+		model:SetAttribute("Island", def.name)
+		model.Parent = islands
+		local c = v3(def.center)
+		local r = def.radius
+		-- Grass top (its top face is `center`), then a rocky underside that narrows.
+		disc("Top", r * 2, 2, c - Vector3.new(0, 1, 0), hex(def.grass), model, { Material = Enum.Material.Grass })
+		disc("Rock1", r * 1.9, 6, c - Vector3.new(0, 5, 0), SKY.rock, model, { Material = Enum.Material.Slate, CanCollide = false })
+		disc("Rock2", r * 1.35, 8, c - Vector3.new(0, 12, 0), SKY.rockDark, model, { Material = Enum.Material.Slate, CanCollide = false })
+		disc("Rock3", r * 0.7, 10, c - Vector3.new(0, 20, 0), SKY.rockDark, model, { Material = Enum.Material.Slate, CanCollide = false })
+		-- Two trees at fixed spots on each island.
+		for i, angle in { 40, 220 } do
+			local a = math.rad(angle + #def.id * 17)
+			local at = c + Vector3.new(math.cos(a) * r * 0.6, 0, math.sin(a) * r * 0.6)
+			block("Trunk" .. i, Vector3.new(1.6, 7, 1.6), CFrame.new(at + Vector3.new(0, 3.5, 0)), SKY.trunk, model)
+			local leaves =
+				block("Tree" .. i, Vector3.new(8, 7, 8), CFrame.new(at + Vector3.new(0, 9, 0)), SKY.leaves, model, { CanCollide = false })
+			leaves.Shape = Enum.PartType.Ball
+		end
+	end
+
+	local bridges = Instance.new("Folder")
+	bridges.Name = "Bridges"
+	bridges.Parent = sky
+	for i, pair in Sky.bridges do
+		local a, b = byId[pair[1]], byId[pair[2]]
+		if a and b then
+			local ca, cb = v3(a.center), v3(b.center)
+			local flat = Vector3.new(cb.X - ca.X, 0, cb.Z - ca.Z).Unit
+			local from = ca + flat * (a.radius - 2) - Vector3.new(0, 0.5, 0)
+			local to = cb - flat * (b.radius - 2) - Vector3.new(0, 0.5, 0)
+			local mid = (from + to) / 2
+			block(
+				"Bridge" .. i,
+				Vector3.new(8, 1, (to - from).Magnitude),
+				CFrame.lookAt(mid, to),
+				SKY.cloud,
+				bridges,
+				{ Material = Enum.Material.SmoothPlastic }
+			)
+		end
+	end
+
+	local launch = disc("LaunchPad", 12, 1, v3(Sky.launchPad) + Vector3.new(0, 0.5, 0), SKY.pad, sky, { Material = Enum.Material.Neon })
+	launch:SetAttribute("SkyPad", "launch")
+	disc("LaunchPadRim", 14, 0.8, v3(Sky.launchPad) + Vector3.new(0, 0.3, 0), SKY.padRim, sky)
+	local back = disc("ReturnPad", 10, 1, v3(Sky.returnPad) + Vector3.new(0, 0.5, 0), SKY.pad, sky, { Material = Enum.Material.Neon })
+	back:SetAttribute("SkyPad", "return")
+
+	local gate = Instance.new("Model")
+	gate.Name = "Gate"
+	gate:SetAttribute("Screen", "Expeditions")
+	gate:SetAttribute("Region", "sky")
+	gate.Parent = sky
+	local g = v3(Sky.gate)
+	block("PostL", Vector3.new(2, 14, 2), CFrame.new(g + Vector3.new(-7, 7, 0)), SKY.gate, gate)
+	block("PostR", Vector3.new(2, 14, 2), CFrame.new(g + Vector3.new(7, 7, 0)), SKY.gate, gate)
+	block("Lintel", Vector3.new(18, 2, 2.4), CFrame.new(g + Vector3.new(0, 15, 0)), SKY.gate, gate)
+	local portal = block("Portal", Vector3.new(12, 13, 0.4), CFrame.new(g + Vector3.new(0, 7, 0)), hex("#BFE3FF"), gate, {
+		Material = Enum.Material.Neon,
+		Transparency = 0.35,
+		CanCollide = false,
+	})
+	portal:SetAttribute("SkyGate", true)
+end
+
 -- Builds the world and returns (folder, partCount). The folder is not parented yet.
 function Build.world(Config): (Folder, number)
 	count = 0
@@ -448,6 +546,7 @@ function Build.world(Config): (Folder, number)
 	end
 
 	buildSpawn(World, root)
+	buildSky(World, root)
 	root:SetAttribute("PartCount", count)
 	return root, count
 end

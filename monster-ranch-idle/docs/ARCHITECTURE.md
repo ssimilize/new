@@ -179,6 +179,12 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Accessories**: `Accessories:Add(player, id, n?)` (Rewards kind `accessory`), `:Count(player, id)`, `:Collection(player)`. Storage is `profile.Accessories.owned`; worn items are `Monster.acc`. Returns items to storage on `MonsterRemoved`. Publishes `AccessoryGained`. Prices use gems or the new `ribbons` currency (Contest Ribbons, a Currency key and a Rewards kind).
 - **Contests**: clock-driven shows (`Config.Contests.Show(now)`, `ThemeFor(show)`, `JudgeScore(acc, theme)`); per-server state in `global.Contests`, votes in server memory only. Actions `Contests.Enter/Withdraw/Vote`. Prizes through `Rewards:Grant`. Publishes `ContestEntered`, `ContestVoted`, `ContestPlaced`.
 
+### 2.0: SkyIslands, Riding, Surf
+- **Elements**: `Config.Elements` has a third group, the Light/Void pair (triangle "C"): each beats the other and is neutral to the rest. Nothing else changes: `Elements.Multiplier` reads `beats`.
+- **SkyIslands**: `SkyIslands.Collect { crystal }` (wind crystals on the floating islands in `Config.World.Sky`, built by World/Build under `Workspace.World.Sky`). Per-player respawn timers in `profile.SkyIslands.taken`, a daily cap, and a character distance check. Travel is client-side (launch/return pads). Publishes `CrystalCollected`.
+- **Riding**: `Riding.Mount { id }` / `Riding.Dismount`. `global.Riding.riders` tells every client which mount to draw under each rider; `session.Riding.speed` is the rider's walk speed (`Config.Riding.SpeedFor`). Dismounts when the monster leaves, becomes busy, or the player leaves. Publishes `Mounted`. `MonsterModel.Build` takes `opts.scale` (mounts are 1.8×).
+- **Surf**: `Surf.Start` → seed; `Surf.Finish { run, inputs }` replays the lane changes with `Logic/Surf.Simulate` (the client never reports a score). Wall-clock checks against the simulated run; Seashells through `Events:Grant`. Publishes `SurfRun`.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 

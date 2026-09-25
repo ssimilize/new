@@ -126,6 +126,17 @@ function MonsterDetail.Build(ctx)
 		Parent = panel.HeaderRight,
 	})
 
+	-- Update 2.0: ride an Adult around the world (Riding.Mount / Riding.Dismount).
+	local rideButton = Button.new({
+		Name = "Ride",
+		Text = "Ride",
+		Color = C.Green,
+		Size = UDim2.fromOffset(84, 44),
+		TextSize = 18,
+		LayoutOrder = 5,
+		Parent = panel.HeaderRight,
+	})
+
 	-- Left: portrait ----------------------------------------------------------------
 	local portrait = New("Frame", {
 		Name = "Portrait",
@@ -614,6 +625,9 @@ function MonsterDetail.Build(ctx)
 			vchip.LayoutOrder = 2
 		end
 		lockButton:SetText(if m.locked then "Locked" else "Lock")
+		local ridingId = StoreKit.tbl(store, "session.Riding").mount
+		rideButton:SetText(if ridingId == currentId then "Get off" else "Ride")
+		rideButton:SetVisible(m.stage == 3)
 		lockButton:SetColor(if m.locked then C.Orange else C.Gray)
 
 		-- Portrait
@@ -775,6 +789,23 @@ function MonsterDetail.Build(ctx)
 
 	feedButton:SetOnClick(openFeed)
 	renameButton:SetOnClick(openRename)
+	rideButton:SetOnClick(function()
+		local m = monster()
+		if not m then
+			return
+		end
+		local riding = StoreKit.tbl(store, "session.Riding").mount
+		if riding == currentId then
+			StoreKit.request(ctx, "Riding.Dismount")
+		elseif m.stage ~= 3 then
+			ctx:Toast("Only Adults are big enough to ride", "info")
+		else
+			local ok = StoreKit.request(ctx, "Riding.Mount", { id = currentId })
+			if ok then
+				ctx.Router:Close("MonsterDetail")
+			end
+		end
+	end)
 	styleButton:SetOnClick(function()
 		if currentId and ctx.Router:Has("Wardrobe") then
 			ctx.Router:Open("Wardrobe", { id = currentId })
@@ -854,7 +885,7 @@ function MonsterDetail.Build(ctx)
 		)
 	end)
 
-	local watch = StoreKit.watch(store, { "profile.Monsters", "profile.Currency" }, function()
+	local watch = StoreKit.watch(store, { "profile.Monsters", "profile.Currency", "session.Riding" }, function()
 		refresh()
 	end)
 

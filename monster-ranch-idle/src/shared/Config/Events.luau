@@ -41,6 +41,14 @@ Events.List = {
 		token = { name = "Petals", glyph = "✿", color = "#FF9EC7" },
 		color = "#FF7AB6",
 	},
+	{
+		id = "summersplash",
+		name = "Summer Splash",
+		startsAt = 1814626800, -- Sat 3 Jul 2027, 15:00 UTC (update 2.0)
+		endsAt = 1818255600, -- Sat 14 Aug 2027
+		token = { name = "Seashells", glyph = "❂", color = "#FFB347" },
+		color = "#3FB6D9",
+	},
 }
 
 -- Tokens earned by playing while an event runs (all capped by `dailyCap` per UTC day).

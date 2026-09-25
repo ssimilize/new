@@ -1,5 +1,7 @@
--- Six elements in two rock-paper-scissors triangles.
+-- Eight elements: two rock-paper-scissors triangles and a pair.
 -- Triangle A: ember > sprout > tide > ember.   Triangle B: spark > gloom > stone > spark.
+-- Pair C (update 2.0): light and void each beat the other and are neutral to the rest,
+-- so a Light-vs-Void fight is a race where both sides hit hard.
 local Elements = {}
 
 Elements.List = {
@@ -9,6 +11,26 @@ Elements.List = {
 	{ id = "spark", name = "Spark", color = "#F6CD3A", light = "#FFF4C2", accent = "#FFE680", beats = "gloom", triangle = "B" },
 	{ id = "gloom", name = "Gloom", color = "#9168D0", light = "#E4D6F8", accent = "#C9A8FF", beats = "stone", triangle = "B" },
 	{ id = "stone", name = "Stone", color = "#A68B70", light = "#E6D9C8", accent = "#EDE3D3", beats = "spark", triangle = "B" },
+	{
+		id = "light",
+		name = "Light",
+		color = "#F2C94C",
+		light = "#FFF6D6",
+		accent = "#FFFBEA",
+		beats = "void",
+		triangle = "C",
+		added = "2.0",
+	},
+	{
+		id = "void",
+		name = "Void",
+		color = "#3B3470",
+		light = "#DAD5F2",
+		accent = "#5CE1E6",
+		beats = "light",
+		triangle = "C",
+		added = "2.0",
+	},
 }
 
 Elements.ById = {}

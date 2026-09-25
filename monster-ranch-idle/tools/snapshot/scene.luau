@@ -83,6 +83,7 @@ local function dress(p, m, items: { string })
 end
 
 local function build(p, pens: number, cast)
+	local ids = {}
 	levelTo(p, 32)
 	finishTutorial(p)
 	local Currency = h:System("Currency")
@@ -95,6 +96,7 @@ local function build(p, pens: number, cast)
 	end
 	for i, entry in cast do
 		local m = adult(p, entry.line, entry.rarity, entry.spec)
+		table.insert(ids, m.id)
 		if entry.acc then
 			dress(p, m, entry.acc)
 		end
@@ -113,13 +115,14 @@ local function build(p, pens: number, cast)
 		end)
 		h:Advance(0.4)
 	end
+	return ids
 end
 
 local me = h:Join(1001, "Rancher")
 local friend = h:Join(1002, "Mia")
 h:Section(me, "Rebirth").stars = 1
 h:System("Shop"):GrantTheme(me, "starfield")
-build(me, 4, {
+local cast = build(me, 4, {
 	{ line = "cindlet", rarity = 4, spec = { variant = 1 }, pen = 1, acc = { "royal_crown", "royal_cape" } },
 	{ line = "mossbun", rarity = 3, spec = {}, pen = 1, acc = { "flower_crown" } },
 	{ line = "zappip", rarity = 5, spec = { muts = { "charged" } }, pen = 1, acc = { "sunglasses" } },
@@ -149,6 +152,29 @@ h:Advance(3)
 
 local c = ClientHarness.new(h, me, { viewport = Vector2.new(1280, 720) })
 c:Advance(4)
+
+-- Ride the rainbow Cometkit in front of the ranch (2.0 Riding), standing where physics
+-- would hold a rider: the root part floats HipHeight + 1 above the ground.
+local plotIndexNow = 1
+for i, plot in h:Client(me).global.Plots or {} do
+	if plot.userId == me.UserId then
+		plotIndexNow = i
+	end
+end
+do
+	local plotDef = Config.World.Plots[plotIndexNow]
+	local cx, cz = plotDef.center[1], plotDef.center[3]
+	local len = math.sqrt(cx * cx + cz * cz)
+	local hx, hz = -cx / len, -cz / len
+	-- Through the client: h:Call would hand the session patch to TestKernel's mirror instead.
+	c:Request("Riding.Mount", { id = cast[10] })
+	c:Advance(1)
+	local humanoid = c.character:FindFirstChildOfClass("Humanoid")
+	local hip = if humanoid then humanoid.HipHeight else 2
+	local at = roblox.Vector3.new(cx + hx * 58 + hz * 8, hip + 1, cz + hz * 58 - hx * 8)
+	c.character:PivotTo(roblox.CFrame.lookAt(at, roblox.Vector3.new(cx, hip + 1, cz)))
+	c:Advance(0.5)
+end
 if SCREEN then
 	c:Open(SCREEN)
 	c:Advance(2)
@@ -303,6 +329,7 @@ fs.writeFile(
 		plot = { center = plot.center, facing = plot.facing, index = plotIndex },
 		weather = h:Client(me).global.Weather and h:Client(me).global.Weather.id or "clear",
 		parts = parts,
+		avatar = { c.character.PrimaryPart.CFrame:GetComponents() },
 		gui = guis,
 	})
 )
