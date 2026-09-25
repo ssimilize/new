@@ -41,5 +41,7 @@ return {
 		"Settings",
 		"Leaderboards",
 		"Clubs",
+		-- M3 · Market Day (1.3)
+		"Market",
 	},
 }
