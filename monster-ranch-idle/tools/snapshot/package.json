@@ -1,0 +1,13 @@
+{
+  "name": "monster-ranch-snapshot",
+  "private": true,
+  "description": "Renders tools/snapshot/scene.json (from scene.luau) to a PNG with three.js in headless Chromium.",
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.55.0",
+    "three": "^0.186.0"
+  }
+}
