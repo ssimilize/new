@@ -269,6 +269,8 @@ return function(t)
 
 			-- The buyer browses, opens the confirm (price + chart) and buys.
 			local buyerCoins, buyerCount = coins(h, buyer), monsterCount(h, buyer)
+			-- The seller is on this server, so their mail can arrive as soon as the sale lands.
+			local sellerCoins = coins(h, seller)
 			local browse = b:Open("Market")
 			b:Advance(1)
 			local row = browse:FindFirstChild("Listing_" .. listingId, true)
@@ -290,23 +292,24 @@ return function(t)
 			expect(got).toBe(true)
 			expect(browse:FindFirstChild("Listing_" .. listingId, true)).toBeNil()
 
-			-- The seller's mail arrives within one sync and shows as a toast.
-			local sellerCoins = coins(h, seller)
-			local arrived = false
-			for _ = 1, Market.MailSyncSeconds + 5 do
-				a:Advance(1)
+			-- The seller's mail arrives within one sync (at once here: same server) and shows as a
+			-- toast, which only stays up a few seconds, so watch for it from the moment of the sale.
+			local arrived, toasted = false, false
+			for _ = 1, (Market.MailSyncSeconds + 5) * 2 do
+				toasted = toasted or a:HasText("sold for 5K", a.kernel.UI.Overlay)
 				for _, e in a.events do
 					if e.name == "Market.MailCollected" then
 						arrived = true
 					end
 				end
-				if arrived then
+				if arrived and toasted then
 					break
 				end
+				a:Advance(0.5)
 			end
 			expect(arrived).toBe(true)
+			expect(toasted).toBe(true)
 			expect(coins(h, seller)).toBe(sellerCoins + Market.Proceeds(5000, false))
-			expect(a:HasText("sold for 5K", a.kernel.UI.Overlay)).toBe(true)
 			expectClean(a)
 			expectClean(b)
 		end)
