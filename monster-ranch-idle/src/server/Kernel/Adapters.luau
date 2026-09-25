@@ -233,6 +233,27 @@ function Adapters.Roblox()
 			end)
 			return ok, result
 		end,
+		-- Club Wars ladder (3.1): one OrderedDataStore per week, club id -> war points.
+		IndexWar = function(week: number, id: string, points: number): boolean
+			return (
+				pcall(function()
+					DataStoreService:GetOrderedDataStore("MonsterRanch_ClubWars_w" .. tostring(week)):SetAsync(id, math.floor(points))
+				end)
+			)
+		end,
+		TopWar = function(week: number, count: number): (boolean, { any })
+			local ok, rows = pcall(function()
+				local page = DataStoreService:GetOrderedDataStore("MonsterRanch_ClubWars_w" .. tostring(week))
+					:GetSortedAsync(false, math.clamp(count, 1, 100))
+					:GetCurrentPage()
+				local out = {}
+				for _, entry in page do
+					table.insert(out, { id = entry.key, points = entry.value })
+				end
+				return out
+			end)
+			return ok, if ok then rows else {}
+		end,
 	}
 
 	-- Market (update 1.3). Listing records (with the escrowed item) live in a DataStore

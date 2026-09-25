@@ -190,6 +190,22 @@ Quests.Achievements = {
 		target = 1,
 		reward = { { kind = "gems", amount = 150 } },
 	},
+	-- Update 3.1 · Club Wars
+	{
+		id = "club_war",
+		text = "Claim a Club Wars reward",
+		topic = "ClubWarClaimed",
+		target = 1,
+		reward = { { kind = "gems", amount = 50 } },
+	},
+	{
+		id = "club_war_gold",
+		text = "Reach the Gold league with your club",
+		topic = "ClubWarClaimed",
+		filter = { league = "gold" },
+		target = 1,
+		reward = { { kind = "egg", id = "crystal", amount = 1 }, { kind = "ribbons", amount = 30 } },
+	},
 	-- Update 3.0 · Year Two
 	{
 		id = "clear_dunes",
@@ -525,6 +541,33 @@ Quests.Seasons = {
 			tier({ { kind = "ribbons", amount = 60 } }, { { kind = "monster", id = "sandskip", rarity = 5, amount = 1 } }),
 		},
 	},
+	-- Update 3.1 · Season 7 "Club Wars": Lantern Eggs, club-friendly rewards, a Legendary Tinselkit.
+	{
+		season = 7,
+		name = "Club Wars",
+		startsAt = 1832166000, -- Sat 22 Jan 2028, 15:00 UTC (right after Season 6)
+		endsAt = 1835794800, -- Sat 4 Mar 2028, 15:00 UTC
+		xpPerTier = 300,
+		xpPerDaily = 100,
+		xpPerAchievement = 200,
+		tiers = {
+			tier({ { kind = "coins", amount = 30000 } }, { { kind = "gems", amount = 30 } }),
+			tier({ { kind = "treats", amount = 25 } }, { { kind = "egg", id = "lantern", amount = 1 } }),
+			tier({ { kind = "ribbons", amount = 25 } }, { { kind = "egg", id = "crystal", amount = 1 } }),
+			tier({ { kind = "gems", amount = 20 } }, { { kind = "stardust", amount = 120 } }),
+			tier({ { kind = "egg", id = "grove", amount = 2 } }, { { kind = "egg", id = "lantern", amount = 1 } }),
+			tier({ { kind = "ribbons", amount = 30 } }, { { kind = "gems", amount = 60 } }),
+			tier({ { kind = "food", id = "random", amount = 30 } }, { { kind = "egg", id = "raid", amount = 1 } }),
+			tier({ { kind = "coins", amount = 400000 } }, { { kind = "egg", id = "dunes", amount = 1 } }),
+			tier({ { kind = "gems", amount = 25 } }, { { kind = "egg", id = "royal", amount = 1 } }),
+			tier({ { kind = "coins", amount = 900000 } }, { { kind = "stardust", amount = 200 } }),
+			tier({ { kind = "egg", id = "crystal", amount = 1 } }, { { kind = "gems", amount = 80 } }),
+			tier({ { kind = "stardust", amount = 80 } }, { { kind = "egg", id = "lantern", amount = 2 } }),
+			tier({ { kind = "gems", amount = 30 } }, { { kind = "egg", id = "celestial", amount = 1 } }),
+			tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "egg", id = "raid", amount = 2 } }),
+			tier({ { kind = "ribbons", amount = 60 } }, { { kind = "monster", id = "tinselkit", rarity = 5, amount = 1 } }),
+		},
+	},
 }
 Quests.Pass = Quests.Seasons[1] -- kept for older call sites; prefer Quests.PassAt(now)
 
@@ -543,6 +586,11 @@ Quests.Codes = {
 	RANCH = { reward = { { kind = "gems", amount = 50 } } },
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
 	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
+	-- Update 3.1 launch code: Lantern Coins for the Lunar Lanterns rerun (expires 26 Feb 2028).
+	CLUBWARS = {
+		reward = { { kind = "token", id = "lunarlanterns", amount = 150 }, { kind = "gems", amount = 50 } },
+		expires = 1835190000,
+	},
 	-- Frostfall returns (3.0.1): Snowflakes for the rerun (expires 15 Jan 2028).
 	FROSTFALL27 = { reward = { { kind = "token", id = "frostfall", amount = 150 } }, expires = 1831561200 },
 	-- Update 3.0 launch code (expires 1 Jan 2028).

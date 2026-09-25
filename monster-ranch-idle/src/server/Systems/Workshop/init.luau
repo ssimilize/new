@@ -36,6 +36,7 @@
 	  Workshop.Moderate { design, verdict = "restore"|"remove" }
 	Worn copies come back to storage through Accessories:Return ("ugc:" handler).
 	Publishes DesignPublished (player, { design }), DesignBought (player, { design, creator }).
+	Public API: Workshop:Copy(player, designId) -> copy?  (a design the player owns)
 ]]
 
 local Workshop = {
@@ -521,6 +522,19 @@ local function moderate(player, id: string, verdict: string)
 	end
 	ctx:Log("design %s %s by moderator %d", id, verdict, player.UserId)
 	return { verdict = verdict }
+end
+
+-- Public API ----------------------------------------------------------------------------
+
+-- A stored design the player owns (a copy in storage, or one they designed), or nil (3.1,
+-- club banners).
+function Workshop:Copy(player, designId: string)
+	local s = ctx:Section(player)
+	local copy = s and s.copies[designId]
+	if copy and ((copy.n or 0) > 0 or table.find(s.designs, designId)) then
+		return copy
+	end
+	return nil
 end
 
 -- Lifecycle ----------------------------------------------------------------------------

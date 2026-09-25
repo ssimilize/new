@@ -23,7 +23,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Social | S5 | 🔌 | `Social.spec` | friend boost (`friends` rate modifier), pets/likes, server + global broadcasts (MessagingService) |
 | Trade | S5 | 🔌 | `Trade.spec` | request → offer → ready → confirm countdown; atomic swap with capacity/egg caps, rollback, private log |
 | Plots | S5 | 🔌 | `Plots.spec` | 6 public plots, lowest free on PlayerReady, throttled rebuilds (≤ 1 / 2 s) |
-| Clubs | S5 | 🔌 | `Clubs.spec` | 1.2: clubs of ≤ 30 across servers (`Services.Clubs`, atomic Update), roles, weekly goals + club boss, batched sync every 60 s + Messaging refresh; rules in `Record.luau` |
+| Clubs | S5 | 🔌 | `Clubs.spec`, `ClubWars.spec` | 3.1: Club Wars (war points from raids / racing / Stampedes, weekly ladder across servers, leagues and Champions, ClaimWar), Workshop banners. 1.2: clubs of ≤ 30 across servers (`Services.Clubs`, atomic Update), roles, weekly goals + club boss, batched sync every 60 s + Messaging refresh; rules in `Record.luau` |
 | Market | S5 | 🔌 | `Market.spec` | 1.3: listings with escrow across servers (`Services.Market`), 8% tax (4% club post), one winner per sale, two-phase deduplicated mailbox; every cross-server step saves an intent task first (`ctx:SaveNow`) so crashes and lost replies never duplicate or lose items or coins |
 | PriceHistory | S5 | 🔌 | `PriceHistory.spec` | 1.3: daily buckets per item key (`Logic/PriceHistory`), `PriceHistory.Get` with a suggested price, retried writes; club sales excluded |
 | Events | S6 | 🔌 | `LunarLanterns.spec`, `GoLive.spec` | 3.0.1: `reruns` windows (Frostfall returns). 1.2: event calendar (`Config/Events`, `Flags.ActiveEvent` override), `global.Events`, event tokens for play with a daily cap |

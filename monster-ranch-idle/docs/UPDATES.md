@@ -3,6 +3,46 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.1 · Club Wars + Lunar Lanterns
+
+Launch Sat 5 Feb 2028. Everything is dated in config (Club Wars start, the event rerun and
+Season 7 on 22 Jan), so this update can be published any time before 22 Jan.
+
+**For players**
+- **Club Wars** (from 5 Feb 2028): every club is on a weekly ladder across all servers.
+  - **Scoring:** members earn war points for their club by winning raids (25), from Racing Cup
+    points (×5) and by finishing Stampedes (5, +10 in the top 3), up to 150 per member per day.
+  - **Leagues:** at the end of the week (Saturday 15:00 UTC) the club's points put it in Bronze,
+    Silver (600), Gold (1,500) or Diamond (3,000). The top 3 clubs on the ladder are Champions.
+  - **Rewards:** every member who scored claims the club's reward during the next week (gems,
+    ribbons, a Crystal Egg in Gold, Royal Eggs in Diamond and for Champions).
+  - A **Club Wars** tab shows your league, progress to the next one, how to score, the top 10
+    ladder and last week's result with a Claim button.
+- **Club banners:** owners and officers can hang a Workshop design they own as the club
+  banner. It shows in the club header and on club tags around the hub.
+- **Lunar Lanterns returns** (5 Feb – 26 Feb 2028): Lantern Coins, the Lantern Egg, Lantern Night
+  and its Glow mutation come back. Lanternwyrms raised on sweet food now grow into the new
+  **Moonlit Dragon** (spicy food still makes the Lantern Dragon).
+- **Ranch Pass Season 7, "Club Wars"** (22 Jan – 4 Mar 2028): Lantern Eggs, ribbons, and a
+  Legendary Tinselkit.
+- **Code:** `CLUBWARS` gives 150 Lantern Coins and 50 gems. It expires on 26 Feb 2028.
+- **New achievements:** claim a Club Wars reward, and reach the Gold league.
+
+**In the code**
+- **Clubs:**
+  - `Config.Clubs.War` (sources, leagues, champion, daily cap, ladder) and `Config.Clubs.League`.
+  - War points collect in the same pending buffer as goal progress and are written with the
+    club's atomic sync. `Record.rollWeek` keeps `lastWar` and each member's share.
+  - `Services.Clubs.IndexWar` / `TopWar` hold the weekly ladder (one OrderedDataStore per
+    week). Servers read the top 10 every 5 minutes into `global.Clubs.ladder`.
+  - New actions `Clubs.ClaimWar` and `Clubs.SetBanner`, and the `ClubWarClaimed` topic.
+  - `RaceFinished` now carries `cup`. `Workshop:Copy(player, designId)` is new.
+- **Events:** a Lunar Lanterns rerun window. The Lantern Dragon line gains a second adult.
+- **Tests:** `ClubWars.spec` (5): leagues, scoring across servers with the daily cap and the
+  ladder, league / Champion claims, banners, and the Lunar Lanterns rerun with Season 7 and
+  the code. `YearTwoClient.spec` gains the Club Wars tab and the banner picker.
+- **Snapshots:** `docs/snapshots/3.1-club-wars.png`. The snapshot tool gains `SNAPSHOT_START`.
+
 ## 3.0.1 · Go live + Frostfall returns
 
 Launch Sat 18 Dec 2027: the Trading Hub goes live, the Workshop gets moderation, and

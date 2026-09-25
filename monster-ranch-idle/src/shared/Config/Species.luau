@@ -481,7 +481,11 @@ Species.Lines = {
 		forms = {
 			{ id = "lanternling", name = "Lanternling" },
 			{ id = "lanternwyrm", name = "Lanternwyrm" },
-			{ { id = "lanterndragon", name = "Lantern Dragon" } },
+			{
+				{ id = "lanterndragon", name = "Lantern Dragon", diet = "spicy" },
+				-- Update 3.1: a second adult for Lanternwyrms raised on sweet food.
+				{ id = "moonlitdragon", name = "Moonlit Dragon", diet = "sweet" },
+			},
 		},
 		base = { hp = 140, atk = 40, def = 22, spd = 16, luck = 8 },
 		weight = 6.0,

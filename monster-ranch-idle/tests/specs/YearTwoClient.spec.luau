@@ -240,6 +240,50 @@ return function(t)
 		end)
 	end)
 
+	describe("Club Wars client (3.1)", function()
+		it("shows the league, the ladder and a banner picked from Workshop designs", function()
+			local War = Config.Clubs.War
+			local h = TestKernel.new({ systems = allSystems(), startTime = War.startsAt + 3600 })
+			local p = h:Join(8501, "Captain")
+			levelTo(h, p, 30)
+			h:System("Currency"):Add(p, "coins", 1e6, "test")
+			h:System("Currency"):Add(p, "ribbons", 100, "test")
+			local clubId = h:Call(p, "Clubs.Create", { name = "Race Crew", tag = "RACE", color = 3, emblem = "bolt", open = true }).id
+			h:Advance(2)
+			local design = h:Call(p, "Workshop.Create", {
+				name = "Crew Flag",
+				shape = "cape",
+				color = Config.Workshop.Palette[4],
+				color2 = Config.Workshop.Palette[1],
+			}).design
+			for _ = 1, 30 do
+				h.kernel.Bus:Publish("RaidFinished", p, { raid = "titan", win = true })
+			end
+			h:System("Clubs"):Flush()
+			h:System("Clubs"):RefreshLadder()
+			local c = ClientHarness.new(h, p)
+			c:Advance(1)
+			local screen = c:Open("Clubs")
+			c:Advance(0.5)
+			c:Click(c:Button("Club Wars", screen))
+			c:Advance(0.5)
+			expect(c:HasText("Bronze league · 150 war points", screen)).toBe(true)
+			expect(c:HasText("to Silver", screen)).toBe(true)
+			local ladder = screen:FindFirstChild("Ladder", true)
+			expect(c:HasText("1. [RACE] Race Crew · 150", ladder)).toBe(true)
+			expect(screen:FindFirstChild("ClaimWar", true) ~= nil).toBe(true)
+
+			c:Click(c:Button("Settings", screen))
+			c:Advance(0.5)
+			c:Click(screen:FindFirstChild("Banner_" .. design, true))
+			c:Advance(1)
+			expect(c:Store("session.Clubs.club").banner.name).toBe("Crew Flag")
+			expect(c:HasText("Banner: Crew Flag", screen)).toBe(true)
+			expect(clubId ~= nil).toBe(true)
+			expectClean(c)
+		end)
+	end)
+
 	describe("Expeditions region tabs", function()
 		it("shows a region's opening date until it opens", function()
 			local h = TestKernel.new({ systems = allSystems(), startTime = LAUNCH - 86400 })

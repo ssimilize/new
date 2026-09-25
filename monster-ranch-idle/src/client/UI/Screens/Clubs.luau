@@ -370,6 +370,7 @@ function Clubs.Build(ctx)
 			{ id = "members", text = "Members", width = 140 },
 			{ id = "goals", text = "Goals", width = 140 },
 			{ id = "boss", text = "Club boss", width = 140 },
+			{ id = "wars", text = "Club Wars", width = 140 },
 			{ id = "settings", text = "Settings", width = 140 },
 		},
 		Selected = tab,
@@ -642,6 +643,221 @@ function Clubs.Build(ctx)
 		end
 	end
 
+	-- Club Wars (update 3.1) -------------------------------------------------------------
+	local function leagueOf(id: string)
+		if id == "champion" then
+			return Cfg.War.champion
+		end
+		for _, l in Cfg.War.leagues do
+			if l.id == id then
+				return l
+			end
+		end
+		return Cfg.War.leagues[1]
+	end
+
+	local function drawWars(v)
+		local w = v.war
+		local card = Util.card({ Name = "Wars", Size = UDim2.new(0.6, -6, 1, 0), Parent = page })
+		if not w or not w.open then
+			Util.text({
+				Text = string.format(
+					"Club Wars start on %s. Win raids, race for the Racing Cup and finish Stampedes to score for your club.",
+					Format.date(Cfg.War.startsAt)
+				),
+				TextWrapped = true,
+				TextYAlignment = Enum.TextYAlignment.Top,
+				Position = UDim2.fromOffset(14, 14),
+				Size = UDim2.new(1, -28, 0, 80),
+				Parent = card,
+			})
+			return
+		end
+		local league = leagueOf(w.league)
+		Util.text({
+			Name = "League",
+			Text = string.format("%s league · %s war points", league.name, Format.commas(w.points)),
+			Font = Theme.Fonts.Display,
+			TextSize = Theme.TextSize.Header,
+			TextColor3 = Color3.fromHex(league.color),
+			Position = UDim2.fromOffset(14, 8),
+			Size = UDim2.new(1, -28, 0, 34),
+			Parent = card,
+		})
+		local nextLeague = if w.next then leagueOf(w.next.id) else nil
+		Widgets.Bar({
+			Color = Color3.fromHex(if nextLeague then nextLeague.color else league.color),
+			Value = if nextLeague then math.clamp(w.points / nextLeague.min, 0, 1) else 1,
+			Text = if nextLeague
+				then string.format("%s / %s to %s", Format.commas(w.points), Format.commas(nextLeague.min), nextLeague.name)
+				else "Top league!",
+			Position = UDim2.fromOffset(14, 50),
+			Size = UDim2.new(1, -28, 0, 26),
+			Parent = card,
+		})
+		local sources = {}
+		for _, src in Cfg.War.sources do
+			table.insert(sources, "• " .. src.text)
+		end
+		Util.text({
+			Text = string.format(
+				"You scored %s this week (%d more today).\n%s",
+				Format.commas(w.mine),
+				w.todayLeft,
+				table.concat(sources, "\n")
+			),
+			TextSize = Theme.TextSize.Small,
+			TextWrapped = true,
+			TextYAlignment = Enum.TextYAlignment.Top,
+			Position = UDim2.fromOffset(14, 86),
+			Size = UDim2.new(1, -28, 0, 100),
+			Parent = card,
+		})
+		local last = w.last
+		local lastLeague = if last then leagueOf(if last.champion then "champion" else last.league) else nil
+		Util.text({
+			Name = "LastWeek",
+			Text = if last
+				then string.format(
+					"Last week: %s (%s points)\nReward: %s",
+					lastLeague.name,
+					Format.commas(last.points),
+					rewardLine(lastLeague.reward)
+				)
+				else "Earn war points this week to share next week's reward.",
+			TextSize = Theme.TextSize.Small,
+			TextColor3 = C.TextMuted,
+			TextWrapped = true,
+			TextYAlignment = Enum.TextYAlignment.Top,
+			Position = UDim2.fromOffset(14, 190),
+			Size = UDim2.new(1, -250, 0, 50),
+			Parent = card,
+		})
+		local claim = Button.new({
+			Name = "ClaimWar",
+			Text = if last and last.claimed then "Claimed ✓" else "Claim",
+			Color = C.Green,
+			Size = UDim2.fromOffset(200, 50),
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -14, 0, 190),
+			Parent = card,
+		})
+		claim:SetDisabled(not last or last.claimed)
+		claim:SetOnClick(function()
+			local ok, res = Util.requestOnce(ctx, "Clubs.ClaimWar")
+			if ok and type(res) == "table" then
+				ctx:Toast("+ " .. rewardLine(res.rewards), "reward")
+			end
+		end)
+
+		local ladder = StoreKit.tbl(store, "global.Clubs.ladder")
+		local board = Util.card({
+			Name = "Ladder",
+			Title = "This week's ladder",
+			Position = UDim2.new(0.6, 6, 0, 0),
+			Size = UDim2.new(0.4, -6, 1, 0),
+			Parent = page,
+		})
+		local rows = if type(ladder.rows) == "table" then ladder.rows else {}
+		for i, row in rows do
+			local mine = row.clubId == v.id
+			Util.text({
+				Name = "Row" .. i,
+				Text = string.format(
+					"%d. [%s] %s · %s",
+					row.rank or i,
+					tostring(row.tag),
+					tostring(row.name),
+					Format.commas(row.points or 0)
+				),
+				Font = if mine then Theme.Fonts.Display else nil,
+				TextColor3 = if mine then C.Green else nil,
+				TextSize = Theme.TextSize.Small,
+				TextTruncate = Enum.TextTruncate.AtEnd,
+				TextWrapped = false,
+				Position = UDim2.fromOffset(14, 40 + (i - 1) * 28),
+				Size = UDim2.new(1, -28, 0, 26),
+				Parent = board,
+			})
+		end
+		if #rows == 0 then
+			Util.text({
+				Text = "No scores yet this week.",
+				TextColor3 = C.TextMuted,
+				Position = UDim2.fromOffset(14, 40),
+				Size = UDim2.new(1, -28, 0, 28),
+				Parent = board,
+			})
+		end
+	end
+
+	-- Banner (3.1): a Workshop design the officer owns.
+	local function drawBanner(card, v, canEdit: boolean)
+		local row = New("Frame", {
+			Name = "Banner",
+			BackgroundTransparency = 1,
+			Position = UDim2.fromOffset(14, 170),
+			Size = UDim2.new(1, -28, 0, 44),
+			Parent = card,
+		}, { Create.List("x", 6, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
+		Util.text({
+			Text = if v.banner then "Banner: " .. tostring(v.banner.name) else "Banner: none",
+			TextSize = Theme.TextSize.Small,
+			Size = UDim2.fromOffset(200, 40),
+			LayoutOrder = 0,
+			Parent = row,
+		})
+		if not canEdit then
+			return
+		end
+		local copies = StoreKit.tbl(store, "profile.Workshop.copies")
+		local ids = {}
+		for id, copy in copies do
+			if type(copy) == "table" then
+				table.insert(ids, id)
+			end
+		end
+		table.sort(ids)
+		for i = 1, math.min(5, #ids) do
+			local copy = copies[ids[i]]
+			local b = New("TextButton", {
+				Name = "Banner_" .. ids[i],
+				Text = "",
+				AutoButtonColor = true,
+				BackgroundColor3 = Color3.fromHex(copy.color or "#FFFFFF"),
+				Size = UDim2.fromOffset(40, 40),
+				LayoutOrder = i,
+				Parent = row,
+			}, { Create.Round(), Create.Stroke(4, Color3.fromHex(copy.color2 or "#FFFFFF")) })
+			b.MouseButton1Click:Connect(function()
+				Util.requestOnce(ctx, "Clubs.SetBanner", { design = ids[i] })
+			end)
+		end
+		if #ids == 0 then
+			Util.text({
+				Text = "Get designs in the Workshop to hang a banner.",
+				TextSize = Theme.TextSize.Small,
+				TextColor3 = C.TextMuted,
+				Size = UDim2.fromOffset(360, 40),
+				LayoutOrder = 1,
+				Parent = row,
+			})
+		elseif v.banner then
+			Button.new({
+				Name = "ClearBanner",
+				Text = "Remove",
+				Color = C.Gray,
+				TextSize = Theme.TextSize.Small,
+				Size = UDim2.fromOffset(110, 40),
+				LayoutOrder = 9,
+				Parent = row,
+				OnClick = function()
+					Util.requestOnce(ctx, "Clubs.SetBanner", { design = "" })
+				end,
+			})
+		end
+	end
+
 	local function drawSettings(v)
 		local canEdit = ROLE_RANK[v.myRole] >= ROLE_RANK.officer
 		local card = Util.card({ Name = "Settings", Size = UDim2.new(1, 0, 1, 0), Parent = page })
@@ -671,6 +887,7 @@ function Clubs.Build(ctx)
 			Size = UDim2.new(1, -28, 0, 44),
 			Parent = card,
 		}, { Create.List("x", 6, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
+		drawBanner(card, v, canEdit)
 		drawSwatches(colors, emblems, { color = v.color, emblem = v.emblem }, function(i)
 			if canEdit then
 				Util.requestOnce(ctx, "Clubs.Settings", { color = i })
@@ -750,6 +967,21 @@ function Clubs.Build(ctx)
 			headerBadge:Destroy()
 		end
 		headerBadge = emblemBadge(header, colorOf(v.color), glyphOf(v.emblem), 50, { Position = UDim2.fromOffset(8, 7) })
+		local oldBanner = header:FindFirstChild("HeaderBanner")
+		if oldBanner then
+			oldBanner:Destroy()
+		end
+		if v.banner then
+			-- Update 3.1: the club's Workshop banner.
+			New("Frame", {
+				Name = "HeaderBanner",
+				BackgroundColor3 = Color3.fromHex(v.banner.color or "#FFFFFF"),
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, -16, 0.5, 0),
+				Size = UDim2.fromOffset(44, 56),
+				Parent = header,
+			}, { Create.Corner(8), Create.Stroke(5, Color3.fromHex(v.banner.color2 or "#FFFFFF")) })
+		end
 		clubName.Text = string.format("[%s] %s", v.tag, v.name)
 		clubInfo.Text = string.format("Code %s · %d / %d members · %s", v.id, v.count, v.max, if v.open then "open" else "invite only")
 		Util.clear(page)
@@ -757,6 +989,8 @@ function Clubs.Build(ctx)
 			drawGoals(v)
 		elseif tab == "boss" then
 			drawBoss(v)
+		elseif tab == "wars" then
+			drawWars(v)
 		elseif tab == "settings" then
 			drawSettings(v)
 		else
@@ -775,7 +1009,7 @@ function Clubs.Build(ctx)
 				tabs:Select(tab)
 			end
 			bag.clean()
-			for _, path in { "session.Clubs", "global.Clubs", "profile.Progression.level" } do
+			for _, path in { "session.Clubs", "global.Clubs", "profile.Progression.level", "profile.Workshop.copies" } do
 				bag.add(store:Observe(path, refresh))
 			end
 			render()

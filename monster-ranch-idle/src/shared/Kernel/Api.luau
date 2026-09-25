@@ -388,6 +388,12 @@ Api.Actions = {
 	["Clubs.ClaimGoal"] = { schema = T.struct({ goal = T.key(Config.Clubs.GoalById) }), rate = 2, returns = "{ rewards: { Reward } }" },
 	["Clubs.AttackBoss"] = { schema = T.none, rate = 1, returns = "{ damage: number, hp: number }" },
 	["Clubs.ClaimBoss"] = { schema = T.none, rate = 1, returns = "{ rewards: { Reward } }" },
+	["Clubs.ClaimWar"] = { schema = T.none, rate = 1, returns = "{ league: string, rewards: { Reward } }" },
+	["Clubs.SetBanner"] = {
+		schema = T.struct({ design = T.string(40) }),
+		rate = 1,
+		returns = "{ banner: { design, name, shape, color, color2 } | false }",
+	},
 	["Clubs.Refresh"] = { schema = T.none, rate = 0.2, returns = "nil  -- re-reads (and writes) your club now" },
 
 	-- Market (S5, update 1.3) · see Config/Market and ARCHITECTURE §8 -------------------
@@ -496,7 +502,7 @@ Api.State = {
 		Arena = "{ defense = { id }, attempts = { day, n }, week, bestTier, lastTier, claimed }",
 		Raids = "{ day, rewarded, wins, runs }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
-		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n } }",
+		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n }, war = { day, n, claimed } }",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -529,7 +535,7 @@ Api.State = {
 		TradingHub = "{ mode: 'main'|'hub', ads = { { id, userId, name, jobId, here, offer = { { kind, appearance?, egg? } }, wants = { wantId }, note, postedAt, expiresAt } }, refreshedAt }",
 		Riding = "{ riders = { ['u'..userId]: { appearance, speed } } }",
 		Contests = "{ state: 'idle'|'entry'|'runway'|'results', show, theme, endsAt, nextAt, entries = { { userId, name, appearance } }, current, results = { { userId, name, appearance, score, votes, rank } } }",
-		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open } } }  -- club tags of players here",
+		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open, banner } }, ladder = { week, at, rows = { { rank, clubId, name, tag, color, emblem, points } } } }",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 	},
 }
@@ -572,7 +578,7 @@ Api.Topics = {
 	CrystalCollected = "(player, { crystal: number })",
 	Mounted = "(player, { id: string, speed: number })",
 	SurfRun = "(player, { score: number, shells: number })",
-	RaceFinished = "(player, { place: number, time: number, day: number })",
+	RaceFinished = "(player, { place: number, time: number, day: number, cup: number })",
 	HubTravel = "(player, { to: 'hub'|'main'|'server' })",
 	HubAdPosted = "(player, {})",
 	DesignPublished = "(player, { design: string })",
@@ -592,6 +598,7 @@ Api.Topics = {
 	WelcomeItem = "(player, { kind: string, text: string, icon: string? })",
 	PlotChanged = "(player, {})",
 	ClubJoined = "(player, { club: string })",
+	ClubWarClaimed = "(player, { league: string, week: number })",
 	MarketListed = "(player, { listing: string, key: string, price: number, club: boolean })",
 	MarketBought = "(player, { listing: string, key: string, kind: string, price: number, club: boolean })",
 	MarketSold = "(nil, { listing, key, kind, price, proceeds, buyer, seller, club })  -- on the buyer's server",
