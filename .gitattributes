@@ -1,0 +1,6 @@
+# Keep LF line endings on every OS: StyLua is set to Unix line endings, so CRLF checkouts on
+# Windows would fail `stylua --check`.
+* text=auto eol=lf
+*.png binary
+*.rbxl binary
+*.woff2 binary

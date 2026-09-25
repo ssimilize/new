@@ -5,5 +5,6 @@
 *.rbxl.lock
 *.rbxlx.lock
 
-# Claude Code local state (agent worktrees)
-.claude/
+# Claude Code local state (agent worktrees, personal settings). .claude/settings.json is shared.
+.claude/worktrees/
+.claude/settings.local.json

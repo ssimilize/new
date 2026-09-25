@@ -23,7 +23,7 @@ local serde = require("@lune/serde")
 local roblox = require("@lune/roblox")
 local Vector2, Color3, UDim2, UDim = roblox.Vector2, roblox.Color3, roblox.UDim2, roblox.UDim
 
-local ROOT = string.gsub(process.cwd, "/$", "")
+local ROOT = string.gsub(process.cwd, "[/\\]$", "") -- a Windows cwd can end in a backslash
 if not fs.isDir(ROOT .. "/tests/specs") and fs.isDir(ROOT .. "/monster-ranch-idle/tests/specs") then
 	ROOT ..= "/monster-ranch-idle"
 end
