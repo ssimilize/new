@@ -165,6 +165,31 @@ Quests.Achievements = {
 		target = 1,
 		reward = { { kind = "gems", amount = 150 } },
 	},
+	-- Update 1.1 · Coral Depths
+	{
+		id = "clear_depths",
+		text = "Clear the Coral Depths",
+		topic = "StageCleared",
+		filter = { region = "coral", stage = 30 },
+		target = 1,
+		reward = { { kind = "gems", amount = 200 }, { kind = "egg", id = "pearl", amount = 1 } },
+	},
+	{
+		id = "hatch_pearl_5",
+		text = "Hatch 5 Pearl Eggs",
+		topic = "EggHatched",
+		filter = { egg = "pearl" },
+		target = 5,
+		reward = { { kind = "decor", id = "tide_pool", amount = 1 } },
+	},
+	{
+		id = "pearl_mutation",
+		text = "Get the Pearl mutation (Soaked + Starstruck)",
+		topic = "Mutated",
+		filter = { mutation = "pearl" },
+		target = 1,
+		reward = { { kind = "gems", amount = 150 } },
+	},
 	{
 		id = "retire_1",
 		text = "Retire a monster to the Hall of Fame",
@@ -217,6 +242,8 @@ Quests.Codes = {
 	RANCH = { reward = { { kind = "gems", amount = 50 } } },
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
 	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
+	-- Update 1.1 launch code (expires 6 Feb 2027).
+	CORALDEPTHS = { reward = { { kind = "egg", id = "pearl", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1801872000 },
 }
 Quests.GroupId = 0 -- set to the Roblox group id for the GROUP code
 

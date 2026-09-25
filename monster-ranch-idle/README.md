@@ -8,6 +8,7 @@ Idle RPG creature ranch: hatch monsters, raise them, send them on expeditions wh
 2. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): kernel, system contract, every public API, and the client contract
 3. [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md): commands, boundaries, definition of done
 4. [`docs/SYSTEMS.md`](docs/SYSTEMS.md): status board
+5. [`docs/UPDATES.md`](docs/UPDATES.md): post-launch updates (1.1 Coral Depths)
 
 ## Setup
 

@@ -26,7 +26,7 @@ local slot = T.integer(1, 8)
 local flavor = T.enum(Config.Food.Ids)
 local eggType = T.key(Config.Eggs.ById)
 local regionId = T.key(Config.Regions.ById)
-local stage = T.integer(1, Config.Regions.StagesPerRegion)
+local stage = T.integer(1, Config.Regions.MaxStages)
 local duration = T.enum({ "900", "3600", "14400", "28800" }) -- sent as strings (see note below)
 local squad = T.array(id, 4, 1)
 
