@@ -911,6 +911,15 @@ function Adapters.Roblox()
 	}
 
 	adapters.Workspace = workspace
+	-- A MeshPart from a published Mesh asset, for World/Dress. Yields; nil if it fails to load.
+	adapters.CreateMeshPart = function(uri: string): MeshPart?
+		local ok, part = pcall(function()
+			return game:GetService("AssetService"):CreateMeshPartAsync(Content.fromUri(uri), {
+				CollisionFidelity = Enum.CollisionFidelity.Hull,
+			})
+		end)
+		return if ok then part else nil
+	end
 	return adapters
 end
 

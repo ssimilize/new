@@ -12,6 +12,8 @@
 ]]
 
 local Build = require(script.Build)
+local BuildingMeshes = require(script.BuildingMeshes)
+local Dress = require(script.Dress)
 
 local World = {
 	Name = "World",
@@ -36,6 +38,16 @@ function World.Init(context)
 	-- Parent last so clients receive the finished tree in one replication step.
 	folder.Parent = workspace
 	ctx:Log("built %d parts", parts)
+	-- The Meshy buildings take over from their placeholders as their meshes load (Dress.luau).
+	local createMeshPart = ctx.Services.CreateMeshPart
+	if createMeshPart then
+		ctx.Services.Spawn(function()
+			local dressed = Dress.world(folder, BuildingMeshes, createMeshPart, function(...)
+				ctx:Log(...)
+			end)
+			ctx:Log("dressed %d buildings", dressed)
+		end)
+	end
 end
 
 return World

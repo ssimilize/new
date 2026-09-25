@@ -58,6 +58,11 @@ below 1 in their module (a slug is drawn with about a fox's bulk, not its height
 - `export_roblox.py`: the form's Luau module (under Studio's 200,000-character Source cap), its
   `mesh.json`, and the 1024 px textures.
 - `publish_meshes.luau`, `asset_ids.py`: publishing the meshes and recording the ids (above).
+- `export_static.py`: the same road for a building (no rig): `python tools/blender/export_static.py
+  eggShop 0` turns it to face -Y, bakes and writes `mesh.json` (centred on its box) and the texture.
+  Publish it like a monster; the ids go in `src/server/Systems/World/BuildingMeshes.luau`, and
+  `World/Dress.luau` swaps the placeholder boxes for it. The models come from
+  `tools/meshy/buildings/make.py`.
 - `previews.py` (system Python, Pillow): GIFs and contact sheets from a rig's `frames/`.
 - `look.py`: renders any GLB from five angles. `model_fox.py`: the from-scratch test (not used).
 
