@@ -8,7 +8,8 @@
 local World = {}
 
 World.GroundY = 0
-World.GroundSize = { 900, 900 }
+-- The grass runs past the wall (Boundary) so the forest band beyond it stands on ground.
+World.GroundSize = { 2000, 2000 }
 World.PlotSize = { 150, 110 } -- width (x), depth (z)
 World.HubRadius = 95
 
@@ -124,6 +125,42 @@ table.insert(World.Hub, {
 	color = "#FF7AC8",
 	screen = "Workshop",
 })
+
+-- The perimeter: a stone wall on a square of 2 x `half` studs round the origin, and an invisible
+-- barrier `barrier` studs tall on the same line so nobody jumps or climbs over. The play area
+-- inside (1600 x 1600) leaves room around the plots for future features. `segment` is the
+-- length of one wall mesh; a pillar stands every `pillarEvery` segments and on the corners.
+World.Boundary = { half = 800, height = 9, thickness = 4, barrier = 80, segment = 24, pillarEvery = 4 }
+
+-- Scenery (Logic/Scenery, World/Scenery): meshes scattered over the open ground, never on the
+-- plaza, a plot, a path, a building or an egg-hunt spot. Per kind: `size` = the mesh's largest
+-- dimension in studs, `count` items, placed in groups of `group` within `spread` studs.
+-- `solid` items collide and keep other items off their `footprint` (x size). Add a zone to
+-- `keepOut` ({ center = { x, z }, radius = r } or { center, size = { w, d } }) to keep ground
+-- clear for a future feature; the kinds' mesh ids live in World/SceneryMeshes.
+World.Scenery = {
+	seed = 3203,
+	margin = 6, -- extra studs between an item and a keep-out zone
+	wallClearance = 8, -- studs kept clear inside the wall
+	keepOut = {},
+	kinds = {
+		-- Big things first so the small ones fill in around them.
+		-- Trees collide only through an invisible trunk post `trunk` x size wide.
+		{ id = "oak", size = { 16, 22 }, count = 70, group = { 2, 5 }, spread = 26, solid = true, footprint = 0.42, trunk = 0.12 },
+		{ id = "oakLight", size = { 16, 22 }, count = 55, group = { 2, 4 }, spread = 24, solid = true, footprint = 0.42, trunk = 0.12 },
+		{ id = "pine", size = { 18, 26 }, count = 60, group = { 3, 6 }, spread = 28, solid = true, footprint = 0.3, trunk = 0.1 },
+		{ id = "blossom", size = { 15, 20 }, count = 30, group = { 1, 3 }, spread = 16, solid = true, footprint = 0.42, trunk = 0.12 },
+		{ id = "boulder", size = { 5, 10 }, count = 45, group = { 1, 3 }, spread = 14, solid = true, footprint = 0.5 },
+		{ id = "bush", size = { 4, 7 }, count = 90, group = { 2, 4 }, spread = 12, solid = true, footprint = 0.45 },
+		{ id = "log", size = { 7, 11 }, count = 25, solid = true, footprint = 0.35 },
+		{ id = "stones", size = { 2, 4 }, count = 90, group = { 1, 3 }, spread = 10, footprint = 0.5 },
+		{ id = "mushrooms", size = { 2, 3.5 }, count = 70, group = { 2, 4 }, spread = 8, footprint = 0.5 },
+		{ id = "flowers", size = { 2.5, 4 }, count = 260, group = { 3, 7 }, spread = 12, footprint = 0.5 },
+		{ id = "grass", size = { 2, 3.5 }, count = 700, group = { 4, 9 }, spread = 14, footprint = 0.5 },
+	},
+	-- The woods beyond the wall: one tree every `step` studs along each side, `depth` studs out.
+	outside = { kinds = { "oak", "oakLight", "pine" }, size = { 22, 32 }, step = 26, depth = { 16, 150 } },
+}
 
 -- Update 2.0 · Sky Islands: floating islands high above the map, joined by cloud bridges.
 -- The launch pad in the Market Square flies players to the landing island's return pad;

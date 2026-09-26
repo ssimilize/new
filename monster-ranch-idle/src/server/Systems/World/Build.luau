@@ -17,6 +17,9 @@
 	    Barn                         Model (attr PlotId) with Body, Roof*, Door
 	    Gate                         Model with PostL, PostR, Sign (client adds the owner name)
 	  SpawnLocation
+	  Boundary/Wall<1-4>             low stone wall on the perimeter (Config.World.Boundary)
+	  Boundary/Barrier<1-4>          invisible, tall, collides: keeps players on the map
+	  Scenery                        added later by World/Scenery (trees, rocks, flowers, grass)
 	  Sky/Islands/<id>               Model: Top (walkable grass disc), Rock* underside, Tree*
 	  Sky/Bridges/Bridge<i>          cloud bridges between island edges
 	  Sky/LaunchPad, Sky/ReturnPad   pads (attr SkyPad = "launch"|"return"); the client adds prompts
@@ -24,7 +27,7 @@
 
 	On the Trading Hub place (Build.world(Config, "hub"), update 3.0): Ground, Hub/Plaza and
 	Hub/Buildings/<id> from Config.TradingHub.World (booths are booth1..n, screen "Trade"),
-	empty Plots and Paths folders, and the SpawnLocation. No plots and no Sky.
+	empty Plots and Paths folders, the SpawnLocation and the Boundary. No plots and no Sky.
 
 	Plot frame: plot-local +X points at the hub (Config.World.Plots[i].facing is the compass
 	heading of that direction, 0 = +Z, 90 = +X). Pen, incubator, barn and statue offsets are
@@ -421,6 +424,40 @@ local function buildPath(World, plotCf: CFrame, index: number, parent: Instance)
 	)
 end
 
+-- The perimeter (Config.World.Boundary): a low stone wall along each side, which World/Scenery
+-- dresses with wall meshes, and a tall invisible barrier on the same line so nobody leaves the map.
+local function buildBoundary(World, root: Instance)
+	local B = World.Boundary
+	if not B then
+		return
+	end
+	local boundary = Instance.new("Folder")
+	boundary.Name = "Boundary"
+	boundary.Parent = root
+	local y = World.GroundY
+	local span = B.half * 2 + B.thickness
+	for i, side in { { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 } } do
+		local along = if side[1] == 0 then Vector3.new(span, 0, B.thickness) else Vector3.new(B.thickness, 0, span)
+		local at = Vector3.new(side[1] * B.half, 0, side[2] * B.half)
+		block(
+			"Wall" .. i,
+			along + Vector3.new(0, B.height, 0),
+			CFrame.new(at + Vector3.new(0, y + B.height / 2, 0)),
+			COLORS.stone,
+			boundary,
+			{ Material = Enum.Material.Cobblestone }
+		)
+		block(
+			"Barrier" .. i,
+			along + Vector3.new(0, B.barrier, 0),
+			CFrame.new(at + Vector3.new(0, y + B.barrier / 2, 0)),
+			COLORS.stone,
+			boundary,
+			{ Transparency = 1, CastShadow = false }
+		)
+	end
+end
+
 local function buildSpawn(World, root: Instance)
 	local s = World.Spawn
 	-- Config.World.Spawn's Y is where characters appear; the pad itself sits on the plaza.
@@ -572,6 +609,7 @@ local function buildTradingHub(Config, root: Instance)
 		folder.Parent = root
 	end
 	buildSpawn({ GroundY = y, Spawn = Hub.spawn }, root)
+	buildBoundary(World, root)
 end
 
 function Build.world(Config, mode: string?): (Folder, number)
@@ -601,6 +639,7 @@ function Build.world(Config, mode: string?): (Folder, number)
 	end
 
 	buildSpawn(World, root)
+	buildBoundary(World, root)
 	buildSky(World, root)
 	root:SetAttribute("PartCount", count)
 	return root, count
