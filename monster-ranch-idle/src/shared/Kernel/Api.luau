@@ -522,6 +522,14 @@ Api.Actions = {
 		rate = 2,
 		returns = "{ ids: { monsterId } }",
 	},
+
+	-- Codex milestones (glow-up O) · Config/Codex, Logic/Codex, Systems/Codex -----------------------
+	-- Each milestone once per account; gems via Rewards.Granted, titles and the aura via Mastery.
+	["Codex.Claim"] = {
+		schema = T.struct({ milestone = T.string(48, 1) }),
+		rate = 2,
+		returns = "{ milestone: string, gems: number, items: { itemId } }",
+	},
 }
 
 --[[
@@ -592,6 +600,7 @@ Api.State = {
 		Community = "{ invitedBy: userId|0, invites = { week, count }, invitesTotal, group: boolean, premiumDay }",
 		Gifts = "{ day, sent, to = { ['u'..userId]: n }, totalSent, totalReceived }",
 		Companions = "{ ids = { monsterId } }  -- glow-up T: who walks with the player",
+		Codex = "{ claimed = { [milestoneId]: unix }, owed = { itemId } }  -- glow-up O (badges private)",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -631,6 +640,7 @@ Api.State = {
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 		Mastery = "{ here = { ['u'..userId]: { flourish: string|false, title: string|false, plinth: string|false } } }  -- equipped prestige cosmetics of players in this server",
 		Companions = "{ walkers = { ['u'..userId]: { { id, appearance } } } }  -- glow-up T: each player's companions, drawn by every client",
+		HallOfFame = "{ plaza = { ['u'..userId]: { slot, name, appearance, rarity } } }  -- glow-up O: best statues on the hub plaza (<= Config.Codex.Plaza.max)",
 	},
 }
 
@@ -701,6 +711,7 @@ Api.Topics = {
 	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
+	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total' })  -- glow-up O",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------

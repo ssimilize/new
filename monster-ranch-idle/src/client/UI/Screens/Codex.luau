@@ -6,6 +6,8 @@
 	were hatched, and hybrid recipe hints from Config.Breeding.Hybrids.
 	Data: profile.Monsters.codex[lineId] = { forms = { [formId] = true }, variants, count },
 	      profile.Breeding.discovered[lineId].
+	Glow-up O: a Species / Milestones tab pair; Milestones (Parts/CodexMilestones) shows the
+	milestone tracks with progress bars and Claim buttons (profile.Codex.claimed).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -24,6 +26,7 @@ local MonsterIcon = require(UI.Components.MonsterIcon)
 local StoreKit = require(UI.Components.StoreKit)
 local Tiles = require(UI.Components.Tiles)
 local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
+local CodexMilestones = require(script.Parent.Parts.CodexMilestones)
 
 local New = Create.New
 local C = Theme.Colors
@@ -80,6 +83,25 @@ function Codex.Build(ctx)
 	})
 	local list = Widgets.List({ Size = UDim2.fromOffset(628, 400), Padding = 8, Parent = panel.Body })
 	local detail = Tiles.card({ Position = UDim2.fromOffset(640, 0), Size = UDim2.fromOffset(304, 400), Parent = panel.Body })
+	-- Glow-up O: the Milestones tab shares the body with the species list and detail card.
+	local milestones = CodexMilestones.new(ctx, panel.Body, UDim2.fromOffset(944, 400))
+	milestones.Root.Visible = false
+	local tab = "species"
+	local tabs = Widgets.Tabs({
+		Tabs = { { id = "species", text = "Species", width = 120 }, { id = "milestones", text = "Milestones", width = 140 } },
+		Size = UDim2.fromOffset(268, 44),
+		OnChanged = function(id)
+			tab = id
+			list.Visible = id == "species"
+			detail.Visible = id == "species"
+			milestones.Root.Visible = id == "milestones"
+			if id == "milestones" then
+				milestones.Refresh()
+			end
+		end,
+	})
+	tabs.Root.LayoutOrder = 2
+	tabs.Root.Parent = panel.HeaderRight
 	local detailBody = Widgets.List({ Position = UDim2.fromOffset(4, 4), Size = UDim2.new(1, -8, 1, -8), Padding = 6, Parent = detail })
 
 	local function codexOf(lineId: string)
@@ -395,13 +417,20 @@ function Codex.Build(ctx)
 		renderDetail()
 	end
 
-	local watch = StoreKit.watch(store, { "profile.Monsters.codex", "profile.Breeding.discovered" }, function()
+	local watch = StoreKit.watch(store, { "profile.Monsters.codex", "profile.Breeding.discovered", "profile.Codex" }, function()
 		refresh()
+		if tab == "milestones" then
+			milestones.Refresh()
+		end
 	end)
 
 	return {
 		Root = panel.Root,
-		Open = function()
+		Open = function(params)
+			local want = if type(params) == "table" and params.tab == "milestones" then "milestones" else "species"
+			if want ~= tab then
+				tabs:Select(want)
+			end
 			watch.Start()
 		end,
 		Close = function()

@@ -66,6 +66,8 @@ return {
 		"Gifts",
 		-- Glow-up T · a monster at your side
 		"Companions",
+		-- Glow-up O · Codex milestones that pay
+		"Codex",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

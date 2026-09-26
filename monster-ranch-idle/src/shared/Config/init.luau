@@ -54,6 +54,8 @@ local Config = {
 	Quality = require(script.Quality), -- glow-up P: automatic quality levels, particle budget, distance LOD
 	-- Glow-up R: pens that grow (fence tiers, upgrade props, theme props, habitats, Feed Garden)
 	Pens = require(script.Pens),
+	-- Glow-up O: Codex milestones, the Codex Museum and the Hall of Fame plaza
+	Codex = require(script.Codex),
 }
 
 return Config

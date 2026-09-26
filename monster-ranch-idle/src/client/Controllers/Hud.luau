@@ -37,6 +37,7 @@ local Appearance = require(Shared.Logic.Appearance)
 local Vip = require(Shared.Logic.Vip)
 local LoginStreak = require(Shared.Logic.LoginStreak)
 local MasteryLogic = require(Shared.Logic.Mastery)
+local CodexLogic = require(Shared.Logic.Codex) -- glow-up O: claimable milestones badge
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -216,6 +217,7 @@ local weather = { frame = nil, text = nil, time = nil }
 local stampede = { title = nil, time = nil, iconHolder = nil, bossId = nil, card = nil, stroke = nil, live = false, pulseAt = 0 }
 local collect = { button = nil, last = -1 }
 local growReady = 0
+local codexClaimable = 0 -- glow-up O: recounted only when the Codex or its claims change
 
 local function refreshCurrency()
 	pills.coins.set(StoreKit.num(ctx.Store, "profile.Currency.coins"))
@@ -333,6 +335,13 @@ local function refreshBadges()
 	local streak = ctx.Store:Get("profile.LoginStreak")
 	local daily = type(streak) == "table" and LoginStreak.Preview(streak, now // 86400).canClaim
 	buttons.Daily.badge:Set(if daily then "!" else nil)
+	-- Glow-up O: Codex milestones ready to claim.
+	buttons.Codex.badge:Set(if codexClaimable > 0 then tostring(codexClaimable) else nil)
+end
+
+local function refreshCodex()
+	codexClaimable = CodexLogic.Claimable(ctx.Store:Get("profile.Monsters.codex"), ctx.Store:Get("profile.Codex.claimed"))
+	refreshBadges()
 end
 
 local function refreshMonsters()
@@ -607,7 +616,7 @@ local function build()
 		openScreen("Monsters")
 	end)
 	sideButton(left, "Codex", "Codex", C.Blue, previewIcon("zappip", 32), 4, function()
-		openScreen("Codex")
+		openScreen("Codex", if codexClaimable > 0 then { tab = "milestones" } else nil)
 	end)
 	sideButton(left, "Market", "Market", C.Orange, Icon.new("coin", 28), 5, function()
 		openScreen("Market")
@@ -883,6 +892,8 @@ function Hud.Init(context)
 	ctx.Store:Observe("profile.Expeditions.slots", refreshBadges)
 	ctx.Store:Observe("profile.Eggs.slots", refreshBadges)
 	ctx.Store:Observe("profile.LoginStreak", refreshBadges)
+	ctx.Store:Observe("profile.Codex", refreshCodex)
+	ctx.Store:Observe("profile.Monsters.codex", refreshCodex)
 	ctx.Bus:Subscribe("Hud.Flash", flash)
 	ctx.Net:On("Market.MailCollected", onMailCollected)
 	ctx.Router.Opened:Connect(refreshCentre)

@@ -57,6 +57,9 @@ return {
 		"Critters",
 		-- Glow-up R: pens that grow and the Feed Garden (Config/Pens, Visuals/PenDress)
 		"Pens",
+		-- Glow-up O: the walk-in Codex Museum and the Hall of Fame plaza
+		"CodexMuseum",
+		"FamePlaza",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

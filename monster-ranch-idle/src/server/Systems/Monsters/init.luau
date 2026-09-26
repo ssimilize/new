@@ -14,6 +14,7 @@
 	  Monsters:All(player) -> { [id]: record }
 	  Monsters:Count(player) -> number
 	  Monsters:CodexCount(player) -> number                             -- forms discovered
+	  Monsters:Codex(player) -> { [lineId]: CodexEntry }                -- glow-up O: read-only (Codex milestones)
 	  Monsters:Capacity(player) -> number
 	  Monsters:Remove(player, id, reason) -> record?                    -- refuses busy monsters
 	  Monsters:Available(player, id) -> record?, why?                   -- exists and not busy
@@ -166,6 +167,12 @@ function Monsters:CodexCount(player): number
 		end
 	end
 	return n
+end
+
+-- Glow-up O: the live codex map, for Codex milestones. Read-only: only Monsters writes it.
+function Monsters:Codex(player)
+	local s = section(player)
+	return if s then s.codex else {}
 end
 
 function Monsters:Get(player, id: string)
