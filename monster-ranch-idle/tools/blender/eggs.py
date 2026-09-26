@@ -975,6 +975,7 @@ PAINTERS = {
     "raid": paint_raid,
     "leviathan": paint_leviathan,
     "titan": paint_titan,
+    "reef": paint_spots,
     "frostfall": paint_frostfall,
     "glacier": paint_glacier,
 }
