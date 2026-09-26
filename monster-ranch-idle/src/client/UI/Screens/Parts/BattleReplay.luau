@@ -160,7 +160,7 @@ function BattleReplay.play(ctx, opts)
 		Parent = root,
 	})
 	local skipButton = Button.new({
-		Text = "Skip ▸▸",
+		Text = "Skip »",
 		Color = C.Gray,
 		Size = UDim2.fromOffset(130, 48),
 		AnchorPoint = Vector2.new(1, 0),

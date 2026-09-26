@@ -23,8 +23,12 @@
 	specs). The Router's screen layer is hidden while the stage shows and given back after. If the
 	shot cannot start (CameraDirector) or the stage fails to build, the 2D viewer takes over; if the
 	camera is taken back mid-fight (PhotoMode, a mount), the result card shows on a plain backdrop.
+	While the stage is up it holds the world's weather and storms off (Config.BattleStage.light):
+	Weather held (only if nobody else holds it, e.g. the Deep Reef), the listed ColorCorrection
+	effects off, the Atmosphere set; all given back exactly on teardown.
 ]]
 
+local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -58,6 +62,57 @@ local holding = 0
 
 function BattleStage.Holding(): boolean
 	return holding > 0
+end
+
+local ATMOSPHERE_KEYS = { "Density", "Offset", "Haze", "Glare", "Color", "Decay" }
+
+-- Holds the world's weather off the stage; returns the function that gives it back.
+local function holdLight(ctx): () -> ()
+	local L = Tuning.light
+	local weather = ctx:GetController("Weather")
+	local tookWeather = false
+	if weather and weather.Hold and not (weather.IsHeld and weather.IsHeld()) then
+		weather.Hold(true)
+		tookWeather = true
+	end
+	local switched = {}
+	for _, name in L.effects do
+		for _, effect in Lighting:GetChildren() do
+			if effect.Name == name and effect:IsA("PostEffect") and effect.Enabled then
+				effect.Enabled = false
+				table.insert(switched, effect)
+			end
+		end
+	end
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+	local saved = {}
+	if atmosphere then
+		for _, key in ATMOSPHERE_KEYS do
+			saved[key] = (atmosphere :: any)[key]
+		end
+		local A = L.atmosphere
+		atmosphere.Density = A.density
+		atmosphere.Offset = A.offset
+		atmosphere.Haze = A.haze
+		atmosphere.Glare = A.glare
+		atmosphere.Color = Color3.fromHex(A.color)
+		atmosphere.Decay = Color3.fromHex(A.decay)
+	end
+	return function()
+		if atmosphere and atmosphere.Parent then
+			for key, value in saved do
+				(atmosphere :: any)[key] = value
+			end
+		end
+		for _, effect in switched do
+			if effect.Parent then
+				effect.Enabled = true
+			end
+		end
+		if tookWeather then
+			weather.Hold(false)
+		end
+	end
 end
 
 local function sideCentre(arena, side: string): Vector3?
@@ -133,7 +188,7 @@ function BattleStage.play(ctx, opts, fallback: () -> any)
 		Parent = root,
 	})
 	local skipButton = Button.new({
-		Text = "Skip ▸▸",
+		Text = "Skip »",
 		Color = C.Gray,
 		Size = UDim2.fromOffset(130, 48),
 		AnchorPoint = Vector2.new(1, 0),
@@ -194,7 +249,14 @@ function BattleStage.play(ctx, opts, fallback: () -> any)
 	end
 	hideScreens()
 
+	local giveLightBack: (() -> ())? = nil
+
 	local function teardown()
+		if giveLightBack then
+			local give = giveLightBack
+			giveLightBack = nil
+			give()
+		end
 		if arena then
 			arena:Destroy()
 			arena = nil
@@ -529,6 +591,7 @@ function BattleStage.play(ctx, opts, fallback: () -> any)
 			handOver()
 			return
 		end
+		giveLightBack = holdLight(ctx)
 		if not alive then
 			teardown()
 			return

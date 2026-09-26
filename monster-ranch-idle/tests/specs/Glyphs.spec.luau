@@ -1,15 +1,37 @@
 --[[
 	Glyphs: UI text never uses a character the game's font cannot draw. FredokaOne (Theme.Fonts)
 	has no U+2715 "✕", so every close button labelled with it rendered as a blank square (found in
-	Studio 2026-09-26); "X" draws cleanly. Scans string literals in src/client and src/shared,
-	comments excluded.
+	Studio 2026-09-26), and a dozen more symbols (the Skip arrows, shard and token glyphs) drew
+	nothing either. Scans string literals in src/client and src/shared, comments excluded.
 ]]
 return function(t)
 	local describe, it, expect = t.describe, t.it, t.expect
 	local fs = require("@lune/fs")
 
-	-- Characters FredokaOne renders as nothing (checked with TextService in Studio).
-	local MISSING = { "✕" }
+	-- Characters FredokaOne renders as nothing, found by drawing each one large in Studio
+	-- (2026-09-26). Safe stand-ins that do render: X › » → ★ ◆ ◇ ◎ ❀ ☼ ✓ and the arrows ◀ ▶ ▲ ▼.
+	local MISSING = {
+		"✕",
+		"▸",
+		"✦",
+		"❂",
+		"✗",
+		"➜",
+		"✪",
+		"✎",
+		"✺",
+		"☾",
+		"❦",
+		"✧",
+		"✶",
+		"☽",
+		"✐",
+		"✘",
+		"⬥",
+		"⬦",
+		"⚘",
+		"✽",
+	}
 
 	local function walk(dir: string, out: { string })
 		for _, name in fs.readDir(dir) do

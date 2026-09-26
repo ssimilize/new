@@ -108,7 +108,7 @@ function MonsterDetail.Build(ctx)
 	local headerChips =
 		Tiles.row({ AutomaticSize = Enum.AutomaticSize.X, Size = UDim2.fromOffset(0, 44), LayoutOrder = 1, Parent = panel.HeaderRight }, 6)
 	local renameButton = Button.new({
-		Text = "✎",
+		Text = "✏",
 		Color = C.Blue,
 		Size = UDim2.fromOffset(44, 44),
 		TextSize = 22,

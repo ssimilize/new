@@ -226,7 +226,7 @@ return {
 				end
 				local left = math.max(0, Cfg.Duration - run.elapsed)
 				local hearts = string.rep("♥", math.max(0, Cfg.Lives - run.hits))
-				status.Text = string.format("❂ %d   %s   %s left", run.shells, hearts, Format.clock(left))
+				status.Text = string.format("◎ %d   %s   %s left", run.shells, hearts, Format.clock(left))
 				if run.hits >= Cfg.Lives or run.elapsed >= Cfg.Duration then
 					task.spawn(finish)
 				end

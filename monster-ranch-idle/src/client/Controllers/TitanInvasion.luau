@@ -67,7 +67,8 @@ local TitanInvasion = {
 }
 
 local PURPLE = Color3.fromHex("#6A3FA0")
--- The banner's HP fill: the live banner is PURPLE, so a purple fill made a full bar read as empty.
+-- HP fills (banner and billboard): the live banner is PURPLE, so a purple fill made a full bar
+-- read as empty, and on the billboard it vanished into the storm.
 local HP_FILL = Color3.fromHex("#FF5A5F")
 -- 480 wide keeps the banner between the left stack and the photo / build buttons on a phone.
 local BANNER_WIDTH = 480
@@ -426,7 +427,7 @@ local function hpBar(model: Model, above: number, def)
 		Size = UDim2.new(1, -20, 0, 16),
 		Parent = gui,
 	}, { Create.Corner(8), Create.Stroke(2, C.Gold, 0) })
-	local barFill = New("Frame", { BackgroundColor3 = PURPLE, Size = UDim2.fromScale(1, 1), Parent = track }, { Create.Corner(8) })
+	local barFill = New("Frame", { BackgroundColor3 = HP_FILL, Size = UDim2.fromScale(1, 1), Parent = track }, { Create.Corner(8) })
 	return gui, barFill
 end
 
@@ -605,9 +606,7 @@ local function step()
 	updateActions(g)
 	-- The banner steps aside for an open screen, a battle or the race HUD (it sat on top of all).
 	if current then
-		current.Visible = ctx.Router:Current() == nil
-			and ctx.UI.Top:FindFirstChild("BattleReplay") == nil
-			and not inLiveRace()
+		current.Visible = ctx.Router:Current() == nil and ctx.UI.Top:FindFirstChild("BattleReplay") == nil and not inLiveRace()
 	end
 	flushAcc += STEP
 	if flushAcc >= 0.5 then

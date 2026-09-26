@@ -1183,7 +1183,7 @@ return {
 	["Silver  {1}+"] = "Prata  {1}+",
 	["Skip all"] = "Pular tudo",
 	["Skip all ({1})"] = "Pular tudo ({1})",
-	["Skip ▸▸"] = "Pular ▸▸",
+	["Skip »"] = "Pular »",
 	["Sky"] = "Céu",
 	["Sky Egg"] = "Ovo do Céu",
 	["Sky Gate"] = "Portal do Céu",
@@ -1857,7 +1857,7 @@ return {
 	["★ {1} Rebirth Star{2} · coins ×{3}"] = "★ {1} Estrela{2} de renascimento · moedas ×{3}",
 	["✓ Confirmed"] = "✓ Confirmado",
 	["✓ Ready"] = "✓ Pronto",
-	["❂ {1}   {2}   {3} left"] = "❂ {1}   {2}   faltam {3}",
+	["◎ {1}   {2}   {3} left"] = "◎ {1}   {2}   faltam {3}",
 	["🔒 Pass"] = "🔒 Passe",
 	-- Purchases that always deliver + VIP crate and chat tag
 	["[VIP]"] = "[VIP]",

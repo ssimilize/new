@@ -300,7 +300,7 @@ return {
 					Parent = row,
 				})
 				local button = Button.new({
-					Text = if maxed then "MAX" else "✦ " .. Format.short(cost or 0),
+					Text = if maxed then "MAX" else "◆ " .. Format.short(cost or 0),
 					Color = C.Purple,
 					Size = UDim2.fromOffset(128, 46),
 					TextSize = Theme.TextSize.Body,

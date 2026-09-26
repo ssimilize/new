@@ -82,14 +82,29 @@ return function(t)
 			Battle.SetMode("3d")
 			local BattleArena = c:require(c.clientFolder.Visuals.BattleArena)
 
+			-- The world's weather and storms are held off the stage (Studio 2026-09-26: snow fog and
+			-- the titan storm washed the fighters out), and given back after.
+			local Lighting = c.world.game:GetService("Lighting")
+			local weather = c.kernel:GetController("Weather")
+			local storm = c.Instance.new("ColorCorrectionEffect")
+			storm.Name = "TitanStorm"
+			storm.Parent = Lighting
+			local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+			local density = atmosphere and atmosphere.Density
+
 			local screen = c:Open("Expeditions")
 			c:Advance(0.5)
 			c:Click(c:Button("Fight stage 1", screen))
 			c:Advance(0.3)
 			expect(is3D(c)).toBe(true)
 			expect(BattleArena.Live()).toBe(1)
+			expect(storm.Enabled).toBe(false)
+			expect(weather.IsHeld()).toBe(true)
+			if atmosphere then
+				expect(math.abs(atmosphere.Density - Tuning.light.atmosphere.density) < 1e-3).toBe(true)
+			end
 
-			c:Click(c:Button("Skip ▸▸", c.kernel.UI.Top))
+			c:Click(c:Button("Skip »", c.kernel.UI.Top))
 			c:Advance(1)
 			expect(c:HasText("cleared", c.kernel.UI.Top) or c:HasText("fainted", c.kernel.UI.Top)).toBe(true)
 			c:Click(c:Button("Continue", c.kernel.UI.Top))
@@ -97,6 +112,12 @@ return function(t)
 
 			expect(root(c)).toBeNil()
 			expect(BattleArena.Live()).toBe(0)
+			expect(storm.Enabled).toBe(true)
+			expect(weather.IsHeld()).toBe(false)
+			if atmosphere then
+				expect(atmosphere.Density).toBe(density)
+			end
+			storm:Destroy()
 			Battle.SetMode(nil)
 			expectClean(c)
 		end)
@@ -122,7 +143,7 @@ return function(t)
 			expect(BattleArena.Live()).toBe(0) -- the 2D viewer never touches the world
 			expect(root(c):FindFirstChild("a1", true) ~= nil).toBe(true)
 
-			c:Click(c:Button("Skip ▸▸", c.kernel.UI.Top))
+			c:Click(c:Button("Skip »", c.kernel.UI.Top))
 			c:Advance(1)
 			c:Click(c:Button("Continue", c.kernel.UI.Top))
 			c:Advance(1)
@@ -164,7 +185,7 @@ return function(t)
 
 			expect(is3D(c)).toBe(true)
 			expect(BattleArena.Live()).toBe(1)
-			c:Click(c:Button("Skip ▸▸", c.kernel.UI.Top))
+			c:Click(c:Button("Skip »", c.kernel.UI.Top))
 			c:Advance(1)
 			c:Click(c:Button("Continue", c.kernel.UI.Top))
 			c:Advance(1)
@@ -219,9 +240,9 @@ return function(t)
 			expect(ArenaA.Live()).toBe(1)
 			expect(ArenaB.Live()).toBe(1)
 
-			ca:Click(ca:Button("Skip ▸▸", ca.kernel.UI.Top))
+			ca:Click(ca:Button("Skip »", ca.kernel.UI.Top))
 			ca:Advance(1)
-			cb:Click(cb:Button("Skip ▸▸", cb.kernel.UI.Top))
+			cb:Click(cb:Button("Skip »", cb.kernel.UI.Top))
 			cb:Advance(1)
 			ca:Click(ca:Button("Continue", ca.kernel.UI.Top))
 			cb:Click(cb:Button("Continue", cb.kernel.UI.Top))

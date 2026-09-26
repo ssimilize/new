@@ -38,7 +38,7 @@ Events.List = {
 		name = "Lunar Lanterns",
 		startsAt = 1801926000, -- Sat 6 Feb 2027, 15:00 UTC (update 1.2)
 		endsAt = 1803740400, -- Sat 27 Feb 2027
-		token = { name = "Lantern Coins", glyph = "✺", color = "#FF7A45" },
+		token = { name = "Lantern Coins", glyph = "☼", color = "#FF7A45" },
 		color = "#E5484D",
 		reruns = {
 			-- Year 2 (update 3.1): Lunar Lanterns returns; Lanternwyrms can now grow into the
@@ -59,7 +59,7 @@ Events.List = {
 		name = "Summer Splash",
 		startsAt = 1814626800, -- Sat 3 Jul 2027, 15:00 UTC (update 2.0)
 		endsAt = 1818255600, -- Sat 14 Aug 2027
-		token = { name = "Seashells", glyph = "❂", color = "#FFB347" },
+		token = { name = "Seashells", glyph = "◎", color = "#FFB347" },
 		color = "#3FB6D9",
 	},
 	{
@@ -67,7 +67,7 @@ Events.List = {
 		name = "Harvest Moon",
 		startsAt = 1822489200, -- Sat 2 Oct 2027, 15:00 UTC (update 2.1)
 		endsAt = 1824908400, -- Sat 30 Oct 2027
-		token = { name = "Moon Candy", glyph = "☾", color = "#F08A4B" },
+		token = { name = "Moon Candy", glyph = "◇", color = "#F08A4B" },
 		color = "#E0701F",
 	},
 }

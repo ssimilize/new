@@ -234,7 +234,7 @@ function MonsterIcon.egg(eggType: string, size: number?): Frame
 	elseif pattern == "stars" then
 		for _, p in { Vector2.new(0.35, 0.35), Vector2.new(0.65, 0.6), Vector2.new(0.45, 0.78) } do
 			Create.Text({
-				Text = "✦",
+				Text = "★",
 				TextColor3 = spots,
 				TextScaled = true,
 				Stroke = false,

@@ -282,11 +282,11 @@ return {
 			local levelOk = Util.unlocked(ctx, R.Unlock)
 			local need = R.CoinsNeeded(n)
 			local coinsOk = coins() >= need
-			line(string.format("%s Ranch Level %d", if levelOk then "✓" else "✗", Util.unlockLevel(R.Unlock)), {
+			line(string.format("%s Ranch Level %d", if levelOk then "✓" else "X", Util.unlockLevel(R.Unlock)), {
 				Color = if levelOk then C.Green else C.Red,
 				LayoutOrder = 2,
 			})
-			line(string.format("%s %s / %s coins in hand", if coinsOk then "✓" else "✗", Format.short(coins()), Format.short(need)), {
+			line(string.format("%s %s / %s coins in hand", if coinsOk then "✓" else "X", Format.short(coins()), Format.short(need)), {
 				Color = if coinsOk then C.Green else C.Red,
 				LayoutOrder = 3,
 			})
@@ -390,7 +390,7 @@ return {
 						})
 						local button = Button.new({
 							Name = "Buy",
-							Text = if maxed then "MAX" elseif lock then "🔒 " .. lock else "✦ " .. Format.short(cost),
+							Text = if maxed then "MAX" elseif lock then "🔒 " .. lock else "◆ " .. Format.short(cost),
 							Color = if lock then C.Gray else C.Purple,
 							TextSize = Theme.TextSize.Small,
 							Size = UDim2.new(1, -16, 0, 40),
