@@ -59,9 +59,79 @@ Run these with at least two servers of each place (a private server plus a publi
 | Controller | Play with an Xbox or PlayStation pad in Studio or on console | The cursor stays in the open menu, B closes it, LB/RB change tabs, Y opens Monsters; racing and surfing work on the pad |
 | Controller legend | Look at the corner hint with a pad | The Ⓐ Ⓑ Ⓨ glyphs render in the font (if not, swap them for "A" / "B" / "Y") |
 
+## Glow-up L: friends, gifts, invites, VIP and Premium
+
+Owner steps before these go live:
+
+1. **Group reward.** Create (or pick) the game's Roblox group and set `Config.Quests.GroupId` to
+   its id. While it is `0` the "Join our group" row stays hidden in Friends → Rewards and
+   `Community.ClaimGroup` answers "Coming soon". The reward (a Crystal Egg and 50 gems, once per
+   account) is `Config.Community.Group.reward`. The old `GROUP` code is retired: it never worked
+   while the id was 0, and the row replaces it.
+2. **Ranch Pass gift.** In Creator Hub create a developer product "Ranch Pass gift" at 399 Robux
+   and put its id in `Config.Monetization.Products` (`ranchPassGift`). Until then the button says
+   "Coming soon". It is sold from Friends → Gifts only (never in the Store grid).
+3. **Invites.** Nothing to set up: the invite prompt carries launch data `invite:<userId>`. Leave
+   the experience's invite settings on in Creator Hub.
+
+| Check | How | Pass |
+|---|---|---|
+| Emotes | HUD Emotes (or G / D-pad down) → Wave, Dance 1-3 … | Your avatar plays it; a second player sees it |
+| Tricks | Stand near one of your pen monsters → Trick | That monster spins / hops for you and for a second player |
+| Gift to an offline friend | Ranch Level 10+, 2 h played, send an egg to a friend who is offline | The confirm names the egg and friend; the egg leaves; the friend gets it (reward popup + toast) on their next join |
+| Gift limits | Send 5 gifts in a day, 3 to one friend | The 6th and the 3rd-to-one-friend are refused with a clear message |
+| Ranch Pass gift | Pick a friend → Gift R$ → buy | The friend gets premium this season, or it is saved for next season if they already have it |
+| Invite reward | Invite a friend with a fresh account from the Friends screen | Both get a Grove Egg and 25 gems (the inviter by mail); a rejoin gives nothing more |
+| Group row | Set `GroupId`, join the group, Friends → Rewards → Claim | Paid once; a second claim says "Already claimed" |
+| Premium | Join with a Premium account | "Premium" badge on the nameplate; Friends → Rewards → Claim gives a Grove Egg once per day |
+| VIP balcony | VIP pass: step on the gold pad by the Feed Store → Go up | Up on the deck; without VIP the pad refuses and opens the passes; jumping or flying up without VIP is moved back down within 2 s |
+| VIP name | Own the VIP pass | Your name shows in gold above your avatar |
+
 ## 4. After launch
 
 - Keep `Config.Workshop.Moderators` (or the moderator group) staffed: hidden designs wait in
   the Review queue until someone restores or removes them.
 - Every region and event has a date in config (`Regions.opensAt`, `Events` windows and
   `reruns`), so the quarterly region openings and event returns need no code push.
+
+## 5. Login streak and reminders (glow-up)
+
+The daily streak calendar needs nothing from the owner. Reminders (Roblox Experience
+Notifications) stay **off** until these steps are done; with `Config.Reminders` empty the game
+never prompts, plans or sends anything.
+
+1. **Enable HTTP requests**: Creator Hub → the experience → Settings → Security → *Allow HTTP
+   Requests* on (the server calls `apis.roblox.com`). MemoryStores are on by default.
+2. **Create the message templates**: Creator Hub → the experience → Engagement →
+   Notifications → *Create notification*. One per reminder, no parameters needed, e.g.
+   - egg: "Your eggs are ready to hatch! 🥚"
+   - expedition: "Your expedition squad is back with loot!"
+   - stampede: "A Stampede starts in 5 minutes. Join the herd!"
+   - streak: "Your daily streak ends soon. Claim today's reward!"
+   Copy each notification's **asset id** into `Config.Reminders.Templates` (`egg`, `expedition`,
+   `stampede`, `streak`). Leave one empty to turn that reminder off.
+3. **Create an Open Cloud API key**: Creator Hub → Open Cloud → API Keys → *Create API key*,
+   add the **user-notification** API system with **write** access for this experience (and
+   allow the Roblox servers' IPs, e.g. `0.0.0.0/0`, since game servers call it).
+4. **Store the key as a secret**: Creator Hub → the experience → Secrets → *Create secret*,
+   name it (for example `notifications_key`) and paste the key. Put that name in
+   `Config.Reminders.SecretName`. In Studio, `HttpService:GetSecret` reads the local secrets
+   from Game Settings → Security instead; without them the feature stays off in Studio.
+5. Publish. Players are asked once (after their first hatch in a later session) and can turn
+   reminders on or off from the Daily streak screen.
+
+What the game sends: at most `MaxPerDay` (2) reminders per player per UTC day, at least
+`MinGapSeconds` (4 h) apart, none while the player is in the game, and none between 22:00 and
+08:00 in a rough local time guessed from the player's country (`Config.Reminders.Offsets`;
+countries not listed get no quiet-hours rule). Roblox also throttles notifications per user on
+its side and only delivers to players who opted in.
+
+| Check | How | Pass |
+|---|---|---|
+| Streak claim | Join, claim, rejoin the same UTC day on another server | Claimed once; the calendar does not open again; the HUD badge is gone |
+| Streak day change | Stay in the game across 00:00 UTC | The Daily badge comes back; a claim pays the next day |
+| Opt-in prompt | Second session, hatch an egg | Roblox's notification prompt shows once; never again after answering |
+| Egg reminder | Opt in, start a 1 h egg, leave | One notification about 1 h later (or at 08:00 local), opening the game |
+| One send across servers | Two servers running while a reminder falls due | Exactly one notification |
+| Off switch | Clear `SecretName` and publish | No prompt, no Reminders button, no sends |
+

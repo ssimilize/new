@@ -55,7 +55,9 @@ return function(t)
 			expect(R.IsOpen("dunes", LAUNCH)).toBe(true)
 			expect(R.IsOpen("meadow", 0)).toBe(true)
 			expect(R.NextOpening(AFTER).id).toBe("glacier")
-			expect(R.NextOpening(R.ById.glacier.opensAt)).toBeNil()
+			-- Glow-up DR: the Deep Reef is the next region after the Glacier, and the last one planned.
+			expect(R.NextOpening(R.ById.glacier.opensAt).id).toBe("reef")
+			expect(R.NextOpening(R.ById.reef.opensAt)).toBeNil()
 			expect(R.ById.glacier.opensAt - LAUNCH).toBe(91 * 86400)
 			for _, id in { "dunes", "glacier" } do
 				local r = R.ById[id]

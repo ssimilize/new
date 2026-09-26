@@ -9,7 +9,13 @@
 	(Eggs.HatchAll can hatch several at once). The first starter hatch offers "Name it"
 	(Monsters.Rename).
 
-	Public: Hatchery:IsShowing() -> boolean
+	Glow-up N: a batch of hatches (one, or every egg of Eggs.HatchAll, gathered for a frame and
+	put rarest last by Logic/Cinematic.MontageOrder) is first offered to Cinematics:Hatch, which
+	plays it in the world when the incubator is on screen nearby; those entries then get this
+	reveal as a summary card (no 2D wobble, no second sting). Otherwise the 2D reveal plays as
+	before. A first discovery (Cinematics:ClaimNew) shows a NEW! chip.
+
+	Public: Hatchery:IsShowing() -> boolean (also true while the in-world hatch plays)
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,7 +26,11 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
+local AudioRules = require(Shared.Logic.Audio)
+local Cinematic = require(Shared.Logic.Cinematic)
 
+local Audio = require(script.Parent.Parent.Audio)
+local Voices = require(script.Parent.Parent.Audio.Voices)
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
@@ -31,6 +41,7 @@ local Widgets = require(UI.Components.Widgets)
 local StoreKit = require(UI.Components.StoreKit)
 local Tiles = require(UI.Components.Tiles)
 local ViewportMonster = require(UI.Components.ViewportMonster)
+local ShowpieceChips = require(UI.Screens.Parts.ShowpieceChips)
 
 local New = Create.New
 local C = Theme.Colors
@@ -243,9 +254,12 @@ local function build()
 	})
 end
 
-local function fillInfo(m)
+local function fillInfo(m, isNew: boolean?)
 	ui.name.Text = Formulas.DisplayName(m)
 	Tiles.clear(ui.chips)
+	if isNew then
+		Widgets.Chip({ Text = "NEW!", Color = C.Gold, LayoutOrder = 0, Parent = ui.chips })
+	end
 	Widgets.RarityChip(m.rarity or 1, ui.chips).LayoutOrder = 1
 	local variant = Widgets.VariantChip(m.variant or 0, ui.chips)
 	if variant then
@@ -257,9 +271,10 @@ local function fillInfo(m)
 	for i, mut in StoreKit.asTable(m.muts) do
 		Widgets.MutationChip(mut, ui.chips).LayoutOrder = 5 + i
 	end
-	if Formulas.IsHuge(m) then
+	if Formulas.IsHuge(m) and m.titanic ~= true then
 		Widgets.Chip({ Text = "HUGE", Color = C.Orange, LayoutOrder = 9, Parent = ui.chips })
 	end
+	ShowpieceChips.add(m, ui.chips, 10) -- glow-up W: TITANIC, #37/500
 	Tiles.clear(ui.traits)
 	for i, id in StoreKit.asTable(m.traits) do
 		local t = Config.Traits.ById[id]
@@ -290,7 +305,8 @@ local function reveal(entry)
 	if not okAp then
 		return
 	end
-	skipRequested = false
+	local inWorld = entry.inWorld == true -- the hatch already played in the world: go to the summary
+	skipRequested = inWorld
 	ui.info.Visible = false
 	ui.hint.Visible = true
 	ui.rays.Visible = false
@@ -317,19 +333,24 @@ local function reveal(entry)
 		end)
 	end
 	-- 3. Burst + monster spinning in.
-	ui.flash.BackgroundTransparency = 0
-	Anim.tween(ui.flash, { BackgroundTransparency = 1 }, 0.45)
 	ui.vm:SetAppearance(ap)
-	ui.rays.Visible = true
 	local rarity = tonumber(m.rarity) or 1
-	if rarity >= 5 then
-		ctx:Sound("HatchLegendary")
-	elseif rarity >= 3 then
-		ctx:Sound("HatchRare")
-	else
-		ctx:Sound("HatchCommon")
+	if not inWorld then
+		ui.flash.BackgroundTransparency = 0
+		Anim.tween(ui.flash, { BackgroundTransparency = 1 }, 0.45)
+		ui.rays.Visible = true
+		-- The rarity's sting (falling back to the nearest lower one with an id), a Golden or Rainbow
+		-- sting over it, then the monster's own first cry.
+		Audio.Chain(AudioRules.HatchChain(rarity, 0))
+		if m.variant == 2 then
+			Audio.Chain({ "HatchRainbow", "HatchGolden" })
+		elseif m.variant == 1 then
+			Audio.Play("HatchGolden")
+		end
+		task.delay(0.45, Voices.Cry, m, "hatch")
 	end
-	local burstSize = 300 + rarity * 30
+	local titanic = m.titanic == true -- glow-up W: a bigger burst and a celebration on top
+	local burstSize = (300 + rarity * 30) * (if titanic then 1.5 else 1)
 	if not skipped then
 		skipped = animate(0.8, function(a)
 			local e = 1 - (1 - a) ^ 3
@@ -345,7 +366,13 @@ local function reveal(entry)
 	ui.vm:SetSpin(0.6)
 	ui.burst.Size = UDim2.fromOffset(burstSize, burstSize)
 	ui.hint.Visible = false
-	fillInfo(m)
+	fillInfo(m, entry.isNew)
+	if titanic then
+		local ok, kit = pcall(ctx.GetController, ctx, "Celebrate")
+		if ok and kit and kit.Play then
+			kit:Play(Config.Titanic.Celebration)
+		end
+	end
 	ui.info.Visible = true
 	Anim.popIn(ui.info, 0.25)
 	skipRequested = false
@@ -356,6 +383,10 @@ local function hide()
 	Focus.remove(ui.root)
 	ui.vm:Clear()
 	showing = false
+	local cine = ctx:GetController("Cinematics")
+	if cine then
+		cine:ReopenAfterHatch() -- back to the Incubators screen the hatch came from
+	end
 end
 
 local playNext
@@ -426,6 +457,37 @@ function playNext()
 	end
 end
 
+-- Glow-up N: gathers a batch for a frame (Eggs.HatchAll fires one event per egg), puts the
+-- rarest last and offers it to the in-world hatch; the reveal cards follow either way.
+local function begin()
+	task.wait()
+	local list = {}
+	for _, entry in queue do
+		table.insert(list, { rarity = entry.monster.rarity, variant = entry.monster.variant })
+	end
+	local ordered = {}
+	for _, i in Cinematic.MontageOrder(list) do
+		table.insert(ordered, queue[i])
+	end
+	table.clear(queue)
+	table.move(ordered, 1, #ordered, 1, queue)
+	local cine = ctx:GetController("Cinematics")
+	local ok, took = false, false
+	if cine and #queue > 0 then
+		ok, took = pcall(function()
+			return cine:Hatch(table.clone(queue), function()
+				playNext()
+			end)
+		end)
+		if not ok then
+			warn("[Hatchery] in-world hatch failed: " .. tostring(took))
+		end
+	end
+	if not (ok and took) then
+		playNext()
+	end
+end
+
 local function onHatched(payload)
 	if type(payload) ~= "table" or type(payload.monster) ~= "table" then
 		return
@@ -434,13 +496,16 @@ local function onHatched(payload)
 	if not (m.line and Config.Species.ById[m.line]) then
 		return
 	end
-	table.insert(queue, { monster = m, egg = payload.egg, slot = payload.slot })
+	local cine = ctx:GetController("Cinematics")
+	local isNew = if cine then cine:ClaimNew(m) else Cinematic.IsNewForm(ctx.Store:Get("profile.Monsters.codex"), m.line, m.form)
+	table.insert(queue, { monster = m, egg = payload.egg, slot = payload.slot, isNew = isNew })
 	if showing then
 		ui.skipAll:SetVisible(true)
 		ui.skipAll:SetText(string.format("Skip all (%d)", #queue))
 		ui.nice:SetText("Nice! Next")
 	else
-		task.spawn(playNext)
+		showing = true
+		task.spawn(begin)
 	end
 end
 

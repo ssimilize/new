@@ -27,3 +27,23 @@ art/vfx/patch.json
 
 # Python bytecode from the art tools.
 __pycache__/
+
+# Eggs (tools/blender/eggs.py): the upload-ready meshes and images, the renders and icons are re-made
+# by the tool; only the small contact sheet in art/eggs/preview is kept.
+art/eggs/*
+!art/eggs/preview/
+
+# Extra-clip previews (tools/blender/clips.py --previews), rendered from the rigs.
+art/rigs-clips/
+
+# UI art (tools/ui): portrait renders, raw Codex icon generations, built icon cells and the
+# upload-ready sheets are rebuilt by the tools; the icon table, manifests, review contact sheets
+# and the generated Luau modules (src/client/UI/Art) are kept.
+art/portraits/
+art/ui/upload/
+art/ui/icons/raw/
+art/ui/icons/cells/
+art/ui/icons/contact.jpg
+
+# The locale report (LOCALE_REPORT=missing.txt lune run tests Locale).
+missing.txt

@@ -17,7 +17,7 @@
 	are saved privately, so offline income never depends on which systems (passes, friends)
 	have loaded when the player comes back.
 
-	Rate of a pen = Σ Formulas.CoinRate(m) × (1 + Σ rate modifiers(player, elements of m))
+	Rate of a pen = Σ Formulas.CoinRate(m) × (1 + Σ rate modifiers(player, elements of m) + Σ monster modifiers(player, m))
 	                × (Double Coins pass ? Economy.DoubleCoinsMult : 1) × Π rate multipliers(player)
 	                (busy monsters: 0)
 	Jar cap (s)   = JarTiers[jarTier] + VIP bonus + Hoarder minutes × 60 of the pen's monsters
@@ -32,8 +32,13 @@
 	  Ranch:RegisterRateModifier(key, fn(player, elements) -> additive pct)
 	  Ranch:RegisterJarBonus(key, fn(player) -> seconds)
 	  Ranch:RegisterRateMultiplier(key, fn(player) -> factor)  -- e.g. Rebirth Stars (×1.5, ×2, …)
+	  Ranch:RegisterMonsterRateModifier(key, fn(player, monster) -> additive pct)  -- glow-up Q: Bond
 	  Ranch:ResetForRebirth(player, theme?)                   -- one fresh pen, tiers 1, decor back to storage
-	  Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id } } }
+	  Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id }, capacity, jarTier } }
+	  Ranch:PublicGarden(player) -> { tier, plots = { { flavor, readyAt } } }?   -- glow-up R
+	  Ranch:TakePenDecor(player) -> { [pen] = { decorId } }  -- glow-up Z: empties the old pen slots
+	                                                          (Decor moves them onto the plot layout)
+	Mood aura: a pen's slot decor plus the mood pieces standing in it on the Decor layout (glow-up Z).
 	  Ranch:Refresh(player)                                   -- recompute after an input changed
 	  Ranch:HoldAutoCollect(player, hold)                     -- WelcomeBack keeps jars for its claim
 
@@ -51,7 +56,7 @@ local TableUtil = require(Shared.Logic.TableUtil)
 local Ranch = {
 	Name = "Ranch",
 	Dependencies = { "Currency", "Progression", "Monsters" },
-	OptionalDependencies = { "Eggs", "Shop", "Monetization", "Weather" },
+	OptionalDependencies = { "Eggs", "Shop", "Monetization", "Weather", "Decor" },
 }
 
 local ctx
@@ -59,6 +64,7 @@ local Config, Economy
 local Currency, Progression, Monsters
 
 local rateModifiers = {} -- [key] = fn(player, elements) -> pct
+local monsterModifiers = {} -- [key] = fn(player, monster) -> pct (glow-up Q: one monster's own bonus)
 local jarBonuses = {} -- [key] = fn(player) -> seconds
 local rateMultipliers = {} -- [key] = fn(player) -> factor (> 0)
 local joined = {} -- [player] = true once PlayerAdded finished (offline accrual applied)
@@ -190,7 +196,11 @@ local function compute(player): ({ number }, { number })
 		for _, id in pen.monsters do
 			local m = Monsters:Get(player, id)
 			if m and not m.busy then
-				rate += Jar.MonsterRate(Formulas.CoinRate(m), modifierPct(player, Formulas.Elements(m), cache), mult)
+				local pct = modifierPct(player, Formulas.Elements(m), cache)
+				for _, fn in monsterModifiers do
+					pct += numberFrom(fn, player, m)
+				end
+				rate += Jar.MonsterRate(Formulas.CoinRate(m), pct, mult)
 				hoarder += Config.Traits.Sum(Formulas.ActiveTraits(m), "jarCapMinutes")
 			end
 		end
@@ -357,6 +367,13 @@ function Ranch:RegisterRateMultiplier(key: string, fn)
 	end
 end
 
+function Ranch:RegisterMonsterRateModifier(key: string, fn)
+	monsterModifiers[key] = fn
+	for _, player in ctx:Players() do
+		refresh(player)
+	end
+end
+
 function Ranch:Refresh(player)
 	refresh(player)
 end
@@ -474,6 +491,22 @@ function Ranch:CollectAll(player, multiplier: number?): number
 	return collect(player, allPens(s), multiplier or 1, { xp = true })
 end
 
+function Ranch:TakePenDecor(player)
+	local s = section(player)
+	local out = {}
+	if not s then
+		return out
+	end
+	for i, pen in s.pens do
+		if #pen.decor > 0 then
+			out[i] = pen.decor
+			pen.decor = {}
+			penChanged(player, i)
+		end
+	end
+	return out
+end
+
 function Ranch:PublicPens(player)
 	local out = {}
 	local s = section(player)
@@ -481,9 +514,28 @@ function Ranch:PublicPens(player)
 		return out
 	end
 	for _, pen in s.pens do
-		table.insert(out, { theme = pen.theme, decor = table.clone(pen.decor), monsters = table.clone(pen.monsters) })
+		table.insert(out, {
+			theme = pen.theme,
+			decor = table.clone(pen.decor),
+			monsters = table.clone(pen.monsters),
+			capacity = pen.capacity, -- glow-up R: pens show their upgrades to everyone
+			jarTier = pen.jarTier,
+		})
 	end
 	return out
+end
+
+-- Glow-up R: the Feed Garden as other players see it (drawn by the Pens controller).
+function Ranch:PublicGarden(player)
+	local s = section(player)
+	if not s or type(s.garden) ~= "table" then
+		return nil
+	end
+	local plots = {}
+	for i, plot in s.garden.plots or {} do
+		plots[i] = { flavor = plot.flavor or false, readyAt = plot.readyAt or 0 }
+	end
+	return { tier = s.garden.tier or 1, plots = plots }
 end
 
 function Ranch:HoldAutoCollect(player, hold: boolean)
@@ -662,6 +714,7 @@ local function upgrade(player, target: string, penIndex: number?): number
 			garden.plots[i] = { flavor = false, readyAt = 0 }
 		end
 		ctx:Dirty(player, "garden")
+		ctx.Bus:Publish("PlotChanged", player, {}) -- glow-up R: the garden is drawn on the plot
 		return garden.tier
 	end
 	ctx:Fail("Unknown upgrade")
@@ -814,6 +867,7 @@ function Ranch.Init(context)
 		plot.flavor = payload.flavor
 		plot.readyAt = ctx:Now() + Economy.Garden.growSeconds
 		ctx:Dirty(player, "garden")
+		ctx.Bus:Publish("PlotChanged", player, {}) -- glow-up R: the garden is drawn on the plot
 		return { readyAt = plot.readyAt }
 	end)
 
@@ -839,6 +893,7 @@ function Ranch.Init(context)
 			end
 		end
 		ctx:Dirty(player, "garden")
+		ctx.Bus:Publish("PlotChanged", player, {}) -- glow-up R: the garden is drawn on the plot
 		return { food = food }
 	end)
 
@@ -878,11 +933,15 @@ function Ranch.Init(context)
 		for _, player in ctx:Players() do
 			local s = section(player)
 			quiet[player] = true
-			for _, pen in s.pens do
+			for i, pen in s.pens do
 				local aura = 0
 				for _, decorId in pen.decor do
 					local def = Config.Decor.ById[decorId]
-					aura += if def then def.mood else 0
+					aura += if def then def.mood or 0 else 0
+				end
+				local placed = ctx:GetSystem("Decor")
+				for _, decorId in if placed then placed:PenDecor(player, i) else {} do
+					aura += Config.Decor.ById[decorId].mood or 0
 				end
 				if aura > 0 then
 					for _, id in table.clone(pen.monsters) do

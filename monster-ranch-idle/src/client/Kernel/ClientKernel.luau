@@ -10,12 +10,13 @@
 	  ctx.Net:On(event, fn)
 	  ctx.Store:Get(path) / ctx.Store:Observe(path, fn) / ctx.Store:WhenReady(fn)
 	  ctx.Router:Open(screenName, params) / Close(name?) / IsOpen(name) / Root(name)
-	  ctx.UI.Hud / ctx.UI.Screens / ctx.UI.Overlay / ctx.UI.Top   (scaled layers)
+	  ctx.UI.Hud / ctx.UI.Screens / ctx.UI.Overlay / ctx.UI.Top / ctx.UI.Feedback   (scaled layers)
 	  ctx.Bus:Publish(topic, ...) / ctx.Bus:Subscribe(topic, fn)  (client-only topics)
 	  ctx:GetController(name)
 	  ctx:Now()                    server-synchronised unix time
 	  ctx:Toast(text, kind)        info | success | error | reward
-	  ctx:Sound(key)               plays Config.Sounds[key] (no-op while ids are empty)
+	  ctx:Sound(key, opts?)        plays Config.Sounds[key] through client/Audio (no-op while its id is
+	                               empty); opts = { at?, pitch?, volume? } (see Audio.Play)
 	  ctx.Player                   LocalPlayer
 ]]
 
@@ -30,6 +31,7 @@ local NetClient = require(script.Parent.NetClient)
 local Router = require(script.Parent.Router)
 local Layers = require(script.Parent.Parent.UI.Layers)
 local Toasts = require(script.Parent.Parent.UI.Components.Toasts)
+local Audio = require(script.Parent.Parent.Audio)
 
 local ClientKernel = {}
 ClientKernel.__index = ClientKernel
@@ -46,9 +48,13 @@ function ClientKernel.new()
 	self._controllers = {}
 	self._order = {}
 	self.Router = Router.new(self)
-	Toasts.init(self.UI.Overlay)
+	Toasts.init(self.UI.Feedback)
+	Audio.Attach(self.Store, self.Config.Sounds)
 	self.Net:On("Kernel.Notify", function(payload)
 		Toasts.show(payload.text, payload.kind)
+		if payload.kind == "error" then
+			Audio.Play("Error")
+		end
 	end)
 	return self
 end
@@ -86,25 +92,14 @@ end
 
 function ClientKernel:Toast(text: string, kind: string?)
 	Toasts.show(text, kind)
+	if kind == "error" then
+		Audio.Play("Error")
+	end
 end
 
-function ClientKernel:Sound(key: string)
-	local id = self.Config.Sounds[key]
-	if not id or id == "" then
-		return
-	end
-	local settings = self.Store:Get("profile.Settings")
-	if settings and settings.sfx == false then
-		return
-	end
-	local sound = Instance.new("Sound")
-	sound.SoundId = id
-	sound.Volume = 0.6
-	sound.Parent = workspace.CurrentCamera
-	sound.Ended:Once(function()
-		sound:Destroy()
-	end)
-	sound:Play()
+-- Pooled, grouped and settings-aware (client/Audio); returns the Sound, or nil when nothing played.
+function ClientKernel:Sound(key: string, opts: any?): Sound?
+	return Audio.Play(key, opts)
 end
 
 function ClientKernel:_context(entry)

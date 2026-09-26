@@ -1,7 +1,13 @@
 --[[
-	Settings screen (C3): the language (3.2) and toggles for music, sound effects, low
-	graphics and hiding broadcasts → Settings.SetLanguage { language } and
-	Settings.Set { key, value }. Reads profile.Settings (tolerated nil).
+	Settings screen (C3): the language (3.2), the Graphics choice (glow-up P) and toggles for
+	music, sound effects and hiding broadcasts → Settings.SetLanguage { language },
+	Settings.SetGraphics { graphics } and Settings.Set { key, value }. Reads profile.Settings
+	(tolerated nil). Music also mutes the ambience beds; Sound effects also mutes monster voices
+	(Logic/Audio.GroupFollows).
+
+	Graphics cycles Auto → High → Low (Config.Quality.Choices). Auto shows the level it measured
+	(Visuals/Quality); Low is the old "Low graphics" (it also reduces motion), and a save with
+	lowGraphics on shows Low (Logic/Quality.Choice).
 
 	Language comes first so a player who can't read the current one still finds it. Its
 	button cycles Auto → English → Español → Português; language names are never
@@ -17,6 +23,8 @@ local Button = require(UI.Components.Button)
 local Panel = require(UI.Components.Panel)
 local Util = require(script.Parent.Parts.Util)
 local Locale = require(ReplicatedStorage.Shared.Locale)
+local QualityRules = require(ReplicatedStorage.Shared.Logic.Quality)
+local Quality = require(UI.Parent.Visuals.Quality)
 
 local New = Create.New
 local C = Theme.Colors
@@ -24,11 +32,15 @@ local C = Theme.Colors
 local ROW_HEIGHT = 60
 
 local ROWS = {
-	{ key = "music", name = "Music", desc = "Background music", default = true },
-	{ key = "sfx", name = "Sound effects", desc = "Buttons, hatches and battles", default = true },
-	{ key = "lowGraphics", name = "Low graphics", desc = "Fewer effects and less motion. Helps older phones.", default = false },
-	{ key = "hideBroadcasts", name = "Hide broadcasts", desc = "Hide server-wide announcements", default = false },
+	{ key = "music", name = "Music", desc = "Music and nature sounds", default = true, order = 1 },
+	{ key = "sfx", name = "Sound effects", desc = "Buttons, hatches and battles", default = true, order = 2 },
+	{ key = "hideBroadcasts", name = "Hide broadcasts", desc = "Hide server-wide announcements", default = false, order = 4 },
 }
+local GRAPHICS_ORDER = 3
+
+-- One literal per label so every one is translated whole.
+local AUTO_LABELS = { "Auto · Low", "Auto · Medium", "Auto · High" }
+local PINNED_LABELS = { high = "High", low = "Low" }
 
 local LANGUAGE_NAMES = {}
 for _, language in Locale.Languages do
@@ -121,6 +133,36 @@ return {
 			end
 		end
 
+		-- Graphics (glow-up P) ------------------------------------------------------------
+		local graphicsButton = row(GRAPHICS_ORDER, "Graphics", "Auto matches your device. Low also cuts motion.", 210)
+
+		local function graphicsSetting(): string
+			return pending.graphics or QualityRules.Choice(ctx.Store:Get("profile.Settings"))
+		end
+
+		local function paintGraphics()
+			local setting = graphicsSetting()
+			if setting == "auto" then
+				graphicsButton:SetText(AUTO_LABELS[Quality.AutoLevel()] or AUTO_LABELS[3])
+				graphicsButton:SetColor(C.Gray)
+			else
+				graphicsButton:SetText(PINNED_LABELS[setting])
+				graphicsButton:SetColor(if setting == "high" then C.Green else C.Blue)
+			end
+		end
+
+		graphicsButton:SetOnClick(function()
+			local choices = ctx.Config.Quality.Choices
+			local index = table.find(choices, graphicsSetting()) or 1
+			local nextValue = choices[index % #choices + 1]
+			pending.graphics = nextValue
+			paintGraphics()
+			Util.request(ctx, "Settings.SetGraphics", { graphics = nextValue })
+			pending.graphics = nil
+			paintGraphics()
+		end)
+		paintGraphics()
+
 		languageButton:SetOnClick(function()
 			local index = table.find(Locale.Choices, languageSetting()) or 1
 			local nextValue = Locale.Choices[index % #Locale.Choices + 1]
@@ -140,8 +182,8 @@ return {
 			b:SetColor(if on then C.Green else C.Gray)
 		end
 
-		for i, item in ROWS do
-			local toggle = row(i, item.name, item.desc, 120)
+		for _, item in ROWS do
+			local toggle = row(item.order, item.name, item.desc, 120)
 			toggles[item.key] = toggle
 			toggle:SetOnClick(function()
 				local value = not current(item.key, item.default)
@@ -181,8 +223,10 @@ return {
 			Root = panel.Root,
 			Open = function()
 				bag.clean()
+				bag.add(Quality.Changed:Connect(paintGraphics))
 				bag.add(ctx.Store:Observe("profile.Settings", function()
 					paintLanguage()
+					paintGraphics()
 					for _, item in ROWS do
 						paint(item)
 					end

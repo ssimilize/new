@@ -2,7 +2,8 @@
 	Progression (S1): Ranch XP and Ranch Level, and every level-gated unlock.
 
 	The level cap is Config.Unlocks.MaxLevelAt(ctx:Now()) (date-gated: 60, then 70 from
-	Sat 11 Mar 2028). At the cap, XP is not banked.
+	Sat 11 Mar 2028). At the cap, XP is not banked here: it is published as "RanchXPOverflow"
+	and the Mastery system (3.3) turns it into Ranch Mastery.
 
 	Other systems grant XP by publishing the "RanchXP" topic (no dependency needed) or by
 	calling AddXP directly.
@@ -78,7 +79,11 @@ function Progression:AddXP(player, amount: number, reason: string?)
 		table.insert(leveled, section.level)
 	end
 	if section.level >= cap then
+		local overflow = section.xp
 		section.xp = 0
+		if overflow > 0 then
+			ctx.Bus:Publish("RanchXPOverflow", player, { amount = overflow, reason = reason or "unknown" })
+		end
 	end
 	ctx:Dirty(player)
 	for _, level in leveled do

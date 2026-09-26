@@ -1,14 +1,17 @@
 --[[
-	Layers: the root ScreenGui and four scaled layers.
+	Layers: the root ScreenGui and five scaled layers.
 
 	Everything is designed at DESIGN_SIZE (1100 × 560, a landscape phone). Each layer is
 	sized to viewport / scale and scaled back with a UIScale, so offsets in design units
 	look the same on every screen, and Scale-based sizes still fill the screen.
 
-	  Hud      always-on HUD (currencies, side buttons)
-	  Screens  menus opened by the Router (with the dim background)
-	  Overlay  toasts, broadcasts, tutorial arrows
-	  Top      reward popups, hatch reveals, level-up banners
+	  Hud       always-on HUD (currencies, side buttons)
+	  Screens   menus opened by the Router (with the dim background)
+	  Overlay   broadcasts, tutorial arrows, the gamepad legend
+	  Top       reward popups, hatch reveals, level-up banners
+	  Feedback  the feedback queue (toasts and reward cards, UI/Components/Toasts), flying
+	            rewards and celebrations (Controllers/Celebrate), the Stampede banner. Above
+	            Top, so a message is never hidden behind the popup it talks about.
 ]]
 
 local Layers = {}
@@ -34,7 +37,7 @@ function Layers.create(player)
 
 	local layers = { Gui = gui, Scale = 1 }
 	local scales = {}
-	for i, name in { "Hud", "Screens", "Overlay", "Top" } do
+	for i, name in { "Hud", "Screens", "Overlay", "Top", "Feedback" } do
 		local frame = Instance.new("Frame")
 		frame.Name = name
 		frame.BackgroundTransparency = 1

@@ -22,6 +22,7 @@ local Formulas = require(Shared.Logic.Formulas)
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
+local Shine = require(UI.Components.Shine)
 local Anim = require(UI.Anim)
 local Button = require(UI.Components.Button)
 local Panel = require(UI.Components.Panel)
@@ -30,7 +31,7 @@ local MonsterIcon = require(UI.Components.MonsterIcon)
 local Icon = require(UI.Components.Icon)
 local Util = require(script.Parent.Parts.Util)
 local Dialog = require(script.Parent.Parts.Dialog)
-local BattleReplay = require(script.Parent.Parts.BattleReplay)
+local Battle = require(script.Parent.Parts.Battle)
 
 local New = Create.New
 local C = Theme.Colors
@@ -215,6 +216,19 @@ return {
 			end,
 		})
 		modeTabs.Root.LayoutOrder = 1
+		-- Glow-up X: the postcards squads send home (Screens/Album).
+		Button.new({
+			Name = "AlbumButton",
+			Text = "Album",
+			Color = C.Orange,
+			Size = UDim2.fromOffset(110, 44),
+			TextSize = Theme.TextSize.Body,
+			LayoutOrder = 2,
+			Parent = panel.HeaderRight,
+			OnClick = function()
+				ctx.Router:Open("Album", { region = region })
+			end,
+		})
 
 		local regionRow = New("Frame", {
 			Name = "Regions",
@@ -491,11 +505,12 @@ return {
 				end
 				adsLeft = math.max(0, adCap - used)
 			end
-			viewer = BattleReplay.play(ctx, {
+			viewer = Battle.play(ctx, {
 				replay = res.replay,
 				win = win,
 				rewards = res.rewards,
 				title = string.format("%s · Stage %d", if r then r.name else region, stageNumber),
+				stage = region,
 				winText = string.format("Stage %d cleared!", stageNumber),
 				retryText = if adsLeft then string.format("Retry +20%% (ad, %d left)", adsLeft) else "Retry with +20% (ad)",
 				onRetry = if adsLeft == nil or adsLeft > 0
@@ -729,6 +744,9 @@ return {
 					LayoutOrder = i,
 					Parent = squadRow,
 				}, { Create.Corner(Theme.Radius.Card), Create.Stroke(2.5, if m then Theme.Rarity(m.rarity or 1) else C.Line) })
+				if m then
+					Shine.attach(slot, m.rarity, Theme.Radius.Card)
+				end
 				slot.Activated:Connect(function()
 					editSlot(i)
 				end)

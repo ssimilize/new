@@ -28,7 +28,7 @@ local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local StoreKit = require(UI.Components.StoreKit)
 local Util = require(script.Parent.Parts.Util)
-local BattleReplay = require(script.Parent.Parts.BattleReplay)
+local Battle = require(script.Parent.Parts.Battle)
 
 local New = Create.New
 local C = Theme.Colors
@@ -94,13 +94,14 @@ return {
 				return
 			end
 			local raid = Cfg.ById[data.raid]
-			BattleReplay.play(ctx, {
+			Battle.play(ctx, {
 				replay = data.replay,
 				win = data.win,
 				rewards = data.rewards,
 				title = if raid then string.format("Raid · %s", raid.name) else "Raid",
 				winText = "The raid boss falls!",
 				loseText = "The raid boss held on. Try again!",
+				stage = "raid",
 			})
 		end)
 

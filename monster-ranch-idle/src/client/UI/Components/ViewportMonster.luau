@@ -129,7 +129,7 @@ function ViewportMonster:SetAppearance(appearance)
 end
 
 function ViewportMonster:SetEgg(eggType: string)
-	local ok, model = pcall(EggModel.Build, eggType, { anchored = true })
+	local ok, model = pcall(EggModel.Build, eggType, { anchored = true, vfx = false }) -- particles do not render here
 	if ok and model then
 		self:_use(model)
 	else

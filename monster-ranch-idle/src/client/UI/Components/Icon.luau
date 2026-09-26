@@ -1,12 +1,15 @@
 --[[
-	Icon: small currency/resource icons drawn with shapes (or Theme.Images when set).
+	Icon: small currency/resource icons. Each kind is drawn, in order of preference, from the icon
+	sheet (UI/Art/Icons, once uploaded), from Theme.Images (a single uploaded image), or with shapes.
 	Kinds: coin · gem · food · treat · stardust · friendship · token · ribbon · xp · egg · star · lock · trophy
+	Any icon name from art/ui/ICONS.md also works as a kind ("food_sweet", "decor_hay_bale", ...).
 
 		Icon.new("coin", 28)       -- returns a Frame (size × size)
 ]]
 
 local Theme = require(script.Parent.Parent.Theme)
 local Create = require(script.Parent.Parent.Create)
+local Sheet = require(script.Parent.Parent.Art.Sheet)
 local Config = require(game:GetService("ReplicatedStorage").Shared.Config)
 
 local New = Create.New
@@ -24,6 +27,29 @@ local IMAGE_KEYS = {
 	token = "Token",
 	ribbon = "Ribbon",
 }
+
+-- Kind -> icon name on the icon sheet. The token kind is resolved per running event.
+local SHEET_NAMES = {
+	coin = "cur_coin",
+	gem = "cur_gem",
+	food = "cur_food",
+	treat = "cur_treat",
+	stardust = "cur_stardust",
+	friendship = "cur_friendship",
+	ribbon = "cur_ribbon",
+	xp = "cur_xp",
+	star = "item_star",
+	trophy = "item_trophy",
+}
+
+local function sheetName(kind: string): string
+	if kind == "token" then
+		local event = Config.Events.Active(workspace:GetServerTimeNow())
+		local name = event and "token_" .. event.id
+		return if name and Sheet.has(Sheet.Icons, name) then name else "cur_token"
+	end
+	return SHEET_NAMES[kind] or kind
+end
 
 local function glyph(parent, text: string, color: Color3, scale: number?)
 	return Create.Text({
@@ -45,6 +71,9 @@ function Icon.new(kind: string, size: number?): Frame
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(px, px),
 	})
+	if Sheet.icon(sheetName(kind), { Parent = frame }) then
+		return frame
+	end
 	local imageKey = IMAGE_KEYS[kind]
 	if imageKey and Theme.Images[imageKey] ~= "" then
 		New("ImageLabel", {

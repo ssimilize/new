@@ -22,6 +22,7 @@ local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Rng = require(Shared.Logic.Rng)
 local RaceLogic = require(Shared.Logic.Racing)
+local LiveCfg = Config.LiveRace
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -324,6 +325,26 @@ return {
 			})
 		end
 
+		-- Live race (glow-up LR): up to 6 riders on the track in the world. This panel only
+		-- starts it; the lobby, countdown, race and podium are the LiveRace controller's HUD.
+		local function joinLiveRace()
+			if not Util.unlocked(ctx, LiveCfg.Unlock) then
+				ctx:Toast(Util.unlockText(LiveCfg.Unlock), "error")
+				return
+			end
+			local riding = StoreKit.tbl(ctx.Store, "session.Riding")
+			if type(riding.mount) ~= "string" then
+				ctx:Toast("Ride one of your Adults first", "error")
+				return
+			end
+			local ok, res = Util.requestOnce(ctx, "LiveRace.Join", {})
+			if ok and type(res) == "table" then
+				ctx.Router:Close("Racing")
+			elseif not ok then
+				ctx:Toast(tostring(res), "error")
+			end
+		end
+
 		-- Lobby and result ---------------------------------------------------------------------
 		local function drawLobby()
 			local stats = StoreKit.tbl(ctx.Store, "profile.Racing")
@@ -345,6 +366,16 @@ return {
 				Position = UDim2.fromOffset(16, 44),
 				Size = UDim2.new(1, -32, 0, 190),
 				Parent = rules,
+			})
+			Button.new({
+				Name = "JoinLiveRace",
+				Text = if Util.unlocked(ctx, LiveCfg.Unlock) then "Join Live Race (up to 6 riders)" else Util.unlockText(LiveCfg.Unlock),
+				Color = if Util.unlocked(ctx, LiveCfg.Unlock) then C.Purple else C.Gray,
+				Size = UDim2.fromOffset(320, 56),
+				AnchorPoint = Vector2.new(0.5, 1),
+				Position = UDim2.new(0.5, 0, 1, -88),
+				Parent = rules,
+				OnClick = joinLiveRace,
 			})
 			Button.new({
 				Name = "PickRacer",

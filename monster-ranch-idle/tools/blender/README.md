@@ -49,6 +49,28 @@ once for happy and attack, so it starts and ends at rest). Shared code is in `ri
 | golem | `rig_golem.py` | hips, chest, head, 2-bone arms (root: where a hanging arm stands clear of the body in a slice), short legs | heavy side-to-side stomp, arms swing against the legs; hop throws both fists up |
 | bug | `rig_bug.py` | body (front, with the face) and abdomen, antennae and wings (what rises above the shell line), six legs, 2-bone stinger | tripod gait, wings buzz in every clip; hop is a buzzing jump |
 
+Each script also keys nine extra clips (`EXTRA_CLIPS`; lengths, rates and modes in `riglib.EXTRA`):
+`sleep`, `eat` and `sit` loop, `cheer`, `cheer2`, `attack`, `hurt` and `trick` play once (start and
+end at rest), `faint` holds its last frame. They are keyed at 10-15 fps and go in a second module
+per form, `Visuals/MeshMonsterClips/<form>.luau` (`clipdata.py`), since both would not fit under the
+Source cap. `riglib.animate_extra` measures the skinned mesh every frame, so no pose sinks below the
+ground, and a clip can lay its lowest point on the floor (lying down; moths and sprites landing).
+
+Forms already in the game get them without a re-rig or a re-publish (the skeleton and skin are
+untouched; the rig is opened read-only):
+
+```sh
+python tools/blender/clips.py                          # every form in MeshMonsterAssets (about 8 min, 8 jobs)
+python tools/blender/clips.py zappip,moonlitdragon     # some forms
+python tools/blender/clips.py --check                  # only prove the rigs match the modules
+python tools/blender/clips.py beamhound --previews [--only sleep,faint]   # + art/rigs-clips/<form>/
+```
+
+`add_clips.py` (one form, in Blender) first proves that the rig's bones and its idle, walk and hop,
+sampled again, are byte for byte what `MeshMonsters/<form>.luau` holds, keys the clips, proves it
+again and writes the clips module; a form whose rig differs stops with an error and gets none.
+`MonsterAnimator` falls back to the old behaviour for any clip a form lacks.
+
 Moths and sprites are modelled hovering above the ground, and long or wide models get a `scale`
 below 1 in their module (a slug is drawn with about a fox's bulk, not its height).
 
@@ -68,6 +90,33 @@ below 1 in their module (a slug is drawn with about a fox's bulk, not its height
   it. The models come from `tools/meshy/buildings/make.py`.
 - `previews.py` (system Python, Pillow): GIFs and contact sheets from a rig's `frames/`.
 - `look.py`: renders any GLB from five angles. `model_fox.py`: the from-scratch test (not used).
+
+## Eggs
+
+```sh
+python tools/blender/eggs.py              # everything, ~75 s; `eggs.py royal,sky` repaints just those
+python tools/blender/eggs.py ids ids.json # record published ids in src/client/Visuals/EggAssets.luau
+```
+
+`eggs.py` (system Python: numpy, Pillow; it runs Blender for `eggs_blender.py`) makes, in `art/eggs`
+(not in git, bar `preview/sheet.jpg`):
+
+- `upload/egg_shell/mesh.json` (the smooth egg, ~3,000 triangles, 1 x 1.3 x 1), `upload/egg_gem/mesh.json`
+  (the Crystal Egg's 96 flat facets), `upload/egg_orn_<egg>/mesh.json` (ornaments: Royal's crown,
+  Harvest's stem and leaf, Bloom's flower, Sky's wings, Glacier's frost crystals). Publish them like
+  monster meshes: `_G.MeshPublishArgs = { base = "http://127.0.0.1:<port>/", forms = { "egg_shell", ... } }`
+  with `http.server` serving `art/eggs/upload`.
+- `upload/egg_<egg>.png` (1024 x 512, one per `Config.Eggs` id), `egg_crack1..3.png` and
+  `egg_painted.png` (transparent overlays), `egg_ornaments.png` (the ornaments' shared swatches).
+  Upload them with `upload_image`.
+- `icons/<egg>.png` (256 px, transparent, #1B1B1B ink outline), `renders/`, and `sheet.png`: every egg,
+  the crack stages, the hunt egg, and the eggs at incubator size. Look at it after any change.
+
+The patterns are painted in numpy, not baked from shader nodes: the texture is a latitude-longitude map
+of the egg, so every texel's point on the surface is known, and each motif is a distance field in the
+egg's tangent plane there (crisp cartoon shapes, even sizes, an ink rim, no seam). One painter per egg
+in `PAINTERS`; the tool refuses to run when a `Config.Eggs` id has none. Re-running keeps the ids already
+in `EggAssets.luau` and refreshes the ornament offsets.
 
 ## Checking a change to a rig script
 

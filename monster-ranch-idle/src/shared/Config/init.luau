@@ -19,6 +19,7 @@ local Config = {
 	Unlocks = require(script.Unlocks),
 	Regions = require(script.Regions),
 	Boss = require(script.Boss),
+	Titan = require(script.Titan), -- glow-up TT: scheduled cross-server titan invasions
 	Breeding = require(script.Breeding),
 	HallOfFame = require(script.HallOfFame),
 	Rebirth = require(script.Rebirth),
@@ -37,6 +38,7 @@ local Config = {
 	Arena = require(script.Arena),
 	Raids = require(script.Raids),
 	Racing = require(script.Racing),
+	LiveRace = require(script.LiveRace), -- glow-up LR: live races on the track, racing gear
 	TradingHub = require(script.TradingHub),
 	Workshop = require(script.Workshop),
 	Clubs = require(script.Clubs),
@@ -44,6 +46,28 @@ local Config = {
 	World = require(script.World),
 	Sounds = require(script.Sounds),
 	Flags = require(script.Flags),
+	LoginStreak = require(script.LoginStreak),
+	Reminders = require(script.Reminders),
+	Mastery = require(script.Mastery), -- 3.3 endgame
+	-- Glow-up L: emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
+	Community = require(script.Community),
+	Ambience = require(script.Ambience),
+	Companions = require(script.Companions), -- glow-up T: a monster at your side
+	Quality = require(script.Quality), -- glow-up P: automatic quality levels, particle budget, distance LOD
+	-- Glow-up R: pens that grow (fence tiers, upgrade props, theme props, habitats, Feed Garden)
+	Pens = require(script.Pens),
+	-- Glow-up O: Codex milestones, the Codex Museum and the Hall of Fame plaza
+	Codex = require(script.Codex),
+	-- Glow-up Q: bond hearts, care gestures, bond tricks
+	Bond = require(script.Bond),
+	Postcards = require(script.Postcards), -- glow-up X: postcards from expeditions
+	-- Glow-up W: the Titanic size tier and numbered limited editions
+	Titanic = require(script.Titanic),
+	Editions = require(script.Editions),
+	-- Glow-up Y: likes that pay, the crown, ranch visits and snapshots, Ranch of the Week
+	Visits = require(script.Visits),
+	-- Glow-up DR: the Deep Reef you dive into, swimming and swimming mounts
+	DeepReef = require(script.DeepReef),
 }
 
 return Config

@@ -18,7 +18,10 @@
 	GraceSeconds) and be finished within MaxSeconds + LateSeconds.
 
 	Public API: Racing:CupPoints(player) -> number   -- this week (Leaderboards "racing")
-	Publishes RaceFinished (player, { place, time, day, cup }) and RanchXP.
+	            Racing:Award(player, { place, time, finished, live, riders }) -> { rewards, cup }
+	              glow-up LR: pays a live race (Systems/LiveRace) from the same table and daily cap;
+	              places past #PlaceRewards get the last row; live times don't touch the best times.
+	Publishes RaceFinished (player, { place, time, day, cup, live, riders }) and RanchXP.
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -87,7 +90,48 @@ function Racing.TrackFor(day: number)
 	return cached
 end
 
+-- Counts the race, pays the place (first RewardedPerDay races a day) and publishes it.
+local function award(player, s, result)
+	local place = result.place
+	s.races += 1
+	if place == 1 then
+		s.wins += 1
+	end
+	local granted = {}
+	local cup = 0
+	if s.rewarded < Config.RewardedPerDay then
+		s.rewarded += 1
+		local row = math.min(place, #Config.PlaceRewards)
+		granted = Rewards:Grant(player, Config.PlaceRewards[row] or {}, "racing")
+		cup = Config.CupPoints[row] or 0
+		s.cup += cup
+	end
+	ctx:Dirty(player)
+	ctx.Bus:Publish(
+		"RaceFinished",
+		player,
+		{ place = place, time = result.time, day = result.day, cup = cup, live = result.live == true, riders = result.riders or 1 }
+	)
+	ctx.Bus:Publish("RanchXP", player, { amount = 10, reason = "race" })
+	return { rewards = granted, cup = cup }
+end
+
 -- Public API ---------------------------------------------------------------------------
+
+function Racing:Award(player, result)
+	local s = ctx:Section(player)
+	if not s then
+		return { rewards = {}, cup = 0 }
+	end
+	sync(player, s)
+	return award(player, s, {
+		place = result.place,
+		time = if result.finished then result.time else 0,
+		day = ctx:Day(),
+		live = result.live,
+		riders = result.riders,
+	})
+end
 
 function Racing:CupPoints(player): number
 	local s = ctx:Section(player)
@@ -148,10 +192,6 @@ local function finish(player, raceId: number, inputs)
 	end
 	sync(player, s)
 	local place = if result.finished then Logic.Place(result.time, race.ghosts) else #race.ghosts + 1
-	s.races += 1
-	if place == 1 then
-		s.wins += 1
-	end
 	if result.finished then
 		if s.best == 0 or result.time < s.best then
 			s.best = result.time
@@ -160,17 +200,8 @@ local function finish(player, raceId: number, inputs)
 			s.bestToday = result.time
 		end
 	end
-	local granted = {}
-	local cup = 0
-	if s.rewarded < Config.RewardedPerDay then
-		s.rewarded += 1
-		granted = Rewards:Grant(player, Config.PlaceRewards[place] or {}, "racing")
-		cup = Config.CupPoints[place] or 0
-		s.cup += cup
-	end
-	ctx:Dirty(player)
-	ctx.Bus:Publish("RaceFinished", player, { place = place, time = result.time, day = race.day, cup = cup })
-	ctx.Bus:Publish("RanchXP", player, { amount = 10, reason = "race" })
+	local paid = award(player, s, { place = place, time = result.time, day = race.day })
+	local granted, cup = paid.rewards, paid.cup
 	return {
 		time = result.time,
 		finished = result.finished,

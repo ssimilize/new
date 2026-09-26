@@ -7,6 +7,8 @@
 	Every adapter call that can fail is wrapped in pcall and returns a safe default.
 ]]
 
+local RemindersAdapter = require(script.Parent.RemindersAdapter)
+
 local Adapters = {}
 
 local REMOTES_FOLDER = "KernelRemotes"
@@ -92,6 +94,7 @@ function Adapters.Roblox()
 	local MessagingService = game:GetService("MessagingService")
 	local TextService = game:GetService("TextService")
 	local AnalyticsService = game:GetService("AnalyticsService")
+	local BadgeService = game:GetService("BadgeService")
 
 	local isStudio = RunService:IsStudio()
 	local nameCache = {}
@@ -910,6 +913,37 @@ function Adapters.Roblox()
 		end,
 	}
 
+	-- Titan invasions (glow-up TT): one MemoryStore hash map entry per scheduled invasion (key =
+	-- the schedule slot's startsAt), holding the shared HP pool and which servers are fighting.
+	-- Every server folds its own damage in with an atomic Update every Config.Titan.ReportSeconds,
+	-- so this is MemoryStore, not a DataStore key (which throttles writes to one key); the entry
+	-- expires a day after its last write. Get never writes. Both yield: the Titan system calls
+	-- them through Services.Spawn. VERIFY in a live server: request units with many servers.
+	local TITAN_TTL = 24 * 3600
+	local titanOk, titanMap = pcall(function()
+		return MemoryStoreService:GetHashMap("MonsterRanch_Titan_v1")
+	end)
+	adapters.Titan = if titanOk
+		then {
+			Get = function(key: string): (boolean, any)
+				local ok, record = pcall(function()
+					return titanMap:GetAsync(key)
+				end)
+				return ok, if ok then record else nil
+			end,
+			Update = function(key: string, transform): (boolean, any)
+				local result = nil
+				local ok = pcall(function()
+					titanMap:UpdateAsync(key, function(current)
+						result = transform(current)
+						return result
+					end, TITAN_TTL)
+				end)
+				return ok, if ok then result else nil
+			end,
+		}
+		else nil
+
 	adapters.Workspace = workspace
 	-- A MeshPart from a published Mesh asset, for World/Dress. Yields; nil if it fails to load.
 	-- A server dressing the world asks for ~90 meshes in a row, and a load in that burst can fail
@@ -932,6 +966,79 @@ function Adapters.Roblox()
 		end
 		return nil
 	end
+	-- Offline reminders (glow-up I): MemoryStore queue + Open Cloud notifications. nil when the
+	-- services can't be reached; the Reminders system is off then.
+	adapters.Reminders = RemindersAdapter.Roblox()
+
+	-- Roblox badges (glow-up O: Codex milestones). May yield; callers run it through Spawn.
+	adapters.Badges = {
+		Award = function(userId: number, badgeId: number): boolean
+			local ok, awarded = pcall(function()
+				return BadgeService:AwardBadge(userId, badgeId)
+			end)
+			return ok and awarded == true
+		end,
+	}
+
+	-- Limited editions (glow-up W): one counter per edition in its own DataStore. UpdateAsync
+	-- makes a claim atomic across servers: Claim -> (true, n) the next number, (true, nil) the
+	-- edition is full, (false, nil) the store failed (the monster stays pending and is tried
+	-- again). nil when the store can't be opened: the system then counts in the profile store.
+	local editionStore = storeOf("MonsterRanch_Editions_v1")
+	adapters.Editions = if editionStore
+		then {
+			Claim = function(editionId: string, size: number): (boolean, number?)
+				local minted = nil
+				local ok = pcall(function()
+					editionStore:UpdateAsync(editionId, function(current)
+						local count = math.max(0, math.floor(tonumber(current) or 0))
+						if count >= size then
+							minted = nil
+							return nil -- full: write nothing
+						end
+						minted = count + 1
+						return minted
+					end)
+				end)
+				return ok, if ok then minted else nil
+			end,
+		}
+		else nil
+
+	-- Ranch visits (glow-up Y): one snapshot per player in its own DataStore (tagged with the
+	-- user id for erasure requests), and where a friend is playing right now. nil when the
+	-- store can't be opened: visits, snapshots and the Ranch of the Week stage are off then.
+	local ranchStore = storeOf("MonsterRanch_Ranches_v1")
+	adapters.Ranches = if ranchStore
+		then {
+			Save = function(userId: number, snap): boolean
+				return (pcall(function()
+					ranchStore:SetAsync("u" .. tostring(userId), snap, { userId })
+				end))
+			end,
+			Load = function(userId: number): (boolean, any)
+				local ok, snap = pcall(function()
+					return ranchStore:GetAsync("u" .. tostring(userId))
+				end)
+				return ok, if ok then snap else nil
+			end,
+			-- (true, { placeId, jobId }) while they play in this universe, (true, nil) when they
+			-- don't, (false, nil) when the lookup failed.
+			Locate = function(userId: number): (boolean, any)
+				local ok, _, _, placeId, jobId = pcall(function()
+					return TeleportService:GetPlayerPlaceInstanceAsync(userId)
+				end)
+				if not ok then
+					return false, nil
+				end
+				if type(placeId) == "number" and placeId ~= 0 and type(jobId) == "string" and jobId ~= "" then
+					return true, { placeId = placeId, jobId = jobId }
+				end
+				return true, nil
+			end,
+		}
+		else nil
+
 	return adapters
 end
 

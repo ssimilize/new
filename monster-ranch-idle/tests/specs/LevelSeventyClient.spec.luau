@@ -109,6 +109,10 @@ return function(t)
 			screen = c:Screen("Expeditions")
 			expect(c:HasText("Squad  5 / 5", screen)).toBe(true)
 
+			-- This checks the 2D viewer's phone layout specifically (glow-up V draws a 3D stage
+			-- by default when the camera is free); force the 2D fallback for this assertion.
+			local Battle = c:require(c.clientFolder.UI.Screens.Parts.Battle)
+			Battle.SetMode("2d")
 			c:Click(c:Button("Fight stage 1", screen))
 			c:Advance(0.5)
 			local viewer = c.kernel.UI.Top:FindFirstChild("BattleReplay")
@@ -134,6 +138,7 @@ return function(t)
 			expect(needed <= allyRow.AbsoluteSize.X).toBe(true)
 			c:Click(c:Button("Skip", c.kernel.UI.Top))
 			c:Advance(1)
+			Battle.SetMode(nil)
 			expectClean(c)
 		end)
 

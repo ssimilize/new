@@ -128,6 +128,13 @@ local function itemDetail(listing): string
 	if item.weight then
 		table.insert(parts, Format.weight(item.weight))
 	end
+	local ap = type(item.appearance) == "table" and item.appearance or item
+	if ap.titanic == true then -- glow-up W
+		table.insert(parts, "TITANIC")
+	end
+	if type(ap.ltdNo) == "number" then
+		table.insert(parts, string.format("#%d/%d", ap.ltdNo, tonumber(ap.ltdOf) or 0))
+	end
 	local muts = {}
 	for _, id in item.muts or {} do
 		local def = Config.Mutations.ById[id]

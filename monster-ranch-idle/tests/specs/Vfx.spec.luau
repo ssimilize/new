@@ -73,6 +73,13 @@ return function(t)
 		for id, specs in Presets.Bursts do
 			table.insert(list, { name = "Bursts." .. id, specs = specs, kind = "burst" })
 		end
+		for id, specs in Presets.Eggs do
+			table.insert(list, { name = "Eggs." .. id, specs = specs, kind = "monster" })
+		end
+		table.insert(list, { name = "EggReady", specs = Presets.EggReady, kind = "monster" })
+		for id, specs in Presets.Mastery do -- 3.3 mastery auras
+			table.insert(list, { name = "Mastery." .. id, specs = specs, kind = "monster" })
+		end
 		return list
 	end
 
@@ -364,6 +371,22 @@ return function(t)
 					expect(live(specs) <= 3).toBe(true)
 				end
 			end
+			-- 3.3: a mastery aura sits on top of everything above, so it stays a light sprinkle.
+			for id, specs in Presets.Mastery do
+				if live(specs) > Presets.Budget.mastery then
+					error(string.format("mastery aura %s has %.2f live particles", id, live(specs)))
+				end
+			end
+			for _, item in Config.Mastery.ItemById do
+				if item.kind == "aura" then
+					expect(type(Presets.Mastery[item.vfx]) == "table" and #Presets.Mastery[item.vfx] > 0).toBe(true)
+				end
+			end
+			for _, tier in Config.Mastery.Tiers do
+				if tier.aura then
+					expect(type(Presets.Mastery[tier.aura]) == "table").toBe(true)
+				end
+			end
 		end)
 	end)
 
@@ -613,7 +636,8 @@ return function(t)
 			c.world:Run(function()
 				c.kernel.Bus:Publish("Vfx.Burst", "rebirth")
 			end)
-			c:Advance(0.2)
+			-- Moments go through Celebrate:Moment, which gives a covering popup a beat to open first.
+			c:Advance(0.6)
 			local bursts = holder:FindFirstChild("Bursts")
 			expect(bursts ~= nil and #emitters(bursts) > 0).toBe(true)
 			-- A ranch level-up from the server bursts round the character.

@@ -18,6 +18,7 @@ local Config = require(Shared.Config)
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
+local Shine = require(UI.Components.Shine)
 local Anim = require(UI.Anim)
 local Button = require(UI.Components.Button)
 local Panel = require(UI.Components.Panel)
@@ -342,6 +343,9 @@ return {
 				LayoutOrder = order,
 				Parent = parent,
 			}, { Create.Corner(Theme.Radius.Card), Create.Stroke(if item then 3 else 2, border) })
+			if ap then
+				Shine.attach(cell, ap.rarity, Theme.Radius.Card)
+			end
 			if onTap then
 				cell.Activated:Connect(onTap)
 			end

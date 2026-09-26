@@ -27,6 +27,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from riglib import X, Y, Z, armature, chain, finish, footprint_scale, footprints, framed_views, log, pulse, rot, run, set_game_scale, surface_samples  # noqa: E402
+from riglib import about, box, ramp  # noqa: E402
 
 ARGS = sys.argv[sys.argv.index("--") + 1 :]
 SRC, OUT = Path(ARGS[0]).resolve(), Path(ARGS[1]).resolve()
@@ -220,15 +221,151 @@ def clip_hop(arm, f, n):
     return pose, Vector((0, 0, 0.17 * air - 0.035 * crouch))
 
 
+
+# ─── The extra clips (riglib.EXTRA: sleep, eat, cheer, cheer2, attack, hurt, faint, sit, trick) ──
+
+
+def env(t: float, rise: float = 0.12, fall: float = 0.85) -> float:
+    """1 through a one-shot clip, easing in from 0 at its start and back to 0 at its end."""
+    return ramp(t, 0.0, rise) * (1 - ramp(t, fall, 1.0))
+
+
+def centre(arm) -> Vector:
+    lo, hi = box(arm)
+    return (lo + hi) / 2
+
+
+def sit_legs(pose, qh, deg):
+    for side in ("L", "R"):
+        pose[f"leg.{side}"] = qh.inverted() @ rot(X, deg)
+
+
+def clip_sleep(arm, f, n):
+    """Sits down heavily and slumps forward, chin on chest, arms hanging; slow breaths."""
+    b = math.sin(2 * math.pi * f / n)
+    qh = rot(X, -8)
+    pose = {"hips": qh, "chest": rot(X, 28 + 2 * b), "head": rot(X, 25 + 1.5 * b) @ rot(Y, 8)}
+    sit_legs(pose, qh, -85)
+    arms_pose(pose, 30, 30, 8, 10)
+    return pose, Vector(), 1.0
+
+
+def clip_eat(arm, f, n):
+    """Hunches over, head down, scooping food to its mouth with one hand then the other."""
+    t = f / n
+    a = 0.5 - 0.5 * math.cos(2 * math.pi * t)
+    chew = 0.5 - 0.5 * math.cos(4 * math.pi * t)
+    qh = rot(X, 4)
+    pose = {"hips": qh, "chest": rot(X, 18), "head": rot(X, 16 + 6 * chew)}
+    sit_legs(pose, qh, 0)
+    arms_pose(pose, -80 * a, -80 * (1 - a), 10, 0)
+    pose["arm.L.2"] = rot(X, -70 * a)
+    pose["arm.R.2"] = rot(X, -70 * (1 - a))
+    return pose, Vector()
+
+
+def clip_cheer(arm, f, n):
+    """Both fists pumped up overhead twice, bouncing."""
+    t = f / n
+    e = env(t, 0.2, 0.8)
+    pump = abs(math.sin(4 * math.pi * t)) * e
+    pose = {"chest": rot(X, -8 * e), "head": rot(X, -12 * e)}
+    arms_pose(pose, -160 * e, -160 * e, 15 * e, 30 * pump)
+    return pose, Vector((0, 0, 0.05 * pump))
+
+
+def clip_cheer2(arm, f, n):
+    """Flexes both arms, chest puffed, looking from one to the other."""
+    t = f / n
+    e = env(t, 0.2, 0.8)
+    pose = {"chest": rot(X, -10 * e), "head": rot(X, -8 * e) @ rot(Z, 15 * math.sin(4 * math.pi * t) * e)}
+    arms_pose(pose, -10 * e, -10 * e, 75 * e, 0)
+    pose["arm.L.2"] = rot(Y, -90 * e)
+    pose["arm.R.2"] = rot(Y, 90 * e)
+    return pose, Vector((0, 0, 0.015 * abs(math.sin(4 * math.pi * t)) * e))
+
+
+def clip_attack(arm, f, n):
+    """Raises both fists overhead, then smashes them down in front, and recovers."""
+    t = f / n
+    wind = ramp(t, 0.0, 0.35) * (1 - ramp(t, 0.35, 0.5))
+    hit = ramp(t, 0.35, 0.5) * (1 - ramp(t, 0.6, 1.0))
+    qh = rot(X, 10 * hit)
+    pose = {"hips": qh, "chest": rot(X, -15 * wind + 30 * hit), "head": rot(X, -10 * wind + 10 * hit)}
+    sit_legs(pose, qh, 0)
+    arms_pose(pose, -170 * wind - 50 * hit, -170 * wind - 50 * hit, 10 * wind, 30 * wind)
+    return pose, Vector((0, -0.06 * hit, -0.04 * hit))
+
+
+def clip_hurt(arm, f, n):
+    """Staggers back, arms flung out."""
+    t = f / n
+    e = ramp(t, 0.0, 0.15) * (1 - ramp(t, 0.3, 1.0))
+    shake = math.sin(2 * math.pi * 5 * t) * e
+    qh = rot(X, -10 * e)
+    pose = {"hips": qh, "chest": rot(X, -10 * e) @ rot(Z, 8 * shake), "head": rot(X, -15 * e)}
+    sit_legs(pose, qh, 0)
+    arms_pose(pose, -30 * e, -30 * e, 30 * e, 20 * e)
+    return pose, Vector((0, 0.06 * e, 0))
+
+
+def clip_faint(arm, f, n):
+    """Wobbles, then topples backward like a felled tree and lies there, arms out."""
+    t = f / n
+    wob = math.sin(2 * math.pi * 1.5 * t) * ramp(t, 0.0, 0.08) * (1 - ramp(t, 0.2, 0.35))
+    fall = ramp(t, 0.25, 0.8)
+    q = rot(X, -85 * fall) @ rot(Y, 5 * wob)
+    pose = {"hips": q, "head": rot(X, -10 * fall)}
+    sit_legs(pose, rot(X, 0), -10 * fall)
+    arms_pose(pose, -60 * fall, -60 * fall, 50 * fall, 10 * fall)
+    c = centre(arm)
+    return pose, about(arm, q, (0, c.y, 0), "hips"), fall
+
+
+def clip_sit(arm, f, n):
+    """Sits on the ground, legs out in front, hands on knees, looking around."""
+    t = f / n
+    b = math.sin(2 * math.pi * t)
+    qh = rot(X, -4)
+    pose = {"hips": qh, "chest": rot(X, 6 + 1.5 * b), "head": rot(Z, 12 * math.sin(2 * math.pi * t))}
+    sit_legs(pose, qh, -85)
+    arms_pose(pose, -25, -25, 12, 25)
+    return pose, Vector(), 1.0
+
+
+def clip_trick(arm, f, n):
+    """Spins a full turn with its arms out like a top, with a little hop."""
+    t = f / n
+    e = env(t)
+    q = rot(Z, 360 * ramp(t, 0.1, 0.85))
+    pose = {"hips": q, "head": rot(X, -10 * e)}
+    arms_pose(pose, 0, 0, 80 * e, 0)
+    return pose, about(arm, q, centre(arm), "hips") + Vector((0, 0, 0.08 * pulse(t, 0.1, 0.85)))
+
+
+EXTRA_CLIPS = {
+    "sleep": clip_sleep,
+    "eat": clip_eat,
+    "cheer": clip_cheer,
+    "cheer2": clip_cheer2,
+    "attack": clip_attack,
+    "hurt": clip_hurt,
+    "faint": clip_faint,
+    "sit": clip_sit,
+    "trick": clip_trick,
+}
+
 CLIPS = {"idle": (clip_idle, 60), "walk": (clip_walk, 30), "hop": (clip_hop, 30)}
 
-run(
-    SRC,
-    OUT,
-    ARGS,
-    fit,
-    build,
-    CLIPS,
-    give_back=(("arm.L.1", shoulder_inboard), ("arm.R.1", shoulder_inboard), ("leg.", above_hip)),
-    views=framed_views,
-)
+if __name__ == "__main__":  # add_clips.py imports the clip functions
+    run(
+        SRC,
+        OUT,
+        ARGS,
+        fit,
+        build,
+        CLIPS,
+        give_back=(("arm.L.1", shoulder_inboard), ("arm.R.1", shoulder_inboard), ("leg.", above_hip)),
+        views=framed_views,
+        extra=EXTRA_CLIPS,
+    )

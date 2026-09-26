@@ -8,6 +8,7 @@
 	  Paths/Path<i>                  dirt paths from the plaza to each plot gate
 	  Hub/Plaza, Hub/Fountain        plaza disc and fountain model
 	  Hub/Buildings/<id>             Model (attrs HubId, Screen, Name) with Body, Roof*, Sign, Door
+	  Hub/VipBalcony, Hub/VipPad     the VIP balcony and its ground pad (World/Balcony, glow-up L)
 	  Plots/Plot<i>                  Model (attr PlotId)
 	    Floor                        Part (attr PlotId)
 	    Pens/Pen<n>                  Model (attrs PlotId, PenIndex)
@@ -34,6 +35,11 @@
 	heading of that direction, 0 = +Z, 90 = +X). Pen, incubator, barn and statue offsets are
 	in this frame. Clients use the same maths (Controllers/World.luau).
 ]]
+
+-- Glow-up L: the VIP balcony module sits beside Build (optional, so Build still loads on its own,
+-- as the client test harness loads it).
+local balconyModule = script.Parent and script.Parent:FindFirstChild("Balcony")
+local Balcony = if balconyModule then require(balconyModule) :: any else nil
 
 local Build = {}
 
@@ -254,7 +260,8 @@ local function buildHub(World, root: Instance)
 	local fp = v3(World.Fountain.position)
 	local r = World.Fountain.radius
 	local basin = disc("Basin", r * 2, 1.6, fp + Vector3.new(0, y + 0.8, 0), COLORS.stone, fountain)
-	disc("Water", r * 2 - 2.5, 0.2, fp + Vector3.new(0, y + 1.45, 0), COLORS.water, fountain, {
+	-- the water's top sits just above the basin's rim (1.6), or the stone hides it
+	disc("Water", r * 2 - 2.5, 0.2, fp + Vector3.new(0, y + 1.62, 0), COLORS.water, fountain, {
 		CanCollide = false,
 		Transparency = 0.15,
 		Material = Enum.Material.Glass,
@@ -634,6 +641,10 @@ function Build.world(Config, mode: string?): (Folder, number)
 
 	buildGround(World, root)
 	buildHub(World, root)
+	-- Glow-up L: the VIP balcony beside the plaza (World/Balcony).
+	if Balcony then
+		count += Balcony.build(Config, root:FindFirstChild("Hub") :: Instance, World.GroundY)
+	end
 
 	local plots = Instance.new("Folder")
 	plots.Name = "Plots"
@@ -649,6 +660,13 @@ function Build.world(Config, mode: string?): (Folder, number)
 	buildSpawn(World, root)
 	buildBoundary(World, root)
 	buildSky(World, root)
+	-- Glow-up P: ready for StreamingEnabled (off today): every model arrives whole, so the client
+	-- never sees a building without its Door or a gate without its Body.
+	for _, d in root:GetDescendants() do
+		if d:IsA("Model") then
+			d.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+		end
+	end
 	root:SetAttribute("PartCount", count)
 	return root, count
 end

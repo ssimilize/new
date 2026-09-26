@@ -5,8 +5,8 @@
 	  pen tab     live jar (session.Ranch rates/caps, §6 formula) + Ranch.Collect; monsters in
 	              the pen (tap → MonsterDetail, "To barn" → Ranch.Assign pen 0); Add monsters
 	              (Monsters pick mode, barn monsters only → Ranch.Assign); capacity and jar
-	              upgrades (Ranch.Upgrade); decor slots (owned decor from profile.Shop.decor →
-	              Ranch.PlaceDecor, tap placed decor to take it back); theme picker
+	              upgrades (Ranch.Upgrade); "Build your ranch" (glow-up Z: opens the Decorate
+	              placement mode; decor is no longer slotted per pen); theme picker
 	              (Ranch.SetPenTheme; free or owned themes)
 	  buy pen     next pen's unlock level and price → Ranch.BuyPen
 	  buildings   barn storage, incubator speed and garden upgrades (Ranch.Upgrade)
@@ -207,75 +207,6 @@ function Ranch.Build(ctx)
 		popup:Show()
 	end
 
-	local function openDecorPicker(penIndex: number)
-		popup:SetTitle(string.format("Decorate pen %d", penIndex))
-		popup:SetSize(UDim2.fromOffset(520, 380))
-		Tiles.clear(popup.Body)
-		local list = Widgets.List({ Size = UDim2.fromScale(1, 1), Padding = 8, Parent = popup.Body })
-		local any = false
-		local decor = StoreKit.tbl(store, "profile.Shop.decor")
-		for i, def in Config.Decor.List do
-			local n = tonumber(decor[def.id]) or 0
-			if n > 0 then
-				any = true
-				local row = Tiles.card({ Size = UDim2.new(1, -12, 0, 60), LayoutOrder = i, Parent = list })
-				New("Frame", {
-					BackgroundColor3 = Color3.fromHex(def.color),
-					Position = UDim2.fromOffset(10, 10),
-					Size = UDim2.fromOffset(40, 40),
-					Parent = row,
-				}, { Create.Corner(8), Create.Stroke(2) })
-				Tiles.label({
-					Text = string.format("%s ×%d · +%d mood", def.name, n, def.mood),
-					TextSize = Theme.TextSize.Body,
-					Position = UDim2.fromOffset(60, 0),
-					Size = UDim2.new(1, -200, 1, 0),
-					Parent = row,
-				})
-				Button.new({
-					Text = "Place",
-					Color = C.Green,
-					Size = UDim2.fromOffset(110, 46),
-					AnchorPoint = Vector2.new(1, 0.5),
-					Position = UDim2.new(1, -8, 0.5, 0),
-					Parent = row,
-					OnClick = function()
-						local ok = StoreKit.request(ctx, "Ranch.PlaceDecor", { decor = def.id, pen = penIndex })
-						if ok then
-							popup:Hide()
-						end
-					end,
-				})
-			end
-		end
-		if not any then
-			Tiles.label({
-				Text = "You have no decor to place. Decor keeps monsters happy!",
-				TextSize = Theme.TextSize.Body,
-				TextXAlignment = Enum.TextXAlignment.Center,
-				Size = UDim2.new(1, -12, 0, 60),
-				LayoutOrder = 1,
-				Parent = list,
-			})
-			Button.new({
-				Text = "Browse decor",
-				Color = C.Pink,
-				Size = UDim2.fromOffset(200, 48),
-				LayoutOrder = 2,
-				Parent = list,
-				OnClick = function()
-					popup:Hide()
-					if ctx.Router:Has("Store") then
-						ctx.Router:Open("Store", { tab = "decor" })
-					else
-						ctx:Toast("Coming soon", "info")
-					end
-				end,
-			})
-		end
-		popup:Show()
-	end
-
 	local function openPlantPicker(plot: number)
 		popup:SetTitle(string.format("Plant in plot %d", plot))
 		popup:SetSize(UDim2.fromOffset(460, 330))
@@ -361,7 +292,8 @@ function Ranch.Build(ctx)
 			Size = UDim2.new(1, -250, 0, 24),
 			Parent = jarCard,
 		})
-		local collectButton = Button.new({
+		local collectButton
+		collectButton = Button.new({
 			Text = "Collect",
 			Color = C.Green,
 			Icon = Icon.new("coin", 24),
@@ -370,11 +302,20 @@ function Ranch.Build(ctx)
 			Position = UDim2.new(1, -12, 0, 8),
 			Parent = jarCard,
 			OnClick = function()
+				local kit = ctx:GetController("Celebrate")
+				local hold = kit and kit:Hold({ "coins" })
 				local ok, res = StoreKit.request(ctx, "Ranch.Collect", { pen = penIndex })
+				local coins = if ok and type(res) == "table" then tonumber(res.coins) or 0 else 0
 				if ok then
-					local coins = type(res) == "table" and tonumber(res.coins) or 0
 					ctx:Sound("CoinCollect")
-					ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+					if kit and coins > 0 then
+						kit:Reward({ { kind = "coins", amount = coins } }, { from = collectButton and collectButton.Root, hold = hold })
+					else
+						ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+					end
+				end
+				if hold and coins <= 0 then
+					hold:Release()
 				end
 			end,
 		})
@@ -497,60 +438,27 @@ function Ranch.Build(ctx)
 			end
 		)
 
-		-- Decor
-		sectionTitle(string.format("Decor (%d slots)", Config.Decor.PerPen), 7)
-		local decorRow = Tiles.row({ Size = UDim2.new(1, -12, 0, 96), LayoutOrder = 8, Parent = content }, 10)
-		local placed = StoreKit.asTable(pen.decor)
-		for slot = 1, Config.Decor.PerPen do
-			local decorId = placed[slot]
-			local def = decorId and Config.Decor.ById[decorId]
-			local tile = Tiles.card({
-				Size = UDim2.fromOffset(150, 92),
-				LayoutOrder = slot,
-				Parent = decorRow,
-				Color = if def then C.Card else C.PanelDeep,
-			})
-			if def then
-				New("Frame", {
-					BackgroundColor3 = Color3.fromHex(def.color),
-					AnchorPoint = Vector2.new(0.5, 0),
-					Position = UDim2.new(0.5, 0, 0, 8),
-					Size = UDim2.fromOffset(40, 40),
-					Parent = tile,
-				}, { Create.Corner(8), Create.Stroke(2) })
-				Tiles.label({
-					Text = def.name .. "\nTap to take back",
-					TextSize = Theme.TextSize.Small - 1,
-					TextXAlignment = Enum.TextXAlignment.Center,
-					Position = UDim2.fromOffset(4, 50),
-					Size = UDim2.new(1, -8, 0, 38),
-					Parent = tile,
-				})
-				Tiles.tap(tile, function()
-					StoreKit.request(ctx, "Ranch.PlaceDecor", { decor = decorId, pen = 0 })
-				end)
-			else
-				Create.Text({
-					Text = "+",
-					TextSize = 40,
-					TextColor3 = C.Orange,
-					Stroke = true,
-					Size = UDim2.new(1, 0, 0, 56),
-					Parent = tile,
-				})
-				Tiles.label({
-					Text = "Place decor",
-					TextSize = Theme.TextSize.Small,
-					TextXAlignment = Enum.TextXAlignment.Center,
-					Position = UDim2.fromOffset(0, 56),
-					Size = UDim2.new(1, 0, 0, 30),
-					Parent = tile,
-				})
-				Tiles.tap(tile, function()
-					openDecorPicker(penIndex)
-				end)
-			end
-		end
+		-- Decor (glow-up Z): placed anywhere on the plot in placement mode (the Decorate screen).
+		sectionTitle("Decor", 7)
+		local decorRow = Tiles.row({ Size = UDim2.new(1, -12, 0, 60), LayoutOrder = 8, Parent = content }, 10)
+		Tiles.label({
+			Text = "Place decor anywhere on your ranch. Mood decor cheers up the pen it stands in.",
+			TextSize = Theme.TextSize.Small,
+			Size = UDim2.new(1, -230, 1, 0),
+			LayoutOrder = 1,
+			Parent = decorRow,
+		})
+		local build = Button.new({
+			Text = "Build your ranch",
+			Color = C.Pink,
+			Size = UDim2.fromOffset(210, 52),
+			Parent = decorRow,
+			OnClick = function()
+				ctx.Router:Close("Ranch")
+				ctx.Router:Open("Decorate")
+			end,
+		})
+		build.Root.LayoutOrder = 2
 	end
 
 	local function renderBuyPen()

@@ -126,6 +126,16 @@ table.insert(World.Hub, {
 	screen = "Workshop",
 })
 
+-- Glow-up O: the Codex Museum and the Hall of Fame plaza (client-built, Config/Codex) south of the
+-- Market Square, either side of the path to plot 5. Scenery keeps off them (keepOut below).
+World.CodexGrounds = {
+	-- Codex Museum (Logic/Museum.Layout fits inside; the south edge is pushed out for glow-up DR's
+	-- 3 new Tide lines, one more depth row in the Tide wing — the north edge stays put, Plot 3's
+	-- clearance runs off it).
+	{ center = { 125, -225 }, size = { 90, 94 } },
+	{ center = { -120, -214 }, size = { 70, 40 } }, -- Hall of Fame plaza
+}
+
 -- The perimeter: a stone wall on a square of 2 x `half` studs round the origin, and an invisible
 -- barrier `barrier` studs tall on the same line so nobody jumps or climbs over. The play area
 -- inside (1600 x 1600) leaves room around the plots for future features. `segment` is the
@@ -142,7 +152,7 @@ World.Scenery = {
 	seed = 3203,
 	margin = 6, -- extra studs between an item and a keep-out zone
 	wallClearance = 8, -- studs kept clear inside the wall
-	keepOut = {},
+	keepOut = { World.CodexGrounds[1], World.CodexGrounds[2] },
 	kinds = {
 		-- Big things first so the small ones fill in around them.
 		-- Trees collide only through an invisible trunk post `trunk` x size wide.
@@ -178,6 +188,10 @@ World.Scenery = {
 	outside = { kinds = { "oak", "oakLight", "pine" }, size = { 22, 32 }, step = 26, depth = { 16, 150 } },
 }
 
+-- Glow-up LR: the live race track (Config.LiveRace.Track, a loop 224 x 104 studs round its centre,
+-- plus the start pad and podium on its north side) stays clear of scenery.
+table.insert(World.Scenery.keepOut, { center = { -210, 332 }, size = { 244, 140 } })
+
 -- Update 2.0 · Sky Islands: floating islands high above the map, joined by cloud bridges.
 -- The launch pad in the Market Square flies players to the landing island's return pad;
 -- the Sky Gate there opens the Sky Islands expeditions. Island `center` is the top of the
@@ -195,5 +209,18 @@ World.Sky = {
 	},
 	bridges = { { "landing", "sunrise" }, { "landing", "dusk" }, { "landing", "halo" }, { "landing", "rift" } },
 }
+
+-- Glow-up U: the Stampede arena, east of the Expedition Gate between the paths to plots 3 and 4.
+-- The giant and every joined squad appear here when the fight goes live; scenery keeps off it.
+World.StampedeArena = { center = { 150, 0 }, radius = 40 }
+table.insert(World.Scenery.keepOut, World.StampedeArena)
+-- Glow-up Y: the Visiting Showcase and the Ranch of the Week stage (client-built, Config/Visits),
+-- north of the Market Square either side of the path to plot 6. Scenery keeps off them.
+World.VisitGrounds = {
+	{ center = { 140, 236 }, size = { 120, 76 } }, -- Visiting Showcase
+	{ center = { -120, 214 }, size = { 50, 36 } }, -- Ranch of the Week stage
+}
+table.insert(World.Scenery.keepOut, World.VisitGrounds[1])
+table.insert(World.Scenery.keepOut, World.VisitGrounds[2])
 
 return World

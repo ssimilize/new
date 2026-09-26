@@ -3,6 +3,134 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## Glow-up · The premium pass
+
+Not a dated content drop: presentation, feel and new ways to play across the whole game, built
+from the Glow-Up plan (37 items). Everything is live as soon as it is published; the Deep Reef
+keeps its own opening date in `Config/Regions`.
+
+**For players**
+- **Sound everywhere:** licensed music for the ranch by day and night, the hub, battles, the
+  Stampede, raids, racing and every event; ambience (birds by day, crickets at night, wind, rain,
+  the fountain, the plaza crowd); UI clicks; hatch, evolve, level-up and reward stings; and a
+  voice for every monster family, pitched per monster.
+- **Rewards you can feel:** coins, gems and items fly to their counters, celebrations scale with
+  the size of the win (confetti, a coin shower, a camera kick for the huge ones), and every toast
+  and reward card shares one queue above popups.
+- **Your monsters, alive:**
+  - Tap your 3D monsters (they were not tappable), and see their hats, scarves and Golden,
+    Rainbow and Shadow looks on the 3D models.
+  - Every monster sleeps, eats, cheers, attacks, flinches, faints, sits and does tricks, blended.
+  - Personalities: Gluttons hang around the food, Night Owls stay up, Show-offs pose when you walk
+    past, Cheerful monsters start chases; pen-mates nap in a pile at night, run to the fence to
+    greet you, shake off rain, shiver in snow and shelter from storms. Mood bubbles show how they feel.
+  - Care for them: Pet, Brush and Play gestures raise Bond hearts (1 to 10) that never decay;
+    tricks at 3, 6 and 9 hearts, a nameplate at 7, a small coin bonus, best friends at your gate.
+  - Take one for a walk (three with VIP): it trots beside you in the hub, on the Sky Islands and
+    on every ranch; mounts now run in step with your speed.
+- **Big moments:**
+  - Eggs hatch on your incubator: the rarer the monster, the longer the wobble; Mythic hatches
+    light up the sky; NEW! and SHINY! stamps; Hatch All plays a montage, rarest last.
+  - Watch your monsters evolve in their pen inside a swirl of their element.
+  - The Stampede is live: every 30 minutes the sky darkens, thunder rolls and a giant charges into
+    the new arena east of the Market Square. Everyone's squads gather round it, Cheer throws bolts in
+    your lead monster's element, and the loot bursts out of the fallen giant.
+  - Expeditions send postcards: a diorama of your squad in the region, kept in an album per region
+    (favourites stay), and one a day can go to a friend.
+- **New ways to play:**
+  - Battles play out in 3D: arena, expedition and raid fights run on a stage themed to the region
+    (or the Arena or a raid) with your team and the enemies as real monsters. Attacks lunge,
+    elements fly as bolts, hits flash and float damage, and the camera cuts in for big hits and the
+    finishing blow. Tap for 2x speed or Skip; older phones and full raids keep the 2D view.
+  - Titan invasions: on set Saturdays a titan invades every server at once. Each server fights its
+    own copy at the Stampede arena, but everyone's damage drains one shared HP bar that shows how
+    many servers and players are fighting. Join from the banner (even mid-fight) and Cheer; when it
+    falls, everyone who dealt damage gets a guaranteed Titan Egg. No Stampede runs meanwhile.
+  - Live races: up to six riders (ghosts fill the empty lanes) on a new track west of plot 6, with
+    a 3-2-1-GO countdown, laps, checkpoint arches, hurdles, boost pads and a podium. Racing gear
+    (saddles, trails and banners) is earned from races and shows on your mount; the classic race
+    is still there.
+  - The Deep Reef (opens Sat 1 Jul 2028): dive from the Dive Dock by the Market Square into a
+    glowing underwater world of coral, kelp, sunken ruins and fish. Swim anywhere, ride monsters
+    that swim (faster, with their own paddle), meet three new Tide lines (Finnip, Glowray and
+    Shellkin), find Reef Eggs and face the Kelp Warden and the Lantern Tide.
+- **A ranch to show off:**
+  - Build your ranch: a Decorate mode on your own plot (grid, rotate, move, undo, save) with 60+
+    pieces placed anywhere, not just in pens: fences, paths, lamps that light at night, water,
+    plants, seats, arches, statues and toys your monsters go and play on; seasonal sets for every
+    event and a free starter set for everyone.
+  - Real 3D eggs (18 painted designs, ornaments, three crack stages).
+  - Pens that grow: fences from wood to crystal, a hay nest, trough, pond, hut and shade tree as
+    you upgrade, themes with real materials and signature props, element habitats, and a Feed
+    Garden you can see growing.
+  - A living world: clouds that follow the weather, sun rays, a golden hour, lamps and windows that
+    light at dusk, swaying trees and windmills, butterflies, fireflies, birds and fish.
+  - Photo mode: a free camera, 7 filters, frames, stickers, depth of field and a Pose button.
+  - Titanic monsters: a rare size roll makes a monster far bigger, with a deeper voice, its own
+    aura and a celebration when it hatches (the odds are in the Egg Shop). Event monsters are
+    numbered limited editions (#37/500) and keep their number when traded or sold.
+- **Collect and come back:**
+  - The Codex pays: element, egg, region and collection milestones give gems, titles, badges and
+    the Codex Crown aura; walk the new Codex Museum; the Hall of Fame Plaza shows everyone's best
+    statue.
+  - A daily login calendar with milestones at 7, 14, 21 and 28 days, a weekly Streak Shield and
+    the Golden Streak Scarf; optional reminders for ready eggs, returning expeditions and the Stampede.
+  - Past the level cap, Ranch XP builds endless Ranch Mastery; every species line earns Mastery
+    tiers and an aura; Star Shards buy trait rerolls (odds shown), auras, flourishes, plinths and
+    small perks; a seasonal Mythic Ladder and a weekly Mastery leaderboard.
+- **Visit each other:** liking a ranch pays you both once a day (not yet for brand-new players); a
+  crown floats over the server's most-liked ranch of the day; visit a friend's ranch on their
+  server or as a snapshot in the Visiting Showcase; last week's most-liked ranch stands on the
+  Ranch of the Week stage.
+- **Friends and VIP:** an emote and trick wheel, gifts to Roblox friends (eggs, food, decor,
+  accessories, a Ranch Pass), invites, the group reward, Premium perks; VIP Ranchers get a daily
+  crate, a gold name, a chat tag and the VIP Balcony.
+- **New look:** portraits for every monster, a full icon set, and textured panels and buttons.
+- **Smooth on every phone:** graphics pick High, Medium or Low from how your device runs (or
+  choose in Settings), faraway ranches draw less, and effects stay inside a particle budget.
+
+**In the code**
+- Audio: `client/Audio` (+ `Voices`), `Controllers/Soundscape`, `Config/Sounds` (ids, variations,
+  scatter beds, duck/duckHold), `Logic/Audio`; Sound Check screen in Studio.
+- Feel: `Controllers/Celebrate`, `UI/Components/Toasts`, the Feedback layer, `Logic/Celebration`,
+  `Controllers/Stampede`, Hud counter hold/release.
+- 3D monsters: `Hit` tap box, accessories on bones (`MeshMonster.Slot/Attach/Follow`),
+  `Visuals/MonsterLooks` (EditableImage recolours, LRU of 8), clip tables per form
+  (`Visuals/MeshMonsterClips`, `tools/blender/clips.py`), `Visuals/PenBrain` + `Logic/PenLife`,
+  `Systems/Bond` + `Controllers/Care`, `Systems/Companions` + `Controllers/Companions`/`Mounts`.
+- Cinematics: `Controllers/CameraDirector`, `Controllers/Cinematics`, `Logic/Cinematic`.
+- World: `Visuals/EggModel` + `EggAssets`, `Visuals/PenDress` + `Controllers/Pens` (`PenSpot` /
+  `Habitat` attributes), `Controllers/Sky`/`Lamplight`/`SceneryMotion`/`Critters`,
+  `Controllers/PhotoMode` + `Logic/PhotoRig`.
+- Systems: `Codex` (+ museum and plaza controllers), `LoginStreak`, `Reminders` (its Roblox services in
+  `Kernel/RemindersAdapter`), `Mastery`, `Community`, `Gifts`, `Postcards`, VIP crate in `Monetization`;
+  `Adapters.Roblox` gains `Badges.Award`.
+- Titanic and editions: `Logic/Titanic` (the size roll, last in `MonsterGen`), `Systems/Editions` +
+  `Logic/Editions`, `Controllers/EditionPlates`, `UI/Screens/Parts/ShowpieceChips`; the
+  `Services.Editions` counter (`MonsterRanch_Editions_v1`).
+- Visits: `Systems/Visits` + `Logic/Visits`, `Controllers/Visits`, `Visuals/RanchShowcase`; the
+  `Services.Ranches` adapter (`MonsterRanch_Ranches_v1` snapshots, friends located through
+  `TeleportService`).
+- Battle stage: `UI/Screens/Parts/Battle` (picks 3D or 2D), `BattleStage`, `BattleResult`,
+  `Visuals/BattleArena` (Workspace.BattleStage, far outside the map; pooled models and effects),
+  `Logic/BattleStage` + `Config/BattleStage`; `CameraDirector` stage shots (cuts, no letterbox).
+- Build your ranch: `Systems/Decor` + `Logic/DecorLayout` (server-checked layouts), `Config/Decor`
+  (+ `DecorArt` part recipes), `Controllers/Decor`, `Visuals/DecorModel`, `UI/Screens/Decorate`.
+- Titans: `Systems/Titan` + `Logic/Titan` + `Config/Titan`, `Controllers/TitanInvasion`; the
+  `Services.Titan` adapter (a MemoryStore hash map entry per invasion, reported off the scheduler
+  thread); Boss skips periods that overlap an invasion.
+- Live racing: `Systems/LiveRace` + `Logic/LiveRace` + `Config/LiveRace` (positions checked on the
+  server against the track), `Systems/RaceGear`, `Controllers/LiveRace`, `Visuals/RaceTrack`.
+- Deep Reef: `Config/DeepReef`, `Logic/Swim`, `Controllers/DeepReef` (dive, swim, the local light),
+  `Visuals/ReefBuild` + `ReefLife`; the Reef region, egg and Tide lines in their configs.
+- Stampede: `Controllers/StampedeArena` + `Logic/StampedeArena` (arena, giant, rings, bolts, fountain,
+  storm), `global.Boss.squads`, `Config.Boss.Arena`.
+- UI art: `UI/Art/Sheet`, `Portraits`, `Icons` (generated by `tools/ui`), 9-slice textures in `Theme`.
+- Quality: `Visuals/Quality`, `Controllers/Quality`, `Logic/Quality`, `Logic/ParticleBudget`,
+  the Settings Graphics row, the Studio `PerfOverlay`.
+- Owner steps before publishing: GO_LIVE §5 (reminder templates and the Open Cloud secret),
+  Codex badge ids. The 22 UI sheets, every sound id and the new egg textures are already uploaded.
+
 ## 3.2 · Frostbite Glacier + Level 70
 
 Launch Sat 11 Mar 2028. Everything is dated in config: Frostbite Glacier and the Frost

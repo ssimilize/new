@@ -221,7 +221,13 @@ return {
 				OnConfirm = function()
 					local ok, res = Util.requestOnce(ctx, "Rebirth.Rebirth", { keep = ids })
 					if ok and type(res) == "table" then
-						ctx.Bus:Publish("Vfx.Burst", "rebirth") -- World: round the character and at the Star Altar
+						ctx.Bus:Publish("Vfx.Burst", "rebirth") -- World: held until this screen closes
+						local kit = ctx:GetController("Celebrate")
+						if kit then
+							kit:Play("huge", { sound = "Rebirth" })
+						else
+							ctx:Sound("Rebirth")
+						end
 						ctx:Toast(
 							string.format("Rebirth Star %d! +%s Stardust", res.stars or nextStar, Format.commas(res.stardust or 0)),
 							"reward"
