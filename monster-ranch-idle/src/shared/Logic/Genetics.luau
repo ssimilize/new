@@ -3,13 +3,15 @@
 	save migration) and the client (grades, breeding preview). Numbers live in Config.Genetics.
 
 	Genes (monster record field `genes`):
-	  { hp = { a, b }, atk = { a, b }, def = { a, b }, spd = { a, b } }
+	  { hp = { a, b }, atk = { a, b }, def = { a, b }, spd = { a, b }, luck = { a, b } }
 	  one gene from each parent per stat, each an integer 0..MaxGene. A stat's points are the
 	  pair's sum and add PctPerPoint each to that stat (Formulas.Stats). A record without genes
 	  (enemies, raid bosses) counts as all zero.
 
 	  Genetics.Roll(rng) -> Genes                 hatched and rewarded monsters (HatchRange)
 	  Genetics.Seeded(seed) -> Genes              the same roll from a seed (save migration)
+	  Genetics.Fill(genes?, rng) -> Genes         a copy with every valid pair kept and each missing
+	                                              or broken pair rolled (Luck for pre-3.7 genes)
 	  Genetics.Inherit(rng, a, b) -> (Genes, surges)
 	                                              a baby of parents' genes a and b: per stat one
 	                                              gene of each parent's pair at random, then each
@@ -107,6 +109,20 @@ end
 
 function Genetics.Seeded(seed: number)
 	return Genetics.Roll(Rng.new(seed))
+end
+
+function Genetics.Fill(genes, rng)
+	local lo, hi = Rules.HatchRange[1], Rules.HatchRange[2]
+	local filled = {}
+	for _, stat in Rules.Stats do
+		local pair = if type(genes) == "table" then genes[stat] else nil
+		if type(pair) == "table" and validGene(pair[1]) and validGene(pair[2]) then
+			filled[stat] = { pair[1], pair[2] }
+		else
+			filled[stat] = { rng:Int(lo, hi), rng:Int(lo, hi) }
+		end
+	end
+	return filled
 end
 
 local function surge(rng, gene: number): (number, boolean)

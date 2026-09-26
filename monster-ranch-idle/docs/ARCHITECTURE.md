@@ -116,11 +116,11 @@ Rules:
 | `meals` | {[flavor]: n} | meals eaten in the current stage (reset on growth) |
 | `growEndsAt` | number | 0 = not growing |
 | `loc`, `pen` | `"barn"`/`"pen"`, 0..6 | set only by Ranch (pen 6 since 3.2) |
-| `busy` | false or `"expedition"`/`"breeding"`/`"trade"` | busy monsters can't be sold, fused, placed or traded |
+| `busy` | false or `"expedition"`/`"breeding"`/`"trade"`/`"job"` | busy monsters can't be sold, fused, placed or traded (`"job"`: the Job Board, 3.7) |
 | `name` | string | "" = use the form name |
 | `locked` | boolean | player lock (can't sell or fuse) |
 | `born`, `gen` | number | |
-| `genes` | `{ hp, atk, def, spd = { a, b } }` | stat genes, each 0..10 (3.6, `Logic/Genetics`). Only `Formulas.Stats` reads them (+1% per point); set at creation or by the Monsters v2 migration, never changed after |
+| `genes` | `{ hp, atk, def, spd, luck = { a, b } }` | stat genes, each 0..10 (3.6, `Logic/Genetics`; Luck since 3.7). Only `Formulas.Stats` reads them (+1% per point); set at creation or by the Monsters v2/v3 migrations, never changed after |
 | `acc` | {[slot]: accessoryId}? | worn accessories (1.5). Set only by Accessories through `Monsters:SetAccessory`; `Monsters:Remove` strips it (the detail of `MonsterRemoved` carries it) and `Monsters:Insert` clears it, so accessories never travel with a traded, listed or retired monster |
 
 All derived numbers (coin rate, stats, power, value, level cap, grow time) come from `Logic/Formulas.luau`. Never store them.

@@ -4,7 +4,8 @@
 	  top-left      coins / gems / food pills (count-up; gems → Store "gems", food → Store "food")
 	  top-right     Ranch Level + XP bar (Config.Unlocks.XPToNext) · ⚙ Settings button beside it
 	  top-centre    server weather banner (global.Weather) with mutation hint and countdown
-	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market
+	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market ·
+	                Jobs (3.7: badge = workers whose storage is full)
 	                (locked until Config.Market.Unlock)
 	  right stack   Expeditions (finished badge) · Stampede card · Quests (claimable badge)
 	                · Breeding · Hall of Fame (locked until their Ranch Level)
@@ -26,6 +27,7 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
+local JobsLogic = require(Shared.Logic.Jobs)
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -243,6 +245,13 @@ local function refreshBadges()
 	local claim = StoreKit.claimableQuests(ctx.Store)
 	buttons.Quests.badge:Set(if claim > 0 then tostring(claim) else nil)
 	buttons.Monsters.badge:Set(if growReady > 0 then "!" else nil)
+	local full = 0
+	for _, slot in StoreKit.tbl(ctx.Store, "profile.Jobs.slots") do
+		if type(slot) == "table" and JobsLogic.IsFull(slot, now) then
+			full += 1
+		end
+	end
+	buttons.Jobs.badge:Set(if full > 0 then tostring(full) else nil)
 end
 
 local function refreshMonsters()
@@ -477,6 +486,9 @@ local function build()
 	sideButton(left, "Market", "Market", C.Orange, Icon.new("coin", 28), 5, function()
 		openScreen("Market")
 	end, Config.Market.Unlock)
+	sideButton(left, "Jobs", "Jobs", C.Purple, previewIcon("pebblet", 30), 6, function()
+		openScreen("Jobs")
+	end, Config.Jobs.Unlock)
 
 	-- Right stack
 	local right = Tiles.col({
@@ -705,6 +717,7 @@ function Hud.Init(context)
 	ctx.Store:Observe("profile.Quests", refreshBadges)
 	ctx.Store:Observe("profile.Expeditions.slots", refreshBadges)
 	ctx.Store:Observe("profile.Eggs.slots", refreshBadges)
+	ctx.Store:Observe("profile.Jobs.slots", refreshBadges)
 	ctx.Bus:Subscribe("Hud.Flash", flash)
 	ctx.Net:On("Market.MailCollected", onMailCollected)
 	ctx.Router.Opened:Connect(refreshCentre)

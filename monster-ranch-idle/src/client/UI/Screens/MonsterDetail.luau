@@ -56,6 +56,7 @@ local STATS = {
 local BUSY_TEXT = {
 	expedition = "Away on an expedition",
 	breeding = "In the Breeding Barn",
+	job = "Working on the Job Board",
 	trade = "Offered in a trade",
 }
 

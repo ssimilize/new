@@ -81,6 +81,11 @@ Unlocks.Features = {
 	incubator_4 = 62,
 	pen_6 = 66,
 	squad_5 = 70,
+	-- 3.7 · Ranch Jobs (Config/Jobs)
+	jobs = 6,
+	jobs_slot_3 = 20,
+	jobs_slot_4 = 35,
+	jobs_slot_5 = 50,
 }
 
 -- Player-facing names for the level-up popup.
@@ -126,6 +131,10 @@ Unlocks.Names = {
 	incubator_4 = "Incubator 4",
 	pen_6 = "Pen 6",
 	squad_5 = "Squad size 5",
+	jobs = "Job Board",
+	jobs_slot_3 = "Job Board slot 3",
+	jobs_slot_4 = "Job Board slot 4",
+	jobs_slot_5 = "Job Board slot 5",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

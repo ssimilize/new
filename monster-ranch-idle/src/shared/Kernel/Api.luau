@@ -336,6 +336,25 @@ Api.Actions = {
 	},
 	["Breeding.Cancel"] = { schema = T.struct({ pod = T.integer(1, 2) }), rate = 1, returns = "nil  -- fee is not refunded" },
 
+	-- Ranch Jobs (3.7) · see Config/Jobs and Logic/Jobs ---------------------------------
+	["Jobs.Assign"] = {
+		schema = T.struct({
+			slot = T.integer(1, Config.Jobs.MaxSlots),
+			job = T.enum(Config.Jobs.Ids),
+			id = id,
+			flavor = T.optional(flavor),
+		}),
+		rate = 2,
+		returns = "nil",
+	},
+	["Jobs.Recall"] = { schema = T.struct({ slot = T.integer(1, Config.Jobs.MaxSlots) }), rate = 2, returns = "{ rewards: { Reward } }" },
+	["Jobs.Collect"] = { schema = T.none, rate = 1, returns = "{ rewards: { Reward } }" },
+	["Jobs.SetFlavor"] = {
+		schema = T.struct({ slot = T.integer(1, Config.Jobs.MaxSlots), flavor = flavor }),
+		rate = 2,
+		returns = "{ rewards: { Reward } }  -- the forager's stored food, paid before the change",
+	},
+
 	-- Social (S5) ------------------------------------------------------------------
 	["Social.Pet"] = { schema = T.struct({ owner = T.userId, id = id }), rate = 4, returns = "{ friendship: number, left: number }" },
 	["Social.Like"] = { schema = T.struct({ owner = T.userId }), rate = 2, returns = "{ likes: number }" },
@@ -499,6 +518,7 @@ Api.State = {
 		Ranch = "{ pens = { Pen }, incubatorTier, barnTier, garden = { tier, plots = { { flavor|false, readyAt } } } }",
 		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id } }",
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true } }",
+		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true } }",
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true } }",
@@ -520,6 +540,7 @@ Api.State = {
 		Eggs = "{ slotCount, speed }",
 		Ranch = "{ income, rates = { [pen]: coinsPerSec }, caps = { [pen]: seconds }, capacity, used }",
 		Breeding = "{ podCount, breedsPerDay }",
+		Jobs = "{ slotCount }",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
 		WelcomeBack = "{ pending: boolean, awaySeconds, coins, items = { { kind, text, icon? } } }",
@@ -581,6 +602,7 @@ Api.Topics = {
 	BossEnded = "(nil, { bossId: string, won: boolean })",
 	BossDamage = "(player, { damage: number, rank: number })  -- per participant when a Stampede ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
+	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
 	Retired = "(player, { rarity: number, element: string })",

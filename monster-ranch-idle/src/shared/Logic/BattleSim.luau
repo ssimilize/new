@@ -26,6 +26,7 @@
 	  • The front living unit of a side draws 50% of attacks, the rest share the other 50%.
 	    A taunting unit draws every attack.
 	  • dmg = ATK × power × elementMult × 100 / (100 + DEF) × rand(0.9, 1.1); crits ×1.5.
+	  • crit chance = BaseCrit + LuckCrit(Luck) (3.7: up to +LuckCritMax) + the Crit passive.
 	  • Shields absorb damage first; Thorns reflect a share of damage taken; Regrowth heals
 	    at the start of the unit's action; a stunned unit skips its next action.
 	  • All enemies fainted = win. All allies fainted or MaxTurns reached = loss.
@@ -50,6 +51,11 @@ BattleSim.MaxEvents = 400
 BattleSim.SpecialCharge = 3 -- every 3rd action is the Special
 BattleSim.BaseCrit = 0.05
 BattleSim.CritMult = 1.5
+-- Update 3.7: Luck adds crit chance, LuckCritK × luck / (luck + LuckCritScale), at most
+-- LuckCritMax: about +0.8% at Luck 13 (a Lv 20 Uncommon), +5.6% at Luck 156 (a maxed Mythic).
+BattleSim.LuckCritK = 0.12
+BattleSim.LuckCritScale = 180
+BattleSim.LuckCritMax = 0.08
 BattleSim.FrontShare = 0.5
 BattleSim.MaxShieldPct = 0.5 -- shields stack up to 50% of max HP
 BattleSim.MaxAllies = 5 -- the largest squad (Config.Regions.SquadSize, Ranch Level 70)
@@ -62,6 +68,11 @@ local Passives = Species.Passives
 
 local function round(x: number): number
 	return math.floor(x + 0.5)
+end
+
+function BattleSim.LuckCrit(luck: number?): number
+	local l = math.max(0, luck or 0)
+	return math.min(BattleSim.LuckCritMax, BattleSim.LuckCritK * l / (l + BattleSim.LuckCritScale))
 end
 
 local function buildUnit(m, side: string, slot: number, opts)
@@ -90,7 +101,7 @@ local function buildUnit(m, side: string, slot: number, opts)
 		atk = math.max(1, stats.atk * mult * atkMult),
 		def = math.max(0, stats.def * mult),
 		spd = math.max(1, stats.spd * mult),
-		crit = BattleSim.BaseCrit + (if passive == "crit" then Passives.crit.value else 0),
+		crit = BattleSim.BaseCrit + BattleSim.LuckCrit(stats.luck) + (if passive == "crit" then Passives.crit.value else 0),
 		guard = if passive == "guard" then Passives.guard.value else 0,
 		thorns = if passive == "thorns" then Passives.thorns.value else 0,
 		regen = if passive == "regen" then Passives.regen.value else 0,

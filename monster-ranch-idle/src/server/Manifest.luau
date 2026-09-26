@@ -56,6 +56,8 @@ return {
 		"Racing",
 		"TradingHub",
 		"Workshop",
+		-- 3.7 · Ranch Jobs
+		"Jobs",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

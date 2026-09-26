@@ -7,7 +7,8 @@
 	  nextId  = number
 	  grown   = number                   -- total growths (the first one is a short tutorial timer)
 	  (Version 2, update 3.6: Migrate gives every monster made before genetics its stat genes,
-	  the hatch roll seeded by the record, so they never change; genes only add to stats)
+	  the hatch roll seeded by the record, so they never change; genes only add to stats.
+	  Version 3, update 3.7: the same pass adds the Luck pair to 3.6 genes and keeps the rest)
 
 	Public API (other systems):
 	  Monsters:Create(player, spec, source, force?) -> record?, err?   -- spec: see Logic/MonsterGen
@@ -32,6 +33,8 @@
 	  Monsters:Appearance(player, id) -> Appearance?
 	  Monsters:RegisterCapacityProvider(fn(player) -> number)
 	  Monsters:RegisterMoodFloorProvider(fn(player) -> number)
+	  Monsters:RegisterMoodDecayModifier(key, fn(player, m) -> 0..1)   -- share of the online Mood
+	                                                  decay a monster skips (3.7: Jobs' herders); max wins
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -48,22 +51,28 @@ local Monsters = {
 }
 
 -- Genes for a record made before genetics: the hatch roll, seeded by the record so the same
--- monster always gets the same genes. Returns true when it had to add them.
+-- monster always gets the same genes. Genes from before a stat had one (Luck, 3.7) keep every
+-- pair they have and roll only the missing one, from its own seed. Returns true on a change.
 local function ensureGenes(id: string, m): boolean
 	if Genetics.Valid(m.genes) then
 		return false
 	end
-	m.genes = Genetics.Seeded(Rng.seed("genes", id, m.born or 0))
+	local seed = Rng.seed("genes", id, m.born or 0)
+	if type(m.genes) == "table" then
+		m.genes = Genetics.Fill(m.genes, Rng.new(Rng.seed(seed, "fill")))
+	else
+		m.genes = Genetics.Seeded(seed)
+	end
 	return true
 end
 
 Monsters.Profile = {
-	Version = 2,
+	Version = 3,
 	Default = function()
 		return { list = {}, codex = {}, nextId = 1, grown = 0 }
 	end,
 	Migrate = function(section, fromVersion)
-		if fromVersion < 2 and type(section.list) == "table" then
+		if fromVersion < 3 and type(section.list) == "table" then
 			for id, m in section.list do
 				if type(m) == "table" then
 					ensureGenes(id, m)
@@ -80,6 +89,7 @@ local Config
 
 local capacityProviders = {}
 local moodFloorProviders = {}
+local moodDecayModifiers = {} -- [key] = fn(player, m) -> 0..1
 local growing = {} -- [player] = { [id] = true }
 
 local DEFAULT_CAPACITY = 60
@@ -138,6 +148,24 @@ local function moodFloor(player, m): number
 end
 
 -- Public API ------------------------------------------------------------------------------
+
+function Monsters:RegisterMoodDecayModifier(key: string, fn)
+	moodDecayModifiers[key] = fn
+end
+
+-- The share (0..1) of the Mood decay this monster skips right now.
+local function decayShield(player, m): number
+	local best = 0
+	for key, fn in moodDecayModifiers do
+		local ok, value = pcall(fn, player, m)
+		if ok and type(value) == "number" and value == value then
+			best = math.max(best, value)
+		elseif not ok then
+			warn(string.format("[Monsters] mood decay modifier '%s' failed: %s", key, tostring(value)))
+		end
+	end
+	return math.clamp(best, 0, 1)
+end
 
 function Monsters:RegisterCapacityProvider(fn)
 	table.insert(capacityProviders, fn)
@@ -236,8 +264,9 @@ function Monsters:Insert(player, record, source: string)
 	copy.muts = table.clone(record.muts or {})
 	copy.traits = table.clone(record.traits or {})
 	copy.meals = table.clone(record.meals or {})
-	-- A record escrowed before genetics (a Market listing) arrives without genes.
-	copy.genes = if Genetics.Valid(record.genes) then Genetics.Copy(record.genes) else Genetics.Roll(ctx.Rng)
+	-- A record escrowed before genetics (a Market listing) arrives without genes, or before 3.7
+	-- without a Luck pair: keep what it has, roll what it lacks.
+	copy.genes = Genetics.Fill(record.genes, ctx.Rng)
 	copy.loc, copy.pen, copy.busy, copy.locked = "barn", 0, false, false
 	copy.acc = nil
 	return insert(player, copy, source)
@@ -420,6 +449,7 @@ function Monsters.Init(context)
 	ctx = context
 	table.clear(capacityProviders)
 	table.clear(moodFloorProviders)
+	table.clear(moodDecayModifiers)
 	table.clear(growing)
 	Config = ctx.Config
 	Currency = ctx:GetSystem("Currency")
@@ -584,8 +614,11 @@ function Monsters.Init(context)
 
 	ctx:Every(Config.Economy.Mood.decayEvery, function()
 		for _, player in ctx:Players() do
-			for id in Monsters:All(player) do
-				Monsters:AddMood(player, id, -Config.Economy.Mood.decayAmount)
+			for id, m in Monsters:All(player) do
+				local amount = Config.Economy.Mood.decayAmount * (1 - decayShield(player, m))
+				if amount > 0 then
+					Monsters:AddMood(player, id, -amount)
+				end
 			end
 		end
 	end)

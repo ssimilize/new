@@ -426,6 +426,7 @@ function Util.pick(ctx, opts)
 			max = opts.max or 1,
 			returnTo = opts.returnTo,
 			returnParams = opts.returnParams,
+			sortBy = opts.sortBy,
 			onPick = function(arg)
 				local ids = arg
 				if type(arg) == "table" and type(arg.ids) == "table" then

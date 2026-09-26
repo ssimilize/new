@@ -19,6 +19,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Expeditions | S4 | 🔌 | `Expeditions.spec`, `BattleSim.spec`, `LevelSeventy.spec` | 3.2: squad 3 / 4 / 5 at Lv 1 / 35 / 70 (`Regions.SquadSize.steps`). Stage fights (`Logic/BattleSim`), timed runs + offline finish (`Logic/Loot`), caravans; optional Monetization (explorer, stageRetry ad), Weather (night) |
 | Boss | S4 | 🔌 | `Boss.spec` | Stampede schedule, cheer (≤ `Boss.MaxTapsPerSecond`), rewards; needs Expeditions; optional Weather (bossDamage) |
 | Breeding | S5 | 🔌 | `Breeding.spec`, `Genetics.spec` | pods (+pass), daily limits, seeded roll via `Logic/Breeding`, offline WelcomeItem, hybrid discovery → `Bred`; 3.6: babies inherit genes and can surge, Claim returns `surges` |
+| Jobs | 3.7 | 🔌 | `Jobs.spec`, `JobsClient.spec` | the Job Board: 2–5 slots by Ranch Level, five stat jobs (herder, miner, guard, forager, scout), 8 h storage, seeded scout eggs; hooks Ranch jar bonus and Monsters mood decay |
 | Weather | S5 | 🔌 | `Weather.spec` | clock-aligned rolls + day/night (`Logic/WeatherRoll`), pen mutations, totems (queued behind running weather), heatwave egg speed, tutorial guarantee |
 | Social | S5 | 🔌 | `Social.spec` | friend boost (`friends` rate modifier), pets/likes, server + global broadcasts (MessagingService) |
 | Trade | S5 | 🔌 | `Trade.spec` | request → offer → ready → confirm countdown; atomic swap with capacity/egg caps, rollback, private log |
@@ -67,6 +68,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Screens: Racing, TradingHub, Workshop | C3 | 🔌 | 3.0: side-view race with Jump / Boost and a ghost strip; Trade Board / My ad (hub) or board preview + Travel (ranch); Design / Gallery / My copies; Racetrack, Trading Hub portal and Workshop buildings; Expeditions region tabs with opening dates |
 | Controller: Localize · `Shared/Locale` | 3.2 | 🔌 | Spanish and Portuguese (Brazil): catalogues keyed by the English text, every text in the PlayerGui and Workspace translated in place, longer text shrunk to fit, Settings → Language; `Locale.spec`, `LocaleClient.spec` |
 | Genes · component: GeneGrades | 3.6 | 🔌 | stat genes on MonsterDetail (grades, gene line), Breeding (parent grades, baby range, surges on claim), Monsters (Genes sort), Market (gene total); `GeneticsClient.spec` |
+| Screen: Jobs · HUD Jobs button | 3.7 | 🔌 | slot cards (job buttons, worker, rate, storage bar, flavour, Recall), Collect all, best-at-the-stat picker (Monsters pick `sortBy`), full-storage badge; `JobsClient.spec` |
 | Controller: Gamepad · `UI/Focus` | 3.2 | 🔌 | controller support: cursor scoped to the open screen or dialog, B back, LB/RB tabs, Y Monsters, Racing / Surf on the pad, key legend; `GamepadClient.spec` |
 | Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
 

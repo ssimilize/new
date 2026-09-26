@@ -1,12 +1,13 @@
 --[[
-	Genetics (update 3.6): stat genes. Genes only change battle stats (HP, ATK, DEF, SPD);
-	they never change how a monster looks, its size, its coin income or its price.
+	Genetics (update 3.6): stat genes. Genes only change stats (HP, ATK, DEF, SPD and, since
+	update 3.7, Luck); they never change how a monster looks, its size, its coin income or its price.
 
 	Every monster carries a pair of genes per stat, one from each parent. Each gene is worth
 	0..MaxGene points and every point adds PctPerPoint to that stat, so a pair is worth
 	0..2 × MaxGene points (+0% .. +20%). Logic/Genetics holds the rules.
 
-	  Stats          the stats that have genes, in display order (Luck has none: no battle reads it)
+	  Stats          the stats that have genes, in display order and roll order. Luck came last
+	                 (3.7): append new stats, never reorder, so seeded rolls stay the same
 	  HatchRange     each gene of a hatched, rewarded or pre-genetics monster rolls in this range
 	  SurgeChance    breeding: chance each inherited gene gains +1 point (capped at MaxGene)
 	  BigSurgeChance breeding: chance it gains +2 instead (checked first)
@@ -15,8 +16,8 @@
 
 local Genetics = {}
 
-Genetics.Stats = { "hp", "atk", "def", "spd" }
-Genetics.StatNames = { hp = "HP", atk = "ATK", def = "DEF", spd = "SPD" }
+Genetics.Stats = { "hp", "atk", "def", "spd", "luck" }
+Genetics.StatNames = { hp = "HP", atk = "ATK", def = "DEF", spd = "SPD", luck = "Luck" }
 
 Genetics.MaxGene = 10
 Genetics.PctPerPoint = 0.01
