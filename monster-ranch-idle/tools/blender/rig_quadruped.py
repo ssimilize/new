@@ -27,6 +27,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from riglib import X, Y, Z, armature, finish, footprints, log, rot, run, surface_samples  # noqa: E402
+from riglib import about, box, pulse, ramp  # noqa: E402
 
 ARGS = sys.argv[sys.argv.index("--") + 1 :]
 SRC, OUT = Path(ARGS[0]).resolve(), Path(ARGS[1]).resolve()
@@ -240,7 +241,186 @@ def clip_hop(arm, f, n):
     return pose, Vector((0, 0, height))
 
 
+
+# ─── The extra clips (riglib.EXTRA: sleep, eat, cheer, cheer2, attack, hurt, faint, sit, trick) ──
+
+
+def env(t: float, rise: float = 0.12, fall: float = 0.85) -> float:
+    """1 through a one-shot clip, easing in from 0 at its start and back to 0 at its end."""
+    return ramp(t, 0.0, rise) * (1 - ramp(t, fall, 1.0))
+
+
+def centre(arm) -> Vector:
+    lo, hi = box(arm)
+    return (lo + hi) / 2
+
+
+def fold_legs(arm, pose, qh, qc, front, back, front_bend=0.0, back_bend=0.0):
+    """Upper legs at world angles (degrees about X) whatever the hips (qh) and chest (qc) do; the
+    bends are added to the lower legs."""
+    for name in legs(arm):
+        side = name.split(".")[1]
+        if name.startswith("upperarm"):
+            pose[name] = (qh @ qc).inverted() @ rot(X, front)
+            pose[f"forearm.{side}"] = rot(X, front_bend)
+        else:
+            pose[name] = qh.inverted() @ rot(X, back)
+            pose[f"shin.{side}"] = rot(X, back_bend)
+
+
+def tail_pose(pose, curl, lift, wag=0.0, ph=0.0):
+    """curl: + curls the tail to the model's right; lift: + raises it; wag: a sway travelling out."""
+    for i in (1, 2, 3):
+        pose[f"tail.{i}"] = rot(Z, curl + wag * math.sin(ph - 0.7 * i)) @ rot(X, lift)
+
+
+def ears_pose(pose, lean):
+    for side in ("L", "R"):
+        pose[f"ear.{side}"] = rot(X, lean)
+
+
+def front_paws(arm):
+    tips = [b.tail_local for b in arm.data.bones if b.name.startswith("forearm.")]
+    return sum(tips, Vector()) / len(tips)
+
+
+def clip_sleep(arm, f, n):
+    """Lies down curled: legs folded under, head turned back toward the tail, slow breaths."""
+    b = math.sin(2 * math.pi * f / n)
+    qh, qc = rot(Y, 8), rot(X, 2 + 1.5 * b)
+    pose = {"hips": qh, "chest": qc, "neck": rot(X, 38) @ rot(Z, -25), "head": rot(X, 18 + 2 * b) @ rot(Y, -12)}
+    fold_legs(arm, pose, qh, qc, -80, -65, -5, 130)
+    tail_pose(pose, 35, -20)
+    ears_pose(pose, -30)
+    return pose, Vector(), 1.0
+
+
+def clip_eat(arm, f, n):
+    """Head down to the ground, three bites a loop, tail wagging."""
+    t = f / n
+    chew = 0.5 - 0.5 * math.cos(2 * math.pi * 3 * t)
+    qh, qc = rot(X, 5), rot(X, 6)
+    pose = {"hips": qh, "chest": qc, "neck": rot(X, 42 + 4 * chew), "head": rot(X, 22 + 8 * chew) @ rot(Z, 3 * math.sin(2 * math.pi * t))}
+    fold_legs(arm, pose, qh, qc, -8, 3, 22, 0)
+    tail_pose(pose, 0, 6, 16, 4 * math.pi * t)
+    ears_pose(pose, 8 * chew)
+    return pose, Vector()
+
+
+def clip_cheer(arm, f, n):
+    """Rears up on the hind legs, paddling the front paws, tail going."""
+    t = f / n
+    r = ramp(t, 0.0, 0.3) * (1 - ramp(t, 0.7, 1.0))
+    pad = math.sin(2 * math.pi * 3 * t) * r
+    qh, qc = rot(X, -32 * r), rot(X, -6 * r)
+    pose = {"hips": qh, "chest": qc, "neck": rot(X, 16 * r), "head": rot(X, 14 * r) @ rot(Y, 8 * pad)}
+    for side, sign in (("L", 1), ("R", -1)):
+        pose[f"upperarm.{side}"] = rot(X, -25 * r + 22 * sign * pad)
+        pose[f"forearm.{side}"] = rot(X, 55 * r)
+        pose[f"thigh.{side}"] = qh.inverted() @ rot(X, 10 * r)
+        pose[f"shin.{side}"] = rot(X, -6 * r)
+    tail_pose(pose, 0, 10 * r, 30 * r, 8 * math.pi * t)
+    ears_pose(pose, 18 * r)
+    return pose, Vector((0, 0, 0.02 * r))
+
+
+def clip_cheer2(arm, f, n):
+    """A play bow (front down, rump up), then two bounces with the tail wagging."""
+    t = f / n
+    bow = ramp(t, 0.0, 0.2) * (1 - ramp(t, 0.35, 0.5))
+    u = max(0.0, (t - 0.45) / 0.55)
+    hop = max(0.0, math.sin(4 * math.pi * u)) if t > 0.45 else 0.0
+    sway = math.sin(4 * math.pi * u) * (1 - ramp(t, 0.85, 1.0)) if t > 0.45 else 0.0
+    qh, qc = rot(X, 16 * bow) @ rot(Z, 10 * sway), rot(X, 8 * bow)
+    pose = {"hips": qh, "chest": qc, "neck": rot(X, -18 * bow - 8 * hop), "head": rot(X, -10 * bow) @ rot(Y, 10 * sway)}
+    fold_legs(arm, pose, qh, qc, -45 * bow - 15 * hop, 12 * bow + 15 * hop, 20 * bow, 10 * hop)
+    tail_pose(pose, 0, 25 * bow + 10 * hop, 28 * env(t), 10 * math.pi * t)
+    ears_pose(pose, 12 * hop - 10 * bow)
+    return pose, Vector((0, 0, 0.1 * hop))
+
+
+def clip_attack(arm, f, n):
+    """Crouches back, then lunges forward with the head thrust out, and recovers."""
+    t = f / n
+    wind = ramp(t, 0.0, 0.3) * (1 - ramp(t, 0.3, 0.45))
+    hit = ramp(t, 0.3, 0.48) * (1 - ramp(t, 0.55, 1.0))
+    qh, qc = rot(X, 6 * wind - 8 * hit), rot(X, 6 * wind)
+    pose = {"hips": qh, "chest": qc, "neck": rot(X, 14 * wind - 18 * hit), "head": rot(X, 10 * wind - 12 * hit)}
+    fold_legs(arm, pose, qh, qc, 15 * wind - 40 * hit, 20 * wind + 25 * hit, 25 * wind, 20 * wind)
+    tail_pose(pose, 0, -10 * wind + 20 * hit)
+    ears_pose(pose, -30 * (wind + hit))
+    return pose, Vector((0, 0.06 * wind - 0.24 * hit, -0.03 * wind + 0.06 * hit))
+
+
+def clip_hurt(arm, f, n):
+    """Flinches back with a shake, ears flat, tail tucked."""
+    t = f / n
+    e = ramp(t, 0.0, 0.15) * (1 - ramp(t, 0.3, 1.0))
+    shake = math.sin(2 * math.pi * 5 * t) * e
+    qh = rot(X, -10 * e) @ rot(Z, 5 * shake)
+    pose = {"hips": qh, "neck": rot(X, -14 * e), "head": rot(X, -12 * e) @ rot(Z, 14 * shake)}
+    fold_legs(arm, pose, qh, rot(X, 0), 8 * e, -10 * e)
+    tail_pose(pose, 0, -30 * e)
+    ears_pose(pose, -40 * e)
+    return pose, Vector((0, 0.08 * e, 0.02 * e))
+
+
+def clip_faint(arm, f, n):
+    """Wobbles, keels over onto its side and stays down."""
+    t = f / n
+    wob = math.sin(2 * math.pi * 1.5 * t) * ramp(t, 0.0, 0.08) * (1 - ramp(t, 0.25, 0.4))
+    fall = ramp(t, 0.3, 0.75)
+    qh = rot(Y, 86 * fall + 6 * wob)
+    pose = {"hips": qh, "neck": rot(X, 20 * fall) @ rot(Y, 12 * fall), "head": rot(X, 14 * fall)}
+    for name in legs(arm):
+        side, front = name.split(".")[1], name.startswith("upperarm")
+        pose[name] = rot(X, (-12 if front else 12) * fall)
+        pose[("forearm." if front else "shin.") + side] = rot(X, (20 if front else -15) * fall)
+    tail_pose(pose, -15 * fall, -15 * fall)
+    ears_pose(pose, -30 * fall)
+    return pose, Vector(), fall
+
+
+def clip_sit(arm, f, n):
+    """Sits back on the haunches, front legs straight, looking around."""
+    t = f / n
+    b = math.sin(2 * math.pi * t)
+    qh, qc = rot(X, -34), rot(X, 8)
+    pose = {"hips": qh, "chest": qc, "neck": rot(X, 14 + 1.5 * b), "head": rot(X, 10) @ rot(Z, 10 * math.sin(2 * math.pi * t))}
+    fold_legs(arm, pose, qh, qc, 0, -70, 0, 110)
+    tail_pose(pose, 0, 25, 12, 2 * math.pi * t)
+    return pose, about(arm, qh, front_paws(arm), "hips"), 1.0
+
+
+def clip_trick(arm, f, n):
+    """Chases its tail: one full turn, body curled, with small bounces."""
+    t = f / n
+    e = env(t)
+    q = rot(Z, 360 * ramp(t, 0.05, 0.9))
+    curl = 22 * e
+    pose = {"hips": q, "chest": rot(Z, curl), "neck": rot(Z, curl), "head": rot(Z, 0.5 * curl)}
+    for name in legs(arm):
+        p = 0.0 if name in ("upperarm.L", "thigh.R") else math.pi
+        pose[name] = rot(X, 20 * math.sin(12 * math.pi * t + p) * e)
+    tail_pose(pose, -30 * e, 10 * e)
+    hop = abs(math.sin(6 * math.pi * t)) * e
+    return pose, about(arm, q, centre(arm), "hips") + Vector((0, 0, 0.05 * hop))
+
+
+EXTRA_CLIPS = {
+    "sleep": clip_sleep,
+    "eat": clip_eat,
+    "cheer": clip_cheer,
+    "cheer2": clip_cheer2,
+    "attack": clip_attack,
+    "hurt": clip_hurt,
+    "faint": clip_faint,
+    "sit": clip_sit,
+    "trick": clip_trick,
+}
+
 CLIPS = {"idle": (clip_idle, 60), "walk": (clip_walk, 24), "hop": (clip_hop, 24)}
 
 
-run(SRC, OUT, ARGS, fit_landmarks, build_armature, CLIPS)
+if __name__ == "__main__":  # add_clips.py imports the clip functions
+    run(SRC, OUT, ARGS, fit_landmarks, build_armature, CLIPS, extra=EXTRA_CLIPS)

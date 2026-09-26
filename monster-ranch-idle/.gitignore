@@ -27,3 +27,6 @@ art/vfx/patch.json
 
 # Python bytecode from the art tools.
 __pycache__/
+
+# Extra-clip previews (tools/blender/clips.py --previews), rendered from the rigs.
+art/rigs-clips/

@@ -26,6 +26,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from riglib import X, Y, Z, armature, below_base, chain, components, finish, footprint_scale, footprints, framed_views, log, pulse, rot, run, set_game_scale, surface_samples  # noqa: E402
+from riglib import about, box, ramp  # noqa: E402
 
 ARGS = sys.argv[sys.argv.index("--") + 1 :]
 SRC, OUT = Path(ARGS[0]).resolve(), Path(ARGS[1]).resolve()
@@ -204,16 +205,166 @@ def clip_hop(arm, f, n):
     return pose, Vector((0, 0, 0.2 * air - 0.02 * crouch))
 
 
+
+# ─── The extra clips (riglib.EXTRA: sleep, eat, cheer, cheer2, attack, hurt, faint, sit, trick) ──
+
+
+def env(t: float, rise: float = 0.12, fall: float = 0.85) -> float:
+    """1 through a one-shot clip, easing in from 0 at its start and back to 0 at its end."""
+    return ramp(t, 0.0, rise) * (1 - ramp(t, fall, 1.0))
+
+
+def centre(arm) -> Vector:
+    lo, hi = box(arm)
+    return (lo + hi) / 2
+
+
+def legs_pose(pose, body, splay=0.0, swing=0.0):
+    """Every leg at world angles whatever the body does: splay spreads them out sideways (-: in),
+    swing swings them back (degrees about X)."""
+    for name in TRIPOD:
+        out = rot(Y, -splay if name[0] == "L" else splay)
+        pose[f"leg.{name}"] = body.inverted() @ out @ rot(X, swing)
+
+
+def feelers(pose, lean, sway=0.0):
+    pose["antenna.L"] = rot(X, lean) @ rot(Y, sway)
+    pose["antenna.R"] = rot(X, lean) @ rot(Y, -sway)
+
+
+def clip_sleep(arm, f, n):
+    """Hunkers down, legs splayed flat, antennae drooping, abdomen breathing."""
+    b = math.sin(2 * math.pi * f / n)
+    body = rot(X, 2)
+    pose = {"body": body, "abdomen": rot(X, -4 + 2 * b), "stinger.1": rot(X, -10)}
+    legs_pose(pose, body, 55)
+    feelers(pose, 45)
+    buzz(pose, 0, 0, -3)
+    return pose, Vector(), 1.0
+
+
+def clip_eat(arm, f, n):
+    """Nose down to the ground, munching, wings twitching."""
+    t = f / n
+    chew = 0.5 - 0.5 * math.cos(2 * math.pi * 3 * t)
+    body = rot(X, 16 + 4 * chew)
+    pose = {"body": body, "abdomen": rot(X, -16)}
+    legs_pose(pose, body, 10)
+    feelers(pose, 25 + 8 * chew)
+    buzz(pose, 12 * math.pi * t, 4)
+    return pose, Vector()
+
+
+def clip_cheer(arm, f, n):
+    """Rears up waving its front legs, wings buzzing."""
+    t = f / n
+    r = ramp(t, 0.0, 0.3) * (1 - ramp(t, 0.7, 1.0))
+    body = rot(X, -22 * r)
+    pose = {"body": body, "abdomen": rot(X, 10 * r)}
+    legs_pose(pose, body)
+    for side, p in (("L", 0.0), ("R", math.pi)):
+        pose[f"leg.{side}.1"] = rot(X, -80 * r + 20 * math.sin(6 * math.pi * t + p) * r)
+    buzz(pose, 16 * math.pi * t, 25 * r, 12 * r)
+    feelers(pose, -15 * r)
+    return pose, Vector((0, 0, 0.03 * r))
+
+
+def clip_cheer2(arm, f, n):
+    """A wiggle dance: body and abdomen swinging, legs tapping."""
+    t = f / n
+    e = env(t)
+    s = math.sin(4 * math.pi * t) * e
+    body = rot(Z, 18 * s) @ rot(Y, 6 * math.sin(8 * math.pi * t) * e)
+    pose = {"body": body, "abdomen": rot(Z, -22 * s), "stinger.1": rot(Z, -15 * s)}
+    legs_pose(pose, body)
+    for name, group in TRIPOD.items():
+        pose[f"leg.{name}"] = pose[f"leg.{name}"] @ rot(X, -20 * max(0.0, math.sin(8 * math.pi * t + (0 if group > 0 else math.pi))) * e)
+    buzz(pose, 12 * math.pi * t, 15 * e)
+    return pose, Vector((0, 0, 0.02 * abs(math.sin(4 * math.pi * t)) * e))
+
+
+def clip_attack(arm, f, n):
+    """Rears up with the abdomen raised, then lunges forward, stinger striking."""
+    t = f / n
+    wind = ramp(t, 0.0, 0.35) * (1 - ramp(t, 0.35, 0.5))
+    hit = ramp(t, 0.35, 0.5) * (1 - ramp(t, 0.6, 1.0))
+    body = rot(X, -18 * wind + 16 * hit)
+    pose = {"body": body, "abdomen": rot(X, 30 * wind + 20 * hit), "stinger.1": rot(X, 30 * wind + 50 * hit)}
+    legs_pose(pose, body, 0, 25 * hit)
+    feelers(pose, -20 * (wind + hit))
+    buzz(pose, 12 * math.pi * t, 20 * (wind + hit), 10 * (wind + hit))
+    return pose, Vector((0, -0.2 * hit, 0.03 * hit))
+
+
+def clip_hurt(arm, f, n):
+    """Flinches back, legs pulled in, antennae swept back."""
+    t = f / n
+    e = ramp(t, 0.0, 0.15) * (1 - ramp(t, 0.3, 1.0))
+    shake = math.sin(2 * math.pi * 5 * t) * e
+    body = rot(X, -14 * e) @ rot(Z, 8 * shake)
+    pose = {"body": body}
+    legs_pose(pose, body, -15 * e)
+    feelers(pose, -30 * e)
+    return pose, Vector((0, 0.06 * e, 0.02 * e))
+
+
+def clip_faint(arm, f, n):
+    """Flips onto its back and lies there, legs curled up."""
+    t = f / n
+    flip = ramp(t, 0.2, 0.7)
+    q = rot(Y, 180 * flip)
+    pose = {"body": q}
+    for name in TRIPOD:
+        pose[f"leg.{name}"] = rot(Y, 35 * flip if name[0] == "L" else -35 * flip) @ rot(X, 40 * flip)
+    feelers(pose, 40 * flip)
+    return pose, about(arm, q, centre(arm), "body") + Vector((0, 0, 0.18 * math.sin(math.pi * flip))), ramp(t, 0.6, 0.85)
+
+
+def clip_sit(arm, f, n):
+    """Settles down, legs folded, antennae swaying, abdomen breathing."""
+    t = f / n
+    body = rot(X, -4)
+    pose = {"body": body, "abdomen": rot(X, 2 * math.sin(2 * math.pi * t))}
+    legs_pose(pose, body, 35)
+    feelers(pose, 10 * math.sin(4 * math.pi * t), 8 * math.sin(2 * math.pi * t))
+    return pose, Vector(), 1.0
+
+
+def clip_trick(arm, f, n):
+    """A buzzing backflip, legs tucked."""
+    t = f / n
+    e = env(t)
+    q = rot(X, -360 * ramp(t, 0.15, 0.85))
+    pose = {"body": q}
+    legs_pose(pose, rot(X, 0), 0, 30 * e)
+    buzz(pose, 20 * math.pi * t, 30 * e, 15 * e)
+    return pose, about(arm, q, centre(arm), "body") + Vector((0, 0, 0.3 * math.sin(math.pi * t)))
+
+
+EXTRA_CLIPS = {
+    "sleep": clip_sleep,
+    "eat": clip_eat,
+    "cheer": clip_cheer,
+    "cheer2": clip_cheer2,
+    "attack": clip_attack,
+    "hurt": clip_hurt,
+    "faint": clip_faint,
+    "sit": clip_sit,
+    "trick": clip_trick,
+}
+
 CLIPS = {"idle": (clip_idle, 60), "walk": (clip_walk, 24), "hop": (clip_hop, 30)}
 
-run(
-    SRC,
-    OUT,
-    ARGS,
-    fit,
-    build,
-    CLIPS,
-    lift_bone="body",
-    give_back=(("antenna.", below_base), ("wing.", below_base), ("stinger.1", ahead_of_root), ("leg.", above_hip)),
-    views=framed_views,
-)
+if __name__ == "__main__":  # add_clips.py imports the clip functions
+    run(
+        SRC,
+        OUT,
+        ARGS,
+        fit,
+        build,
+        CLIPS,
+        lift_bone="body",
+        give_back=(("antenna.", below_base), ("wing.", below_base), ("stinger.1", ahead_of_root), ("leg.", above_hip)),
+        views=framed_views,
+        extra=EXTRA_CLIPS,
+    )
