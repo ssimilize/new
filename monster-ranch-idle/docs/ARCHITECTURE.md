@@ -300,7 +300,7 @@ Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`
   - **Minigames:** a screen root with a string attribute `GamepadLegend` hides the cursor, and the screen reads the pad itself (Racing, Surf).
   - **Modal cards** (Dialog, InsetPopup, hatch reveal, evolution popup) call `Focus.push(root, close?)` while open.
 
-Client bus topics (free-form, client only): `"Tutorial.Arrow"` `(target: string?)` where the HUD exposes targets `incubator`, `jar`, `shop`, `monster`, `expeditions`, `weather`; `"World.FocusPlot"` `(plotIndex)`; `"Hud.Flash"` `(buttonName)`.
+Client bus topics (free-form, client only): `"Tutorial.Arrow"` `(target: string?)` where the HUD exposes targets `incubator`, `jar`, `shop`, `monster`, `expeditions`, `weather`; `"World.FocusPlot"` `(plotIndex)`; `"Hud.Flash"` `(buttonName)`; `"Vfx.Burst"` `(name, { id }?)` where World takes `monsterLevelUp` (MonsterDetail) and `rebirth` (Rebirth).
 
 ### UI kit
 `UI/Theme`, `UI/Create` (`New`, `Corner`, `Stroke`, `TextStroke`, `Padding`, `List`, `Grid`, `Shade`, `Text`), `UI/Anim` (`popIn`, `pulse`, `shake`, `countUp`, `bob`, `tween`), `UI/Layers`, `UI/Focus` (3.2: `push`, `remove`, `top`, `isShown`, `Changed`). `Router:Root(name)` returns a built screen's root. Components: `Button`, `Panel`, `Icon`, `Widgets` (`Pill`, `Bar`, `Chip`, `RarityChip`, `ElementChip`, `MutationChip`, `VariantChip`, `Scroll`, `List`, `Tabs`, `Countdown`, `Amount`), `Toasts`, `MonsterIcon` (`new`, `egg`, `silhouette`, `card`). Design size is 1100 × 560 (landscape phone); every tap target is at least 44 px.
@@ -309,6 +309,11 @@ Client bus topics (free-form, client only): `"Tutorial.Arrow"` `(target: string?
 - `Visuals/MonsterModel.Build(appearance, opts) -> Model` (contract in the file header).
 - `Visuals/EggModel.Build(eggType, opts) -> Model`.
 - `Visuals/MonsterAnimator.new(model) -> animator` with `:Play(state)` (`idle|walk|happy|eat|attack|hurt|sleep`), `:SetBase(cframe)`, `:Destroy()`. One shared RenderStepped loop drives every animator. Owned by C1.
+
+### Particle effects (Vfx)
+- Data: `Config/Vfx` holds every effect as emitter specs (keys and engine rules in its header): `Auras[element]`, `Mutations[id]`, `Variants.shiny/.rainbow`, `Rarity[rarityId]` (epic and up: a faint ground glow), `Landmarks[hubId | "skyGate"]`, `Bursts[name]` (`hatch`, `evolve`, `monsterLevelUp`, `ranchLevelUp`, `rebirth`, `coins`, `hearts`). Sprite ids are the GENERATED `Config/VfxSprites` (`[name] = { color, grey? }`, names from `art/vfx/SPRITES.md`, made with `tools/vfx`); a sprite not uploaded yet just skips its emitters.
+- Runtime: `Visuals/Vfx` - `AttachMonster(model, appearance)`, `SetOwned(model, owned)`, `AttachLandmark(instance, id)`, `Burst(name, cframeOrPosition, { color?, scale?, elements? }?)` (pooled, `:Emit`), `SetQuality(low)`, `Clear(target)`, `Count(target)`. `MonsterModel.Build` attaches effects on the mesh and placeholder paths alike (`opts.vfx == false` skips: ViewportMonster, statues). The `Landmarks` controller attaches the hub buildings (on their Body, which World/Dress keeps) and the Sky Gate portal; World marks pen monsters own / other plot, routes `lowGraphics` to `SetQuality` and fires the moment bursts.
+- Rules (`Vfx.spec` enforces them): daylight LightEmission 0.15 - 0.3 (portal cores may glow more), Size and Transparency are NumberSequences that fade in fast and out slow, live particles (rate x max lifetime) <= 8 per aura, <= 12 with two mutations, <= 60 per landmark. Low graphics: other plots' auras and glows off, mutation / variant / landmark rates and bursts halved.
 
 ## 6. State shapes (binding)
 

@@ -817,15 +817,21 @@ function MonsterDetail.Build(ctx)
 			StoreKit.request(ctx, "Monsters.SetLocked", { id = currentId, locked = not m.locked })
 		end
 	end)
+	local function levelUp(times: number)
+		local id = currentId
+		if StoreKit.request(ctx, "Monsters.LevelUp", { id = id, times = times }) then
+			ctx.Bus:Publish("Vfx.Burst", "monsterLevelUp", { id = id }) -- World: stars at the pen monster
+		end
+	end
 	lvOne:SetOnClick(function()
-		StoreKit.request(ctx, "Monsters.LevelUp", { id = currentId, times = 1 })
+		levelUp(1)
 	end)
 	lvTen:SetOnClick(function()
 		local m = monster()
 		if m then
 			local _, n = levelCost(m, 10)
 			if n > 0 then
-				StoreKit.request(ctx, "Monsters.LevelUp", { id = currentId, times = n })
+				levelUp(n)
 			end
 		end
 	end)

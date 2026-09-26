@@ -1,0 +1,31 @@
+{
+  "method": "meshy text-to-image (nano-banana-pro, one 3x2 sheet on black) + local brightness-alpha cut",
+  "wall_minutes": 7,
+  "generation_seconds": 59,
+  "cost": { "meshy_credits": 21 },
+  "credits_per_call": [
+    { "task": "vfx-bakeoff-sheet-nb-r1", "ai_model": "nano-banana", "credits": 3, "seconds": 10, "used": false, "why": "compare only" },
+    { "task": "vfx-bakeoff-sheet-nbpro-r1", "ai_model": "nano-banana-pro", "credits": 9, "seconds": 37, "used": true },
+    { "task": "vfx-bakeoff-sheet-nbpro-r2", "ai_model": "nano-banana-pro", "credits": 9, "seconds": 22, "used": false, "why": "repeatability test, same prompt: came back on WHITE" }
+  ],
+  "balance_after": 1079,
+  "attempts": 3,
+  "delivered_from": "raw/sheet_nano-banana-pro_r1.png",
+  "cut_command": "python tools/vfx/sheet_cut.py art/vfx/bakeoff/meshy/raw/sheet_nano-banana-pro_r1.png --rows 2 --cols 3 --names flame,droplet,leaf,bolt,star,wisp --outdir art/vfx/bakeoff/meshy --gain auto:leaf=3 --contact",
+  "prompt_settings": { "aspect_ratio": "16:9", "prompt": "see art/meshy/vfx-bakeoff-sheet-nbpro-r1/submission.json" },
+  "scripts": ["tools/vfx/sheet_cut.py", "tools/meshy/meshy.py"],
+  "notes": {
+    "worked": "One 9-credit pro call gave all six in a consistent, polished mobile-VFX style on true black (black point 3/255), well separated, no text. Brightness alpha + un-premultiply gives clean edges on both strips, no dark fringe. Glowing sprites (flame, droplet, bolt, star, wisp) cut perfectly with auto gain ~1.0.",
+    "needed_a_tweak": "leaf is a solid, non-emissive shape (dark-green outline, mid-green body), so brightness alpha made it see-through; --gain leaf=3 makes it opaque. Grey versions get a gamma so the body's median is ~0.78 grey, otherwise a green/blue body desaturates to dark grey and tints dark.",
+    "failed": "Repeatability: the SAME prompt on a second pro roll ignored 'pure solid black background' and drew all six on white with dark outlines -> unusable for a brightness cut (sheet_cut.py now refuses a sheet whose background black point is > 0.2). Expect roughly 1 in 2 rolls to need a re-roll; check the sheet before cutting. nano-banana (3 cr) also works on black but is less on-brief: the star comes with satellite sparkles, the wisp is a round grape-like cloud, a stray white blob sits in the top-left corner, and the flame cuts small.",
+    "per_sprite": {
+      "flame": "good: clean tongue, white core, orange glow; tintable grey keeps the core/body split",
+      "droplet": "good: glossy highlights, blue rim glow, reads well small",
+      "leaf": "good silhouette with midrib; has a drawn dark outline (cartoon, not glow) - most 'icon-like' of the six",
+      "bolt": "good: bright white core, yellow glow; slightly thin at 20 px",
+      "star": "very good: clean 4-point twinkle with soft halo",
+      "wisp": "good: curling smoke with soft edges; the pro version is the only one that reads as a wisp"
+    },
+    "adding_a_new_sprite": "Cheap but not style-locked: a new text-to-image call (3-9 credits, ~20-40 s) redraws the whole set, so a single new sprite may drift from the six. Better: ask for a new sheet containing the new sprite plus 1-2 existing ones as style anchors, or use image-to-image on this sheet (not tried). Cutting is one command."
+  }
+}

@@ -7,7 +7,8 @@
 		vm:SetYaw(rad) / vm:SetRoll(rad) / vm:SetZoom(mult) / vm:SetSpin(radPerSecond)
 		vm:Clear()  vm:Destroy()
 
-	Only Visuals builders are used, so real art replaces the placeholders automatically.
+	Only Visuals builders are used, so real art replaces the placeholders automatically. Monsters
+	are built without particle effects (vfx = false): a ViewportFrame does not render particles.
 	The spin loop skips work while the frame (or any ancestor) is hidden.
 ]]
 
@@ -118,7 +119,7 @@ function ViewportMonster:_use(model: Model)
 end
 
 function ViewportMonster:SetAppearance(appearance)
-	local ok, model = pcall(MonsterModel.Build, appearance, { anchored = true })
+	local ok, model = pcall(MonsterModel.Build, appearance, { anchored = true, vfx = false }) -- particles do not render here
 	if ok and model then
 		self:_use(model)
 	else

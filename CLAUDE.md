@@ -37,6 +37,7 @@ lune run tests
 - `tests/specs/*.spec.luau`: `TestKernel` boots real systems on mocks; `ClientHarness` runs the real client in a reflection-checked Roblox mock. `Client.spec` clicks every button on every screen and checks a 568×320 phone fit.
 - `tools/snapshot`: renders a picture of the game without Studio (see its README).
 - `monster-ranch-idle/tools/meshy` + `tools/blender`: the 3D monsters. Meshy concept → model per form, a Blender rig per body type (all eight), then each mesh is published as a Roblox asset and drawn by `Visuals/MeshMonster` (ids in `MeshMonsterAssets.luau`; forms without both ids keep the placeholder). Workflow in each folder's README.
+- Particle effects: presets as data in `Config/Vfx.luau`, built by `Visuals/Vfx.luau` (monsters via `MonsterModel.Build`, landmarks via the `Landmarks` controller, bursts via World). The sprites are listed in `monster-ranch-idle/art/vfx/SPRITES.md`, made with `monster-ranch-idle/tools/vfx`, and their uploaded ids go in the generated `Config/VfxSprites.luau`.
 
 ## Building an update (the pattern every update so far followed)
 

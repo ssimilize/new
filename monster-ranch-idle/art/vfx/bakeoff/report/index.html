@@ -1,0 +1,166 @@
+<title>Particle Sprite Bake-off</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root {
+  --ground: #F3F6EF;
+  --panel: #FFFFFF;
+  --ink: #1F2530;
+  --muted: #5B6472;
+  --line: #DCE3D6;
+  --accent: #2F8F4E;
+  --accent-soft: #E1F2E5;
+  --warm: #C9711F;
+  --warm-soft: #FBEEDD;
+  --bad: #B23A3A;
+  --bad-soft: #F8E3E3;
+  --display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #151A17; --panel: #1D2420; --ink: #E7ECE6; --muted: #A2ACA4; --line: #2E3831;
+    --accent: #6BCB8A; --accent-soft: #1F3527; --warm: #F0A95C; --warm-soft: #3A2C1C;
+    --bad: #F08A8A; --bad-soft: #3B2222;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #151A17; --panel: #1D2420; --ink: #E7ECE6; --muted: #A2ACA4; --line: #2E3831;
+  --accent: #6BCB8A; --accent-soft: #1F3527; --warm: #F0A95C; --warm-soft: #3A2C1C;
+  --bad: #F08A8A; --bad-soft: #3B2222;
+}
+body { background: var(--ground); color: var(--ink); font: 16px/1.55 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 64px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); }
+h2 { font-size: 26px; margin-bottom: 12px; }
+h3 { font-size: 19px; font-weight: 500; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 18px; color: var(--muted); margin-top: 12px; }
+section { margin-top: 48px; display: grid; gap: 14px; }
+.verdict { margin-top: 28px; background: var(--accent-soft); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.verdict strong { color: var(--accent); }
+.tbl { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 15px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-family: var(--mono); font-size: 13.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; font: 600 12px/1 var(--body); padding: 4px 8px; border-radius: 999px; white-space: nowrap; }
+.pick { background: var(--accent-soft); color: var(--accent); }
+.alt { background: var(--warm-soft); color: var(--warm); }
+.no { background: var(--bad-soft); color: var(--bad); }
+.methods { display: grid; gap: 18px; }
+.method { display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: start; }
+.method img { border-radius: 10px; display: block; width: 100%; }
+.method h3 { margin-bottom: 4px; }
+.method p { font-size: 15px; color: var(--muted); }
+.cols { font: 500 12px/1 var(--mono); color: var(--muted); display: grid; grid-template-columns: repeat(6, 1fr); padding-inline: 2%; margin-bottom: 4px; }
+figure { margin: 0; display: grid; gap: 8px; }
+figure img { border-radius: 12px; border: 1px solid var(--line); display: block; width: 100%; }
+figcaption { font-size: 14px; color: var(--muted); max-width: 80ch; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+ul.findings { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 72ch; }
+.plan { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; }
+.plan ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+code { font-family: var(--mono); font-size: .88em; background: var(--line); padding: 1px 5px; border-radius: 4px; }
+@media (max-width: 720px) {
+  .method { grid-template-columns: 1fr; }
+  .pair { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Monster Ranch Idle · VFX · 25 Sep 2026</div>
+  <h1>Particle Sprite Bake-off</h1>
+  <p class="lede">The same six particle sprites (flame, droplet, leaf, bolt, star, wisp) made six ways, then run on identical ParticleEmitters in the Monster Ranch place to decide how the game's effects get made.</p>
+
+  <div class="verdict">
+    <p><strong>Decided 26 Sep: Codex, with the cartoon brief.</strong> Round 2 (below) gave Codex a precise brief: toy-style cartoon, three flat tones, a same-hue outline, no glow, and the game's own monster as a style reference. In the Studio head-to-head it beat code-drawn sprites on every sprite. Following your rule ("Codex if it wins, otherwise procedural"), the full set is now being made with Codex.</p>
+  </div>
+
+  <section>
+    <h2>Round 2: Codex with a cartoon brief</h2>
+    <p>Same six sprites and one Codex session, with the Kindlefox concept attached as a style reference. The brief set the exact shape, orientation and hex colours for each sprite. 16 minutes in all, including one fix to the leaf; no extra cost on the subscription. <code>gpt-6-luna</code> was refused again for the ChatGPT login, so it ran on <code>gpt-6-astra</code>.</p>
+    <figure><img src="codex_versus.jpg" alt="Codex round 1 sprites above round 2 cartoon sprites, on dark and light grounds"><figcaption>Top row: round 1 (open brief). Bottom row: round 2 (cartoon brief). The chunky shapes and same-hue outlines now match the monsters and survive being shrunk.</figcaption></figure>
+    <figure><img src="codex_cartoon_contact.jpg" alt="Codex cartoon sprites with their grey tintable versions"><figcaption>Grey tintable versions keep the three tones as three greys, so tinted sprites don't flatten.</figcaption></figure>
+    <ul class="findings">
+      <li><b>In the engine, head to head against procedural and Meshy:</b> Codex's bolt is the only one that stays yellow against the sky. Its stars and outlined puffs are the most legible at game size, and its leaves read best of any method.</li>
+      <li><b>Tinting still muddies any sprite.</b> Production uses a sprite drawn in each element's own colour. Grey tintable sprites are kept for neutral shapes: glow, ring, swirl, puff and rune.</li>
+    </ul>
+  </section>
+
+  <div class="verdict" style="background:var(--panel);border:1px solid var(--line)">
+    <p><strong>Round 1 recommendation (superseded): draw sprites in code (procedural) as the main pipeline, with GPT via Codex as the fallback</strong> for the few illustrative shapes code draws poorly. Procedural costs nothing, regenerates the whole set in about 30 seconds, stays in one style, and held up as well as any method in the engine. Its flame and wisp read best.</p>
+    <p>The bigger lesson came from the emitters, not the sprites. At game scale the top four methods look closer than their sprite sheets suggest. Emitter settings made more difference: at the usual glow levels, every method's fire, bolts and stars washed out to white against the sunny ranch sky.</p>
+  </div>
+
+  <section>
+    <h2>Scorecard</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Method</th><th>Verdict</th><th>Cost</th><th>Wall time</th><th>Machine time</th><th>In the engine</th><th>Adding a new sprite</th></tr></thead>
+        <tbody>
+          <tr><td><b>Procedural</b><br><span style="color:var(--muted);font-size:13px">Python + numpy</span></td><td><span class="pill pick">Use</span></td><td class="num">0</td><td class="num">10 min</td><td class="num">31 s / set</td><td>Most vivid flame, strongest wisp, clean droplet and star. The leaf is thin at game size.</td><td>A new function in <code>procedural.py</code>. Easy for geometric shapes (ring, rune, heart, coin, snowflake), slower for organic ones.</td></tr>
+          <tr><td><b>GPT via Codex</b><br><span style="color:var(--muted);font-size:13px">gpt-6-astra, image tool</span></td><td><span class="pill alt">Fallback</span></td><td class="num">$0 extra*</td><td class="num">23 min</td><td class="num">~75 s / sprite</td><td>The most detailed art, with true transparent PNGs. Droplet, leaf and star are excellent. The flame reads pale and the wisp is busy.</td><td>One Codex run per sprite. Style drift between batches is untested; add a style-reference image.</td></tr>
+          <tr><td><b>Meshy</b><br><span style="color:var(--muted);font-size:13px">Nano Banana Pro sheet</span></td><td><span class="pill alt">Good, costs credits</span></td><td class="num">21 cr</td><td class="num">7 min</td><td class="num">59 s</td><td>A cohesive cartoon set. Its outlined leaf and bolt read best against the bright sky. The wisp is pale.</td><td>Re-rolls came back on white instead of black (alpha keying breaks). Credits are earmarked for monsters.</td></tr>
+          <tr><td><b>Blender</b><br><span style="color:var(--muted);font-size:13px">Cycles, headless</span></td><td><span class="pill no">Skip</span></td><td class="num">0</td><td class="num">22 min</td><td class="num">172 s / set</td><td>Nice droplet and leaf. The bolt is weak and the wisp reads as rings.</td><td>Model, light and render each sprite. The wisp volume alone took 114 s. The most work for no gain.</td></tr>
+          <tr><td><b>Creator Store</b><br><span style="color:var(--muted);font-size:13px">free decals</span></td><td><span class="pill no">Skip</span></td><td class="num">0</td><td class="num">12 min</td><td class="num">—</td><td>The maple leaf reads well; the rest is a mix of realistic fire and smoke next to clip art.</td><td>A new hunt each time, through noisy search, moderated thumbnails and a few rips.</td></tr>
+          <tr><td><b>Roblox built-in</b></td><td><span class="pill no">Baseline</span></td><td class="num">0</td><td class="num">—</td><td class="num">—</td><td>Only fire, smoke and a sparkle exist.</td><td>Not possible.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13px;color:var(--muted)">* On your ChatGPT subscription. Codex refused <code>gpt-6-luna</code> for a ChatGPT-account login (HTTP 400), so it ran on your config default <code>gpt-6-astra</code> at high effort; the image tool is the same either way. The OpenAI API route is closed: that key has no credits (HTTP 429, nothing billed).</p>
+  </section>
+
+  <section>
+    <h2>The sprites</h2>
+    <p>Own-colour versions on the dark and the light ground. Every method also delivered a white/grey version for tinting per element.</p>
+    <div class="methods">
+      <div class="method"><div><h3>Procedural</h3><p>SDF shapes, FFT glow, home-made noise; deterministic.</p></div><div><div class="cols"><span>flame</span><span>droplet</span><span>leaf</span><span>bolt</span><span>star</span><span>wisp</span></div><img src="strip_procedural.jpg" alt="Procedural sprites: flame, droplet, leaf, bolt, star, wisp"></div></div>
+      <div class="method"><div><h3>GPT via Codex</h3><p>One image per sprite, transparent PNG.</p></div><div><img src="strip_gpt.jpg" alt="GPT via Codex sprites"></div></div>
+      <div class="method"><div><h3>Meshy</h3><p>One 3×2 sheet on black, cut by brightness.</p></div><div><img src="strip_meshy.jpg" alt="Meshy sprites"></div></div>
+      <div class="method"><div><h3>Blender</h3><p>Emission shaders, volumes for flame and wisp.</p></div><div><img src="strip_blender.jpg" alt="Blender sprites"></div></div>
+      <div class="method"><div><h3>Creator Store</h3><p>Best free pick per sprite (store thumbnails).</p></div><div><img src="strip_store.jpg" alt="Creator Store sprites"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>In Roblox Studio</h2>
+    <p>Same emitter per sprite, three times game size so they can be judged, over the place's own sky. Columns left to right: Creator Store, Meshy, Procedural, GPT via Codex, Blender.</p>
+    <div class="pair">
+      <figure><img src="colour_flame_droplet_leaf.jpg" alt="Own-colour flame, droplet and leaf particles for five methods in Studio"><figcaption>Own colour: flame, droplet, leaf. Procedural and Blender give the richest fire; Meshy's outlined leaves read best.</figcaption></figure>
+      <figure><img src="colour_bolt_star_wisp.jpg" alt="Own-colour bolt, star and wisp particles for five methods in Studio"><figcaption>Own colour: bolt, star, wisp. Against a blue sky, bolts fade whatever the method; Procedural's wisp holds its colour best.</figcaption></figure>
+      <figure><img src="tint_flame_droplet_leaf.jpg" alt="Tinted grey flame, droplet and leaf particles in Studio"><figcaption>White/grey sprites tinted per element: fire goes pastel for everyone, while droplets and leaves tint fine.</figcaption></figure>
+      <figure><img src="tint_bolt_star_wisp.jpg" alt="Tinted grey bolt, star and wisp particles in Studio"><figcaption>Tinted bolts read better than the own-colour ones, and tinted wisps keep their shape.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the engine test taught</h2>
+    <ul class="findings">
+      <li><b>Glow is the enemy in daylight.</b> LightEmission 0.8–1 added to a bright sky turned every method's flames, bolts and stars nearly white. Daytime presets use 0.15–0.3; glow belongs to night and to dark spots like portal cores.</li>
+      <li><b>Fire needs its own-colour sprite.</b> A white flame tinted orange goes pastel. Droplets, leaves, bolts, stars and wisps tint well, so one sprite serves several elements.</li>
+      <li><b>Anything seen against the sky needs a darker edge.</b> That's why Meshy's outlined bolt and leaf read best. The procedural generator gets an outline option instead of switching methods.</li>
+      <li><b>Particles only simulate near the live camera.</b> The gallery had to move Studio's own camera before capturing, which also means off-screen auras cost almost nothing.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>In progress</h2>
+    <div class="plan">
+      <ol>
+        <li>The full set of 22 sprites through Codex in the round-2 style, anchored on the six approved sprites: ember, bubble, petal, pebble, void swirl, 5-point star, heart, coin, snowflake, rainbow twinkle, confetti, ring, puff, portal swirl, rune, plus a glow orb drawn in code.</li>
+        <li><code>Config/Vfx.luau</code> (sprite ids and presets as data) and <code>Visuals/Vfx.luau</code> (builds emitters, low-graphics budget).</li>
+        <li>Monsters: element auras, all 14 mutations, shiny and rainbow effects, hooked into <code>MonsterModel.Build</code>, which every monster already passes through (mesh or placeholder, pens, mounts, viewports). Mesh monsters currently have no effects at all.</li>
+        <li>Landmarks: Raid Portal and Trading Hub vortexes, the Sky Gate, Star Altar runes, and ambient effects on the other hub buildings.</li>
+        <li>Moment bursts on the existing events: hatch, evolve, monster and ranch level-up, rebirth, plus the coin and heart bursts redone with the new sprites.</li>
+      </ol>
+    </div>
+  </section>
+</div>

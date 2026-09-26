@@ -16,5 +16,14 @@ art/export/
 art/tripo/
 art/rbxgen/
 
+# Particle sprites: the finished sprites, their prompts and the bake-off record are kept
+# (art/vfx, a few MB); raw generations, third-party store thumbnails, screen grabs and the Studio
+# patch bundle are not.
+art/vfx/**/raw/
+art/vfx/bakeoff/store/
+art/vfx/bakeoff/report/strip_store.jpg
+art/vfx/bakeoff/shots/
+art/vfx/patch.json
+
 # Python bytecode from the art tools.
 __pycache__/

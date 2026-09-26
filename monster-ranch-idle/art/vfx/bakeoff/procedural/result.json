@@ -1,0 +1,11 @@
+{
+  "method": "procedural",
+  "wall_minutes": 10,
+  "generation_seconds": 31,
+  "cost": 0,
+  "attempts": 6,
+  "scripts": [
+    "tools/vfx/procedural.py"
+  ],
+  "notes": "Pure numpy + PIL, no assets or APIs. Each sprite is one function returning a luminance field and an alpha field at 1024 px: SDF shapes (teardrop/tongue profile, polygon, astroid, capsule), smooth-min unions, FFT gaussian blur for glow halos and interior depth shading, home-made value/fbm noise for the flame flicker and the wisp's domain warp. Premultiplied Lanczos downsample to 256, un-premultiply, then colour is bled into (near-)transparent pixels so bilinear sampling never picks up a dark fringe (min RGB under low alpha is >=159 grey on every tintable sprite). _color variants are the same luminance through a per-element colour ramp. Full run of all 6 + contact sheet: ~20-31 s (wisp is the slowest, ~10-15 s, 260 gaussians at 1024 px); timings varied with machine load. Iterations: 6 full/partial runs - flame side licks took three passes (first merged into lumps, then thorn-thin spikes, then proper tongues with notches); wisp density was overshot once (became an ammonite blob) and its trailing puffs showed dark rings on light bg until the edge luminance was raised; then recentring. What worked: crisp stylized silhouettes, clean alpha, perfectly repeatable (fixed seeds), every shape parameter is a number to tweak. Weak spots: the look is 'clean vector / emoji' rather than painterly; the wisp is the least convincing (reads as a magic swirl, less like real smoke); flame is narrower than wide flames in reference art. Adding a new sprite: one function (~20-40 lines) plus a ramp entry; 5-15 minutes of tuning for a geometric subject, longer for organic ones (smoke, fur, splashes)."
+}

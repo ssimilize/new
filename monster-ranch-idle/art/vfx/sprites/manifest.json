@@ -1,0 +1,178 @@
+[
+ {
+  "name": "flame",
+  "file": "flame.png",
+  "grey": null,
+  "tint": false,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "droplet",
+  "file": "droplet.png",
+  "grey": "droplet_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "leaf",
+  "file": "leaf.png",
+  "grey": "leaf_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 2
+ },
+ {
+  "name": "bolt",
+  "file": "bolt.png",
+  "grey": null,
+  "tint": false,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "star",
+  "file": "star.png",
+  "grey": "star_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "wisp",
+  "file": "wisp.png",
+  "grey": "wisp_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "ember",
+  "file": "ember.png",
+  "grey": null,
+  "tint": false,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "bubble",
+  "file": "bubble.png",
+  "grey": "bubble_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "petal",
+  "file": "petal.png",
+  "grey": "petal_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "pebble",
+  "file": "pebble.png",
+  "grey": "pebble_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "voidswirl",
+  "file": "voidswirl.png",
+  "grey": null,
+  "tint": false,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "star5",
+  "file": "star5.png",
+  "grey": "star5_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "heart",
+  "file": "heart.png",
+  "grey": null,
+  "tint": false,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "coin",
+  "file": "coin.png",
+  "grey": null,
+  "tint": false,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "snowflake",
+  "file": "snowflake.png",
+  "grey": "snowflake_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "prism",
+  "file": "prism.png",
+  "grey": null,
+  "tint": false,
+  "source": "codex",
+  "attempts": 2
+ },
+ {
+  "name": "confetti",
+  "file": "confetti.png",
+  "grey": "confetti_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "ring",
+  "file": "ring.png",
+  "grey": "ring_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "puff",
+  "file": "puff.png",
+  "grey": "puff_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 2
+ },
+ {
+  "name": "swirl",
+  "file": "swirl.png",
+  "grey": "swirl_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "rune",
+  "file": "rune.png",
+  "grey": "rune_grey.png",
+  "tint": true,
+  "source": "codex",
+  "attempts": 1
+ },
+ {
+  "name": "glow",
+  "file": "glow.png",
+  "grey": "glow_grey.png",
+  "tint": true,
+  "source": "procedural",
+  "attempts": 1
+ }
+]

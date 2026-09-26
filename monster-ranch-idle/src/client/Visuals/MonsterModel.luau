@@ -11,6 +11,10 @@
 	  • attributes: Line, Form, Stage, Rarity, Variant, Rainbow (bool), Height (studs)
 	  • Build must be cheap: ≤ 20 parts (+ ≤ 3 per worn accessory); no scripts inside
 	  • appearance.acc { [slot] = accessoryId } draws Config.Accessories placeholders (1.5)
+	  • particle effects (element aura, mutations, shiny / rainbow, epic+ ground glow) come from
+	    Visuals/Vfx on BOTH paths; opts.vfx == false builds without them (ViewportMonster, since
+	    particles do not render in a ViewportFrame; statues). The placeholder keeps only geometry
+	    and PointLights for elements and mutations.
 	To use authored models later: look up a model by appearance.form in
 	ReplicatedStorage.Assets.Monsters (if present), clone it, and keep the contract above.
 	3D monsters: a form with a rig module in Visuals/MeshMonsters and a published mesh and texture
@@ -21,6 +25,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local MeshMonster = require(script.Parent.MeshMonster)
+local Vfx = require(script.Parent.Vfx)
 
 local MonsterModel = {}
 
@@ -368,12 +373,24 @@ function MonsterModel.ScaleFor(appearance): number
 	return stageScale * weightScale
 end
 
-function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: number? }?)
+-- Particle effects on a finished model; a failure here never costs the monster its body.
+local function attachVfx(model: Model, appearance, options)
+	if options.vfx == false then
+		return
+	end
+	local ok, err = pcall(Vfx.AttachMonster, model, appearance)
+	if not ok then
+		warn("[MonsterModel] effects failed for " .. tostring(appearance.form) .. ": " .. tostring(err))
+	end
+end
+
+function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: number?, vfx: boolean? }?)
 	local options = opts or {}
 	local s = BASE_SIZE * MonsterModel.ScaleFor(appearance) * (options.scale or 1)
 	if MeshMonster.Has(appearance.form) then
 		local ok, meshModel = pcall(MeshMonster.Build, appearance, s, options.anchored ~= false)
 		if ok then
+			attachVfx(meshModel, appearance, options)
 			return meshModel
 		end
 		warn("[MonsterModel] mesh build failed for " .. tostring(appearance.form) .. ": " .. tostring(meshModel))
@@ -527,23 +544,9 @@ function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: numbe
 		end
 	end
 
-	-- Element accent.
+	-- Element accent (geometry and lights; the particles are Vfx's element aura).
 	if element == "ember" then
-		local flame = ball(
-			model,
-			root,
-			"Flame",
-			Vector3.new(s * 0.3, s * 0.45, s * 0.3),
-			accent,
-			CFrame.new(0, top + s * 0.12, 0),
-			Enum.Material.Neon
-		)
-		local fire = Instance.new("Fire")
-		fire.Size = s * 1.2
-		fire.Heat = 3
-		fire.Color = Color3.fromHex("#FFB547")
-		fire.SecondaryColor = Color3.fromHex("#F0663A")
-		fire.Parent = flame
+		ball(model, root, "Flame", Vector3.new(s * 0.3, s * 0.45, s * 0.3), accent, CFrame.new(0, top + s * 0.12, 0), Enum.Material.Neon)
 	elseif element == "tide" then
 		for _, x in { -1, 1 } do
 			ball(
@@ -633,7 +636,7 @@ function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: numbe
 		light.Parent = bodyPart
 	end
 
-	-- Mutation effects.
+	-- Mutation geometry (their particles are Vfx's).
 	for _, m in appearance.muts or {} do
 		if m == "frosted" or m == "frozen" then
 			ball(
@@ -644,29 +647,6 @@ function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: numbe
 				Color3.new(1, 1, 1),
 				CFrame.new(0, top - s * 0.05, 0)
 			)
-		elseif m == "soaked" then
-			local drip = Instance.new("ParticleEmitter")
-			drip.Color = ColorSequence.new(Color3.fromHex("#7CC7FF"))
-			drip.Size = NumberSequence.new(s * 0.08)
-			drip.Rate = 4
-			drip.Lifetime = NumberRange.new(0.6)
-			drip.Speed = NumberRange.new(0)
-			drip.Acceleration = Vector3.new(0, -12, 0)
-			drip.Parent = bodyPart
-		elseif m == "charged" or m == "plasma" or m == "starstruck" or m == "prismatic" then
-			local sparkles = Instance.new("Sparkles")
-			sparkles.SparkleColor = if m == "charged"
-				then Color3.fromHex("#FFE14D")
-				elseif m == "plasma" then Color3.fromHex("#C06BFF")
-				elseif m == "starstruck" then Color3.fromHex("#FFD447")
-				else Color3.fromHex("#FF7AC8")
-			sparkles.Parent = bodyPart
-		elseif m == "scorched" then
-			local smoke = Instance.new("Smoke")
-			smoke.Size = s * 0.4
-			smoke.Opacity = 0.08
-			smoke.RiseVelocity = 2
-			smoke.Parent = bodyPart
 		end
 	end
 	-- Accessories (1.5): one placeholder per worn slot.
@@ -677,11 +657,6 @@ function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: numbe
 				addAccessory(model, root, def, { s = s, top = top, bodyY = bodyY, bodySize = bodySize, eyeY = eyeY, eyeZ = eyeZ })
 			end
 		end
-	end
-	if appearance.variant == 1 then
-		local sparkles = Instance.new("Sparkles")
-		sparkles.SparkleColor = Color3.fromHex("#FFF3B0")
-		sparkles.Parent = bodyPart
 	end
 
 	local height = top + s * 0.3
@@ -700,6 +675,7 @@ function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: numbe
 	model:SetAttribute("Variant", appearance.variant or 0)
 	model:SetAttribute("Rainbow", appearance.variant == 2)
 	model:SetAttribute("Height", height)
+	attachVfx(model, appearance, options)
 	return model
 end
 

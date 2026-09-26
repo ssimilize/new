@@ -1,0 +1,206 @@
+{
+ "method": "gpt-cartoon (GPT Image via Codex CLI image_gen, precise cartoon brief + style ref)",
+ "wall_minutes": 16.0,
+ "generation_seconds": 568,
+ "cost": {
+  "usd": 0,
+  "subscription": "Codex CLI on the ChatGPT subscription, 0 USD marginal"
+ },
+ "attempts": 3,
+ "codex_runs": [
+  {
+   "name": "cartoon_r1_luna",
+   "model_requested": "gpt-6-luna",
+   "model_used": null,
+   "seconds": 21,
+   "images": 0,
+   "result": "HTTP 400: 'gpt-6-luna' is not supported when using Codex with a ChatGPT account"
+  },
+  {
+   "name": "cartoon_r1",
+   "model_requested": "gpt-6-astra",
+   "model_used": "gpt-6-astra (reasoning high) + built-in image_gen",
+   "seconds": 402,
+   "images": 6,
+   "codex_tokens": 45751,
+   "style_ref": "art/meshy/kindlefox-concept/image_0.png",
+   "result": "six transparent 1254x1254 RGBA; five kept; the leaf had a dark pixelated smudge across the body"
+  },
+  {
+   "name": "cartoon_r2_leaf_edit",
+   "model_requested": "gpt-6-astra",
+   "model_used": "gpt-6-astra (reasoning high) + built-in image_gen edit",
+   "seconds": 145,
+   "images": 1,
+   "codex_tokens": 47769,
+   "input": "raw/r1_leaf.png",
+   "result": "smudge removed; everything else preserved; transparent"
+  }
+ ],
+ "picked_from": {
+  "flame": {
+   "from": "r1_flame.png",
+   "tone_lum": [
+    0.305,
+    0.422,
+    0.54,
+    0.68,
+    0.817,
+    0.923
+   ],
+   "tone_grey": [
+    0.4,
+    0.6,
+    0.8,
+    0.95,
+    0.95,
+    0.95
+   ],
+   "tone_share": [
+    0.134,
+    0.173,
+    0.32,
+    0.01,
+    0.217,
+    0.147
+   ]
+  },
+  "droplet": {
+   "from": "r1_droplet.png",
+   "tone_lum": [
+    0.316,
+    0.458,
+    0.552,
+    0.596,
+    0.77,
+    0.986
+   ],
+   "tone_grey": [
+    0.4,
+    0.57,
+    0.69,
+    0.8,
+    0.95,
+    1.0
+   ],
+   "tone_share": [
+    0.161,
+    0.186,
+    0.011,
+    0.535,
+    0.049,
+    0.058
+   ]
+  },
+  "leaf": {
+   "from": "r2_leaf.png",
+   "tone_lum": [
+    0.347,
+    0.454,
+    0.536,
+    0.649,
+    0.794,
+    0.985
+   ],
+   "tone_grey": [
+    0.4,
+    0.57,
+    0.69,
+    0.8,
+    0.95,
+    1.0
+   ],
+   "tone_share": [
+    0.146,
+    0.13,
+    0.27,
+    0.349,
+    0.08,
+    0.026
+   ]
+  },
+  "bolt": {
+   "from": "r1_bolt.png",
+   "tone_lum": [
+    0.463,
+    0.556,
+    0.656,
+    0.798,
+    0.938
+   ],
+   "tone_grey": [
+    0.4,
+    0.57,
+    0.69,
+    0.8,
+    1.0
+   ],
+   "tone_share": [
+    0.241,
+    0.016,
+    0.184,
+    0.521,
+    0.037
+   ]
+  },
+  "star": {
+   "from": "r1_star.png",
+   "tone_lum": [
+    0.513,
+    0.597,
+    0.681,
+    0.746,
+    0.806,
+    0.943
+   ],
+   "tone_grey": [
+    0.4,
+    0.53,
+    0.63,
+    0.72,
+    0.8,
+    1.0
+   ],
+   "tone_share": [
+    0.181,
+    0.014,
+    0.251,
+    0.012,
+    0.46,
+    0.082
+   ]
+  },
+  "wisp": {
+   "from": "r1_wisp.png",
+   "tone_lum": [
+    0.248,
+    0.368,
+    0.442,
+    0.512,
+    0.698,
+    0.941
+   ],
+   "tone_grey": [
+    0.4,
+    0.57,
+    0.69,
+    0.8,
+    0.95,
+    1.0
+   ],
+   "tone_share": [
+    0.183,
+    0.143,
+    0.011,
+    0.54,
+    0.102,
+    0.022
+   ]
+  }
+ },
+ "scripts": [
+  "tools/vfx/gpt_cartoon.py",
+  "tools/vfx/gpt_sprites.py"
+ ],
+ "notes": "Brief: PROMPT.md, with the style block word for word and the per-sprite lines with hex colours. The kindlefox concept was attached with -i. All six were made in ONE Codex session so they share a style. gpt-6-luna was refused again (HTTP 400, not available to a ChatGPT-account Codex), so every image came from gpt-6-astra, reasoning high. Codex's image_gen returned real transparent RGBA every time. Processing: keep the alpha; trim, centre and scale to 80% (long side 204/256); bleed colour into transparent pixels. The grey version maps the tones by luminance with 1-D k-means: the most common tone (base) goes to 0.80, the darkest (outline) to 0.40, tones between them to about 0.60, lighter tones to 0.95 and white highlights to 1.0. Tones closer than 0.04 are merged first, because splitting one flat tone amplified the faint model noise into speckle on the bolt.\nBrief compliance (round 1): flame, droplet, bolt, star and wisp met it on the first try: flat 3-tone cel shading, own-colour outline, white highlights top-left, no glow or extra objects, correct orientation. The hex colours were followed closely. The leaf had a dark, blurry, pixelated diagonal smudge across its body (an image-model artefact). ONE follow-up edit fixed it by naming the smudge, giving the base colour to fill it with, and listing everything to keep; it came back clean and otherwise identical. Delivered: r1 for five sprites, r2 for the leaf.\nVersus round 1 (gpt/): round 1 was glossy painterly VFX with glow (thin bolt, hazy star, detailed smoke). The cartoon set is chunky sticker art that matches the monsters' toy style and reads far better when small. It has no glow, so on the light strip it keeps its outline where round-1's bolt and star nearly vanished. Trade-off: less 'magic'; the flame and wisp look like icons rather than effects.\nRepeatability: high. A new sprite is one line in the same brief (shape, orientation, 4 hex colours) run in the same session or with the style reference attached, then `gpt_cartoon.py build`. An individual defect is fixed with an image_gen edit on the raw PNG (about 2.5 min).\n"
+}

@@ -31,6 +31,8 @@ return {
 		"Riding",
 		-- 3.2 · Frostbite Glacier
 		"Gamepad",
+		-- Particle effects (Visuals/Vfx): landmark ambience
+		"Landmarks",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
