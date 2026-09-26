@@ -122,4 +122,9 @@ return {
 	CelebrateBig = { id = "", volume = 0.65, duck = 0.5, cooldown = 0.5 },
 	CelebrateHuge = { id = "", volume = 0.75, duck = 0.7, cooldown = 1 },
 	StampedeSoon = { id = "", volume = 0.6, duck = 0.4, cooldown = 5 },
+
+	-- Photo mode (PhotoMode controller + screen) ----------------------------------------
+	PhotoShutter = { id = "", volume = 0.6, cooldown = 0.3, group = "UI" }, -- a photo is taken
+	PhotoSticker = { id = "", volume = 0.45, pitch = { 0.94, 1.08 }, cooldown = 0.06, group = "UI" }, -- a sticker lands
+	PhotoPose = { id = "", volume = 0.5, cooldown = 0.5 }, -- monsters strike a pose
 }

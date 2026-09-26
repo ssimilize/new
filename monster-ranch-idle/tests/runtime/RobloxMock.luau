@@ -1540,7 +1540,9 @@ define("Workspace", {
 			if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" then
 				error("Raycast expects (Vector3, Vector3, RaycastParams?)", 2)
 			end
-			if params ~= nil and luneTypeof(params) ~= "RaycastParams" and typeof(params) ~= "RaycastParams" then
+			-- The world's own RaycastParams.new() tables carry RaycastParamsMeta (World:typeof).
+			local mockParams = type(params) == "table" and getmetatable(params) == RobloxMock.RaycastParamsMeta
+			if params ~= nil and not mockParams and luneTypeof(params) ~= "RaycastParams" then
 				error("Raycast params must be RaycastParams", 2)
 			end
 			return recOf(self).world.raycastResult

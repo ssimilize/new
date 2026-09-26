@@ -475,6 +475,22 @@ local function build()
 	})
 	buttons.Settings = { gui = settingsButton.Root, button = settingsButton, color = C.Gray }
 
+	-- Photo mode: a small camera under the gear (top-right utility column, clear of both stacks).
+	local photoButton = Button.new({
+		Name = "Photo",
+		Text = "📷",
+		Color = C.Purple,
+		Size = UDim2.fromOffset(46, 46),
+		TextSize = 24,
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -246, 0, 64),
+		Parent = root,
+		OnClick = function()
+			openScreen("PhotoMode")
+		end,
+	})
+	buttons.Photo = { gui = photoButton.Root, button = photoButton, color = C.Purple }
+
 	-- Weather (top-centre)
 	local banner = New("Frame", {
 		Name = "Weather",

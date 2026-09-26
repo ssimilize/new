@@ -39,6 +39,8 @@ return {
 		-- Glow-up: celebrations that travel, the moment queue, the Stampede call
 		"Celebrate",
 		"Stampede",
+		-- Photo mode: free camera, filters, frames, stickers, CaptureService
+		"PhotoMode",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -75,5 +77,7 @@ return {
 		-- 2.1 · Arena & Raids
 		"Arena",
 		"Raids",
+		-- Photo mode (non-modal; opened by the HUD camera button, P or D-pad up)
+		"PhotoMode",
 	},
 }
