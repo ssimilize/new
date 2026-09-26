@@ -469,8 +469,10 @@ SUBJECTS = {
     "flower on its head, stubby sandstone legs and little cactus arms.",
     "pricklord": "Pricklord: a sturdier cactus golem with thick cactus-pad arms covered in soft rounded spines, "
     "sandstone feet like boots, two pink flowers on its head.",
-    "saguardian": "A huge towering saguaro cactus titan: massive cactus arms raised like a strongman, sandstone rock "
-    "shoulders, a crown of blooming pink and white flowers.",
+    # Arms "raised like a strongman" drew them above the head (2026-09-26): the golem rig finds arms
+    # hanging at the sides.
+    "saguardian": "A huge towering saguaro cactus titan: massive cactus arms hanging at its sides, held clear of "
+    "the body, sandstone rock shoulders, a crown of blooming pink and white flowers.",
     # 53 scarabit (bug, ember)
     "scarabit": "Scarabit, a baby fire scarab: a round glossy shell with golden edges, a small sun-disc marking on "
     "its back, two short antennae with ember tips.",

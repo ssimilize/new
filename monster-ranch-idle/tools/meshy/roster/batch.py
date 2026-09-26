@@ -56,6 +56,8 @@ MODELS = {"t2": ("model-t2.json", 15), "71": ("model.json", 30)}
 MODEL = "t2"
 COST = {"concept": 6, "model": MODELS[MODEL][1]}
 HOVERING = {"sprite", "moth"}  # body plans drawn in the air, over a shadow of their own (matte)
+# Forms drawn with grey parts in the backdrop's own grey, which matte() cut out (tight_matte instead).
+GREY_PARTS = {"yetikit", "snowbrute", "avalancheyeti"}
 RESERVE = 60  # credits left untouched, for re-rolls
 PENDING = 10  # Meshy refuses an 11th pending task on this plan (429 NoMorePendingTasks)
 # Forms made by the pilot (tools/meshy/pilot): their concepts are the parents of later stages.
@@ -174,6 +176,25 @@ def matte(image: Image.Image, hovering: bool = False) -> Image.Image:
     return out
 
 
+def tight_matte(image: Image.Image) -> Image.Image:
+    """For a monster with grey parts the backdrop's colour (the yeti line's face, horns, hands and
+    feet): matte() takes those for background or shadow, so only what is within a hair of the
+    backdrop's own colour, and reachable from the border, is cut. The concepts drawn for these forms
+    so far had no soft shadow to leave behind."""
+    rgb = np.asarray(image.convert("RGB")).astype(np.float32)
+    h, w, _ = rgb.shape
+    bg = np.median(np.concatenate([rgb[0], rgb[-1], rgb[:, 0], rgb[:, -1]]), axis=0)
+    candidate = Image.fromarray(np.where(np.linalg.norm(rgb - bg, axis=2) < 9, 255, 0).astype(np.uint8))
+    padded = Image.new("L", (w + 2, h + 2), 255)
+    padded.paste(candidate, (1, 1))
+    ImageDraw.floodfill(padded, (0, 0), 128)
+    background = np.asarray(padded.crop((1, 1, w + 1, h + 1))) == 128
+    alpha = Image.fromarray(np.where(background, 0, 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(0.7))
+    out = image.convert("RGB").convert("RGBA")
+    out.putalpha(alpha)
+    return out
+
+
 def floating_shadow(rgb: np.ndarray, solid: np.ndarray, bg: np.ndarray) -> np.ndarray:
     """The shadow a hovering monster casts on the "ground" below it, which the image model draws
     even when asked not to, tinted with the monster's colour (so it is not a background grey).
@@ -232,7 +253,10 @@ def cutout(name: str) -> Path:
     if not path.exists():
         form = name.split("-concept")[0]
         _, table = roster()
-        matte(image, hovering=form in table and table[form]["line"]["archetype"] in HOVERING).save(path)
+        if form in GREY_PARTS:
+            tight_matte(image).save(path)
+        else:
+            matte(image, hovering=form in table and table[form]["line"]["archetype"] in HOVERING).save(path)
     return path
 
 
@@ -305,13 +329,17 @@ def create_concept(form: str, elements, table, name: str, source: str | None = N
     # The grey background stays: matte() cuts it out (Meshy's remover took pale bellies with it).
     text = subjects.prompt(entry["form"], entry["line"], elements, from_later=source is not None)
     settings = {"ai_model": CONCEPT_MODEL, "prompt": text, "aspect_ratio": "1:1", "remove_background": False}
+    # The drawing to start from goes up as the image itself, not as input_task_id: a task is only found
+    # by the account that made it, and after the top-up of 2026-09-26 the key saw none of the earlier
+    # tasks (every stage-3 concept answered 404 "Input task not found").
     if source is not None:
-        reply = meshy("create", "image-to-image", name, "--link", f"input_task_id={concept_name(source)}", "--settings", json.dumps(settings))
+        image = ART / concept_name(source) / "image_0.png"
+        reply = meshy("create", "image-to-image", name, "--images", f"reference_image_urls={image}", "--settings", json.dumps(settings))
     elif entry["form"]["stage"] == 1:
         reply = meshy("create", "text-to-image", name, "--settings", json.dumps(settings))
     else:
-        parent = concept_name(entry["parent"])
-        reply = meshy("create", "image-to-image", name, "--link", f"input_task_id={parent}", "--settings", json.dumps(settings))
+        image = ART / concept_name(entry["parent"]) / "image_0.png"
+        reply = meshy("create", "image-to-image", name, "--images", f"reference_image_urls={image}", "--settings", json.dumps(settings))
     print(f"[concept] {name}: {reply.get('state')}", flush=True)
 
 
