@@ -58,17 +58,24 @@ local function part(parent: Instance, name: string, size: Vector3, cf: CFrame, c
 end
 
 local function buildRoad(parent: Instance)
-	local steps = math.max(24, Track.curveSegments * 4)
+	local steps = math.max(48, Track.curveSegments * 8)
 	local len = Logic.Length()
 	local segLen = len / steps
+	-- On the curves a straight piece must reach round the outer edge (radius + halfWidth), which is
+	-- longer than the centreline: stretch the road by that ratio there so no grass shows between
+	-- pieces; each edge line follows its own radius (+ lateral = the inside of the loop).
+	local stretch = Track.halfWidth / Track.radius
+	local edgeStretch = (Track.halfWidth - 0.6) / Track.radius
 	for i = 0, steps - 1 do
 		local u = (i + 0.5) * segLen
 		local x, z, dx, dz = Logic.Point(u)
 		local yaw = yawFor(dx, dz)
+		local curve = Logic.IsCurve(u)
+		local pieceLen = segLen * (if curve then 1 + stretch else 1) + 0.6
 		part(
 			parent,
 			"Road" .. i,
-			Vector3.new(segLen + 0.6, 0.4, Track.halfWidth * 2),
+			Vector3.new(Track.halfWidth * 2, 0.4, pieceLen), -- Z runs along the track (Yaw)
 			CFrame.new(x, Track.center[2] + Track.roadY, z) * CFrame.Angles(0, yaw, 0),
 			ROAD_COLOR,
 			Enum.Material.Concrete
@@ -79,7 +86,7 @@ local function buildRoad(parent: Instance)
 			part(
 				parent,
 				string.format("Edge%d_%d", i, side),
-				Vector3.new(segLen + 0.6, 0.45, 0.8),
+				Vector3.new(0.8, 0.45, segLen * (if curve then 1 - side * edgeStretch else 1) + 0.6),
 				CFrame.new(ex, Track.center[2] + Track.roadY + 0.05, ez) * CFrame.Angles(0, yaw, 0),
 				EDGE_COLOR
 			)
@@ -105,7 +112,7 @@ local function buildHurdles(parent: Instance)
 		part(
 			parent,
 			"Hurdle" .. i,
-			Vector3.new(1, 3, Track.halfWidth * 2 - 2),
+			Vector3.new(Track.halfWidth * 2 - 2, 3, 1),
 			CFrame.new(x, Track.center[2] + 1.5, z) * CFrame.Angles(0, yaw, 0),
 			HURDLE_COLOR,
 			Enum.Material.Neon
@@ -122,7 +129,7 @@ local function buildBoostPads(parent: Instance)
 		local p = part(
 			parent,
 			"BoostPad" .. i,
-			Vector3.new(Cfg.PadLength, 0.5, Track.halfWidth - 1),
+			Vector3.new(Track.halfWidth - 1, 0.5, Cfg.PadLength),
 			CFrame.new(x, Track.center[2] + Track.roadY + 0.1, z) * CFrame.Angles(0, yaw, 0),
 			PAD_COLOR,
 			Enum.Material.Neon
