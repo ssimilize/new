@@ -186,7 +186,11 @@ return function(t)
 				local root = c:Open(name, params)
 				c:Advance(0.5)
 				expect(root ~= nil).toBe(true)
-				expectCursorIn(c, root, name)
+				if type(root:GetAttribute("GamepadLegend")) == "string" then
+					expect(c:Selected()).toBe(nil) -- the screen reads the pad itself (photo mode)
+				else
+					expectCursorIn(c, root, name)
+				end
 				c:Press("ButtonB")
 				c:Advance(0.3)
 				if c.kernel.Router:IsOpen(name) then

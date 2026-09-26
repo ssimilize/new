@@ -1304,6 +1304,25 @@ local function loop()
 	end
 end
 
+-- Photo mode (PhotoMode controller): the local player's pen monsters within `radius` studs of
+-- `position`, nearest first, as { model, animator } (the animator is live; do not Destroy it).
+function World:OwnMonstersNear(position: Vector3, radius: number): { { model: Model, animator: any } }
+	local view = if ownIndex then views[ownIndex] else nil
+	local found = {}
+	for _, entry in if view then view.entries else {} do
+		if entry.alive then
+			local distance = (entry.animator:GetPosition() - position).Magnitude
+			if distance <= radius then
+				table.insert(found, { model = entry.model, animator = entry.animator, distance = distance })
+			end
+		end
+	end
+	table.sort(found, function(a, b)
+		return a.distance < b.distance
+	end)
+	return found
+end
+
 function World.Init(context)
 	ctx = context
 	table.insert(

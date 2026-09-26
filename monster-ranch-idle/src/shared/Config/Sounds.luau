@@ -107,4 +107,9 @@ return {
 	VoiceBug = { id = "", volume = 0.55, cooldown = 0.1, maxConcurrent = 3 },
 	VoiceGolem = { id = "", volume = 0.6, cooldown = 0.1, maxConcurrent = 3 },
 	VoiceSprite = { id = "", volume = 0.5, cooldown = 0.1, maxConcurrent = 3 },
+
+	-- Photo mode (PhotoMode controller + screen) ----------------------------------------
+	PhotoShutter = { id = "", volume = 0.6, cooldown = 0.3, group = "UI" }, -- a photo is taken
+	PhotoSticker = { id = "", volume = 0.45, pitch = { 0.94, 1.08 }, cooldown = 0.06, group = "UI" }, -- a sticker lands
+	PhotoPose = { id = "", volume = 0.5, cooldown = 0.5 }, -- monsters strike a pose
 }

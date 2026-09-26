@@ -68,6 +68,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Controller: Localize · `Shared/Locale` | 3.2 | 🔌 | Spanish and Portuguese (Brazil): catalogues keyed by the English text, every text in the PlayerGui and Workspace translated in place, longer text shrunk to fit, Settings → Language; `Locale.spec`, `LocaleClient.spec` |
 | Controller: Gamepad · `UI/Focus` | 3.2 | 🔌 | controller support: cursor scoped to the open screen or dialog, B back, LB/RB tabs, Y Monsters, Racing / Surf on the pad, key legend; `GamepadClient.spec` |
 | Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
+| Screen + controller: PhotoMode | glow-up | 🔌 | HUD 📷 / P / D-pad up; hides every game UI, free camera (`Logic/PhotoRig`, `Config/Photo`), filters, depth of field with tap-to-focus, frames, stickers, Pose (`World:OwnMonstersNear`), CaptureService capture / save / share where it exists; `PhotoModeClient.spec`, `PhotoRig.spec` |
 
 ## Studio test pass (not yet done)
 

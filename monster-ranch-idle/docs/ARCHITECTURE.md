@@ -325,6 +325,12 @@ Client bus topics (free-form, client only): `"Weather.Lightning"` `(strength 0..
 - **Soundscape controller:** twice a second derives the context — battle (a `BattleReplay` in UI.Top, or the Arena / Raids / Racing screen), Stampede (Boss screen), Sky Islands (`SkyIslands.IsOnIslands()`), hub (inside `World.HubRadius`), night and weather (`global.Weather`), event (`Events.ActiveId`) — and sets music (`Logic/Audio.MusicChain`: battle > Stampede > Sky Islands > event theme > hub > night > day, falling back to `MusicRanch`) and ambience beds (birds by day, crickets at night, wind up high, rain; a positional fountain loop at `World.Fountain`). One-shots: `RainStart`, `Thunder` just after each `"Weather.Lightning"`, `WindGust` on the islands.
 - **Sound Check (Studio only):** when `RunService:IsStudio()`, Soundscape registers the `SoundCheck` screen (not in the Manifest) and a "Sound Check" button: every key by kind with its group, id or "empty", Play / Stop (voices at Baby / Teen / Adult pitch), and buttons that preview each music context (`Soundscape.Preview`).
 
+### Photo mode
+- **Screen `PhotoMode`** (non-modal; the HUD's 📷 under the gear, P, or D-pad up while nothing is open) and **controller `PhotoMode`**: the screen's Open / Close start and end a session (`PhotoMode:Begin(api)` / `:End()`), so every exit path restores the game the same way.
+- A session hides our layers (except the toast lane and the pad legend), every other ScreenGui and BillboardGui, avatar name tags and the core GUI, takes the camera (Scriptable) and hands back its CameraType, CameraSubject, CFrame, Focus and FieldOfView; Lighting gets `PhotoModeColor` / `PhotoModeBloom` / `PhotoModeDepth`. Movement keys and sticks are sunk through ContextActionService only during a session.
+- Camera maths are pure (`Logic/PhotoRig`), tuning and content in `Config/Photo` (required directly, like `Config/Vfx`). Low graphics skips heavy filters, bloom and depth of field; reduced motion snaps the camera and drops the shutter flash.
+- `World:OwnMonstersNear(position, radius) -> { { model, animator } }` feeds Pose (`:Play("trick")`, else `"happy"`). CaptureService members are feature-checked (`PhotoMode:Capabilities()`); the photo button, Save and Share only show where they exist.
+
 ## 6. State shapes (binding)
 
 These are the exact replicated shapes. Server systems must produce them; client screens read them. Arrays have fixed lengths where noted, and use `false` for empty values.
