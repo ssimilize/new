@@ -10,6 +10,8 @@ clones it for every monster, and bends each clone with its own Bone instances
 python tools/blender/pipeline.py scorchling,emberslug [--previews]   # rig -> bake -> export -> stylua
 ```
 
+(`--source rbxgen` takes the model from Roblox's own generator instead of Meshy: `tools/rbxgen`.)
+
 That writes, per form, `src/client/Visuals/MeshMonsters/<form>.luau` (bounds, scale, bones, clips),
 `art/rigs/<form>/mesh.json` (the mesh) and `art/export/<form>.png` (the 1024 px texture). The rest is
 done from Studio, in Edit, with both files served on localhost (`python -m http.server`):

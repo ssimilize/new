@@ -1,6 +1,10 @@
 """Takes Meshy models into the game: rig (by body type) -> bake -> export -> stylua.
 
-  python tools/blender/pipeline.py FORM[,FORM...] [--previews]
+  python tools/blender/pipeline.py FORM[,FORM...] [--previews] [--source rbxgen] [--as NAME]
+
+--source rbxgen takes the form's model from Roblox's own generator (art/rbxgen/<form>/model.glb,
+tools/rbxgen) instead of Meshy. --as NAME (one form) writes the result under another name, so a
+trial version stands beside the form in the game's data without replacing it.
 
 For each form: art/meshy/<form>-model/model.glb is rigged by its line's archetype's script into
 art/rigs/<form>/, the texture is re-baked there (bake_texture.py), and the data module and 1024 px
@@ -48,11 +52,12 @@ def blender(*args) -> str:
     return "\n".join(lines)
 
 
-def run(form: str, kind: str, previews: bool) -> None:
+def run(form: str, kind: str, previews: bool, source: str = "meshy", name: str | None = None) -> None:
     script = RIGS.get(kind)
     if script is None:
         raise SystemExit(f"{form}: no rig script for the {kind} body type")
-    model = ROOT / "art" / "meshy" / f"{form}-model" / "model.glb"
+    model = ROOT / "art" / "rbxgen" / form / "model.glb" if source == "rbxgen" else ROOT / "art" / "meshy" / f"{form}-model" / "model.glb"
+    form = name or form
     rig_dir = ROOT / "art" / "rigs" / form
     if not model.exists():
         raise SystemExit(f"{form}: no model at {model}")
@@ -63,7 +68,10 @@ def run(form: str, kind: str, previews: bool) -> None:
         raise SystemExit(f"{form}: the {kind} rig did not finish\n{rig}")
     if previews:
         subprocess.run([sys.executable, str(HERE / "previews.py"), str(rig_dir)], capture_output=True, check=True)
-    bake = blender(str(rig_dir / "rig.blend"), "--python", str(HERE / "bake_texture.py"))
+    # Roblox's generator already hands over a 1024 px atlas with every gap between its islands
+    # filled (what bake_texture.py makes out of Meshy's 4096 px one); re-baking it onto new UVs at the
+    # same size kept only 57-66% of its texels (2026-09-25), so its own texture goes out as it is.
+    bake = "[bake] kept Roblox's own 1024 px atlas" if source == "rbxgen" else blender(str(rig_dir / "rig.blend"), "--python", str(HERE / "bake_texture.py"))
     export = blender(str(rig_dir / "rig.blend"), "--python", str(HERE / "export_roblox.py"), "--", form, str(MODULES), str(ROOT / "art" / "export"))
     subprocess.run([str(STYLUA), str(MODULES / f"{form}.luau")], check=True)
     summary = [line for line in (rig + "\n" + bake + "\n" + export).splitlines() if line.startswith(("[rig] landmarks", "[rig] skeleton", "[rig] game scale", "[rig] skin: WARNING", "[bake]", "[export]"))]
@@ -73,13 +81,20 @@ def run(form: str, kind: str, previews: bool) -> None:
 def main() -> None:
     if len(sys.argv) < 2:
         raise SystemExit(__doc__)
+    flags = sys.argv[2:]
+    source = flags[flags.index("--source") + 1] if "--source" in flags else "meshy"
+    name = flags[flags.index("--as") + 1] if "--as" in flags else None
+    if source not in ("meshy", "rbxgen"):
+        raise SystemExit(f"unknown source {source}: meshy or rbxgen")
     kinds = archetypes()
     forms = [f for f in sys.argv[1].split(",") if f]
     unknown = [f for f in forms if f not in kinds]
     if unknown:
         raise SystemExit(f"not in the roster: {', '.join(unknown)}")
+    if name and len(forms) > 1:
+        raise SystemExit("--as names one form's result: give one form")
     for form in forms:
-        run(form, kinds[form], "--previews" in sys.argv[2:])
+        run(form, kinds[form], "--previews" in flags, source, name)
 
 
 if __name__ == "__main__":
