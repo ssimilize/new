@@ -556,6 +556,67 @@ SUBJECTS = {
     "sparkly tail, star markings along its back.",
     "yuletail": "Yuletail: a majestic festive fox with a huge fluffy tail tipped with a solid golden star shape, a "
     "thick garland mane with small red berries, star patterns across its fur.",
+    # ── Batch 9 (2026-09-26): lines 64-71, update 3.3. Lessons of batch 8 written in: a bug lies lengthwise
+    # on six legs (Batterfly was drawn upright twice), nothing hangs to the ground (Sprucesprout's cape), and
+    # no part is the backdrop's mid grey (the yeti line's grey parts were cut out as background).
+    # 64 smoglet (slug, ember + gloom)
+    "smoglet": "Smoglet, a baby smoke slug: a soft dark plum body with a small sooty shell on its back, little "
+    "glowing orange ember spots peeking through cracks in the shell, two short eye-stalks with ember tips, a puff "
+    "of dark smoke-curl shape on top of the shell.",
+    "soothorn": "Soothorn: a longer body, a bigger sooty shell with a row of short blunt horns along its ridge and "
+    "brighter glowing ember cracks, longer eye-stalks.",
+    "pyreshade": "Pyreshade: a big shadowy fire slug, a tall spiralled dark shell crowned with a solid flame-shaped "
+    "crest, glowing orange ember veins across the shell, deep purple smoke-curl markings on its body.",
+    # 65 inklet (slug, tide + gloom)
+    "inklet": "Inklet, a baby sea slug: a soft glossy deep-blue body with lavender frilly edges along its sides, "
+    "two short curled tentacle-stalks on its head, a few pale glowing spots, a small ink-drop marking on its back.",
+    "murkling": "Murkling: a longer body with wavy frilled fins along both sides, four short curled tentacles "
+    "around its face, glowing spots in rows down its back.",
+    "inkraken": "Inkraken: a big friendly little-kraken slug, a large rounded head with a crest of frills, six "
+    "short thick curled tentacles around its face, bioluminescent teal rings down its back.",
+    # 66 gargit (bug, stone + gloom)
+    "gargit": "Gargit, a baby gargoyle beetle lying lengthwise on the ground on six stubby legs: a dark slate-purple "
+    "stone shell with carved swirl patterns, two tiny folded stone bat wings on its back, two small horn nubs.",
+    "gargarock": "Gargarock: a bigger gargoyle beetle, the same low lengthwise body on six legs, bigger folded "
+    "stone wings, two curled horns, glowing violet runes carved into the shell.",
+    "gargolith": "Gargolith: a big heavy gargoyle beetle, the same low lengthwise body on six thick legs, a "
+    "cathedral-like carved stone shell, large folded stone wings, curled ram horns, glowing violet runes.",
+    # 67 lodebug (bug, spark + stone)
+    "lodebug": "Lodebug, a baby magnet beetle lying lengthwise on the ground on six stubby legs: a glossy "
+    "gunmetal-blue shell with copper stripes, a horseshoe-magnet-shaped horn with red and silver tips, tiny "
+    "yellow spark marks on its back.",
+    "ferrobeetle": "Ferrobeetle: a bigger magnet beetle, the same low lengthwise body on six legs, a larger "
+    "horseshoe horn, shiny copper plates along the shell edge, glowing yellow lightning seams.",
+    "magnetitan": "Magnetitan: a massive armoured magnet beetle, the same low lengthwise body on six thick legs, "
+    "a huge horseshoe-magnet horn, heavy gunmetal and copper armour plates, glowing yellow lightning seams.",
+    # 68 pitling (bug, stone): the Dune Egg's fourth line.
+    "pitling": "Pitling, a baby antlion lying lengthwise on the ground on six stubby legs: a round sandy-tan body "
+    "with darker brown dune stripes, two small curved pincers at the front, fuzzy little tufts on its back.",
+    "sandlion": "Sandlion: a bigger antlion, the same low lengthwise body on six legs, bigger curved pincers, a "
+    "mane-like fuzzy ruff behind its head, a striped shell.",
+    "dunemaw": "Dunemaw: a big bold antlion, the same low lengthwise body on six sturdy legs, huge curved golden "
+    "pincers, a thick sandy mane ruff, a banded amber and brown shell.",
+    # 69 rimebug (bug, tide): the Glacier Egg's fourth line.
+    "rimebug": "Rimebug, a baby ice scarab lying lengthwise on the ground on six stubby legs: a round icy-blue "
+    "shell with white frost patterns, a tiny crystal horn, pale blue legs.",
+    "icicarab": "Icicarab: a bigger ice scarab, the same low lengthwise body on six legs, a shell with clear "
+    "crystal ridges, a forked crystal horn, snowflake patterns.",
+    "frostscarab": "Frostscarab: a big majestic ice scarab, the same low lengthwise body on six legs, a gleaming "
+    "crystal shell with a large snowflake emblem, a tall crystal horn, frosty white trim.",
+    # 70 lumisnail (slug, light): Sky Egg.
+    "lumisnail": "Lumisnail, a baby glowing snail: a soft cream-yellow body, a small round spiral shell of pale "
+    "prism colours on its back, two short eye-stalks with glowing tips.",
+    "prismsnail": "Prismsnail: a longer body, a bigger faceted crystal-prism spiral shell shining in soft rainbow "
+    "colours, glowing golden spots along its body.",
+    "haloshell": "Haloshell: a big radiant snail with a tall gleaming prism spiral shell, a solid golden halo ring "
+    "resting on top of the shell, soft golden light patterns along its body.",
+    # 71 nullbun (bunny, void): Sky Egg.
+    "nullbun": "Nullbun, a baby void rabbit: deep indigo fur with tiny twinkling star specks, long ears lined "
+    "with purple nebula swirls, a small crescent mark on the forehead.",
+    "riftrabbit": "Riftrabbit: longer ears with glowing violet tips, a fluffy starry ruff, a swirl of nebula "
+    "colour across its back.",
+    "umbrahare": "Umbrahare: a majestic cosmic hare with tall star-tipped ears, a thick starry mane, deep "
+    "indigo fur with swirling violet nebula patterns, a glowing crescent mark on the forehead.",
 }
 
 

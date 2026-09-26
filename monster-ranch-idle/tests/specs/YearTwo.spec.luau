@@ -60,7 +60,15 @@ return function(t)
 			for _, id in { "dunes", "glacier" } do
 				local r = R.ById[id]
 				expect(Config.Eggs.ById[id].pool).toBe(id)
-				expect(#Config.Species.Pools[id]).toBe(3)
+				-- Three lines at launch, and a fourth from update 3.3 (Pitling, Rimebug).
+				local launch = 0
+				for _, lineId in Config.Species.Pools[id] do
+					if Config.Species.ById[lineId].added == "3.0" then
+						launch += 1
+					end
+				end
+				expect(launch).toBe(3)
+				expect(#Config.Species.Pools[id]).toBe(4)
 				for _, boss in r.bosses do
 					expect(Config.Species.FormById[boss.form].line.id).toBe(boss.line)
 				end

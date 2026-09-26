@@ -2009,6 +2009,250 @@
         "frostfall"
       ],
       "weight": 2.6
+    },
+    {
+      "added": "3.3",
+      "archetype": "slug",
+      "elements": [
+        "ember",
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "smoglet",
+          "name": "Smoglet",
+          "stage": 1
+        },
+        {
+          "id": "soothorn",
+          "name": "Soothorn",
+          "stage": 2
+        },
+        {
+          "id": "pyreshade",
+          "name": "Pyreshade",
+          "stage": 3
+        }
+      ],
+      "id": "smoglet",
+      "order": 64,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 4.5
+    },
+    {
+      "added": "3.3",
+      "archetype": "slug",
+      "elements": [
+        "tide",
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "inklet",
+          "name": "Inklet",
+          "stage": 1
+        },
+        {
+          "id": "murkling",
+          "name": "Murkling",
+          "stage": 2
+        },
+        {
+          "id": "inkraken",
+          "name": "Inkraken",
+          "stage": 3
+        }
+      ],
+      "id": "inklet",
+      "order": 65,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 3.5
+    },
+    {
+      "added": "3.3",
+      "archetype": "bug",
+      "elements": [
+        "stone",
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "gargit",
+          "name": "Gargit",
+          "stage": 1
+        },
+        {
+          "id": "gargarock",
+          "name": "Gargarock",
+          "stage": 2
+        },
+        {
+          "id": "gargolith",
+          "name": "Gargolith",
+          "stage": 3
+        }
+      ],
+      "id": "gargit",
+      "order": 66,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 12
+    },
+    {
+      "added": "3.3",
+      "archetype": "bug",
+      "elements": [
+        "spark",
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "lodebug",
+          "name": "Lodebug",
+          "stage": 1
+        },
+        {
+          "id": "ferrobeetle",
+          "name": "Ferrobeetle",
+          "stage": 2
+        },
+        {
+          "id": "magnetitan",
+          "name": "Magnetitan",
+          "stage": 3
+        }
+      ],
+      "id": "lodebug",
+      "order": 67,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 6
+    },
+    {
+      "added": "3.3",
+      "archetype": "bug",
+      "elements": [
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "pitling",
+          "name": "Pitling",
+          "stage": 1
+        },
+        {
+          "id": "sandlion",
+          "name": "Sandlion",
+          "stage": 2
+        },
+        {
+          "id": "dunemaw",
+          "name": "Dunemaw",
+          "stage": 3
+        }
+      ],
+      "id": "pitling",
+      "order": 68,
+      "pools": [
+        "dunes"
+      ],
+      "weight": 4
+    },
+    {
+      "added": "3.3",
+      "archetype": "bug",
+      "elements": [
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "rimebug",
+          "name": "Rimebug",
+          "stage": 1
+        },
+        {
+          "id": "icicarab",
+          "name": "Icicarab",
+          "stage": 2
+        },
+        {
+          "id": "frostscarab",
+          "name": "Frostscarab",
+          "stage": 3
+        }
+      ],
+      "id": "rimebug",
+      "order": 69,
+      "pools": [
+        "glacier"
+      ],
+      "weight": 3
+    },
+    {
+      "added": "3.3",
+      "archetype": "slug",
+      "elements": [
+        "light"
+      ],
+      "forms": [
+        {
+          "id": "lumisnail",
+          "name": "Lumisnail",
+          "stage": 1
+        },
+        {
+          "id": "prismsnail",
+          "name": "Prismsnail",
+          "stage": 2
+        },
+        {
+          "id": "haloshell",
+          "name": "Haloshell",
+          "stage": 3
+        }
+      ],
+      "id": "lumisnail",
+      "order": 70,
+      "pools": [
+        "sky"
+      ],
+      "weight": 2.2
+    },
+    {
+      "added": "3.3",
+      "archetype": "bunny",
+      "elements": [
+        "void"
+      ],
+      "forms": [
+        {
+          "id": "nullbun",
+          "name": "Nullbun",
+          "stage": 1
+        },
+        {
+          "id": "riftrabbit",
+          "name": "Riftrabbit",
+          "stage": 2
+        },
+        {
+          "id": "umbrahare",
+          "name": "Umbrahare",
+          "stage": 3
+        }
+      ],
+      "id": "nullbun",
+      "order": 71,
+      "pools": [
+        "sky"
+      ],
+      "weight": 2.4
     }
   ]
 }

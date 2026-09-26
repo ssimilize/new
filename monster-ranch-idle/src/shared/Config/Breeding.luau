@@ -23,6 +23,11 @@ Breeding.Hybrids = {
 	["ember+stone"] = "lavashell",
 	["gloom+spark"] = "eclipsette",
 	["gloom+sprout"] = "mirebloom",
+	-- Update 3.3
+	["ember+gloom"] = "smoglet",
+	["gloom+tide"] = "inklet",
+	["gloom+stone"] = "gargit",
+	["spark+stone"] = "lodebug",
 }
 
 function Breeding.HybridFor(elementA: string, elementB: string): string?
