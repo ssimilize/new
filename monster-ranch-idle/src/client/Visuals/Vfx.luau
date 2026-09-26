@@ -430,7 +430,7 @@ local function pool(key: string, specs, scale: number)
 	return list
 end
 
-local function fire(list, cf: CFrame, color: Color3?, count: ((any) -> number)): number
+local function fire(list, cf: CFrame, color: Color3?, count: (any) -> number): number
 	local fired = 0
 	for _, rec in list do
 		rec.part.CFrame = cf
