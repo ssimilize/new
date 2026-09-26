@@ -192,7 +192,7 @@ return {
 	StampedeSoon = { id = "rbxassetid://9114160185", volume = 0.55, duck = 0.4, duckHold = 2.5, cooldown = 5 }, -- a conch call
 
 	-- Photo mode (PhotoMode controller + screen) ----------------------------------------
-	PhotoShutter = { id = "", volume = 0.6, cooldown = 0.3, group = "UI" }, -- a photo is taken
+	PhotoShutter = { id = "rbxassetid://9113678227", volume = 0.6, cooldown = 0.3, group = "UI" }, -- a photo is taken (PSE Camera Shutter 1)
 	PhotoSticker = { id = "rbxassetid://9117849115", volume = 0.45, pitch = { 0.94, 1.08 }, cooldown = 0.06, group = "UI" }, -- a sticker lands
 	PhotoPose = { id = "rbxassetid://9117240114", volume = 0.45, cooldown = 0.5 }, -- monsters strike a pose
 }
