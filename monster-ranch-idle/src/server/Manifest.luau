@@ -70,6 +70,8 @@ return {
 		"Codex",
 		-- Glow-up Q · bond hearts and care gestures
 		"Bond",
+		-- Glow-up X · postcards from expeditions (the Market mailbox sends them to friends)
+		"Postcards",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

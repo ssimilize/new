@@ -67,6 +67,8 @@ return {
 		-- Glow-up O: the walk-in Codex Museum and the Hall of Fame plaza
 		"CodexMuseum",
 		"FamePlaza",
+		-- Glow-up X: a postcard from every finished expedition (the card, the send picker)
+		"Postcards",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -114,5 +116,7 @@ return {
 		"Friends",
 		-- Glow-up Q · care gestures and bond hearts (non-modal)
 		"Care",
+		-- Glow-up X · postcards from expeditions
+		"Album",
 	},
 }

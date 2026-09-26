@@ -29,6 +29,7 @@
 	Actions: Gifts.Prepare { to, kind, item, amount }, Gifts.Send { token }, Gifts.PassTarget { to }.
 	Product: handler "Gifts.RanchPass" (+ its CanBuy check: a friend picked, a season on sale).
 	Bus: publishes GiftSent.
+	Public: Gifts:SentToday(player), Gifts:Gate(player, to) (glow-up X: the gates for Postcards).
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -393,6 +394,27 @@ end
 function Gifts:SentToday(player): number
 	local s = ctx:Section(player)
 	return if s and s.day == ctx:Day() then s.sent else 0
+end
+
+-- Glow-up X: the sender gates and the friend check for other mail sent to friends (Postcards),
+-- without the gift caps. Returns (true) or (false, "self"|"level"|"play"|"account"|"friend", need?).
+function Gifts:Gate(player, to: number): (boolean, string?, number?)
+	if to == player.UserId then
+		return false, "self"
+	end
+	local meta = ctx:Meta(player)
+	local ok, why, need = Logic.GiftGate({
+		level = Progression:GetLevel(player),
+		playSeconds = meta and meta.playSeconds or 0,
+		accountDays = accountDays(player),
+	}, Cfg)
+	if not ok then
+		return false, why, need
+	end
+	if not isFriend(player, to) then
+		return false, "friend"
+	end
+	return true
 end
 
 -- Lifecycle -----------------------------------------------------------------------------------
