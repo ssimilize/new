@@ -8,6 +8,8 @@ return {
 	Controllers = {
 		-- 3.2 · first, so every text any other controller builds is shown translated
 		"Localize",
+		-- Glow-up P · the quality level every visual reads (before the controllers that read it)
+		"Quality",
 		-- C2 · HUD & core
 		"Hud",
 		"Notifications",

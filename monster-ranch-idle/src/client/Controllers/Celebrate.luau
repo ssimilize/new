@@ -50,6 +50,7 @@ local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
 local Anim = require(UI.Anim)
+local Quality = require(script.Parent.Parent.Visuals.Quality)
 local Focus = require(UI.Focus)
 local Icon = require(UI.Components.Icon)
 local MonsterIcon = require(UI.Components.MonsterIcon)
@@ -479,8 +480,18 @@ end
 
 -- opts.sound: a Config.Sounds key to play instead of the size's own (false: none), for a moment
 -- that has its own sting (Rebirth).
+-- The Low quality level (Visuals/Quality, glow-up P) halves the swarms; reduced motion (the plan's
+-- own low) is the player's explicit choice and already drops them.
+local function lighten(plan)
+	if Quality.IsLow() then
+		plan.shower = math.ceil((plan.shower or 0) / 2)
+		plan.confetti = math.ceil((plan.confetti or 0) / 2)
+	end
+	return plan
+end
+
 function Celebrate:Play(size: string, opts: { sound: (string | false)? }?)
-	local plan = Celebration.Plan(size, not Anim.enabled)
+	local plan = lighten(Celebration.Plan(size, not Anim.enabled))
 	local sound = plan.sound
 	if opts and opts.sound ~= nil then
 		sound = opts.sound
@@ -510,7 +521,7 @@ function Celebrate:Reward(items: { any }?, opts: { [string]: any }?): string
 	if options.minSize then
 		size = Celebration.Max(size, options.minSize)
 	end
-	local plan = Celebration.Plan(size, not Anim.enabled)
+	local plan = lighten(Celebration.Plan(size, not Anim.enabled))
 	local origin = pointOf(options.from) or centre()
 
 	-- Hold every counter this reward moves (reusing a hold taken before the request).

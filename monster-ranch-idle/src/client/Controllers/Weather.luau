@@ -1,7 +1,7 @@
 --[[
 	Weather controller (C1): the look of the server weather and the day/night cycle.
 
-	Reads global.Weather { id, night, phaseEndsAt, ... } and profile.Settings.lowGraphics.
+	Reads global.Weather { id, night, phaseEndsAt, ... } and Visuals/Quality.IsLow() (glow-up P).
 	  day/night   Lighting.ClockTime holds ~14 by day and ~0.5 at night. Around each phase
 	              change it sweeps forward through dusk or dawn, centred on phaseEndsAt, so
 	              every client computes the same sky from server time (no tween state).
@@ -23,6 +23,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared").Config)
+local Quality = require(script.Parent.Parent.Visuals.Quality)
 local WeatherConfig = Config.Weather
 
 local Weather = {
@@ -218,7 +219,7 @@ local current = {}
 local target = {}
 local written = {}
 local settled = false
-local lowGraphics = false
+local lowGraphics = Quality.IsLow() -- Visuals/Quality (glow-up P)
 local weatherState = nil
 local weatherId = "clear"
 local isNight = false
@@ -585,8 +586,8 @@ function Weather.Start()
 	table.insert(connections, ctx.Store:Observe("global.Weather", onWeather))
 	table.insert(
 		connections,
-		ctx.Store:Observe("profile.Settings", function(settings)
-			lowGraphics = type(settings) == "table" and settings.lowGraphics == true
+		Quality.Changed:Connect(function()
+			lowGraphics = Quality.IsLow()
 		end)
 	)
 	table.insert(connections, RunService.RenderStepped:Connect(step))

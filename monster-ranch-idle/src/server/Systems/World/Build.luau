@@ -660,6 +660,13 @@ function Build.world(Config, mode: string?): (Folder, number)
 	buildSpawn(World, root)
 	buildBoundary(World, root)
 	buildSky(World, root)
+	-- Glow-up P: ready for StreamingEnabled (off today): every model arrives whole, so the client
+	-- never sees a building without its Door or a gate without its Body.
+	for _, d in root:GetDescendants() do
+		if d:IsA("Model") then
+			d.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+		end
+	end
 	root:SetAttribute("PartCount", count)
 	return root, count
 end

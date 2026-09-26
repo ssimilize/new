@@ -50,6 +50,7 @@ local Config = {
 	-- Glow-up L: emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
 	Community = require(script.Community),
 	Ambience = require(script.Ambience),
+	Quality = require(script.Quality), -- glow-up P: automatic quality levels, particle budget, distance LOD
 }
 
 return Config

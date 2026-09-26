@@ -6,7 +6,7 @@
 	  Clouds         Terrain Clouds; cover, density and colour per weather id, blended over a few
 	                 seconds and shaded at night. Off with lowGraphics.
 	  SunRays        a SunRaysEffect whose intensity follows the weather, zero at night. Off with lowGraphics.
-	  DepthOfField   a faint far-distance haze. Off with lowGraphics.
+	  DepthOfField   a faint far-distance haze. Only at the High quality level (Visuals/Quality).
 	  GoldenHour     its own ColorCorrectionEffect ("AmbienceGoldenHour"), stacked on the Weather
 	                 controller's: warm through dusk and dawn, white (no effect) otherwise.
 
@@ -23,6 +23,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Logic = require(Shared.Logic.Ambience)
+local Quality = require(script.Parent.Parent.Visuals.Quality)
 
 local Cfg = Config.Ambience
 
@@ -36,7 +37,7 @@ local STEP = 0.2 -- seconds between updates
 local ctx
 local connections = {}
 local made: { Instance } = {}
-local lowGraphics = false
+local lowGraphics = Quality.IsLow() -- Visuals/Quality (glow-up P)
 local weatherId = "clear"
 local since = STEP
 local written = {}
@@ -186,7 +187,7 @@ local function update(dt: number)
 		set(sunRays, "Intensity", Logic.SunRays(Cfg.SunRays, weatherId, night), 0.002)
 	end
 
-	set(dof, "Enabled", layer("depthOfField") and not lowGraphics)
+	set(dof, "Enabled", layer("depthOfField") and not lowGraphics and Quality.Level() >= 3)
 
 	local G = Cfg.GoldenHour
 	local w = if layer("goldenHour") then Logic.GoldenHour(clock, G) else 0
@@ -215,8 +216,8 @@ function Sky.Start()
 	table.insert(connections, ctx.Store:Observe("global.Weather", onWeather))
 	table.insert(
 		connections,
-		ctx.Store:Observe("profile.Settings", function(settings)
-			lowGraphics = type(settings) == "table" and settings.lowGraphics == true
+		Quality.Changed:Connect(function()
+			lowGraphics = Quality.IsLow()
 		end)
 	)
 	update(0)

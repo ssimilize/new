@@ -23,6 +23,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Logic = require(Shared.Logic.Ambience)
 local Visuals = script.Parent.Parent.Visuals
+local Quality = require(Visuals.Quality)
 local SceneryIndex = require(Visuals.SceneryIndex)
 local SceneryFx = require(Visuals.SceneryFx)
 
@@ -36,7 +37,6 @@ local SceneryMotion = {
 
 local POOLED = { campfire = "campfires", windmill = "windmills" } -- scenery kind -> layer
 
-local ctx
 local connections = {}
 local lowGraphics = false
 local pools: { [string]: { any } } = {} -- kind -> SceneryFx holders
@@ -223,23 +223,20 @@ local function step(dt: number)
 	end
 end
 
-function SceneryMotion.Init(context)
-	ctx = context
-end
+function SceneryMotion.Init(_context) end
 
 function SceneryMotion.Start()
 	SceneryIndex.Start()
-	table.insert(
-		connections,
-		ctx.Store:Observe("profile.Settings", function(settings)
-			local low = type(settings) == "table" and settings.lowGraphics == true
-			if low ~= lowGraphics then
-				lowGraphics = low
-				SceneryFx.SetQuality(low)
-				sincePick = math.huge
-			end
-		end)
-	)
+	local function onQuality()
+		local low = Quality.IsLow()
+		if low ~= lowGraphics then
+			lowGraphics = low
+			SceneryFx.SetQuality(low)
+			sincePick = math.huge
+		end
+	end
+	onQuality()
+	table.insert(connections, Quality.Changed:Connect(onQuality))
 	table.insert(connections, RunService.Heartbeat:Connect(step))
 end
 

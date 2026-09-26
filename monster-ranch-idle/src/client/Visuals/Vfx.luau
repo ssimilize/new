@@ -27,7 +27,11 @@
 		Vfx.NightFromClock(clockTime) -> number            0..1, smooth through dusk and dawn
 		Vfx.SetQuality(low)                                low graphics: other plots' auras and rarity
 		                                                   glows off, mutation / variant / landmark rates
-		                                                   halved, bursts halved
+		                                                   halved, bursts halved. Follows Visuals/Quality
+		                                                   (IsLow) on its own; this is a manual override
+		Vfx.StartBudget() / Vfx.StopBudget()               the particle budget loop (Quality controller)
+		Vfx.BudgetPass() -> number                         one budget pass now; returns live particles
+		Vfx.Live() -> number                               live particles after the last pass
 		Vfx.Clear(modelOrInstance)                         removes what Attach* made
 		Vfx.Count(modelOrInstance) -> number               emitters attached (tests, debugging)
 
@@ -42,13 +46,24 @@
 	placeholder) in its Body's orientation, or in Body itself while nothing is visible. The Landmarks
 	controller attaches again once Dress's pieces stop arriving; if the anchor leaves the Workspace
 	the effect is cleared, and a new building is attached when it appears.
+
+	Budget (glow-up P, Config.Quality.Particles): every `tick` seconds a pass counts live particles
+	(Rate x mean Lifetime) of every enabled emitter in the Workspace, by kind; the local player's
+	own monsters are never cut, every other kind gets a scale from Logic/ParticleBudget.Plan for
+	the current Quality level (scaled together, then whole kinds off, restored when under). The
+	same pass turns off auras, rarity glows and mastery effects on another plot's monsters beyond
+	Config.Quality.Lod.effectsDistance from the camera. Bursts share a per-second allowance.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local ConfigFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")
 local Config = require(ConfigFolder)
 local Presets = require(ConfigFolder:WaitForChild("Vfx"))
+local ParticleBudget = require(ReplicatedStorage.Shared.Logic.ParticleBudget)
+local LodRules = require(ReplicatedStorage.Shared.Logic.Quality)
+local Quality = require(script.Parent.Quality)
 local spritesModule = ConfigFolder:FindFirstChild("VfxSprites")
 local Sprites = {}
 if spritesModule then
@@ -65,10 +80,22 @@ local HOVERING = { moth = true, sprite = true }
 local KIND_OFF_ON_OTHER_PLOTS = { aura = true, rarity = true, mastery = true }
 local KIND_HALVED = { mutation = true, variant = true, landmark = true, egg = true }
 
-type Rec = { emitter: ParticleEmitter, rate: number, kind: string, spec: any }
-type Entry = { recs: { Rec }, owned: boolean, made: { Instance }, connection: RBXScriptConnection? }
+type Rec = { emitter: ParticleEmitter, rate: number, kind: string, spec: any, life: number? }
+type Entry = {
+	recs: { Rec },
+	owned: boolean,
+	made: { Instance },
+	connection: RBXScriptConnection?,
+	root: BasePart?, -- where distance is measured from (budget pass)
+	monster: boolean?, -- AttachMonster: owned monsters are never cut by the budget
+	far: boolean?, -- another plot's monster beyond effectsDistance: KIND_OFF_ON_OTHER_PLOTS off
+}
 
-local low = false
+local low = Quality.IsLow()
+local scales: { [string]: number } = {} -- budget scale per kind (missing = 1)
+local burstWindow = { start = -math.huge, used = 0 }
+local budgetConnection: RBXScriptConnection? = nil
+local liveParticles = 0
 local night = 0 -- 0 = day .. 1 = night (Vfx.SetNight)
 local registry: { [Instance]: Entry } = setmetatable({}, { __mode = "k" }) :: any
 local pools: { [string]: { { part: BasePart, emitter: ParticleEmitter, spec: any } } } = {}
@@ -173,7 +200,12 @@ local function build(spec, k: number, colorOverride: Color3?): ParticleEmitter?
 	return emitter
 end
 
-local function factor(kind: string, owned: boolean): number
+-- The quality factor before the budget: low graphics halves or hides kinds; another plot's
+-- far monsters lose their auras at any level.
+local function factor(kind: string, owned: boolean, far: boolean?): number
+	if far and not owned and KIND_OFF_ON_OTHER_PLOTS[kind] then
+		return 0
+	end
 	if not low then
 		return 1
 	end
@@ -181,6 +213,10 @@ local function factor(kind: string, owned: boolean): number
 		return if owned then 1 else 0
 	end
 	return if KIND_HALVED[kind] then 0.5 else 1
+end
+
+local function protected(entry: Entry): boolean
+	return entry.monster == true and entry.owned
 end
 
 -- The night glow: LightEmission lifted and LightInfluence lowered by the sprite's weight
@@ -201,8 +237,12 @@ local function lit(emitter: ParticleEmitter, spec)
 end
 
 local function apply(entry: Entry)
+	local budgeted = not protected(entry)
 	for _, rec in entry.recs do
-		local f = factor(rec.kind, entry.owned)
+		local f = factor(rec.kind, entry.owned, entry.far)
+		if budgeted then
+			f *= scales[rec.kind] or 1
+		end
 		rec.emitter.Rate = rec.rate * f
 		rec.emitter.Enabled = f > 0
 		lit(rec.emitter, rec.spec)
@@ -255,7 +295,7 @@ function Vfx.AttachMonster(model: Model, appearance): number
 	end
 	local k = math.clamp(height / Presets.RefHeight, 0.4, 4)
 	local hover = HOVERING[appearance.archetype] == true
-	local entry: Entry = { recs = {}, owned = true, made = {} }
+	local entry: Entry = { recs = {}, owned = true, made = {}, root = root, monster = true }
 	local anchors: { [string]: Instance } = {}
 
 	local function anchorFor(spec): Instance
@@ -355,7 +395,7 @@ function Vfx.AttachEgg(model: Model, eggType: string, ready: boolean?): number
 	end
 	local height = root.Size.Y
 	local k = math.clamp(height / (Presets.EggRefHeight or 2.6), 0.4, 4)
-	local entry: Entry = { recs = {}, owned = true, made = {} }
+	local entry: Entry = { recs = {}, owned = true, made = {}, root = root }
 	local anchors: { [string]: Instance } = {}
 
 	local function anchorFor(spec): Instance
@@ -455,7 +495,7 @@ function Vfx.AttachLandmark(instance: Instance, id: string): Folder?
 	end
 	local folder = Instance.new("Folder")
 	folder.Name = "Vfx_" .. id
-	local entry: Entry = { recs = {}, owned = true, made = { folder } }
+	local entry: Entry = { recs = {}, owned = true, made = { folder }, root = anchor }
 	local frame, size = landmarkFrame(instance, anchor)
 	for i, spec in specs do
 		local emitter = build(spec, 1)
@@ -539,9 +579,16 @@ local function fire(list, cf: CFrame, color: Color3?, count: (any) -> number): n
 			rec.emitter.Color = colorSequence(rec.spec.color, color)
 		end
 		local n = count(rec.spec)
+		if n > 0 and low then
+			n = math.ceil(n / 2)
+		end
+		if n > 0 then
+			-- The per-second burst allowance (Config.Quality.Particles.burstsPerSecond).
+			n = ParticleBudget.Allow(burstWindow, os.clock(), n, Config.Quality.Particles.burstsPerSecond[Quality.Level()] or n)
+		end
 		if n > 0 then
 			lit(rec.emitter, rec.spec)
-			rec.emitter:Emit(if low then math.ceil(n / 2) else n)
+			rec.emitter:Emit(n)
 			fired += 1
 		end
 	end
@@ -613,6 +660,111 @@ function Vfx.SetQuality(isLow: boolean)
 		apply(entry)
 	end
 end
+
+-- ─── Budget (glow-up P) ──────────────────────────────────────────────────────────────
+
+local function meanLife(rec: Rec): number
+	if rec.life == nil then
+		local ok, range = pcall(function()
+			return rec.emitter.Lifetime
+		end)
+		rec.life = if ok and typeof(range) == "NumberRange" then (range.Min + range.Max) / 2 else 1
+	end
+	return rec.life :: number
+end
+
+function Vfx.BudgetPass(): number
+	local cfg = Config.Quality.Particles
+	local lod = Config.Quality.Lod
+	local level = Quality.Level()
+	local camera = workspace.CurrentCamera
+	local camPos = if camera then camera.CFrame.Position else nil
+	local demand: { [string]: number } = {}
+	local kept = 0
+	local dirty: { Entry } = {}
+	for target, entry in registry do
+		if not entry.owned and entry.monster and entry.root then
+			local far = camPos ~= nil and not LodRules.EffectsOn(lod, level, false, (entry.root.Position - camPos).Magnitude)
+			if far ~= (entry.far == true) then
+				entry.far = far
+				table.insert(dirty, entry)
+			end
+		end
+		if target:IsDescendantOf(workspace) then
+			local isProtected = protected(entry)
+			for _, rec in entry.recs do
+				local live = ParticleBudget.Live(rec.rate * factor(rec.kind, entry.owned, entry.far), meanLife(rec), meanLife(rec))
+				if isProtected then
+					kept += live
+				elseif live > 0 then
+					demand[rec.kind] = (demand[rec.kind] or 0) + live
+				end
+			end
+		end
+	end
+	local plan = ParticleBudget.Plan(demand, kept, cfg.budget[level] or math.huge, cfg)
+	local changed = false
+	for kind, scale in plan do
+		if math.abs((scales[kind] or 1) - scale) > 0.02 or (scale == 0) ~= ((scales[kind] or 1) == 0) then
+			scales[kind] = scale
+			changed = true
+		end
+	end
+	for kind, scale in scales do
+		if plan[kind] == nil and scale ~= 1 then
+			scales[kind] = nil -- nothing of that kind left: restore for the next one
+			changed = true
+		end
+	end
+	if changed then
+		for _, entry in registry do
+			apply(entry)
+		end
+	else
+		for _, entry in dirty do
+			apply(entry)
+		end
+	end
+	local live = kept
+	for kind, n in demand do
+		live += n * (scales[kind] or 1)
+	end
+	liveParticles = live
+	Quality.Stats.particles = live
+	return live
+end
+
+function Vfx.Live(): number
+	return liveParticles
+end
+
+function Vfx.StartBudget()
+	if budgetConnection then
+		return
+	end
+	local elapsed = 0
+	budgetConnection = RunService.Heartbeat:Connect(function(dt: number)
+		elapsed += dt
+		if elapsed >= (Config.Quality.Particles.tick or 0.5) then
+			elapsed = 0
+			Vfx.BudgetPass()
+		end
+	end)
+end
+
+function Vfx.StopBudget()
+	if budgetConnection then
+		budgetConnection:Disconnect()
+		budgetConnection = nil
+	end
+end
+
+Quality.Changed:Connect(function()
+	low = Quality.IsLow()
+	for _, entry in registry do
+		apply(entry)
+	end
+end)
 
 function Vfx.Clear(target: Instance)
 	local entry = registry[target]
