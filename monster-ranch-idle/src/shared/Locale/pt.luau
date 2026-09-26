@@ -2106,4 +2106,7 @@ return {
 	-- Glow-up N: the hatch in the world
 	["NEW!"] = "NOVO!",
 	["SHINY!"] = "BRILHANTE!",
+	-- Glow-up V: the 3D battle stage
+	["Tap to speed up"] = "Toque para acelerar",
+	["2× speed"] = "Velocidade 2×",
 }

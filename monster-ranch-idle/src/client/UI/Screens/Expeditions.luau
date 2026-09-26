@@ -31,7 +31,7 @@ local MonsterIcon = require(UI.Components.MonsterIcon)
 local Icon = require(UI.Components.Icon)
 local Util = require(script.Parent.Parts.Util)
 local Dialog = require(script.Parent.Parts.Dialog)
-local BattleReplay = require(script.Parent.Parts.BattleReplay)
+local Battle = require(script.Parent.Parts.Battle)
 
 local New = Create.New
 local C = Theme.Colors
@@ -492,11 +492,12 @@ return {
 				end
 				adsLeft = math.max(0, adCap - used)
 			end
-			viewer = BattleReplay.play(ctx, {
+			viewer = Battle.play(ctx, {
 				replay = res.replay,
 				win = win,
 				rewards = res.rewards,
 				title = string.format("%s · Stage %d", if r then r.name else region, stageNumber),
+				stage = region,
 				winText = string.format("Stage %d cleared!", stageNumber),
 				retryText = if adsLeft then string.format("Retry +20%% (ad, %d left)", adsLeft) else "Retry with +20% (ad)",
 				onRetry = if adsLeft == nil or adsLeft > 0
