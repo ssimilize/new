@@ -56,6 +56,8 @@ local Config = {
 	Pens = require(script.Pens),
 	-- Glow-up O: Codex milestones, the Codex Museum and the Hall of Fame plaza
 	Codex = require(script.Codex),
+	-- Glow-up Q: bond hearts, care gestures, bond tricks
+	Bond = require(script.Bond),
 }
 
 return Config

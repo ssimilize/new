@@ -50,6 +50,8 @@ return {
 		"DailyLogin",
 		-- Glow-up L: emote wheel, Friends button, VIP balcony pads
 		"Community",
+		-- Glow-up Q: care menu on own-monster taps, bond nameplates, best friends at the ranch gate
+		"Care",
 		-- Ambience (Config/Ambience): sky and clouds, dusk lights, scenery that moves, ambient life
 		"Sky",
 		"Lamplight",
@@ -105,5 +107,7 @@ return {
 		-- Glow-up L · emotes and tricks, gifts, invites, community rewards
 		"EmoteWheel",
 		"Friends",
+		-- Glow-up Q · care gestures and bond hearts (non-modal)
+		"Care",
 	},
 }

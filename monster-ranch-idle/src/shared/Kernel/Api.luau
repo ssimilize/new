@@ -530,6 +530,14 @@ Api.Actions = {
 		rate = 2,
 		returns = "{ milestone: string, gems: number, items: { itemId } }",
 	},
+
+	-- Bond (glow-up Q) · Config.Bond, Systems/Bond ---------------------------------------------
+	-- A finished care gesture on an own pen monster; the kind must be off its cooldown for that monster.
+	["Bond.Care"] = {
+		schema = T.struct({ id = id, kind = T.enum(Config.Bond.KindIds) }),
+		rate = 1,
+		returns = "{ hearts: number, points: number, gained: boolean, learned: trickId|false }",
+	},
 }
 
 --[[
@@ -601,6 +609,7 @@ Api.State = {
 		Gifts = "{ day, sent, to = { ['u'..userId]: n }, totalSent, totalReceived }",
 		Companions = "{ ids = { monsterId } }  -- glow-up T: who walks with the player",
 		Codex = "{ claimed = { [milestoneId]: unix }, owed = { itemId } }  -- glow-up O (badges private)",
+		Bond = "{ list = { [monsterId]: { pts, pet: unix?, brush: unix?, play: unix? } }, cares }  -- see Systems/Bond",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -641,6 +650,7 @@ Api.State = {
 		Mastery = "{ here = { ['u'..userId]: { flourish: string|false, title: string|false, plinth: string|false } } }  -- equipped prestige cosmetics of players in this server",
 		Companions = "{ walkers = { ['u'..userId]: { { id, appearance } } } }  -- glow-up T: each player's companions, drawn by every client",
 		HallOfFame = "{ plaza = { ['u'..userId]: { slot, name, appearance, rarity } } }  -- glow-up O: best statues on the hub plaza (<= Config.Codex.Plaza.max)",
+		Bond = "{ here = { ['u'..userId]: { best = { { id, hearts, form, variant, name } }, plates = { { id, hearts, name } } } } }  -- ranch gate best friends + pen nameplates",
 	},
 }
 
@@ -712,6 +722,7 @@ Api.Topics = {
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
 	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total' })  -- glow-up O",
+	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------

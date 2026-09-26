@@ -38,6 +38,7 @@ local InsetPopup = require(UI.Components.InsetPopup)
 local ViewportMonster = require(UI.Components.ViewportMonster)
 local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local WalkToggle = require(script.Parent.Parts.WalkToggle) -- glow-up T
+local BondBadge = require(script.Parent.Parts.BondBadge)
 
 local New = Create.New
 local C = Theme.Colors
@@ -635,6 +636,7 @@ function MonsterDetail.Build(ctx)
 			vchip.LayoutOrder = 2
 		end
 		MasteryBadge.chip(ctx, m.line, headerChips, 3) -- 3.3: the line's mastery tier
+		BondBadge.chip(ctx, currentId, headerChips, 4) -- glow-up Q: bond hearts
 		lockButton:SetText(if m.locked then "Locked" else "Lock")
 		local ridingId = StoreKit.tbl(store, "session.Riding").mount
 		rideButton:SetText(if ridingId == currentId then "Get off" else "Ride")

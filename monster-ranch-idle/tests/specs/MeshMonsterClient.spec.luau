@@ -127,7 +127,7 @@ return function(t)
 	end
 
 	describe("3D monsters: taps", function()
-		it("gives a 3D monster a hit box that a tap reaches (detail for the owner, a pet for a visitor)", function()
+		it("gives a 3D monster a hit box that a tap reaches (care for the owner, a pet for a visitor)", function()
 			local h = TestKernel.new({ systems = allSystems() })
 			local owner = h:Join(9101, "Owner")
 			local visitor = h:Join(9102, "Visitor")
@@ -153,7 +153,7 @@ return function(t)
 			expect(hit.Size.Y).toBeNear(model:GetAttribute("Height"), 0.01)
 
 			tap(mine, hit)
-			expect(mine.kernel.Router:Current()).toBe("MonsterDetail")
+			expect(mine.kernel.Router:IsOpen("Care")).toBe(true) -- glow-up Q: an own tap opens the care menu
 
 			local other = findModel(theirs, form)
 			expect(other ~= nil).toBe(true)

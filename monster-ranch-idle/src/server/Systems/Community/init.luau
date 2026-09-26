@@ -6,7 +6,8 @@
 
 	  Tricks    Community.Trick { id, trick }: the monster must be the player's and in a pen; one
 	            trick every TrickCooldown seconds. Fires Community.Trick { owner, id, trick } to
-	            everyone, and the World controller plays it on that pen monster.
+	            everyone, and the World controller plays it on that pen monster. Glow-up Q: a
+	            trick with `bond` (Config.Bond.Tricks) needs that many Bond hearts on the monster.
 	  Invites   a first join whose launch data is "invite:<userId>" from a Roblox friend gets
 	            Invites.inviteeReward once (profile.Community.invitedBy); the inviter gets
 	            Invites.inviterReward by Market mail (kind "invite", id "invite:<invitee>"), at most
@@ -35,7 +36,7 @@ local Logic = require(Shared.Logic.Community)
 local Community = {
 	Name = "Community",
 	Dependencies = { "Rewards", "Monsters" },
-	OptionalDependencies = { "Market", "Monetization", "Ranch" },
+	OptionalDependencies = { "Market", "Monetization", "Ranch", "Bond" },
 }
 
 Community.Profile = {
@@ -143,6 +144,12 @@ local function trick(player, payload)
 	local Ranch = ctx:GetSystem("Ranch")
 	if Ranch and Ranch:PenOf(player, payload.id) <= 0 then
 		ctx:Fail("Only monsters in your pens can do tricks")
+	end
+	if def.bond then -- glow-up Q: a trick learned from bond hearts (Config.Bond.Tricks)
+		local Bond = ctx:GetSystem("Bond")
+		if not Bond or Bond:Hearts(player, payload.id) < def.bond then
+			ctx:Fail(string.format("Your monster learns this trick at %d bond hearts", def.bond))
+		end
 	end
 	local now = ctx:Now()
 	if lastTrick[player] and now - lastTrick[player] < Cfg.TrickCooldown then

@@ -68,6 +68,8 @@ return {
 		"Companions",
 		-- Glow-up O · Codex milestones that pay
 		"Codex",
+		-- Glow-up Q · bond hearts and care gestures
+		"Bond",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},
