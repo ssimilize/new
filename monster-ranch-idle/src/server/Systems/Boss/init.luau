@@ -4,6 +4,8 @@
 	Schedule (aligned to the clock, so every server fights at :00 and :30):
 	  idle ──(LobbySeconds before start)──► lobby ──(startsAt)──► active ──(endsAt or HP 0)──► idle
 	  next start = ceil(now / Period) × Period; boss = Rotation[(startsAt / Period) % #Rotation + 1]
+	  A period that overlaps a scheduled titan invasion (glow-up TT, when the Titan system runs:
+	  Logic/Titan.Overlaps) is skipped, so the Stampede and the titan never share the arena.
 
 	Global (global.Boss):
 	  { state = "idle"|"lobby"|"active", bossId, startsAt, endsAt, hp, maxHp, participants,
@@ -44,11 +46,12 @@
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Formulas = require(Shared.Logic.Formulas)
+local TitanLogic = require(Shared.Logic.Titan)
 
 local Boss = {
 	Name = "Boss",
 	Dependencies = { "Progression", "Rewards", "Monsters", "Expeditions" },
-	OptionalDependencies = { "Weather" },
+	OptionalDependencies = { "Weather", "Titan" },
 }
 
 local BOARD_SIZE = 10
@@ -88,9 +91,25 @@ local function setSession(player, joined: boolean, damage: number, cheer: number
 	ctx:DirtySession(player)
 end
 
+-- Glow-up TT: a scheduled titan invasion holds the arena at some point of this period (its
+-- lobby to its end), so this Stampede is skipped and the two giants never share the arena.
+local function titanHolds(startsAt: number): boolean
+	local T = ctx.Config.Titan
+	if not T or not ctx:GetSystem("Titan") then
+		return false
+	end
+	return TitanLogic.Overlaps(T.Schedule, T.Duration, T.LobbySeconds, startsAt - Cfg.LobbySeconds, startsAt + Cfg.Duration)
+end
+
 local function scheduleNext(now: number)
 	local G = global()
 	local startsAt = nextStart(now)
+	for _ = 1, 8 do -- past a titan invasion (a couple of periods at most)
+		if not titanHolds(startsAt) then
+			break
+		end
+		startsAt += Cfg.Period
+	end
 	G.state = "idle"
 	G.startsAt = startsAt
 	G.endsAt = startsAt + Cfg.Duration
@@ -271,7 +290,11 @@ local function tick()
 	local now = ctx:Now()
 	local G = global()
 	if G.state == "idle" and now >= G.startsAt - Cfg.LobbySeconds then
-		openLobby()
+		if titanHolds(G.startsAt) then
+			scheduleNext(G.startsAt + 1) -- the next period
+		else
+			openLobby()
+		end
 	end
 	if G.state == "lobby" and now >= G.startsAt then
 		activate()
@@ -401,6 +424,14 @@ function Boss.Init(context)
 	end)
 
 	ctx:Every(Cfg.TickSeconds, tick)
+end
+
+-- Glow-up TT: optional systems are ready only once every Init has run, so the plan made in Init
+-- could not see Titan yet. Plan the next Stampede again, past any titan invasion.
+function Boss.Start()
+	if global().state == "idle" then
+		scheduleNext(ctx:Now())
+	end
 end
 
 function Boss.PlayerAdded(player)

@@ -328,6 +328,13 @@ Api.Actions = {
 	-- Boss (S4) -------------------------------------------------------------------
 	["Boss.Join"] = { schema = T.none, rate = 1, returns = "nil" },
 	["Boss.Cheer"] = { schema = T.struct({ taps = T.integer(1, Config.Boss.MaxTapsPerRequest) }), rate = 3, returns = "{ cheer: number }" },
+	-- Titan (glow-up TT): a scheduled, cross-server titan invasion, on the same unlock as Boss.
+	["Titan.Join"] = { schema = T.none, rate = 1, returns = "nil" },
+	["Titan.Cheer"] = {
+		schema = T.struct({ taps = T.integer(1, Config.Titan.MaxTapsPerRequest) }),
+		rate = 3,
+		returns = "{ cheer: number }",
+	},
 
 	-- Breeding (S5) ---------------------------------------------------------------
 	["Breeding.Start"] = { schema = T.struct({ pod = T.integer(1, 2), a = id, b = id }), rate = 2, returns = "{ endsAt: number }" },
@@ -590,6 +597,9 @@ Api.Events = {
 	["Boss.Result"] = "{ rank: number, share: number, damage: number, rewards: { Reward }, egg: boolean }",
 	["Boss.Starting"] = "{ bossId: string, startsAt: number }  -- to everyone as the lobby opens",
 	["Boss.Started"] = "{ bossId: string, startsAt: number, endsAt: number }  -- to everyone: the horn",
+	["Titan.Result"] = "{ won: boolean, damage: number, rewards: { Reward }, egg: boolean }",
+	["Titan.Starting"] = "{ titanId: string, startsAt: number }  -- to everyone as the lobby opens",
+	["Titan.Started"] = "{ titanId: string, startsAt: number, endsAt: number }  -- to everyone: the horn",
 	["Social.Broadcast"] = "{ kind: string, text: string, userId: number, appearance: Appearance? }",
 	["Trade.Incoming"] = "{ from: number, name: string }",
 	["Trade.Completed"] = "{ received: { { kind: string, appearance: Appearance? } } }",
@@ -659,6 +669,7 @@ Api.State = {
 		Trade = "{ status: 'none'|'outgoing'|'incoming'|'open'|'countdown', partner = { userId, name }, mine = TradeSide, theirs = TradeSide, endsAt }",
 		Expeditions = "{ caravan = { id, host, region, stage, duration, members = { { userId, name } } }? }",
 		Boss = "{ joined: boolean, damage, cheer }",
+		Titan = "{ joined: boolean, damage, cheer }",
 		Clubs = "{ club: ClubView | false }  -- see Systems/Clubs header",
 		Market = "{ mail = { coins, items } }  -- mail waiting that could not be collected yet (e.g. ranch full)",
 		Contests = "{ entered: monsterId|false, votes = { [entryIndex]: stars } }  -- this show",
@@ -674,6 +685,7 @@ Api.State = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
 		Weather = "{ id, endsAt, nextRollAt, night: boolean, phaseEndsAt, summonedBy: string? }",
 		Boss = "{ state: 'idle'|'lobby'|'active', bossId, startsAt, endsAt, hp, maxHp, board = { { userId, name, damage } }, squads = { { userId, looks = { { line, form, stage, rarity, variant } } } } }",
+		Titan = "{ state: 'idle'|'lobby'|'active'|'fallen'|'retreated', titanId, startsAt, endsAt, hp, maxHp, servers, players, participants, poolOk, board = { { userId, name, damage } } }  -- hp/maxHp/servers/players are the SHARED pool; board is this server's top 10",
 		Plots = "{ ['1'..'6' as numbers]: PublicPlot }  -- array of 6",
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
 		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",
@@ -722,6 +734,9 @@ Api.Topics = {
 	BossJoined = "(player, {})",
 	BossEnded = "(nil, { bossId: string, won: boolean })",
 	BossDamage = "(player, { damage: number, rank: number })  -- per participant when a Stampede ends",
+	TitanJoined = "(player, {})",
+	TitanEnded = "(nil, { titanId: string, won: boolean })",
+	TitanDamage = "(player, { damage: number, won: boolean })  -- per participant when a titan invasion ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
