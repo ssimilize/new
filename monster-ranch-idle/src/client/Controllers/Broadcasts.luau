@@ -216,6 +216,12 @@ local function showBossResult(payload)
 		Buttons = { { Text = "Nice!", Color = C.Green } },
 	})
 	ctx:Sound("Victory")
+	-- The chest's coins and gems fly into the HUD; a top-3 finish is a big moment.
+	local kit = ctx:GetController("Celebrate")
+	if kit and type(payload.rewards) == "table" then
+		local rank = tonumber(payload.rank) or 0
+		kit:Reward(payload.rewards, { minSize = if rank >= 1 and rank <= 3 then "big" else nil })
+	end
 end
 
 function Broadcasts.Init(context)

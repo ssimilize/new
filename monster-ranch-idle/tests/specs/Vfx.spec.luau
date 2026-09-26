@@ -613,7 +613,8 @@ return function(t)
 			c.world:Run(function()
 				c.kernel.Bus:Publish("Vfx.Burst", "rebirth")
 			end)
-			c:Advance(0.2)
+			-- Moments go through Celebrate:Moment, which gives a covering popup a beat to open first.
+			c:Advance(0.6)
 			local bursts = holder:FindFirstChild("Bursts")
 			expect(bursts ~= nil and #emitters(bursts) > 0).toBe(true)
 			-- A ranch level-up from the server bursts round the character.

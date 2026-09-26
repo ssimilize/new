@@ -1785,4 +1785,9 @@ return {
 	["✓ Ready"] = "✓ Pronto",
 	["❂ {1}   {2}   {3} left"] = "❂ {1}   {2}   faltam {3}",
 	["🔒 Pass"] = "🔒 Passe",
+	-- Glow-up: the Stampede call (Controllers/Stampede).
+	["The Stampede is coming!"] = "A Debandada está chegando!",
+	["The Stampede is here!"] = "A Debandada chegou!",
+	["The Stampede starts in {1}!"] = "A Debandada começa em {1}!",
+	["{1} · {2} left"] = "{1} · faltam {2}",
 }

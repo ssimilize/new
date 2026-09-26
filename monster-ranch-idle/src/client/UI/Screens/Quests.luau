@@ -82,14 +82,10 @@ return {
 			return ctx.Store:Get("profile.Quests") or {}
 		end
 
+		-- Claimed rewards arrive as a Rewards.Granted card (Notifications), whose items fly into
+		-- the HUD; a second toast listing the same items would only pile up beside it.
 		local function claimToast(res)
-			if type(res) == "table" and type(res.rewards) == "table" and #res.rewards > 0 then
-				local parts = {}
-				for _, item in res.rewards do
-					table.insert(parts, Util.rewardText(item))
-				end
-				ctx:Toast("+ " .. table.concat(parts, ", "), "reward")
-			else
+			if not (type(res) == "table" and type(res.rewards) == "table" and #res.rewards > 0) then
 				ctx:Toast("Claimed!", "success")
 			end
 		end

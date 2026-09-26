@@ -15,8 +15,11 @@
 	Moment bursts: Eggs.Hatched and Monsters.Evolved burst at the monster once it appears in the
 	pen (or at the character if it does not within HATCH_WAIT), Progression.LevelUp round the
 	character; the client bus topic "Vfx.Burst" (name, { id }?) takes "monsterLevelUp" (at that pen
-	monster, MonsterDetail) and "rebirth" (character + Star Altar, the Rebirth screen). Coin and
-	heart bursts use the coin / heart sprites, or the plain emitters while those are not uploaded.
+	monster, MonsterDetail) and "rebirth" (character + Star Altar, the Rebirth screen). Every moment
+	goes through Celebrate:Moment, which holds it while a screen or popup covers the world (the
+	hatch reveal, the evolution popup, MonsterDetail, Rebirth) and plays it once the view clears.
+	Coin and heart bursts use the coin / heart sprites, or the plain emitters while those are not
+	uploaded. A jar tap also flies its coins into the HUD counter (Celebrate:Reward).
 
 	Taps on monsters are raycast against their Body parts: own monster -> MonsterDetail,
 	someone else's -> Social.Pet with hearts. Taps on own eggs open Incubators.
@@ -309,6 +312,17 @@ local function expectMonster(id: any, name: string, opts, ready: (Model) -> bool
 	end)
 end
 
+-- Plays an in-world moment where the player can see it: Celebrate holds it while a screen or
+-- popup covers the world. Without the kit (it failed to start) the moment plays at once.
+local function moment(key: string, fn: () -> (), opts: { [string]: any }?)
+	local kit = ctx:GetController("Celebrate")
+	if kit then
+		kit:Moment(key, fn, opts)
+	else
+		fn()
+	end
+end
+
 local function onHatched(payload)
 	local monster = type(payload) == "table" and payload.monster
 	if type(monster) ~= "table" then
@@ -316,38 +330,48 @@ local function onHatched(payload)
 	end
 	local rarity = type(monster.rarity) == "number" and Config.Rarities.Get(monster.rarity)
 	local opts = { color = if rarity then Color3.fromHex(rarity.color) else nil }
-	expectMonster(monster.id, "hatch", opts, function()
-		return true
-	end)
+	-- The hatch reveal is the feedback while it is up; the burst waits for it to close.
+	moment("hatch:" .. tostring(monster.id), function()
+		expectMonster(monster.id, "hatch", opts, function()
+			return true
+		end)
+	end, { flourish = false })
 end
 
 local function onEvolved(payload)
 	if type(payload) ~= "table" then
 		return
 	end
-	local line = nil
-	local entry = ownEntry(payload.id)
-	if entry then
-		line = entry.model:GetAttribute("Line")
-	end
-	local def = type(line) == "string" and Config.Species.ById[line]
-	expectMonster(payload.id, "evolve", { elements = if def then def.elements else nil }, function(model)
-		return model:GetAttribute("Form") == payload.toForm
-	end)
+	moment("evolve:" .. tostring(payload.id), function()
+		local line = nil
+		local entry = ownEntry(payload.id)
+		if entry then
+			line = entry.model:GetAttribute("Line")
+		end
+		local def = type(line) == "string" and Config.Species.ById[line]
+		expectMonster(payload.id, "evolve", { elements = if def then def.elements else nil }, function(model)
+			return model:GetAttribute("Form") == payload.toForm
+		end)
+	end, { flourish = false })
 end
 
 local function onBurstTopic(name: any, info: any)
 	if name == "monsterLevelUp" and type(info) == "table" then
-		momentAt(info.id, "monsterLevelUp")
+		-- MonsterDetail shows its own shockwave at the click.
+		moment("monsterLevelUp:" .. tostring(info.id), function()
+			momentAt(info.id, "monsterLevelUp")
+		end, { flourish = false })
 	elseif name == "rebirth" then
-		local feet = characterFeet()
-		if feet then
-			Vfx.Burst("rebirth", feet)
-		end
-		local altar = hubBody("starAltar")
-		if altar then
-			Vfx.Burst("rebirth", altar.CFrame * CFrame.new(0, -altar.Size.Y / 2 + 0.2, -altar.Size.Z * 0.85))
-		end
+		moment("rebirth", function()
+			local feet = characterFeet()
+			if feet then
+				Vfx.Burst("rebirth", feet)
+			end
+			local altar = hubBody("starAltar")
+			if altar then
+				Vfx.Burst("rebirth", altar.CFrame * CFrame.new(0, -altar.Size.Y / 2 + 0.2, -altar.Size.Z * 0.85))
+			end
+		end)
 	end
 end
 
@@ -936,21 +960,32 @@ local function collect(pen: number)
 	end
 	jar.busy = true
 	Anim.pulse(jar.button, 0.15)
+	-- The coin counter waits for the coins to fly in rather than jumping on the reply.
+	local kit = ctx:GetController("Celebrate")
+	local hold = kit and kit:Hold({ "coins" })
 	local ok, result = ctx.Net:Request("Ranch.Collect", { pen = pen })
 	jar.busy = false
+	local coins = if ok and type(result) == "table" then tonumber(result.coins) or 0 else 0
 	if ok then
 		local floor = ownIndex and penFloor(ownIndex, pen)
 		local area = if ownIndex then penArea(ownIndex, pen) else nil
-		if area then
-			burst("coins", fx.coins, area.Position + Vector3.new(0, 4, 0), 24)
+		local at = if area then area.Position + Vector3.new(0, 4, 0) else nil
+		if at then
+			burst("coins", fx.coins, at, 24)
 		end
-		local coins = type(result) == "table" and tonumber(result.coins) or 0
 		if floor and coins > 0 then
 			floatText(floor, "+" .. Format.short(coins), Theme.Colors.Gold)
 		end
 		ctx:Sound("CoinCollect")
+		if kit and coins > 0 then
+			-- From the jar on screen (the float text already says "+N", so no second label).
+			kit:Reward({ { kind = "coins", amount = coins } }, { from = at, hold = hold, label = false })
+		end
 	else
 		ctx:Toast(tostring(result), "error")
+	end
+	if hold and coins <= 0 then
+		hold:Release()
 	end
 end
 
@@ -1301,10 +1336,13 @@ function World.Init(context)
 	table.insert(
 		connections,
 		ctx.Net:On("Progression.LevelUp", function()
-			local feet = characterFeet()
-			if feet then
-				Vfx.Burst("ranchLevelUp", feet)
-			end
+			-- The level-up banner and the HUD shockwave are the feedback while a screen is open.
+			moment("ranchLevelUp", function()
+				local feet = characterFeet()
+				if feet then
+					Vfx.Burst("ranchLevelUp", feet)
+				end
+			end, { flourish = false })
 		end)
 	)
 end

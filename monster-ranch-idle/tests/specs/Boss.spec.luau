@@ -151,6 +151,38 @@ return function(t)
 			expect(C:Balance(p, "gems") - gems).toBe(5)
 		end)
 
+		it("announces the lobby and the start to every player on the server", function()
+			local h = boot()
+			local fighterP = fighter(h)
+			local newbie = h:Join()
+			h:Section(newbie, "Progression").level = 1 -- below the unlock: still hears the horn
+			for _, p in { fighterP, newbie } do
+				expect(#h:Events(p, "Boss.Starting")).toBe(0)
+			end
+			h:Advance(TO_LOBBY)
+			local bossId = Cfg.Rotation[(1000000 % #Cfg.Rotation) + 1].id
+			for _, p in { fighterP, newbie } do
+				local soon = h:Events(p, "Boss.Starting")
+				expect(#soon).toBe(1)
+				expect(soon[1].payload.bossId).toBe(bossId)
+				expect(soon[1].payload.startsAt).toBe(START)
+				expect(#h:Events(p, "Boss.Started")).toBe(0)
+			end
+			h:Call(fighterP, "Boss.Join")
+			h:Advance(Cfg.LobbySeconds)
+			for _, p in { fighterP, newbie } do
+				local started = h:Events(p, "Boss.Started")
+				expect(#started).toBe(1)
+				expect(started[1].payload.bossId).toBe(bossId)
+				expect(started[1].payload.startsAt).toBe(START)
+				expect(started[1].payload.endsAt).toBe(START + Cfg.Duration)
+			end
+			-- Once per fight: the rest of the fight and its end announce nothing more.
+			h:Advance(Cfg.Duration + 5)
+			expect(#h:Events(newbie, "Boss.Starting")).toBe(1)
+			expect(#h:Events(newbie, "Boss.Started")).toBe(1)
+		end)
+
 		it("ends unbeaten when nobody joins", function()
 			local h, _, topics = boot()
 			fighter(h)

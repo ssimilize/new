@@ -33,6 +33,9 @@ return {
 		"Gamepad",
 		-- Particle effects (Visuals/Vfx): landmark ambience
 		"Landmarks",
+		-- Glow-up: celebrations that travel, the moment queue, the Stampede call
+		"Celebrate",
+		"Stampede",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

@@ -17,7 +17,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Ranch | S3 | 🔌 | `Ranch.spec`, `RanchLogic.spec`, `LevelSeventy.spec` | 3.2: pen 6 (Lv 66, 10B). Pens + jars (`Logic/Jar`, settle-on-change, offline at saved rates), modifiers/jar bonuses, passes (doubleCoins, vip, bigBarn, autoCollect), assign/busy auto-removal + return, upgrades, decor mood aura, themes, garden (rain ×2) |
 | WelcomeBack | S3 | 🔌 | `WelcomeBack.spec` | buffers join WelcomeItems, ≥ 5 min away summary, claim ×1 / ×2 (ad); holds Auto-Collect until claimed |
 | Expeditions | S4 | 🔌 | `Expeditions.spec`, `BattleSim.spec`, `LevelSeventy.spec` | 3.2: squad 3 / 4 / 5 at Lv 1 / 35 / 70 (`Regions.SquadSize.steps`). Stage fights (`Logic/BattleSim`), timed runs + offline finish (`Logic/Loot`), caravans; optional Monetization (explorer, stageRetry ad), Weather (night) |
-| Boss | S4 | 🔌 | `Boss.spec` | Stampede schedule, cheer (≤ `Boss.MaxTapsPerSecond`), rewards; needs Expeditions; optional Weather (bossDamage) |
+| Boss | S4 | 🔌 | `Boss.spec` | Stampede schedule, cheer (≤ `Boss.MaxTapsPerSecond`), rewards, `Boss.Starting` / `Boss.Started` to everyone; needs Expeditions; optional Weather (bossDamage) |
 | Breeding | S5 | 🔌 | `Breeding.spec` | pods (+pass), daily limits, seeded roll via `Logic/Breeding`, offline WelcomeItem, hybrid discovery → `Bred` |
 | Weather | S5 | 🔌 | `Weather.spec` | clock-aligned rolls + day/night (`Logic/WeatherRoll`), pen mutations, totems (queued behind running weather), heatwave egg speed, tutorial guarantee |
 | Social | S5 | 🔌 | `Social.spec` | friend boost (`friends` rate modifier), pets/likes, server + global broadcasts (MessagingService) |
