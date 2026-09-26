@@ -73,6 +73,10 @@ return function(t)
 		for id, specs in Presets.Bursts do
 			table.insert(list, { name = "Bursts." .. id, specs = specs, kind = "burst" })
 		end
+		for id, specs in Presets.Eggs do
+			table.insert(list, { name = "Eggs." .. id, specs = specs, kind = "monster" })
+		end
+		table.insert(list, { name = "EggReady", specs = Presets.EggReady, kind = "monster" })
 		return list
 	end
 

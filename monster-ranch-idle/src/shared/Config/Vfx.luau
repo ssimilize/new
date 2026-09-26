@@ -45,7 +45,10 @@
 	x (1 - weight x night). `night` (0..1) follows Lighting.ClockTime through dusk and dawn.
 
 	Tables: Auras[element], Mutations[mutationId], Variants.shiny / .rainbow, Rarity[rarityId],
-	Landmarks[hubId | "skyGate"], Bursts[name], Night.
+	Landmarks[hubId | "skyGate"], Bursts[name], Night, Eggs[eggId], EggReady.
+
+	Eggs use the monster keys (at = feet / core / head / body, measured on the shell), authored for
+	an egg EggRefHeight studs tall (the incubator's); Visuals/Vfx scales them with the egg's height.
 ]]
 
 local Vfx = {}
@@ -1435,6 +1438,154 @@ Vfx.Bursts = {
 			lightEmission = 0.2,
 			lightInfluence = 0.3,
 		},
+	},
+}
+
+-- ─── Eggs ────────────────────────────────────────────────────────────────────────────
+
+Vfx.EggRefHeight = 2.6
+
+-- Twinkles that blink on the shell's surface.
+local function eggTwinkle(sprite: string, color: string, rate: number, size: number)
+	return {
+		sprite = sprite,
+		grey = true,
+		color = color,
+		at = "body",
+		shape = "Sphere",
+		shapeStyle = "Surface",
+		rate = rate,
+		lifetime = { 0.6, 0.9 },
+		size = { { 0, 0 }, { 0.35, size }, { 1, 0 } },
+		transparency = { { 0, 1 }, { 0.25, 0.1 }, { 1, 1 } },
+		speed = 0.05,
+		rotSpeed = { -60, 60 },
+		lightEmission = 0.3,
+		lightInfluence = 0,
+	}
+end
+
+local SNOWFALL = {
+	sprite = "snowflake",
+	grey = true,
+	color = "#DDF3FF",
+	at = "head",
+	rate = 0.9,
+	lifetime = { 1.8, 2.4 },
+	size = { { 0, 0.2 }, { 1, 0.12 } },
+	speed = { 0.3, 0.6 },
+	spread = 70,
+	accel = { 0, -0.7, 0 },
+	rot = { 0, 360 },
+	rotSpeed = { -40, 40 },
+	lightEmission = 0.2,
+	lightInfluence = 0.3,
+}
+
+local EMBERS = {
+	sprite = "ember",
+	at = "body",
+	shape = "Sphere",
+	shapeStyle = "Surface",
+	rate = 1.2,
+	lifetime = { 0.9, 1.3 },
+	size = { { 0, 0.14 }, { 1, 0.03 } },
+	speed = 0.3,
+	accel = { 0, 1.6, 0 },
+	lightEmission = 0.3,
+	lightInfluence = 0,
+}
+
+-- The eggs that sparkle (the others stay still: their painted pattern is the show).
+Vfx.Eggs = {
+	royal = { eggTwinkle("star", "#FFD447", 1.6, 0.34) },
+	crystal = {
+		eggTwinkle("star", "#E8F9FF", 2, 0.36),
+		{
+			sprite = "prism",
+			at = "body",
+			shape = "Sphere",
+			shapeStyle = "Surface",
+			rate = 0.5,
+			lifetime = { 0.7, 1 },
+			size = { { 0, 0 }, { 0.4, 0.3 }, { 1, 0 } },
+			speed = 0.05,
+			lightEmission = 0.3,
+			lightInfluence = 0,
+		},
+	},
+	starlit = { eggTwinkle("star", "#FFE680", 1.8, 0.32) },
+	celestial = {
+		eggTwinkle("star", "#D6CCFF", 1.5, 0.32),
+		{
+			sprite = "star5",
+			grey = true,
+			color = "#B9A7FF",
+			at = "head",
+			rate = 0.5,
+			lifetime = { 1.4, 1.8 },
+			size = { { 0, 0.18 }, { 1, 0.06 } },
+			speed = { 0.4, 0.7 },
+			spread = 40,
+			rotSpeed = { -90, 90 },
+			lightEmission = 0.3,
+			lightInfluence = 0,
+		},
+	},
+	frostfall = { SNOWFALL },
+	glacier = { SNOWFALL, eggTwinkle("star", "#FFFFFF", 1, 0.26) },
+	stampede = { EMBERS },
+	raid = { EMBERS, eggTwinkle("star", "#F5C630", 0.8, 0.26) },
+	leviathan = {
+		{
+			sprite = "bubble",
+			grey = true,
+			color = "#BFEFFF",
+			at = "body",
+			shape = "Sphere",
+			shapeStyle = "Surface",
+			rate = 1,
+			lifetime = { 1.2, 1.6 },
+			size = { { 0, 0.08 }, { 1, 0.16 } },
+			speed = 0.2,
+			accel = { 0, 1.2, 0 },
+			lightEmission = 0.2,
+			lightInfluence = 0.4,
+		},
+	},
+}
+
+-- An incubator egg that is ready to hatch: a soft warm halo behind it and twinkles rising off it.
+Vfx.EggReady = {
+	{
+		sprite = "glow",
+		grey = true,
+		color = "#FFD98A",
+		at = "core",
+		rate = 1.2,
+		lifetime = { 1.4, 1.6 },
+		size = { { 0, 2.4 }, { 0.5, 3.1 }, { 1, 2.4 } },
+		transparency = { { 0, 1 }, { 0.35, 0.72 }, { 1, 1 } },
+		speed = 0,
+		zOffset = -1,
+		lightEmission = 0.3,
+		lightInfluence = 0,
+	},
+	{
+		sprite = "star",
+		grey = true,
+		color = "#FFE9A8",
+		at = "body",
+		shape = "Sphere",
+		shapeStyle = "Surface",
+		rate = 2.4,
+		lifetime = { 0.9, 1.3 },
+		size = { { 0, 0.1 }, { 0.3, 0.34 }, { 1, 0 } },
+		speed = 0.5,
+		accel = { 0, 1.4, 0 },
+		rotSpeed = { -90, 90 },
+		lightEmission = 0.3,
+		lightInfluence = 0,
 	},
 }
 

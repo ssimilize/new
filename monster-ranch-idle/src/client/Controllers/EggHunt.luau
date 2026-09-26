@@ -77,10 +77,10 @@ end
 
 local function buildEgg(spot: number)
 	local pos = Cfg.Spots[spot]
-	local model = EggModel.Build("bloom", { size = 2.2 })
+	-- A plain shell in the spot's colour with white paint over it.
+	local model = EggModel.Build("bloom", { size = 2.2, tint = Color3.fromHex(Cfg.Colors[(spot - 1) % #Cfg.Colors + 1]) })
 	model.Name = "HuntEgg" .. spot
 	local root = model.PrimaryPart :: BasePart
-	root.Color = Color3.fromHex(Cfg.Colors[(spot - 1) % #Cfg.Colors + 1])
 	root.CFrame = CFrame.new(pos[1], pos[2] + 1.2, pos[3]) * CFrame.Angles(0, math.rad(spot * 37), math.rad(12))
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "PickUp"

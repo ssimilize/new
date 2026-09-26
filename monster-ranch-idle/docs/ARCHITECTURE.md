@@ -307,7 +307,7 @@ Client bus topics (free-form, client only): `"Tutorial.Arrow"` `(target: string?
 
 ### Visuals (art swap point)
 - `Visuals/MonsterModel.Build(appearance, opts) -> Model` (contract in the file header).
-- `Visuals/EggModel.Build(eggType, opts) -> Model`.
+- `Visuals/EggModel.Build(eggType, opts) -> Model` (`opts.anchored`, `size`, `tint`, `vfx`), `SetCrack(model, 0..3)` (the hatch cracks), `SetReady(model, ready)` (World's READY glow), `Has(eggType)`. The shared egg mesh, a painted texture per egg, ornaments and crack overlays come from `tools/blender/eggs.py`; their ids live in `Visuals/EggAssets` and an egg without them is the placeholder. Egg sparkles are `Vfx.AttachEgg` (`Config.Vfx.Eggs`, `EggReady`).
 - `Visuals/MonsterAnimator.new(model) -> animator` with `:Play(state)` (`idle|walk|happy|eat|attack|hurt|sleep`), `:SetBase(cframe)`, `:Destroy()`. One shared RenderStepped loop drives every animator. Owned by C1.
 
 ### Particle effects (Vfx)
