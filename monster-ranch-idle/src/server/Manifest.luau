@@ -64,6 +64,8 @@ return {
 		-- Glow-up L · emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
 		"Community",
 		"Gifts",
+		-- Glow-up T · a monster at your side
+		"Companions",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

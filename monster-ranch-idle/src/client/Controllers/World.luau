@@ -1385,6 +1385,11 @@ function World:OwnMonstersNear(position: Vector3, radius: number): { { model: Mo
 			end
 		end
 	end
+	-- Glow-up T: the monsters walking with us pose too.
+	local companions = ctx:GetController("Companions")
+	if companions and companions.PoseSubjects then
+		companions:PoseSubjects(position, radius, found)
+	end
 	table.sort(found, function(a, b)
 		return a.distance < b.distance
 	end)

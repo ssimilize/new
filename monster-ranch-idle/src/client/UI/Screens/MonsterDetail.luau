@@ -37,6 +37,7 @@ local StatBar = require(UI.Components.StatBar)
 local InsetPopup = require(UI.Components.InsetPopup)
 local ViewportMonster = require(UI.Components.ViewportMonster)
 local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
+local WalkToggle = require(script.Parent.Parts.WalkToggle) -- glow-up T
 
 local New = Create.New
 local C = Theme.Colors
@@ -177,6 +178,7 @@ function MonsterDetail.Build(ctx)
 		ZIndex = 5,
 		Parent = portrait,
 	})
+	local walkToggle = WalkToggle.new(ctx, portrait) -- glow-up T: "Walk with me"
 	local leftInfo = Tiles.col({ Position = UDim2.fromOffset(4, 308), Size = UDim2.fromOffset(282, 92), Parent = panel.Body }, 2)
 	local rateLabel =
 		Tiles.label({ Text = "", TextSize = Theme.TextSize.Body, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 1, Parent = leftInfo })
@@ -637,6 +639,7 @@ function MonsterDetail.Build(ctx)
 		local ridingId = StoreKit.tbl(store, "session.Riding").mount
 		rideButton:SetText(if ridingId == currentId then "Get off" else "Ride")
 		rideButton:SetVisible(m.stage == 3)
+		walkToggle:Refresh(currentId, m)
 		lockButton:SetColor(if m.locked then C.Orange else C.Gray)
 
 		-- Portrait
@@ -906,7 +909,7 @@ function MonsterDetail.Build(ctx)
 		)
 	end)
 
-	local watch = StoreKit.watch(store, { "profile.Monsters", "profile.Currency", "session.Riding" }, function()
+	local watch = StoreKit.watch(store, { "profile.Monsters", "profile.Currency", "session.Riding", "profile.Companions" }, function()
 		refresh()
 	end)
 
