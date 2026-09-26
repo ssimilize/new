@@ -300,6 +300,18 @@ return function(t)
 		error("no hybrid seed found")
 	end
 
+	-- Finds a seed that rolls one of the parents' own lines (no hybrid) for the running pod.
+	local function forcePure(h, p, pod, a, b)
+		for seed = 1, 5000 do
+			local _, isHybrid = Logic.Roll(Rng.new(seed), a, b)
+			if not isHybrid then
+				h:Section(p, "Breeding").pods[pod].seed = seed
+				return seed
+			end
+		end
+		error("no pure seed found")
+	end
+
 	describe("Breeding system", function()
 		it("is locked until Ranch Level 12", function()
 			local h, p, M = boot({ level = 5 })
@@ -314,6 +326,7 @@ return function(t)
 			local coins = h:Section(p, "Currency").coins
 			local fee = Logic.Fee(a, b)
 			local data = h:Call(p, "Breeding.Start", { pod = 1, a = a.id, b = b.id })
+			forcePure(h, p, 1, a, b) -- this test is about the ordinary path; hybrids have their own
 			expect(data.endsAt).toBe(h.adapters.Clock.Now() + Config.Breeding.Seconds[3])
 			expect(h:Section(p, "Currency").coins).toBe(coins - fee)
 			expect(a.busy).toBe("breeding")

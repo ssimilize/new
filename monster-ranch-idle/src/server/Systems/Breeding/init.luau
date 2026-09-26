@@ -10,6 +10,7 @@
 	Session (session.Breeding): { podCount, breedsPerDay }
 
 	Actions: Breeding.Start { pod, a, b } · Breeding.Claim { pod } · Breeding.Cancel { pod }
+	  (Claim returns the baby and `surges`, how many of its genes surged: Logic/Genetics)
 
 	Rules:
 	  • unlock "breeding"; pods = 1 + Breeding Pod pass (Monetization:HasPass, optional)
@@ -253,7 +254,7 @@ local function claim(player, payload)
 		hybrid = tostring(isHybrid),
 		variant = tostring(record.variant),
 	})
-	return { monster = record, hybridDiscovered = isHybrid and newForPlayer }
+	return { monster = record, hybridDiscovered = isHybrid and newForPlayer, surges = spec.surges or 0 }
 end
 
 local function cancel(player, payload)

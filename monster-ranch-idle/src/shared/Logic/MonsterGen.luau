@@ -14,10 +14,12 @@
 	  weight = number?,          -- rolled when nil
 	  muts = { string }?,
 	  gen = number?,             -- generation (0 hatched, parents' max + 1 when bred)
+	  genes = Genes?,            -- stat genes (Logic/Genetics); rolled last when nil
 	}
 ]]
 
 local Config = require(script.Parent.Parent.Config)
+local Genetics = require(script.Parent.Genetics)
 
 local Species = Config.Species
 local Traits = Config.Traits
@@ -98,7 +100,7 @@ function MonsterGen.New(rng, spec, now: number)
 		traits = traits or rolledTraits
 		hidden = hidden or rolledHidden
 	end
-	return {
+	local record = {
 		line = spec.line,
 		stage = stage,
 		form = form,
@@ -121,6 +123,9 @@ function MonsterGen.New(rng, spec, now: number)
 		born = now,
 		gen = spec.gen or 0,
 	}
+	-- Rolled after everything else so the rolls above stay as they were before genes.
+	record.genes = if Genetics.Valid(spec.genes) then Genetics.Copy(spec.genes) else Genetics.Roll(rng)
+	return record
 end
 
 return MonsterGen

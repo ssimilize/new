@@ -27,6 +27,7 @@ local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Appearance = require(Shared.Logic.Appearance)
+local Genetics = require(Shared.Logic.Genetics)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -135,6 +136,9 @@ local function itemDetail(listing): string
 	end
 	if #muts > 0 then
 		table.insert(parts, table.concat(muts, ", "))
+	end
+	if type(item.genes) == "table" then
+		table.insert(parts, string.format("Genes %d/%d", Genetics.Total(item.genes), Genetics.MaxTotal))
 	end
 	return table.concat(parts, " · ")
 end

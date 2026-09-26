@@ -6,6 +6,8 @@
 	  codex   = { [lineId] = { forms = { [formId] = true }, variants = { normal|golden|rainbow = true }, count } }
 	  nextId  = number
 	  grown   = number                   -- total growths (the first one is a short tutorial timer)
+	  (Version 2, update 3.6: Migrate gives every monster made before genetics its stat genes,
+	  the hatch roll seeded by the record, so they never change; genes only add to stats)
 
 	Public API (other systems):
 	  Monsters:Create(player, spec, source, force?) -> record?, err?   -- spec: see Logic/MonsterGen
@@ -37,16 +39,38 @@ local Formulas = require(Shared.Logic.Formulas)
 local MonsterGen = require(Shared.Logic.MonsterGen)
 local Mutation = require(Shared.Logic.Mutation)
 local Appearance = require(Shared.Logic.Appearance)
+local Genetics = require(Shared.Logic.Genetics)
+local Rng = require(Shared.Logic.Rng)
 
 local Monsters = {
 	Name = "Monsters",
 	Dependencies = { "Currency" },
 }
 
+-- Genes for a record made before genetics: the hatch roll, seeded by the record so the same
+-- monster always gets the same genes. Returns true when it had to add them.
+local function ensureGenes(id: string, m): boolean
+	if Genetics.Valid(m.genes) then
+		return false
+	end
+	m.genes = Genetics.Seeded(Rng.seed("genes", id, m.born or 0))
+	return true
+end
+
 Monsters.Profile = {
-	Version = 1,
+	Version = 2,
 	Default = function()
 		return { list = {}, codex = {}, nextId = 1, grown = 0 }
+	end,
+	Migrate = function(section, fromVersion)
+		if fromVersion < 2 and type(section.list) == "table" then
+			for id, m in section.list do
+				if type(m) == "table" then
+					ensureGenes(id, m)
+				end
+			end
+		end
+		return section
 	end,
 }
 
@@ -212,6 +236,8 @@ function Monsters:Insert(player, record, source: string)
 	copy.muts = table.clone(record.muts or {})
 	copy.traits = table.clone(record.traits or {})
 	copy.meals = table.clone(record.meals or {})
+	-- A record escrowed before genetics (a Market listing) arrives without genes.
+	copy.genes = if Genetics.Valid(record.genes) then Genetics.Copy(record.genes) else Genetics.Roll(ctx.Rng)
 	copy.loc, copy.pen, copy.busy, copy.locked = "barn", 0, false, false
 	copy.acc = nil
 	return insert(player, copy, source)
@@ -571,6 +597,10 @@ function Monsters.PlayerAdded(player, _info)
 		-- Trades and expeditions never survive a rejoin; clear stale busy tags that the owning
 		-- systems re-apply in their own PlayerAdded (expeditions/breeding keep theirs).
 		trackGrowing(player, m, id)
+		-- The v2 migration gives genes; this also covers a save whose migration failed.
+		if ensureGenes(id, m) then
+			ctx:Dirty(player, "list", id)
+		end
 	end
 	local done = processGrowth(player, ctx:Now())
 	if done > 0 then

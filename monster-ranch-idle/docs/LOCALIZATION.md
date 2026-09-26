@@ -95,6 +95,7 @@ longer than the English. Buttons and tabs should be about as long as the English
 | Light / Void | Luz / Vacío | Luz / Vazio |
 | Mood / Feed / Weight | Ánimo / Alimentar / Peso | Humor / Alimentar / Peso |
 | Mutation / Trait / Hidden trait | Mutación / Rasgo / Rasgo oculto | Mutação / Traço / Traço oculto |
+| Gene / Gene surge / Gen (generation) | Gen / Impulso genético / Gen. | Gene / Impulso genético / Ger. |
 | Expedition / Squad / Stage / Region | Expedición / Equipo / Etapa / Región | Expedição / Equipe / Fase / Região |
 | Caravan | Caravana | Caravana |
 | Boss / Stampede | Jefe / Estampida | Chefe / Debandada |

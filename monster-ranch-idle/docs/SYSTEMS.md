@@ -11,14 +11,14 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Progression | S1 | 🔌 | `Economy.spec`, `LevelSeventy.spec` | 3.2: date-gated cap (`Unlocks.LevelCaps`: 60, then 70 from 11 Mar 2028); unlocks at 62 / 66 / 70 |
 | Rewards | S1 | 🔌 | `Economy.spec` | |
 | Settings | S1 | 🔌 | `Kernel.spec`, `LocaleClient.spec` | 3.2: `language` ("auto" / en / es / pt) through `Settings.SetLanguage` |
-| Monsters | S2 | 🔌 | `Economy.spec` | growth, feeding, levels, stars, codex |
+| Monsters | S2 | 🔌 | `Economy.spec`, `Genetics.spec` | growth, feeding, levels, stars, codex; 3.6: stat genes on every record (save v2 migration, `Logic/Genetics`) |
 | Eggs | S3 | 🔌 | `Eggs.spec`, `RanchLogic.spec`, `LevelSeventy.spec` | 3.2: 5 slots (incubator 4 at Lv 62 + the pass), save v2 adds the 5th slot. Starter egg, slots from unlocks + Extra Incubator pass, speed providers (cap 0.75, fixed at placement), Starlit pity / Royal lucky meter (`Logic/EggRoll`), Hatch Rush ad, offline-ready eggs → WelcomeItem; `Room()` for trade/shop caps |
 | Shop | S3 | 🔌 | `Shop.spec`, `RanchLogic.spec` | deterministic global restock (`Logic/Restock`), per-player allowance per window, unlocks, event eggs, paid-random gate (Monetization → Policy fallback), storage cap, food, decor, themes, daily free egg ad |
 | Ranch | S3 | 🔌 | `Ranch.spec`, `RanchLogic.spec`, `LevelSeventy.spec` | 3.2: pen 6 (Lv 66, 10B). Pens + jars (`Logic/Jar`, settle-on-change, offline at saved rates), modifiers/jar bonuses, passes (doubleCoins, vip, bigBarn, autoCollect), assign/busy auto-removal + return, upgrades, decor mood aura, themes, garden (rain ×2) |
 | WelcomeBack | S3 | 🔌 | `WelcomeBack.spec` | buffers join WelcomeItems, ≥ 5 min away summary, claim ×1 / ×2 (ad); holds Auto-Collect until claimed |
 | Expeditions | S4 | 🔌 | `Expeditions.spec`, `BattleSim.spec`, `LevelSeventy.spec` | 3.2: squad 3 / 4 / 5 at Lv 1 / 35 / 70 (`Regions.SquadSize.steps`). Stage fights (`Logic/BattleSim`), timed runs + offline finish (`Logic/Loot`), caravans; optional Monetization (explorer, stageRetry ad), Weather (night) |
 | Boss | S4 | 🔌 | `Boss.spec` | Stampede schedule, cheer (≤ `Boss.MaxTapsPerSecond`), rewards; needs Expeditions; optional Weather (bossDamage) |
-| Breeding | S5 | 🔌 | `Breeding.spec` | pods (+pass), daily limits, seeded roll via `Logic/Breeding`, offline WelcomeItem, hybrid discovery → `Bred` |
+| Breeding | S5 | 🔌 | `Breeding.spec`, `Genetics.spec` | pods (+pass), daily limits, seeded roll via `Logic/Breeding`, offline WelcomeItem, hybrid discovery → `Bred`; 3.6: babies inherit genes and can surge, Claim returns `surges` |
 | Weather | S5 | 🔌 | `Weather.spec` | clock-aligned rolls + day/night (`Logic/WeatherRoll`), pen mutations, totems (queued behind running weather), heatwave egg speed, tutorial guarantee |
 | Social | S5 | 🔌 | `Social.spec` | friend boost (`friends` rate modifier), pets/likes, server + global broadcasts (MessagingService) |
 | Trade | S5 | 🔌 | `Trade.spec` | request → offer → ready → confirm countdown; atomic swap with capacity/egg caps, rollback, private log |
@@ -66,6 +66,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Screens: Arena, Raids | C3 | 🔌 | 3.2: three raid cards with date / level gates and a join gate on lobbies. 2.1: Battle / Defense / Rewards tabs; raid list and server lobbies; both play fights in Parts/BattleReplay; Champions Arena and Raid Portal buildings |
 | Screens: Racing, TradingHub, Workshop | C3 | 🔌 | 3.0: side-view race with Jump / Boost and a ghost strip; Trade Board / My ad (hub) or board preview + Travel (ranch); Design / Gallery / My copies; Racetrack, Trading Hub portal and Workshop buildings; Expeditions region tabs with opening dates |
 | Controller: Localize · `Shared/Locale` | 3.2 | 🔌 | Spanish and Portuguese (Brazil): catalogues keyed by the English text, every text in the PlayerGui and Workspace translated in place, longer text shrunk to fit, Settings → Language; `Locale.spec`, `LocaleClient.spec` |
+| Genes · component: GeneGrades | 3.6 | 🔌 | stat genes on MonsterDetail (grades, gene line), Breeding (parent grades, baby range, surges on claim), Monsters (Genes sort), Market (gene total); `GeneticsClient.spec` |
 | Controller: Gamepad · `UI/Focus` | 3.2 | 🔌 | controller support: cursor scoped to the open screen or dialog, B back, LB/RB tabs, Y Monsters, Racing / Surf on the pad, key legend; `GamepadClient.spec` |
 | Screen + controller: Leaderboards | C3 | 🔌 | board tabs, server/everywhere switch, champion card, reset countdown; controller draws the Market Square board (SurfaceGui) and champion nameplates |
 

@@ -3,6 +3,63 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.6 · Genetics
+
+No launch date of its own: genes switch on the moment the update is published, and every
+monster already on a ranch gets its genes the first time its owner joins.
+
+**For players**
+- **Stat genes.** Every monster carries two genes each for **HP, ATK, DEF and SPD**, one
+  from each parent. Each gene is worth 0–10 points and every point adds **+1%** to its stat,
+  so a perfect pair is +20%. Luck has no gene.
+- **Grades:** each stat's pair is graded **D** (0–4), **C** (5–9), **B** (10–13), **A**
+  (14–17) or **S** (18–20).
+- **Where genes come from:** hatched and reward monsters roll each gene at 0–5 (mostly C,
+  a lucky B). A and S only come from breeding.
+- **Breeding:** for each stat the baby gets one of parent A's two genes and one of parent
+  B's, at random, so a strong line has to be bred for. Every gene a baby inherits has an 8%
+  chance to **surge** +1 and a 1% chance to surge +2 (up to 10). Genes never drop.
+- **Your monsters keep their power:** monsters from before this update get genes too
+  (rolled once, the same every time), and genes only ever add to stats.
+- **Only stats:** genes never change how a monster looks, its size, its coin income, its
+  sell price or the breeding fee.
+- **Where you see them:**
+  - **Monster Detail:** a grade beside HP, ATK, DEF and SPD (tap it for the pair, e.g.
+    "ATK genes: 7 + 8 = +15%") and a "Genes 41/80 · Gen 6" line (tap it for how genes work).
+  - **Breeding Barn:** both parents' grades, the baby's bonus range for each stat before
+    surges ("ATK +6–11%"), and the number of genes that surged when you claim the baby.
+  - **Monsters:** a new **Genes** sort.
+  - **Market:** listings show the monster's gene total. Genes travel with traded and sold
+    monsters.
+
+**In the code**
+- `Config.Genetics`: the gene stats, `MaxGene`, `PctPerPoint`, `HatchRange`, `SurgeChance`,
+  `BigSurgeChance` and the grade table.
+- `Logic/Genetics`: `Roll`, `Seeded`, `Inherit` (one gene of each parent's pair, then
+  surges), `Valid`, `Copy`, `Pair`, `Points`, `Bonus`, `Total`, `Grade`, `Range`, `Preview`.
+  A record without genes (enemies, raid bosses) counts as all zero.
+- Monster records have `genes = { hp = { a, b }, atk = …, def = …, spd = … }`.
+  - `Formulas.Stats` multiplies HP, ATK, DEF and SPD by `1 + Genetics.Bonus`. `CoinRate`,
+    `Value`, `SellPrice` and `Appearance` don't read genes.
+  - `MonsterGen.New` rolls genes last, or copies `spec.genes`, so every earlier roll is
+    unchanged.
+  - `Breeding.Roll` inherits them last and sets `spec.surges`. `Breeding.Outcomes` has
+    `genes = Genetics.Preview(...)`, and `Breeding.Claim` returns `surges`.
+- The Monsters save is version 2. `Migrate` gives every pre-genetics record
+  `Genetics.Seeded(Rng.seed("genes", id, born))`, and `PlayerAdded` repeats that for a
+  save whose migration failed. `Monsters:Insert` keeps genes, and gives a record escrowed
+  before genetics a fresh roll.
+- `genes` is one of Trade's `VALUE_FIELDS`, and Market's `ItemView` carries `genes` (false
+  for an egg).
+- UI: `UI/Components/GeneGrades` (grade colours, a badge, a four-stat row). Changed:
+  MonsterDetail (stat rows 22 px to make room for the gene line), Breeding (parent cards,
+  preview row, claim dialog 480 × 420), the Monsters sort and the Market item line.
+- Specs:
+  - `Genetics.spec`: rules, inheritance and surge rates, stats and nothing else, earlier
+    rolls unchanged, server breeding, the v2 migration twice, Insert and the Market view.
+  - `GeneticsClient.spec`: Monster Detail with a column-fit check, Spanish, the Breeding
+    Barn with a forced surge, and the Genes sort.
+
 ## 3.2 · Frostbite Glacier + Level 70
 
 Launch Sat 11 Mar 2028. Everything is dated in config: Frostbite Glacier and the Frost

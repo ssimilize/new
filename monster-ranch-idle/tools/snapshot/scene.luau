@@ -247,6 +247,21 @@ local PREPARE = {
 	Workshop = function()
 		c:Request("Workshop.Browse", { tab = "new" })
 	end,
+	-- Update 3.6: a bred Adult's genes (grades beside the stats, the gene line).
+	MonsterDetail = function()
+		local m = adult(me, "zappip", 4, { gen = 6, genes = { hp = { 9, 8 }, atk = { 10, 9 }, def = { 4, 6 }, spd = { 7, 5 } } })
+		c:Advance(1)
+		c:Open("MonsterDetail", { id = m.id })
+		return true
+	end,
+	-- Update 3.6: two parents in a pod, their gene grades and the baby's gene range.
+	Breeding = function()
+		local a = adult(me, "cindlet", 4, { genes = { hp = { 6, 9 }, atk = { 8, 7 }, def = { 3, 5 }, spd = { 9, 10 } } })
+		local b = adult(me, "mossbun", 4, { genes = { hp = { 4, 5 }, atk = { 10, 6 }, def = { 8, 8 }, spd = { 2, 4 } } })
+		h:System("Currency"):Add(me, "coins", 1e9, "snapshot")
+		c:Advance(1)
+		c:Request("Breeding.Start", { pod = 1, a = a.id, b = b.id })
+	end,
 	TradingHub = function()
 		c:Request("TradingHub.Refresh")
 	end,

@@ -120,6 +120,7 @@ Rules:
 | `name` | string | "" = use the form name |
 | `locked` | boolean | player lock (can't sell or fuse) |
 | `born`, `gen` | number | |
+| `genes` | `{ hp, atk, def, spd = { a, b } }` | stat genes, each 0..10 (3.6, `Logic/Genetics`). Only `Formulas.Stats` reads them (+1% per point); set at creation or by the Monsters v2 migration, never changed after |
 | `acc` | {[slot]: accessoryId}? | worn accessories (1.5). Set only by Accessories through `Monsters:SetAccessory`; `Monsters:Remove` strips it (the detail of `MonsterRemoved` carries it) and `Monsters:Insert` clears it, so accessories never travel with a traded, listed or retired monster |
 
 All derived numbers (coin rate, stats, power, value, level cap, grow time) come from `Logic/Formulas.luau`. Never store them.
@@ -465,7 +466,7 @@ State only moves from `"open"` to one closed state, always inside `Services.Mark
 ```lua
 { id, seller, sellerName, kind, key, price, createdAt, expiresAt, club = boolean, mine = boolean, state,
   item = { appearance = Appearance | false, egg = eggType | false, name, rarity, variant, stage, lv,
-           stars, weight, muts = { string }, traits = { traitId } } }   -- no hidden trait, no ids
+           stars, weight, muts = { string }, traits = { traitId }, genes = Genes | false } }   -- no hidden trait, no ids
 ```
 
 ### Adapters (`ctx.Services`)

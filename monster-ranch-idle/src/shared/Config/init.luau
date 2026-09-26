@@ -11,6 +11,7 @@ local Config = {
 	Elements = require(script.Elements),
 	Species = require(script.Species),
 	Traits = require(script.Traits),
+	Genetics = require(script.Genetics),
 	Mutations = require(script.Mutations),
 	Weather = require(script.Weather),
 	Eggs = require(script.Eggs),

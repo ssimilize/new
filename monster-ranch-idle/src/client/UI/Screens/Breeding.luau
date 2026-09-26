@@ -4,7 +4,9 @@
 	Pods (session.Breeding.podCount) with timers, Claim and Cancel (fee is not refunded);
 	two parent pickers (Monsters pick mode: Adults that aren't busy and have breeds left);
 	a preview from Logic/Breeding.Outcomes (species with a "?" silhouette for undiscovered
-	hybrids, rarity bars, mutation chance, time and fee); daily breeds left per parent;
+	hybrids, rarity bars, mutation chance, the baby's gene range per stat, time and fee);
+	daily breeds left per parent; each parent's gene grades; the claimed baby's grades and
+	gene surges (update 3.6);
 	Start → Breeding.Start.
 
 	Reads: profile.Breeding, session.Breeding, profile.Monsters.list, profile.Currency.coins,
@@ -18,6 +20,7 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
+local Genetics = require(Shared.Logic.Genetics)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -26,6 +29,8 @@ local Button = require(UI.Components.Button)
 local Panel = require(UI.Components.Panel)
 local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
+local GeneGrades = require(UI.Components.GeneGrades)
+local Tiles = require(UI.Components.Tiles)
 local Util = require(script.Parent.Parts.Util)
 local Dialog = require(script.Parent.Parts.Dialog)
 
@@ -224,10 +229,10 @@ return {
 			Dialog.show(ctx.UI.Top, {
 				Title = if res.hybridDiscovered then "New hybrid discovered!" else "A new monster!",
 				Color = if res.hybridDiscovered then C.Purple else C.Pink,
-				Size = Vector2.new(480, 380),
+				Size = Vector2.new(480, 420),
 				Build = function(content)
 					if ap then
-						local icon = MonsterIcon.new(ap, 130)
+						local icon = MonsterIcon.new(ap, 120)
 						icon.LayoutOrder = 1
 						icon.Parent = content
 						Util.text({
@@ -240,6 +245,20 @@ return {
 							Parent = content,
 						})
 						Util.tagChips(ap, content, 3)
+					end
+					GeneGrades.row(res.monster and res.monster.genes, { Height = 20, LayoutOrder = 4, Parent = content })
+					local surges = tonumber(res.surges) or 0
+					if surges > 0 then
+						Util.text({
+							Text = if surges == 1
+								then "Gene surge! A gene grew stronger"
+								else string.format("Gene surge! %d genes grew stronger", surges),
+							TextColor3 = C.Purple,
+							TextXAlignment = Enum.TextXAlignment.Center,
+							Size = UDim2.new(1, 0, 0, 22),
+							LayoutOrder = 5,
+							Parent = content,
+						})
 					end
 				end,
 				Buttons = { { Text = "Nice!", Color = C.Green } },
@@ -435,11 +454,12 @@ return {
 				LayoutOrder = 4,
 				Parent = content,
 			})
+			GeneGrades.row(m.genes, { Height = 20, PerRow = 2, LayoutOrder = 5, Parent = content })
 			Util.text({
 				Text = string.format("Breeds left today: %d", breedsLeft(m.id)),
 				TextXAlignment = Enum.TextXAlignment.Center,
 				Size = UDim2.new(1, 0, 0, 20),
-				LayoutOrder = 5,
+				LayoutOrder = 6,
 				Parent = content,
 			})
 			if editable then
@@ -448,7 +468,7 @@ return {
 					Color = C.Blue,
 					Size = UDim2.new(1, 0, 0, 44),
 					TextSize = Theme.TextSize.Body,
-					LayoutOrder = 6,
+					LayoutOrder = 7,
 					Parent = content,
 					OnClick = function()
 						pickParent(which)
@@ -608,6 +628,60 @@ return {
 				mutText ..= " · " .. table.concat(extras, " · ")
 			end
 			Util.text({ Text = mutText, Size = UDim2.new(1, 0, 0, 20), LayoutOrder = 5, Parent = content })
+
+			-- Genes (update 3.6): the baby's bonus per stat before surges.
+			local genes = o.genes or Genetics.Preview(a.genes, b.genes)
+			local genesRow = New("Frame", {
+				Name = "Genes",
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 22),
+				LayoutOrder = 6,
+				Parent = content,
+			})
+			local genesTitle = Util.text({ Text = "Genes", Size = UDim2.new(0, 90, 1, 0), Parent = genesRow })
+			local cells = New("Frame", {
+				BackgroundTransparency = 1,
+				Position = UDim2.fromOffset(90, 0),
+				Size = UDim2.new(1, -90, 1, 0),
+				Parent = genesRow,
+			}, { Create.List("x", 10, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
+			for i, g in genes.stats or {} do
+				local cell = New("Frame", {
+					BackgroundTransparency = 1,
+					AutomaticSize = Enum.AutomaticSize.X,
+					Size = UDim2.fromOffset(0, 22),
+					LayoutOrder = i,
+					Parent = cells,
+				}, { Create.List("x", 4, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
+				Util.text({
+					Text = Config.Genetics.StatNames[g.stat] or g.stat,
+					TextColor3 = C.TextMuted,
+					AutomaticSize = Enum.AutomaticSize.X,
+					TextWrapped = false,
+					Size = UDim2.fromOffset(0, 22),
+					LayoutOrder = 1,
+					Parent = cell,
+				})
+				local pct = Config.Genetics.PctPerPoint * 100
+				Util.text({
+					Text = string.format("+%d–%d%%", math.floor(g.lo * pct + 0.5), math.floor(g.hi * pct + 0.5)),
+					TextColor3 = GeneGrades.color(g.hi),
+					AutomaticSize = Enum.AutomaticSize.X,
+					TextWrapped = false,
+					Size = UDim2.fromOffset(0, 22),
+					LayoutOrder = 2,
+					Parent = cell,
+				})
+			end
+			Tiles.tap(genesTitle, function()
+				ctx:Toast(
+					string.format(
+						"The baby gets one gene of each parent's pair, and each gene has a %d%% chance to surge higher.",
+						math.floor((genes.surgeChance or 0) * 100 + 0.5)
+					),
+					"info"
+				)
+			end)
 
 			-- Time, fee and the action (bottom of the card).
 			local footer = New("Frame", {

@@ -3,10 +3,11 @@
 	shared by the server (authoritative) and the client (previews).
 
 	Monster record fields used here (see ARCHITECTURE.md → "Monster record"):
-	  line, stage, form, rarity, variant, muts, traits, hidden, weight, lv, stars, mood
+	  line, stage, form, rarity, variant, muts, traits, hidden, weight, lv, stars, mood, genes
 ]]
 
 local Config = require(script.Parent.Parent.Config)
+local Genetics = require(script.Parent.Genetics)
 
 local Economy = Config.Economy
 local Rarities = Config.Rarities
@@ -75,7 +76,8 @@ function Formulas.CoinRate(m): number
 		* (1 + traitBonus)
 end
 
--- Battle stats. Returns { hp, atk, def, spd, luck }.
+-- Battle stats. Returns { hp, atk, def, spd, luck }. Genes (Logic/Genetics) multiply HP, ATK,
+-- DEF and SPD on top of everything else; a record without genes gets no gene bonus.
 function Formulas.Stats(m)
 	local def = Species.ById[m.line]
 	local rarity = Rarities.List[m.rarity]
@@ -93,7 +95,7 @@ function Formulas.Stats(m)
 	local all = Traits.Sum(traits, "allStatPct") + mutPct
 	local function stat(key: string, traitKey: string?)
 		local bonus = all + (if traitKey then Traits.Sum(traits, traitKey) else 0)
-		return math.floor(def.base[key] * common * (1 + bonus) + 0.5)
+		return math.floor(def.base[key] * common * (1 + bonus) * (1 + Genetics.Bonus(m.genes, key)) + 0.5)
 	end
 	return {
 		hp = stat("hp", "hpPct"),

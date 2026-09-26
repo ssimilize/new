@@ -6,7 +6,9 @@
 	  left     rotating 3D portrait (ViewportMonster), element + mutation chips, stage,
 	           weight (+ HUGE), mood, base coin rate, busy state
 	  middle   level bar (lv / Formulas.LevelCap), stat bars (Formulas.Stats; bars show how far
-	           each stat is from its value at this stage's level cap), power, traits (hidden
+	           each stat is from its value at this stage's level cap) with a gene grade beside HP,
+	           ATK, DEF and SPD (tap: the gene pair), gene points and generation (tap: how genes
+	           work, update 3.6), power, traits (hidden
 	           trait is "???" until Adult), Feed (flavour picker with owned food), Level up ×1 /
 	           ×N (Economy.LevelCost), Grow (Formulas.CanGrow reason) or grow countdown
 	  right    diet meter for this stage, evolution path with branches
@@ -22,6 +24,7 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
+local Genetics = require(Shared.Logic.Genetics)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -36,6 +39,7 @@ local Tiles = require(UI.Components.Tiles)
 local StatBar = require(UI.Components.StatBar)
 local InsetPopup = require(UI.Components.InsetPopup)
 local ViewportMonster = require(UI.Components.ViewportMonster)
+local GeneGrades = require(UI.Components.GeneGrades)
 
 local New = Create.New
 local C = Theme.Colors
@@ -206,17 +210,44 @@ function MonsterDetail.Build(ctx)
 	})
 	local levelBar = Widgets.Bar({ Color = C.Blue, Size = UDim2.new(1, 0, 0, 16), LayoutOrder = 2, Parent = middle })
 	local statRows = {}
+	local geneSlots = {} -- [stat] = the frame beside its bar that holds the gene grade
 	for i, s in STATS do
+		local line = Tiles.frame({ Size = UDim2.new(1, 0, 0, 22), LayoutOrder = 2 + i, Parent = middle })
 		statRows[s.key] = StatBar.new({
 			Label = s.label,
 			Color = s.color,
 			LabelWidth = 48,
 			ValueWidth = 64,
-			Height = 24,
-			LayoutOrder = 2 + i,
-			Parent = middle,
+			Height = 22,
+			Parent = line,
 		})
+		statRows[s.key].Root.Size = UDim2.new(1, -32, 1, 0)
+		if Config.Genetics.StatNames[s.key] then
+			geneSlots[s.key] = Tiles.frame({
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.fromScale(1, 0.5),
+				Size = UDim2.fromOffset(26, 20),
+				Parent = line,
+			})
+		end
 	end
+	local genesLabel = Tiles.label({
+		Text = "",
+		TextSize = Theme.TextSize.Small,
+		TextColor3 = C.TextMuted,
+		Size = UDim2.new(1, 0, 0, 20),
+		LayoutOrder = 8,
+		Parent = middle,
+	})
+	Tiles.tap(genesLabel, function()
+		ctx:Toast(
+			string.format(
+				"Each stat has two genes, one from each parent. Every gene point adds %d%% to that stat, and a baby's genes can surge higher.",
+				math.floor(Config.Genetics.PctPerPoint * 100 + 0.5)
+			),
+			"info"
+		)
+	end)
 	local traitsRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 10, Parent = middle }, 6)
 	local actionRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 54), LayoutOrder = 11, Parent = middle }, 8)
 	local feedButton = Button.new({
@@ -677,6 +708,18 @@ function MonsterDetail.Build(ctx)
 			local v = stats[s.key] or 0
 			statRows[s.key]:Set(v / math.max(1, maxStats[s.key] or v), Format.commas(v), true)
 		end
+
+		-- Genes (update 3.6)
+		for stat, slot in geneSlots do
+			Tiles.clear(slot)
+			local a, b = Genetics.Pair(m.genes, stat)
+			local badge = GeneGrades.badge({ Points = a + b, Size = UDim2.fromScale(1, 1), Parent = slot })
+			Tiles.tap(badge, function()
+				local pct = math.floor((a + b) * Config.Genetics.PctPerPoint * 100 + 0.5)
+				ctx:Toast(string.format("%s genes: %d + %d = +%d%%", Config.Genetics.StatNames[stat], a, b, pct), "info")
+			end)
+		end
+		genesLabel.Text = string.format("Genes %d/%d · Gen %d", Genetics.Total(m.genes), Genetics.MaxTotal, tonumber(m.gen) or 0)
 
 		-- Traits
 		Tiles.clear(traitsRow)

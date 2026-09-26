@@ -332,7 +332,7 @@ Api.Actions = {
 	["Breeding.Claim"] = {
 		schema = T.struct({ pod = T.integer(1, 2) }),
 		rate = 2,
-		returns = "{ monster: Monster, hybridDiscovered: boolean }",
+		returns = "{ monster: Monster, hybridDiscovered: boolean, surges: number }",
 	},
 	["Breeding.Cancel"] = { schema = T.struct({ pod = T.integer(1, 2) }), rate = 1, returns = "nil  -- fee is not refunded" },
 

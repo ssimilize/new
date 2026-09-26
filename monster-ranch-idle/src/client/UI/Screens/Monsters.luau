@@ -5,7 +5,7 @@
 	  { tab? = "all" | "pens" | "barn" | "busy" }
 	  { pick = { title, filter = fn(monster) -> bool, max = 1, onPick = fn({ ids }), returnTo, returnParams } }
 
-	Normal mode  tabs (All / In pens / Barn / Busy), sort (rarity, level, power, newest),
+	Normal mode  tabs (All / In pens / Barn / Busy), sort (rarity, level, power, genes, newest),
 	             tap → MonsterDetail { id }. "Sell" toggles multi-select sell mode with a total
 	             price preview (Formulas.SellPrice) → Monsters.Sell { ids } (two taps to confirm).
 	Pick mode    (ARCHITECTURE §5) only monsters passing `filter` are shown (a filter that
@@ -22,6 +22,7 @@ local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
+local Genetics = require(Shared.Logic.Genetics)
 local Appearance = require(Shared.Logic.Appearance)
 
 local UI = script.Parent.Parent
@@ -41,8 +42,8 @@ local C = Theme.Colors
 local Monsters = { Name = "Monsters" }
 
 local CARD = 104
-local SORTS = { "rarity", "level", "power", "newest" }
-local SORT_NAMES = { rarity = "Rarity", level = "Level", power = "Power", newest = "Newest" }
+local SORTS = { "rarity", "level", "power", "genes", "newest" }
+local SORT_NAMES = { rarity = "Rarity", level = "Level", power = "Power", genes = "Genes", newest = "Newest" }
 local BUSY_TEXT = { expedition = "Away", breeding = "Breeding", trade = "Trading" }
 
 local function idNumber(id: string): number
@@ -174,7 +175,7 @@ function Monsters.Build(ctx)
 
 	local function sortedList()
 		local list = {}
-		local power = {}
+		local score = {} -- power or gene points, for those two sorts
 		local mode = SORTS[sortIndex]
 		for id, m in StoreKit.monsters(store) do
 			if type(m) == "table" and Config.Species.ById[m.line or ""] then
@@ -182,7 +183,9 @@ function Monsters.Build(ctx)
 					table.insert(list, { id = id, m = m })
 					if mode == "power" then
 						local ok, p = pcall(Formulas.MonsterPower, m)
-						power[id] = if ok then p else 0
+						score[id] = if ok then p else 0
+					elseif mode == "genes" then
+						score[id] = Genetics.Total(m.genes)
 					end
 				end
 			end
@@ -191,8 +194,8 @@ function Monsters.Build(ctx)
 			local ma, mb = a.m, b.m
 			if mode == "level" and (ma.lv or 1) ~= (mb.lv or 1) then
 				return (ma.lv or 1) > (mb.lv or 1)
-			elseif mode == "power" and power[a.id] ~= power[b.id] then
-				return power[a.id] > power[b.id]
+			elseif (mode == "power" or mode == "genes") and score[a.id] ~= score[b.id] then
+				return score[a.id] > score[b.id]
 			elseif mode == "newest" then
 				local ba, bb = tonumber(ma.born) or 0, tonumber(mb.born) or 0
 				if ba ~= bb then

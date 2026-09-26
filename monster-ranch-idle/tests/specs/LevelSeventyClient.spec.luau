@@ -132,7 +132,7 @@ return function(t)
 			expect(n).toBe(5)
 			local needed = (width + gap * (n - 1)) * uiScale(allyRow)
 			expect(needed <= allyRow.AbsoluteSize.X).toBe(true)
-			c:Click(c:Button("Skip", c.kernel.UI.Top))
+			c:Click(c:Button("Skip ▸▸", c.kernel.UI.Top)) -- not a bare "Skip": a title like "vs Sky Skipper" matches it
 			c:Advance(1)
 			expectClean(c)
 		end)

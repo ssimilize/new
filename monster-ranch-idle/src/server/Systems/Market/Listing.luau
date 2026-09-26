@@ -14,13 +14,15 @@
 	  { id, seller, sellerName, kind, key, price, createdAt, expiresAt, club = boolean,
 	    mine = boolean, state, item = ItemView }
 	  ItemView = { appearance = Appearance | false, egg = eggType | false, name, rarity, variant,
-	               stage, lv, stars, weight, muts = { string }, traits = { traitId } }
+	               stage, lv, stars, weight, muts = { string }, traits = { traitId },
+	               genes = Genes | false }   -- stat genes (Logic/Genetics), false for an egg
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Config = require(Shared.Config)
 local Appearance = require(Shared.Logic.Appearance)
 local Formulas = require(Shared.Logic.Formulas)
+local Genetics = require(Shared.Logic.Genetics)
 
 local Cfg = Config.Market
 
@@ -42,6 +44,7 @@ function Listing.ItemView(kind: string, record)
 			weight = 0,
 			muts = {},
 			traits = {},
+			genes = false,
 		}
 	end
 	return {
@@ -56,6 +59,7 @@ function Listing.ItemView(kind: string, record)
 		weight = record.weight,
 		muts = table.clone(record.muts or {}),
 		traits = table.clone(record.traits or {}),
+		genes = if Genetics.Valid(record.genes) then Genetics.Copy(record.genes) else false,
 	}
 end
 
