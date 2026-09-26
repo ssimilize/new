@@ -84,6 +84,16 @@ local function inReef(): boolean
 	return reef ~= nil and type(reef.IsInside) == "function" and reef.IsInside() == true
 end
 
+-- Glow-up LR: this player is in a live race on the track (the Racing screen is closed by then).
+local function liveRacing(): boolean
+	local mine = ctx.Store:Get("session.LiveRace")
+	local race = ctx.Store:Get("global.LiveRace")
+	return type(mine) == "table"
+		and type(mine.heat) == "number"
+		and type(race) == "table"
+		and (race.state == "countdown" or race.state == "running")
+end
+
 local function computeState()
 	local current = ctx.Router:Current()
 	local position = characterPosition()
@@ -95,7 +105,7 @@ local function computeState()
 	end
 	return {
 		raid = current == "Raids",
-		racing = current == "Racing",
+		racing = current == "Racing" or liveRacing(),
 		battle = ctx.UI.Top:FindFirstChild("BattleReplay") ~= nil or (current ~= nil and BATTLE_SCREENS[current] == true),
 		stampede = current == "Boss" or stampedeLive(),
 		sky = onSky(),
