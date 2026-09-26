@@ -7,7 +7,11 @@
 
 	Global (global.Boss):
 	  { state = "idle"|"lobby"|"active", bossId, startsAt, endsAt, hp, maxHp, participants,
-	    board = { { userId, name, damage } } }        -- board: top 10 by damage
+	    board = { { userId, name, damage } },          -- board: top 10 by damage
+	    squads = { { userId, looks = { { line, form, stage, rarity, variant } } } } }
+	  squads (glow-up U): what each joined squad looks like, for the arena drawn in the world
+	  (Controllers/StampedeArena); in join order, at most Arena.squadPlayers players and
+	  Arena.squadPerPlayer looks each. Render-only (no monster ids); cleared when a lobby opens.
 	  While idle, startsAt/endsAt/bossId describe the NEXT fight; hp/maxHp/board keep the
 	  last fight's result until the next lobby opens.
 	Session (session.Boss): { joined, damage, cheer }   -- cheer 0..1
@@ -95,6 +99,7 @@ local function scheduleNext(now: number)
 	G.maxHp = G.maxHp or 0
 	G.participants = G.participants or 0
 	G.board = G.board or {}
+	G.squads = G.squads or {}
 	ctx:DirtyGlobal()
 end
 
@@ -126,6 +131,7 @@ local function openLobby()
 	G.maxHp = 0
 	G.participants = 0
 	G.board = {}
+	G.squads = {}
 	ctx:DirtyGlobal()
 	for _, player in ctx:Players() do
 		setSession(player, false, 0, 0)
@@ -148,6 +154,25 @@ local function activate()
 	G.hp = G.maxHp
 	ctx:DirtyGlobal()
 	ctx.Net:FireAll("Boss.Started", { bossId = G.bossId, startsAt = G.startsAt, endsAt = G.endsAt })
+end
+
+-- Glow-up U: the squad's looks for the arena in the world, capped (render-only, no ids).
+local function addSquadLooks(player, ids: { string })
+	local arena = Cfg.Arena
+	local G = global()
+	if not arena or #G.squads >= arena.squadPlayers then
+		return
+	end
+	local looks = {}
+	for _, id in ids do
+		local m = Monsters:Get(player, id)
+		if m and #looks < arena.squadPerPlayer then
+			table.insert(looks, { line = m.line, form = m.form, stage = m.stage, rarity = m.rarity, variant = m.variant or 0 })
+		end
+	end
+	if #looks > 0 then
+		table.insert(G.squads, { userId = player.UserId, looks = looks })
+	end
 end
 
 -- Damage ------------------------------------------------------------------------------------
@@ -337,6 +362,7 @@ function Boss.Init(context)
 		}
 		table.insert(participants, entry)
 		byUser[player.UserId] = entry
+		addSquadLooks(player, ids)
 		if G.state == "active" then
 			local share = math.floor(hpShare(power, math.max(0, G.endsAt - ctx:Now())))
 			G.maxHp += share

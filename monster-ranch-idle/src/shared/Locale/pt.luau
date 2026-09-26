@@ -2106,4 +2106,6 @@ return {
 	-- Glow-up N: the hatch in the world
 	["NEW!"] = "NOVO!",
 	["SHINY!"] = "BRILHANTE!",
+	["Cheer!"] = "Torça!",
+	["To the arena"] = "Para a arena",
 }

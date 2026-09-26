@@ -281,6 +281,11 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Community**: a trick with a `bond` field (`Config/Bond.Tricks`, merged into `Config.Community.TrickById` but not `Tricks`) needs that many hearts on the monster; the emote wheel is unchanged.
 - **Client**: controller `Care`, screen `Care` (non-modal, `{ id }`); `World.OwnTapHandler(id) -> handled` (set by Care; an own-monster tap falls back to MonsterDetail without it), `World.PlayCare(id, state, hearts) -> Model?`, `World.MonsterModel(owner, id) -> Model?`; `Screens/Parts/BondBadge`.
 
+### Glow-up U: The Stampede, live
+- **Boss** adds `global.Boss.squads = { { userId, looks = { { line, form, stage, rarity, variant } } } }` (render-only, no monster ids): filled on `Boss.Join` in join order, at most `Config.Boss.Arena.squadPlayers` players and `squadPerPlayer` looks each, cleared when the next lobby opens. Damage, HP, cheer and rewards are unchanged.
+- **Place**: `Config.World.StampedeArena = { center = { x, z }, radius }` (east of the Expedition Gate), also in `World.Scenery.keepOut`. Tuning in `Config.Boss.Arena`; pure rules in `Logic/StampedeArena` (`Rings`, `Pick`, `AttackOffset`, `Crossed`, `newPacer`, `Approach`, `MaxMonsters`).
+- **Client**: controller `StampedeArena` draws the arena, the giant (`MonsterModel.Build` at `bossScale`), every squad in rings, cheer bolts and the loot fountain from replicated state, plus a stacked `ColorCorrectionEffect` "StampedeStorm" in Lighting during the lobby and fight (the Weather and Sky controllers never write it; it is destroyed when it fades out). Public: `StampedeArena:Live() -> boolean` (Soundscape plays `MusicStampede` meanwhile), `StampedeArena:Fountain(payload, done(rewarded)) -> boolean` (Broadcasts hands it `Boss.Result` first; `true` = it will call `done` once, after the fountain), `StampedeArena.Stats()` (tests). Its HUD buttons Cheer (sends `Boss.Cheer`) and "To the arena" (`Boss.Join` if unlocked, then moves the character) show only with no screen open.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 
@@ -333,6 +338,7 @@ Canonical names (the HUD, world prompts and other screens open these):
 | `Settings` | C3 | — |
 
 Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2) · `Soundscape` (audio) · `ChatTags` (VIP chat tag) · `Celebrate`, `Stampede`, `PhotoMode`, `DailyLogin`, `Community` (glow-up) · `CameraDirector`, `Cinematics` (glow-up N) · `Sky`, `Lamplight`, `SceneryMotion`, `Critters` (ambience).
+Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2) · `Soundscape` (audio) · `ChatTags` (VIP chat tag) · `Celebrate`, `Stampede`, `StampedeArena`, `PhotoMode`, `DailyLogin`, `Community` (glow-up) · `Sky`, `Lamplight`, `SceneryMotion`, `Critters` (ambience).
 
 - **Layers:** `ctx.UI.Hud`, `Screens`, `Overlay`, `Top` and `Feedback` (glow-up), in that drawing order. `Feedback` holds the feedback queue, flying rewards and the Stampede banner, so feedback is never hidden behind the popup it is about.
 - **Feedback queue (`UI/Components/Toasts`):** toasts and reward cards share one stack above the bottom bar. `Toasts.show(text, kind, seconds?)` (`ctx:Toast`), `Toasts.push(gui, seconds?) -> dismiss()`, `Toasts.dismiss(gui)`. At most 4 items; they pop in, shrink out, and a repeated toast refreshes the one showing.
@@ -460,7 +466,7 @@ profile.Expeditions = {
 session.Expeditions = { slotCount, squadSize, caravan = CaravanLobby|false }   -- squadSize 3..5
 global.Expeditions  = { caravans = { [caravanId] = { id, host, hostName, region, stage, duration, members = { { userId, name, slot, power } }, expiresAt } } }
 
-global.Boss  = { state = "idle"|"lobby"|"active", bossId, startsAt, endsAt, hp, maxHp, participants, board = { { userId, name, damage } } }  -- board: top 10
+global.Boss  = { state = "idle"|"lobby"|"active", bossId, startsAt, endsAt, hp, maxHp, participants, board = { { userId, name, damage } }, squads = { { userId, looks } } }  -- board: top 10; squads: glow-up U
 session.Boss = { joined, damage, cheer }                 -- cheer 0..1
 
 profile.Breeding = { pods = { [1..2] = { state = "idle"|"running", a = id|false, b = id|false, startedAt, endsAt, seed } }, daily = { day, counts = { [monsterId] = n } }, discovered = { [lineId] = true } }

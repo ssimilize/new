@@ -44,6 +44,8 @@ return {
 		-- Glow-up: celebrations that travel, the moment queue, the Stampede call
 		"Celebrate",
 		"Stampede",
+		-- Glow-up U: the Stampede live in the world (arena, giant, squads, cheer bolts, storm)
+		"StampedeArena",
 		-- Photo mode: free camera, filters, frames, stickers, CaptureService
 		"PhotoMode",
 		-- Glow-up N: camera shots (hatch in the world, evolution, star-up / level-up looks)

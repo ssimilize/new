@@ -5,7 +5,7 @@
 	Twice a second it works out the listening context from what the client already knows:
 	  raid       the Raids screen            racing   the Racing screen
 	  battle     a BattleReplay viewer is up (ctx.UI.Top), or the Arena screen
-	  stampede   the Boss screen is open
+	  stampede   the Boss screen is open, or the Stampede lobby or fight is on (StampedeArena:Live)
 	  sky        SkyIslands.IsOnIslands()
 	  hub        the character is inside Config.World.HubRadius of the plaza
 	  night      global.Weather.night        weather   global.Weather.id
@@ -72,6 +72,12 @@ local function onSky(): boolean
 	return sky ~= nil and type(sky.IsOnIslands) == "function" and sky.IsOnIslands() == true
 end
 
+-- Glow-up U: the Stampede music plays server-wide while its lobby or fight is on.
+local function stampedeLive(): boolean
+	local arena = ctx:GetController("StampedeArena")
+	return arena ~= nil and arena:Live() == true
+end
+
 local function computeState()
 	local current = ctx.Router:Current()
 	local position = characterPosition()
@@ -85,7 +91,7 @@ local function computeState()
 		raid = current == "Raids",
 		racing = current == "Racing",
 		battle = ctx.UI.Top:FindFirstChild("BattleReplay") ~= nil or (current ~= nil and BATTLE_SCREENS[current] == true),
-		stampede = current == "Boss",
+		stampede = current == "Boss" or stampedeLive(),
 		sky = onSky(),
 		hub = flat <= (Config.World.HubRadius or 95),
 		night = weather.night,
