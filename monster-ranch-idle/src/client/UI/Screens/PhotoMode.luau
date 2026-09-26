@@ -402,7 +402,7 @@ return {
 			sticker:SetAttribute("Sprite", name)
 			local remove = Button.new({
 				Name = "Remove",
-				Text = "✕",
+				Text = "X", -- FredokaOne has no ✕ glyph (it renders blank)
 				Color = C.Red,
 				Round = true,
 				Size = UDim2.fromOffset(44, 44),
@@ -545,7 +545,7 @@ return {
 		})
 		toolButton({
 			Name = "Exit",
-			Text = "✕",
+			Text = "X", -- FredokaOne has no ✕ glyph (it renders blank)
 			Color = C.Red,
 			Size = UDim2.fromOffset(52, 52),
 			TextSize = 24,

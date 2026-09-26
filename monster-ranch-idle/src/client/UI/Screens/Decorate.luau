@@ -104,7 +104,7 @@ return {
 		})
 		Button.new({
 			Name = "Leave",
-			Text = "✕",
+			Text = "X", -- FredokaOne has no ✕ glyph (it renders blank)
 			Color = C.Red,
 			Size = UDim2.fromOffset(46, 46),
 			AnchorPoint = Vector2.new(1, 0),
@@ -113,7 +113,7 @@ return {
 			OnClick = function()
 				if decor and decor.Dirty() and not leaving then
 					leaving = true
-					ctx:Toast("You have unsaved changes. Tap ✕ again to leave.", "info")
+					ctx:Toast("You have unsaved changes. Tap X again to leave.", "info")
 					return
 				end
 				ctx.Router:Close("Decorate")

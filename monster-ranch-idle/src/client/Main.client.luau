@@ -33,3 +33,8 @@ for _, name in Manifest.Screens do
 end
 
 kernel:Start()
+
+-- Studio only: the client QA bridge (PlayerScripts.QABridge), see Kernel/QABridge.
+if game:GetService("RunService"):IsStudio() then
+	require(script.Parent.Kernel.QABridge).Attach(kernel)
+end

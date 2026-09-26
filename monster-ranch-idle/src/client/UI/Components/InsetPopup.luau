@@ -65,7 +65,7 @@ function InsetPopup.new(props: { Parent: Instance, Title: string?, Size: UDim2?,
 		Parent = header,
 	})
 	local close = Button.new({
-		Text = "✕",
+		Text = "X", -- FredokaOne has no ✕ glyph (it renders blank)
 		Color = Theme.Colors.Red,
 		Size = UDim2.fromOffset(44, 44),
 		AnchorPoint = Vector2.new(1, 0.5),

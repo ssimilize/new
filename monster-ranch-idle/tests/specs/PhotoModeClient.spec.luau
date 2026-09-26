@@ -148,7 +148,7 @@ return function(t)
 			c:Advance(1)
 			expect(camera.CFrame ~= before.cframe).toBe(true)
 
-			c:Click(c:Button("✕", root))
+			c:Click(c:Button("X", root))
 			c:Advance(0.2)
 			expect(photo:IsActive()).toBe(false)
 			expect(c:IsShown(root)).toBe(false)

@@ -9,10 +9,12 @@
 	            Titan.Started, or from replicated state for a player who arrives mid-invasion;
 	            closing it sticks until the next phase. Its button is Join until you have joined
 	            (lobby or fight), then Cheer while the fight is on: taps batched into Titan.Cheer
-	            every 0.5 s, the button showing your cheer meter (session.Titan.cheer).
-	  bar       once the fight is live, the banner also shows the SHARED hp (global.Titan.hp /
+	            every 0.5 s, the button showing your cheer meter (session.Titan.cheer). Hidden
+	            while a screen or a battle is open, or you are in a live race (they share the
+	            top band).
+	  bar      once the fight is live, the banner also shows the SHARED hp (global.Titan.hp /
 	            maxHp - every server's damage drains the same pool) and
-	            "{servers} servers · {players} players fighting" underneath, refreshed every
+	            "Fighting: {players} · Servers: {servers}" underneath, refreshed every
 	            frame from replicated state.
 	  giant     a stationary titan at the arena centre (Config.World.StampedeArena.center),
 	            Config.Titan.Arena.bossScale big, from Config.Titan.Rotation; its own storm
@@ -65,6 +67,11 @@ local TitanInvasion = {
 }
 
 local PURPLE = Color3.fromHex("#6A3FA0")
+-- HP fills (banner and billboard): the live banner is PURPLE, so a purple fill made a full bar
+-- read as empty, and on the billboard it vanished into the storm.
+local HP_FILL = Color3.fromHex("#FF5A5F")
+-- 480 wide keeps the banner between the left stack and the photo / build buttons on a phone.
+local BANNER_WIDTH = 480
 local STEP = 0.1
 
 local ctx
@@ -220,7 +227,7 @@ local function buildBanner(payload: any, live: boolean)
 		BackgroundTransparency = if live then 0 else 0.1,
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, 58),
-		Size = UDim2.fromOffset(640, if live then 130 else 76),
+		Size = UDim2.fromOffset(BANNER_WIDTH, if live then 130 else 76),
 		ZIndex = 8,
 		Parent = ctx.UI.Feedback,
 	}, { Create.Corner(Theme.Radius.Card), Create.Stroke(3, C.Gold, 0) })
@@ -260,6 +267,8 @@ local function buildBanner(payload: any, live: boolean)
 		ZIndex = 9,
 		Parent = banner,
 	})
+	line.TextScaled = true
+	New("UITextSizeConstraint", { MaxTextSize = Theme.TextSize.Body, Parent = line })
 	local target = tonumber(if live then payload.endsAt else payload.startsAt) or ctx:Now()
 	stopCountdown = Widgets.Countdown(line, function()
 		return target
@@ -295,7 +304,7 @@ local function buildBanner(payload: any, live: boolean)
 			ZIndex = 9,
 			Parent = banner,
 		}, { Create.Corner(10), Create.Stroke(2, C.Gold, 0) })
-		fill = New("Frame", { BackgroundColor3 = PURPLE, Size = UDim2.fromScale(1, 1), ZIndex = 9, Parent = track }, { Create.Corner(10) })
+		fill = New("Frame", { BackgroundColor3 = HP_FILL, Size = UDim2.fromScale(1, 1), ZIndex = 9, Parent = track }, { Create.Corner(10) })
 		countLabel = Create.Text({
 			Text = "",
 			TextSize = Theme.TextSize.Small,
@@ -322,7 +331,7 @@ local function buildBanner(payload: any, live: boolean)
 	end
 	Button.new({
 		Name = "Close",
-		Text = "✕",
+		Text = "X", -- FredokaOne has no ✕ glyph (it renders blank)
 		Color = C.Gray,
 		Size = UDim2.fromOffset(44, 44),
 		TextSize = 22,
@@ -357,7 +366,8 @@ local function updateBar(g)
 	local hp = tonumber(g.hp) or 0
 	local frac = if maxHp > 0 then math.clamp(hp / maxHp, 0, 1) else 0
 	fill.Size = UDim2.fromScale(frac, 1)
-	countLabel.Text = string.format("%d servers · %d players fighting", tonumber(g.servers) or 0, tonumber(g.players) or 0)
+	-- Plural-free, so "1 servers" never shows and the line stays one Locale key.
+	countLabel.Text = string.format("Fighting: %d · Servers: %d", tonumber(g.players) or 0, tonumber(g.servers) or 0)
 end
 
 -- ─── The giant ──────────────────────────────────────────────────────────────────────
@@ -386,7 +396,8 @@ local function destroyGiant()
 	lastFlinch = -math.huge
 end
 
-local function hpBar(model: Model, height: number, def)
+-- `above` = studs from the model's root up to where the bar floats (clear of its head).
+local function hpBar(model: Model, above: number, def)
 	local anchor = model.PrimaryPart
 	if not anchor then
 		return nil, nil
@@ -395,7 +406,7 @@ local function hpBar(model: Model, height: number, def)
 		Name = "TitanHp",
 		Adornee = anchor,
 		Size = UDim2.fromOffset(280, 56),
-		StudsOffsetWorldSpace = Vector3.new(0, height * 0.6 + 4, 0),
+		StudsOffsetWorldSpace = Vector3.new(0, above, 0),
 		AlwaysOnTop = true,
 		LightInfluence = 0,
 		Parent = ensureFolder(),
@@ -416,7 +427,7 @@ local function hpBar(model: Model, height: number, def)
 		Size = UDim2.new(1, -20, 0, 16),
 		Parent = gui,
 	}, { Create.Corner(8), Create.Stroke(2, C.Gold, 0) })
-	local barFill = New("Frame", { BackgroundColor3 = PURPLE, Size = UDim2.fromScale(1, 1), Parent = track }, { Create.Corner(8) })
+	local barFill = New("Frame", { BackgroundColor3 = HP_FILL, Size = UDim2.fromScale(1, 1), Parent = track }, { Create.Corner(8) })
 	return gui, barFill
 end
 
@@ -436,10 +447,15 @@ local function spawnGiant(g)
 	model.Parent = ensureFolder()
 	Vfx.SetOwned(model, false)
 	model:PivotTo(CFrame.lookAt(centre, centre - Vector3.xAxis))
-	local height = tonumber(model:GetAttribute("Height")) or 24
+	-- The Height attribute is the unscaled model's; the titan is built bossScale big, so measure
+	-- it (the bar sat inside the body, found in Studio 2026-09-26).
+	local box, size = model:GetBoundingBox()
+	local height = math.max(size.Y, tonumber(model:GetAttribute("Height")) or 24)
+	local root = model.PrimaryPart
+	local top = box.Position.Y + size.Y / 2 - (if root then root.Position.Y else centre.Y)
 	local anim = MonsterAnimator.new(model)
 	anim:SetOwn(false)
-	local gui, barFill = hpBar(model, height, def)
+	local gui, barFill = hpBar(model, top + 6, def)
 	giant = { model = model, anim = anim, def = def, height = height, gui = gui, bar = barFill }
 	lastFrac = nil
 	roar()
@@ -568,6 +584,16 @@ local function onStarted(payload)
 	ctx.Bus:Publish("Hud.Flash", "Titan")
 end
 
+-- In a live race (lobby, countdown or running) the race HUD owns the top of the screen.
+local function inLiveRace(): boolean
+	local mine = ctx.Store:Get("session.LiveRace")
+	local race = ctx.Store:Get("global.LiveRace")
+	return type(mine) == "table"
+		and type(mine.heat) == "number"
+		and type(race) == "table"
+		and (race.state == "lobby" or race.state == "countdown" or race.state == "running")
+end
+
 local function step()
 	if mainPlace == nil and ctx.Store.Ready then
 		mainPlace = ctx.Store:Get("global.TradingHub.mode") ~= "hub"
@@ -578,6 +604,10 @@ local function step()
 		showBanner(g, g.state == "active")
 	end
 	updateActions(g)
+	-- The banner steps aside for an open screen, a battle or the race HUD (it sat on top of all).
+	if current then
+		current.Visible = ctx.Router:Current() == nil and ctx.UI.Top:FindFirstChild("BattleReplay") == nil and not inLiveRace()
+	end
 	flushAcc += STEP
 	if flushAcc >= 0.5 then
 		flushAcc = 0

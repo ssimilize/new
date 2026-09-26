@@ -373,7 +373,7 @@ local function showNextEvolve()
 	a.LayoutOrder = 1
 	a.Parent = icons
 	Create.Text({
-		Text = "➜",
+		Text = "→",
 		TextSize = 44,
 		TextColor3 = C.Orange,
 		Stroke = true,

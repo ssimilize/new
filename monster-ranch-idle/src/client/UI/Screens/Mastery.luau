@@ -439,13 +439,13 @@ return {
 			local text, color, disabled, action
 			if item.kind == "perk" then
 				local cost = item.costs[level + 1]
-				text = if cost then "✦ " .. tostring(cost) else "MAX"
+				text = if cost then "◆ " .. tostring(cost) else "MAX"
 				color, disabled = C.Purple, cost == nil or shards() < cost
 				action = function()
 					Util.requestOnce(ctx, "Mastery.Buy", { item = item.id })
 				end
 			elseif not owned then
-				text, color, disabled = "✦ " .. tostring(item.cost or 0), C.Purple, item.cost == nil or shards() < (item.cost or 0)
+				text, color, disabled = "◆ " .. tostring(item.cost or 0), C.Purple, item.cost == nil or shards() < (item.cost or 0)
 				action = function()
 					local ok = Util.requestOnce(ctx, "Mastery.Buy", { item = item.id })
 					if ok then

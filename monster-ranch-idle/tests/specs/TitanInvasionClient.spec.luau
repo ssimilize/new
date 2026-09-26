@@ -98,6 +98,32 @@ return function(t)
 			end
 			c:Advance(1)
 			expect((tonumber(c:Store("session.Titan").cheer) or 0) > 0).toBe(true)
+
+			-- Found in Studio 2026-09-26: the HP fill was the banner's own purple (a full bar read as
+			-- empty), the banner sat on top of open screens, and "1 servers" showed.
+			local banner = feedback:FindFirstChild("TitanBanner")
+			local fill
+			for _, d in banner:GetDescendants() do
+				if d:IsA("Frame") and d.Parent and d.Parent:IsA("Frame") and d.Parent.Parent == banner and d.Size.Y.Scale == 1 then
+					fill = d
+				end
+			end
+			expect(fill ~= nil).toBe(true)
+			expect(fill.BackgroundColor3 == banner.BackgroundColor3).toBe(false)
+			local counted = false
+			for _, d in banner:GetDescendants() do
+				if d:IsA("TextLabel") and d.Text:match("^Fighting: %d+ · Servers: %d+$") then
+					counted = true
+				end
+			end
+			expect(counted).toBe(true)
+			expect(banner.Visible).toBe(true)
+			c:Open("Monsters")
+			c:Advance(0.2)
+			expect(banner.Visible).toBe(false)
+			c:Close("Monsters")
+			c:Advance(0.2)
+			expect(banner.Visible).toBe(true)
 			expect(c.world.errors).toEqual({})
 		end)
 	end)

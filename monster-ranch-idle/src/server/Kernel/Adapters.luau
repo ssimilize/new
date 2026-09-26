@@ -8,6 +8,7 @@
 ]]
 
 local RemindersAdapter = require(script.Parent.RemindersAdapter)
+local MemoryStores = require(script.Parent.MemoryStores)
 
 local Adapters = {}
 
@@ -51,8 +52,7 @@ local function makeTransport()
 	}
 end
 
-local function makeDataStore()
-	local DataStoreService = game:GetService("DataStoreService")
+local function makeDataStore(DataStoreService)
 	local ok, store = pcall(function()
 		return DataStoreService:GetDataStore(DATASTORE_NAME)
 	end)
@@ -99,7 +99,18 @@ function Adapters.Roblox()
 	local isStudio = RunService:IsStudio()
 	local nameCache = {}
 
+	-- QA in Studio: Workspace attribute QA_MemoryProfiles = true (set in Edit before Play) puts every
+	-- DataStore-backed adapter on an in-memory store (Kernel/MemoryStores), so a check can grant
+	-- levels or join fights without touching the real save or the real leaderboards. Never on a
+	-- live server.
+	local qa = isStudio and workspace:GetAttribute("QA_MemoryProfiles") == true
+	local DataStoreService = if qa then MemoryStores.new() else game:GetService("DataStoreService")
+	if qa then
+		warn("[Adapters] QA_MemoryProfiles: in-memory data stores, nothing is saved this session")
+	end
+
 	local adapters = {}
+	adapters.QA = qa
 	adapters.JobId = if game.JobId ~= "" then game.JobId else "studio-" .. tostring(math.random(1, 1e9))
 	adapters.PlaceId = game.PlaceId
 	adapters.IsStudio = isStudio
@@ -194,9 +205,7 @@ function Adapters.Roblox()
 	}
 
 	adapters.Transport = makeTransport()
-	adapters.DataStore = makeDataStore()
-
-	local DataStoreService = game:GetService("DataStoreService")
+	adapters.DataStore = makeDataStore(DataStoreService)
 
 	-- Clubs: one record per club in its own DataStore, keyed by the club code. Update is
 	-- atomic (UpdateAsync) so servers can write the same club at the same time; the

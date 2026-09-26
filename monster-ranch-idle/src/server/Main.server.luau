@@ -20,3 +20,8 @@ for _, name in Manifest.Systems do
 end
 
 kernel:Start()
+
+-- Studio only: the QA bridge (ServerStorage.QABridge) for staged checks, see Kernel/QABridge.
+if game:GetService("RunService"):IsStudio() then
+	require(script.Parent.Kernel.QABridge).Attach(kernel)
+end

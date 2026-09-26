@@ -141,16 +141,16 @@ function Icon.new(kind: string, size: number?): Frame
 		}, { Create.Corner(px / 3), Create.Stroke(math.max(1.5, px / 14)) })
 	elseif kind == "stardust" then
 		local d = disc(C.Stardust)
-		glyph(d, "✦", C.White, 0.7)
+		glyph(d, "◆", C.White, 0.7)
 	elseif kind == "ribbon" then
 		-- Contest Ribbons (1.5): a rosette.
 		local d = disc(C.Ribbon)
-		glyph(d, "✪", C.White, 0.7)
+		glyph(d, "❀", C.White, 0.7)
 	elseif kind == "friendship" then
 		local d = disc(C.Friendship)
 		glyph(d, "♥", C.White, 0.62)
 	elseif kind == "token" then
-		-- The running event's token (❄ Snowflakes, ✺ Lantern Coins, …).
+		-- The running event's token (❄ Snowflakes, ☼ Lantern Coins, …).
 		local event = Config.Events.Active(workspace:GetServerTimeNow())
 		local token = event and event.token
 		local d = disc(if token then Color3.fromHex(token.color) else C.Token)
@@ -213,6 +213,14 @@ function Icon.forReward(kind: string): string
 		return "ribbon"
 	elseif kind == "accessory" then
 		return "star"
+	end
+	-- Rewards name currencies in the plural ("coins", "gems", "treats"); the icons are singular.
+	-- Unmapped, every coin / gem chip drew the grey fallback disc (found in Studio 2026-09-26).
+	if not SHEET_NAMES[kind] and not IMAGE_KEYS[kind] and string.sub(kind, -1) == "s" then
+		local single = string.sub(kind, 1, -2)
+		if SHEET_NAMES[single] or IMAGE_KEYS[single] then
+			return single
+		end
 	end
 	return kind
 end

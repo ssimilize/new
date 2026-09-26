@@ -98,7 +98,7 @@ Mastery.Shop = {
 		name = "Sparkle Flourish",
 		desc = "A sparkle on your nameplate.",
 		cost = 8,
-		glyph = "✦",
+		glyph = "◆",
 		color = "#8FD3FF",
 	},
 	{
@@ -179,7 +179,7 @@ Mastery.Shop = {
 
 -- Rewards that are not sold (the ladder's). Same shape as shop cosmetics, no cost.
 Mastery.Rewards = {
-	{ id = "flourish_laurel", kind = "flourish", name = "Laurel Flourish", desc = "A ladder reward.", glyph = "❦", color = "#62BF55" },
+	{ id = "flourish_laurel", kind = "flourish", name = "Laurel Flourish", desc = "A ladder reward.", glyph = "❀", color = "#62BF55" },
 	{ id = "plinth_gilded", kind = "plinth", name = "Gilded Plinth", desc = "A ladder reward.", color = "#E0B040", material = "Foil" },
 	{ id = "aura_mythic_flame", kind = "aura", name = "Mythic Flame Aura", desc = "A ladder reward.", vfx = "mythicFlame" },
 	{ id = "title_mythic", kind = "title", name = "Mythic Master", desc = "Reach the top of a Mythic Ladder." },

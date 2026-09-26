@@ -99,11 +99,12 @@ local function show(payload, live: boolean)
 		BackgroundTransparency = if live then 0 else 0.1,
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, 58),
-		Size = UDim2.fromOffset(600, 76),
+		Size = UDim2.fromOffset(480, 76), -- clear of the left stack and the photo / build buttons on a phone
 		ZIndex = 8,
 		Parent = ctx.UI.Feedback,
 	}, { Create.Corner(Theme.Radius.Card), Create.Stroke(3, C.Gold, 0) })
 	current = banner
+	banner.Visible = ctx.Router:Current() == nil and ctx.UI.Top:FindFirstChild("BattleReplay") == nil
 
 	local iconHolder = New("Frame", {
 		BackgroundTransparency = 1,
@@ -139,6 +140,8 @@ local function show(payload, live: boolean)
 		ZIndex = 9,
 		Parent = banner,
 	})
+	line.TextScaled = true
+	New("UITextSizeConstraint", { MaxTextSize = Theme.TextSize.Body, Parent = line })
 	local target = tonumber(if live then payload.endsAt else payload.startsAt) or ctx:Now()
 	stopCountdown = Widgets.Countdown(line, function()
 		return target
@@ -164,7 +167,7 @@ local function show(payload, live: boolean)
 	end
 	Button.new({
 		Name = "Close",
-		Text = "✕",
+		Text = "X", -- FredokaOne has no ✕ glyph (it renders blank)
 		Color = C.Gray,
 		Size = UDim2.fromOffset(44, 44),
 		TextSize = 22,
@@ -212,6 +215,16 @@ function Stampede.Init(context)
 			close()
 		end
 	end)
+	-- The banner steps aside while a screen or a battle is open (it drew on top of them).
+	local function fit()
+		if current then
+			current.Visible = ctx.Router:Current() == nil and ctx.UI.Top:FindFirstChild("BattleReplay") == nil
+		end
+	end
+	ctx.Router.Opened:Connect(fit)
+	ctx.Router.Closed:Connect(fit)
+	ctx.UI.Top.ChildAdded:Connect(fit)
+	ctx.UI.Top.ChildRemoved:Connect(fit)
 end
 
 function Stampede.Start() end

@@ -50,6 +50,14 @@ return {
 	floor = { radius = 24, thickness = 2, rim = 1.2 },
 	wall = { radius = 36, height = 26, panels = 12, width = 20 },
 	lights = { brightness = 1.6, range = 60, height = 22 },
+	-- While the stage shows, the world's weather and storms are held off it (snow fog and the
+	-- titan / Stampede storm tints washed fighters out, found in Studio 2026-09-26): Weather is
+	-- held, these ColorCorrection effects switched off, and the Atmosphere set to `atmosphere`;
+	-- all of it given back when the stage goes.
+	light = {
+		effects = { "WeatherColor", "TitanStorm", "StampedeStorm", "ReefColor", "AmbienceGoldenHour" },
+		atmosphere = { density = 0.1, offset = 0, haze = 0, glare = 0, color = "#A9C1DA", decay = "#5E7389" },
+	},
 
 	layout = { front = 6, spacing = 4.4, rowDepth = 4, perRow = 4, bossBack = 3 },
 	scale = { unit = 1.15, min = 0.85, max = 1.2, boss = 1.9 },
