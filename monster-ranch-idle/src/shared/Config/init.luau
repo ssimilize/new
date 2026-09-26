@@ -50,6 +50,8 @@ local Config = {
 	-- Glow-up L: emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
 	Community = require(script.Community),
 	Ambience = require(script.Ambience),
+	-- Glow-up R: pens that grow (fence tiers, upgrade props, theme props, habitats, Feed Garden)
+	Pens = require(script.Pens),
 }
 
 return Config

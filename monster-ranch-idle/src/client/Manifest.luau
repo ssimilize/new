@@ -50,6 +50,8 @@ return {
 		"Lamplight",
 		"SceneryMotion",
 		"Critters",
+		-- Glow-up R: pens that grow and the Feed Garden (Config/Pens, Visuals/PenDress)
+		"Pens",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
