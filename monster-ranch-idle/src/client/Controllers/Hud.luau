@@ -4,7 +4,7 @@
 	  top-left      coins / gems / food pills (count-up; gems → Store "gems", food → Store "food")
 	  top-right     Ranch Level + XP bar (Config.Unlocks.XPToNext) · ⚙ Settings button beside it
 	  top-centre    server weather banner (global.Weather) with mutation hint and countdown
-	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market
+	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market · Daily
 	                (locked until Config.Market.Unlock)
 	  right stack   Expeditions (finished badge) · Stampede card · Quests (claimable badge)
 	                · Breeding · Hall of Fame (locked until their Ranch Level)
@@ -26,6 +26,7 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
+local LoginStreak = require(Shared.Logic.LoginStreak)
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -243,6 +244,10 @@ local function refreshBadges()
 	local claim = StoreKit.claimableQuests(ctx.Store)
 	buttons.Quests.badge:Set(if claim > 0 then tostring(claim) else nil)
 	buttons.Monsters.badge:Set(if growReady > 0 then "!" else nil)
+	-- Glow-up: the daily streak calendar has an unclaimed day.
+	local streak = ctx.Store:Get("profile.LoginStreak")
+	local daily = type(streak) == "table" and LoginStreak.Preview(streak, now // 86400).canClaim
+	buttons.Daily.badge:Set(if daily then "!" else nil)
 end
 
 local function refreshMonsters()
@@ -477,6 +482,9 @@ local function build()
 	sideButton(left, "Market", "Market", C.Orange, Icon.new("coin", 28), 5, function()
 		openScreen("Market")
 	end, Config.Market.Unlock)
+	sideButton(left, "Daily", "Daily", C.Gold, Icon.new("star", 28), 6, function()
+		openScreen("LoginStreak")
+	end)
 
 	-- Right stack
 	local right = Tiles.col({
@@ -705,6 +713,7 @@ function Hud.Init(context)
 	ctx.Store:Observe("profile.Quests", refreshBadges)
 	ctx.Store:Observe("profile.Expeditions.slots", refreshBadges)
 	ctx.Store:Observe("profile.Eggs.slots", refreshBadges)
+	ctx.Store:Observe("profile.LoginStreak", refreshBadges)
 	ctx.Bus:Subscribe("Hud.Flash", flash)
 	ctx.Net:On("Market.MailCollected", onMailCollected)
 	ctx.Router.Opened:Connect(refreshCentre)

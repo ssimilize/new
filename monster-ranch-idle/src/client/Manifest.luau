@@ -33,6 +33,8 @@ return {
 		"Gamepad",
 		-- Particle effects (Visuals/Vfx): landmark ambience
 		"Landmarks",
+		-- Glow-up · daily streak auto-open + reminder opt-in
+		"DailyLogin",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -69,5 +71,7 @@ return {
 		-- 2.1 · Arena & Raids
 		"Arena",
 		"Raids",
+		-- Glow-up · daily login streak
+		"LoginStreak",
 	},
 }

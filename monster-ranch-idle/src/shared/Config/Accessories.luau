@@ -395,6 +395,15 @@ Accessories.List = {
 		color2 = "#7CC7FF",
 		tags = { "cute", "nature" },
 	}),
+	-- Login streak: day 28 of the first milestone track (never sold)
+	item({
+		id = "golden_streak_scarf",
+		name = "Golden Streak Scarf",
+		slot = "neck",
+		shape = "scarf",
+		color = "#F4C43A",
+		tags = { "royal", "winter" },
+	}),
 }
 
 Accessories.ById = {}

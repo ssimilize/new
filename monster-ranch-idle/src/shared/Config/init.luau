@@ -44,6 +44,8 @@ local Config = {
 	World = require(script.World),
 	Sounds = require(script.Sounds),
 	Flags = require(script.Flags),
+	LoginStreak = require(script.LoginStreak),
+	Reminders = require(script.Reminders),
 }
 
 return Config

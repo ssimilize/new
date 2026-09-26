@@ -65,3 +65,45 @@ Run these with at least two servers of each place (a private server plus a publi
   the Review queue until someone restores or removes them.
 - Every region and event has a date in config (`Regions.opensAt`, `Events` windows and
   `reruns`), so the quarterly region openings and event returns need no code push.
+
+## 5. Login streak and reminders (glow-up)
+
+The daily streak calendar needs nothing from the owner. Reminders (Roblox Experience
+Notifications) stay **off** until these steps are done; with `Config.Reminders` empty the game
+never prompts, plans or sends anything.
+
+1. **Enable HTTP requests**: Creator Hub → the experience → Settings → Security → *Allow HTTP
+   Requests* on (the server calls `apis.roblox.com`). MemoryStores are on by default.
+2. **Create the message templates**: Creator Hub → the experience → Engagement →
+   Notifications → *Create notification*. One per reminder, no parameters needed, e.g.
+   - egg: "Your eggs are ready to hatch! 🥚"
+   - expedition: "Your expedition squad is back with loot!"
+   - stampede: "A Stampede starts in 5 minutes. Join the herd!"
+   - streak: "Your daily streak ends soon. Claim today's reward!"
+   Copy each notification's **asset id** into `Config.Reminders.Templates` (`egg`, `expedition`,
+   `stampede`, `streak`). Leave one empty to turn that reminder off.
+3. **Create an Open Cloud API key**: Creator Hub → Open Cloud → API Keys → *Create API key*,
+   add the **user-notification** API system with **write** access for this experience (and
+   allow the Roblox servers' IPs, e.g. `0.0.0.0/0`, since game servers call it).
+4. **Store the key as a secret**: Creator Hub → the experience → Secrets → *Create secret*,
+   name it (for example `notifications_key`) and paste the key. Put that name in
+   `Config.Reminders.SecretName`. In Studio, `HttpService:GetSecret` reads the local secrets
+   from Game Settings → Security instead; without them the feature stays off in Studio.
+5. Publish. Players are asked once (after their first hatch in a later session) and can turn
+   reminders on or off from the Daily streak screen.
+
+What the game sends: at most `MaxPerDay` (2) reminders per player per UTC day, at least
+`MinGapSeconds` (4 h) apart, none while the player is in the game, and none between 22:00 and
+08:00 in a rough local time guessed from the player's country (`Config.Reminders.Offsets`;
+countries not listed get no quiet-hours rule). Roblox also throttles notifications per user on
+its side and only delivers to players who opted in.
+
+| Check | How | Pass |
+|---|---|---|
+| Streak claim | Join, claim, rejoin the same UTC day on another server | Claimed once; the calendar does not open again; the HUD badge is gone |
+| Streak day change | Stay in the game across 00:00 UTC | The Daily badge comes back; a claim pays the next day |
+| Opt-in prompt | Second session, hatch an egg | Roblox's notification prompt shows once; never again after answering |
+| Egg reminder | Opt in, start a 1 h egg, leave | One notification about 1 h later (or at 08:00 local), opening the game |
+| One send across servers | Two servers running while a reminder falls due | Exactly one notification |
+| Off switch | Clear `SecretName` and publish | No prompt, no Reminders button, no sends |
+
