@@ -13,6 +13,7 @@
 	  anim:IsMoving(), anim:GetPosition(), anim:Stop()  (Stop cancels a MoveTo)
 	  MonsterAnimator.SetLowGraphics(bool)             fewer updates for every animator
 	  MonsterAnimator.Count()                          live animators (debug)
+	  MonsterAnimator.HasState(state)                  whether :Play knows `state` (else it plays idle)
 
 	One shared RenderStepped connection drives every animator. It connects when the first
 	animator is created and disconnects when the last one is destroyed. Animators further than
@@ -124,6 +125,11 @@ end
 
 function MonsterAnimator.Count(): number
 	return #animators
+end
+
+-- Does :Play know this state? (Callers pick a fallback for a state an art pass adds later.)
+function MonsterAnimator.HasState(state: string): boolean
+	return ONE_SHOT[state] ~= nil or LOOPING[state] == true
 end
 
 function MonsterAnimator:SetBase(cframe: CFrame)

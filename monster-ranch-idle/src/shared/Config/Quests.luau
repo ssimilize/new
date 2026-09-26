@@ -648,7 +648,8 @@ end
 Quests.Codes = {
 	RANCH = { reward = { { kind = "gems", amount = 50 } } },
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
-	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
+	-- The GROUP code became the "Join our group" reward row (Config.Community.Group, glow-up L). A
+	-- code may still set `requiresGroup = true` to need membership of GroupId.
 	-- Update 3.2 launch code (expires 1 Apr 2028, the 3.3 launch).
 	FROSTBITE = { reward = { { kind = "egg", id = "glacier", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1838214000 },
 	-- Update 3.1 launch code: Lantern Coins for the Lunar Lanterns rerun (expires 26 Feb 2028).
@@ -672,7 +673,7 @@ Quests.Codes = {
 	-- Update 1.1 launch code (expires 6 Feb 2027).
 	CORALDEPTHS = { reward = { { kind = "egg", id = "pearl", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1801872000 },
 }
-Quests.GroupId = 0 -- set to the Roblox group id for the GROUP code
+Quests.GroupId = 0 -- the Roblox group id: shows the "Join our group" reward row (docs/GO_LIVE.md)
 
 -- Topics whose detail carries a count (progress += detail[field]); every other topic counts 1.
 Quests.CountField = { EggBought = "amount", AccessoryGained = "amount" }

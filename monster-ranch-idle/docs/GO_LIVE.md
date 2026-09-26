@@ -59,6 +59,34 @@ Run these with at least two servers of each place (a private server plus a publi
 | Controller | Play with an Xbox or PlayStation pad in Studio or on console | The cursor stays in the open menu, B closes it, LB/RB change tabs, Y opens Monsters; racing and surfing work on the pad |
 | Controller legend | Look at the corner hint with a pad | The Ⓐ Ⓑ Ⓨ glyphs render in the font (if not, swap them for "A" / "B" / "Y") |
 
+## Glow-up L: friends, gifts, invites, VIP and Premium
+
+Owner steps before these go live:
+
+1. **Group reward.** Create (or pick) the game's Roblox group and set `Config.Quests.GroupId` to
+   its id. While it is `0` the "Join our group" row stays hidden in Friends → Rewards and
+   `Community.ClaimGroup` answers "Coming soon". The reward (a Crystal Egg and 50 gems, once per
+   account) is `Config.Community.Group.reward`. The old `GROUP` code is retired: it never worked
+   while the id was 0, and the row replaces it.
+2. **Ranch Pass gift.** In Creator Hub create a developer product "Ranch Pass gift" at 399 Robux
+   and put its id in `Config.Monetization.Products` (`ranchPassGift`). Until then the button says
+   "Coming soon". It is sold from Friends → Gifts only (never in the Store grid).
+3. **Invites.** Nothing to set up: the invite prompt carries launch data `invite:<userId>`. Leave
+   the experience's invite settings on in Creator Hub.
+
+| Check | How | Pass |
+|---|---|---|
+| Emotes | HUD Emotes (or G / D-pad down) → Wave, Dance 1-3 … | Your avatar plays it; a second player sees it |
+| Tricks | Stand near one of your pen monsters → Trick | That monster spins / hops for you and for a second player |
+| Gift to an offline friend | Ranch Level 10+, 2 h played, send an egg to a friend who is offline | The confirm names the egg and friend; the egg leaves; the friend gets it (reward popup + toast) on their next join |
+| Gift limits | Send 5 gifts in a day, 3 to one friend | The 6th and the 3rd-to-one-friend are refused with a clear message |
+| Ranch Pass gift | Pick a friend → Gift R$ → buy | The friend gets premium this season, or it is saved for next season if they already have it |
+| Invite reward | Invite a friend with a fresh account from the Friends screen | Both get a Grove Egg and 25 gems (the inviter by mail); a rejoin gives nothing more |
+| Group row | Set `GroupId`, join the group, Friends → Rewards → Claim | Paid once; a second claim says "Already claimed" |
+| Premium | Join with a Premium account | "Premium" badge on the nameplate; Friends → Rewards → Claim gives a Grove Egg once per day |
+| VIP balcony | VIP pass: step on the gold pad by the Feed Store → Go up | Up on the deck; without VIP the pad refuses and opens the passes; jumping or flying up without VIP is moved back down within 2 s |
+| VIP name | Own the VIP pass | Your name shows in gold above your avatar |
+
 ## 4. After launch
 
 - Keep `Config.Workshop.Moderators` (or the moderator group) staffed: hidden designs wait in

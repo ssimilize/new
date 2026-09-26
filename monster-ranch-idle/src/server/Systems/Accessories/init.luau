@@ -22,6 +22,8 @@
 	  Accessories:Return(player, accessoryId)         -- back to storage (or its handler)
 	  Accessories:RegisterReturn(prefix, fn(player, accessoryId))  -- e.g. Workshop, "ugc:"
 	  Accessories:Count(player, accessoryId) -> n     -- in storage + equipped
+	  Accessories:Stored(player, accessoryId) -> n   -- in storage only
+	  Accessories:Take(player, accessoryId) -> bool  -- one out of storage (gifts, glow-up L)
 	  Accessories:Collection(player) -> n             -- distinct accessories owned
 	Publishes AccessoryGained (player, { id, amount, source }).
 ]]
@@ -67,6 +69,22 @@ function Accessories:Add(player, accessoryId: string, n: number?)
 	end
 	store(player, s, accessoryId, amount)
 	ctx.Bus:Publish("AccessoryGained", player, { id = accessoryId, amount = amount, source = "reward" })
+end
+
+-- How many are in storage (not worn).
+function Accessories:Stored(player, accessoryId: string): number
+	local s = ctx:Section(player)
+	return if s then s.owned[accessoryId] or 0 else 0
+end
+
+-- Takes one from storage (never a worn one); false when there is none (glow-up L: gifts).
+function Accessories:Take(player, accessoryId: string): boolean
+	local s = ctx:Section(player)
+	if not s or not Config.ById[accessoryId] or (s.owned[accessoryId] or 0) <= 0 then
+		return false
+	end
+	store(player, s, accessoryId, -1)
+	return true
 end
 
 function Accessories:RegisterReturn(prefix: string, fn)

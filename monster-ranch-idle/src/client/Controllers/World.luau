@@ -26,6 +26,8 @@
 	someone else's -> Social.Pet with hearts. Taps on own eggs open Incubators.
 	The local character is moved to its plot once global.Plots lists the local UserId, and
 	again on every respawn. Client bus: subscribes to "World.FocusPlot" (plotIndex).
+	Glow-up L: Community.Trick (server event) plays a trick on that pen monster; World.PlayTrick and
+	World.NearestOwn serve the emote wheel (Controllers/Community).
 
 	Monsters are diffed by id and rebuilt only when their appearance changes; released models
 	are pooled by appearance key. At most MAX_PER_PEN monsters are rendered per pen.
@@ -1304,6 +1306,61 @@ local function loop()
 	end
 end
 
+-- Tricks (glow-up L) ------------------------------------------------------------------------------
+
+-- Plays a Config.Community trick on a pen monster (any plot), falling back while the animator
+-- lacks the trick's own state. Returns whether that monster is on screen here.
+function World.PlayTrick(owner: number, id: string, trickId: string): boolean
+	local def = Config.Community and Config.Community.TrickById[trickId]
+	if not def then
+		return false
+	end
+	for _, view in views do
+		if view.userId == owner then
+			local entry = view.entries[id]
+			if entry and entry.alive then
+				local state = def.state
+				if not MonsterAnimator.HasState(state) then
+					state = def.fallback or "happy"
+				end
+				entry.animator:Stop()
+				entry.animator:Play(state)
+				entry.nextAt = os.clock() + 2.5
+				if state == "happy" or state == "trick" then
+					Voices.Cry(entry.model, "happy")
+				end
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- The local player's pen monster nearest to `position` within `range` studs, or nil.
+function World.NearestOwn(position: Vector3, range: number): string?
+	local view = if ownIndex then views[ownIndex] else nil
+	if not view then
+		return nil
+	end
+	local best, bestDistance = nil, range
+	for id, entry in view.entries do
+		local root = entry.alive and entry.model.PrimaryPart
+		if root then
+			local distance = (root.Position - position).Magnitude
+			if distance <= bestDistance then
+				best, bestDistance = id, distance
+			end
+		end
+	end
+	return best
+end
+
+local function onTrick(payload)
+	if type(payload) == "table" and type(payload.owner) == "number" and type(payload.id) == "string" then
+		World.PlayTrick(payload.owner, payload.id, tostring(payload.trick))
+	end
+end
+
 function World.Init(context)
 	ctx = context
 	table.insert(
@@ -1315,6 +1372,7 @@ function World.Init(context)
 	table.insert(connections, ctx.Bus:Subscribe("Vfx.Burst", onBurstTopic))
 	table.insert(connections, ctx.Net:On("Eggs.Hatched", onHatched))
 	table.insert(connections, ctx.Net:On("Monsters.Evolved", onEvolved))
+	table.insert(connections, ctx.Net:On("Community.Trick", onTrick)) -- glow-up L: emote wheel tricks
 	table.insert(
 		connections,
 		ctx.Net:On("Progression.LevelUp", function()

@@ -56,6 +56,9 @@ return {
 		"Racing",
 		"TradingHub",
 		"Workshop",
+		-- Glow-up L · emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
+		"Community",
+		"Gifts",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

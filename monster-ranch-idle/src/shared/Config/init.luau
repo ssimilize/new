@@ -44,6 +44,8 @@ local Config = {
 	World = require(script.World),
 	Sounds = require(script.Sounds),
 	Flags = require(script.Flags),
+	-- Glow-up L: emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
+	Community = require(script.Community),
 }
 
 return Config

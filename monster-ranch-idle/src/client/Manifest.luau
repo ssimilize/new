@@ -36,6 +36,8 @@ return {
 		"Landmarks",
 		-- Audio (client/Audio): music, ambience beds, monster chatter; Sound Check in Studio
 		"Soundscape",
+		-- Glow-up L: emote wheel, Friends button, VIP balcony pads
+		"Community",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -72,5 +74,8 @@ return {
 		-- 2.1 · Arena & Raids
 		"Arena",
 		"Raids",
+		-- Glow-up L · emotes and tricks, gifts, invites, community rewards
+		"EmoteWheel",
+		"Friends",
 	},
 }

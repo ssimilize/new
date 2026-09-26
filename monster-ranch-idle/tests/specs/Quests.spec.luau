@@ -326,15 +326,24 @@ return function(t)
 		end)
 
 		it("require the group when asked", function()
-			local h = boot()
-			local p = h:Join()
-			expect(h:Reject(p, "Quests.Redeem", { code = "group" })).toContain("Join our Roblox group")
-			h.adapters.groups[p.UserId] = { [Q.GroupId] = true }
-			h:Advance(2)
-			h:Call(p, "Quests.Redeem", { code = "group" })
-			expect(h:Section(p, "Quests").codes.GROUP).toBe(true)
-			h:Advance(2)
-			expect(h:Reject(p, "Quests.Redeem", { code = "group" })).toBe("You already used that code")
+			-- GROUP itself became the group reward row (Community.spec); any code can still ask.
+			expect(Q.Codes.GROUP).toBe(nil)
+			Q.Codes.GROUP = { reward = { { kind = "gems", amount = 5 } }, requiresGroup = true }
+			local ok, err = pcall(function()
+				local h = boot()
+				local p = h:Join()
+				expect(h:Reject(p, "Quests.Redeem", { code = "group" })).toContain("Join our Roblox group")
+				h.adapters.groups[p.UserId] = { [Q.GroupId] = true }
+				h:Advance(2)
+				h:Call(p, "Quests.Redeem", { code = "group" })
+				expect(h:Section(p, "Quests").codes.GROUP).toBe(true)
+				h:Advance(2)
+				expect(h:Reject(p, "Quests.Redeem", { code = "group" })).toBe("You already used that code")
+			end)
+			Q.Codes.GROUP = nil
+			if not ok then
+				error(err, 0)
+			end
 		end)
 	end)
 

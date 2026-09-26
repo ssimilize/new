@@ -590,6 +590,9 @@ return {
 			local credit = ctx.Store:Get("profile.Quests.passCredit")
 			local now = ctx:Now()
 			for i, product in M.Products do
+				if product.gift then
+					continue -- bought for a friend from the Friends screen
+				end
 				local cell = Util.card({ LayoutOrder = i, Parent = grid })
 				local icon = productIcon(product)
 				icon.Position = UDim2.fromOffset(10, 10)
@@ -761,14 +764,16 @@ return {
 				if type(params) == "table" and table.find(TABS, params.tab) then
 					tabs:Select(params.tab)
 				end
-				for _, path in {
-					"profile.Currency",
-					"profile.Shop",
-					"session.Monetization",
-					"profile.Monetization",
-					"profile.Quests.pass",
-					"profile.Quests.passCredit",
-				} do
+				for _, path in
+					{
+						"profile.Currency",
+						"profile.Shop",
+						"session.Monetization",
+						"profile.Monetization",
+						"profile.Quests.pass",
+						"profile.Quests.passCredit",
+					}
+				do
 					bag.add(ctx.Store:Observe(path, refresh))
 				end
 				refresh()

@@ -458,6 +458,33 @@ Api.Actions = {
 	["Monetization.CanBuy"] = { schema = T.struct({ product = T.key(Config.Monetization.ProductByKey) }), rate = 2, returns = "nil" },
 	-- VIP Rancher: one crate per UTC day (Config.Monetization.VipCrate); also fires Rewards.Granted.
 	["Monetization.ClaimVipCrate"] = { schema = T.none, rate = 1, returns = "{ rewards: { Reward }, day: number }" },
+
+	-- Community (glow-up L) · Config.Community, Systems/Community -----------------------------
+	-- A trick by the player's nearest own pen monster; everyone on the server sees Community.Trick.
+	["Community.Trick"] = {
+		schema = T.struct({ id = id, trick = T.key(Config.Community.TrickById) }),
+		rate = 1,
+		returns = "{ state: string }",
+	},
+	["Community.ClaimGroup"] = { schema = T.none, rate = 0.5, returns = "{ rewards: { Reward } }  -- once per account, group members" },
+	["Community.ClaimPremium"] = { schema = T.none, rate = 0.5, returns = "{ rewards: { Reward } }  -- once per UTC day, Premium" },
+	["Community.Balcony"] = { schema = T.struct({ enter = T.boolean }), rate = 1, returns = "nil  -- VIP balcony up / down" },
+
+	-- Gifts (glow-up L) · Config.Community.Gifts, Systems/Gifts --------------------------------
+	-- Two steps: Prepare checks everything and returns a token for the confirm dialog; Send spends it.
+	["Gifts.Prepare"] = {
+		schema = T.struct({
+			to = T.userId,
+			kind = T.enum(Config.Community.Gifts.kinds),
+			item = T.string(40, 1),
+			amount = T.integer(1, Config.Community.Gifts.maxFood),
+		}),
+		rate = 2,
+		returns = "{ token: string, name: string|false, kind, item, amount, left: number }",
+	},
+	["Gifts.Send"] = { schema = T.struct({ token = T.string(40, 1) }), rate = 1, returns = "{ left: number }" },
+	-- Picks the friend a Ranch Pass gift (product ranchPassGift) goes to; then Monetization.CanBuy.
+	["Gifts.PassTarget"] = { schema = T.struct({ to = T.userId }), rate = 1, returns = "{ name: string|false }" },
 }
 
 --[[
@@ -480,6 +507,7 @@ Api.Events = {
 	["HallOfFame.Retired"] = "{ appearance: Appearance, stardust: number }",
 	["Raids.Result"] = "{ raid: string, replay: BattleReplay, win: boolean, rewards: { Reward } }",
 	["Market.MailCollected"] = "{ coins: number, items: { { kind, id } }, sold: { { key, price, proceeds, name? } }, returned: number }",
+	["Community.Trick"] = "{ owner: number, id: string, trick: string }  -- to everyone on the server",
 }
 
 --[[
@@ -519,6 +547,8 @@ Api.State = {
 		Raids = "{ day, rewarded, wins, runs }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n }, war = { day, n, claimed } }",
+		Community = "{ invitedBy: userId|0, invites = { week, count }, invitesTotal, group: boolean, premiumDay }",
+		Gifts = "{ day, sent, to = { ['u'..userId]: n }, totalSent, totalReceived }",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -553,6 +583,7 @@ Api.State = {
 		Contests = "{ state: 'idle'|'entry'|'runway'|'results', show, theme, endsAt, nextAt, entries = { { userId, name, appearance } }, current, results = { { userId, name, appearance, score, votes, rank } } }",
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open, banner } }, ladder = { week, at, rows = { { rank, clubId, name, tag, color, emblem, points } } } }",
 		Monetization = "{ vip = { ['u'..userId]: true } }  -- VIP Rancher owners in this server (chat tags)",
+		Community = "{ premium = { ['u'..userId]: true } }  -- Roblox Premium members in this server (nameplate badge)",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 	},
 }
@@ -619,6 +650,8 @@ Api.Topics = {
 	MarketListed = "(player, { listing: string, key: string, price: number, club: boolean })",
 	MarketBought = "(player, { listing: string, key: string, kind: string, price: number, club: boolean })",
 	MarketSold = "(nil, { listing, key, kind, price, proceeds, buyer, seller, club })  -- on the buyer's server",
+	GiftSent = "(player, { kind: string, to: number })",
+	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------

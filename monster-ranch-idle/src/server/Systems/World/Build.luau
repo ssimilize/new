@@ -8,6 +8,7 @@
 	  Paths/Path<i>                  dirt paths from the plaza to each plot gate
 	  Hub/Plaza, Hub/Fountain        plaza disc and fountain model
 	  Hub/Buildings/<id>             Model (attrs HubId, Screen, Name) with Body, Roof*, Sign, Door
+	  Hub/VipBalcony, Hub/VipPad     the VIP balcony and its ground pad (World/Balcony, glow-up L)
 	  Plots/Plot<i>                  Model (attr PlotId)
 	    Floor                        Part (attr PlotId)
 	    Pens/Pen<n>                  Model (attrs PlotId, PenIndex)
@@ -34,6 +35,11 @@
 	heading of that direction, 0 = +Z, 90 = +X). Pen, incubator, barn and statue offsets are
 	in this frame. Clients use the same maths (Controllers/World.luau).
 ]]
+
+-- Glow-up L: the VIP balcony module sits beside Build (optional, so Build still loads on its own,
+-- as the client test harness loads it).
+local balconyModule = script.Parent and script.Parent:FindFirstChild("Balcony")
+local Balcony = if balconyModule then require(balconyModule) :: any else nil
 
 local Build = {}
 
@@ -634,6 +640,10 @@ function Build.world(Config, mode: string?): (Folder, number)
 
 	buildGround(World, root)
 	buildHub(World, root)
+	-- Glow-up L: the VIP balcony beside the plaza (World/Balcony).
+	if Balcony then
+		count += Balcony.build(Config, root:FindFirstChild("Hub") :: Instance, World.GroundY)
+	end
 
 	local plots = Instance.new("Folder")
 	plots.Name = "Plots"
