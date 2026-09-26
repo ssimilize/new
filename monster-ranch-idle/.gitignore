@@ -44,3 +44,6 @@ art/ui/upload/
 art/ui/icons/raw/
 art/ui/icons/cells/
 art/ui/icons/contact.jpg
+
+# The locale report (LOCALE_REPORT=missing.txt lune run tests Locale).
+missing.txt
