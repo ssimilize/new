@@ -22,6 +22,7 @@ return {
 		"TradeRequests",
 		"Leaderboards",
 		"Nameplates",
+		"ChatTags",
 		-- 1.4 · Spring Bloom
 		"EggHunt",
 		-- 1.5 · Showtime

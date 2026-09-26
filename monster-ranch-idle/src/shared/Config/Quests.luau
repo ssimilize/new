@@ -625,6 +625,25 @@ function Quests.PassAt(now: number)
 	return current
 end
 
+-- The Ranch Pass is sold only while a season runs (startsAt <= now < endsAt): before the first
+-- season and in the gap between two there is nothing to unlock yet. A pass bought anyway is
+-- banked by the Quests system and unlocks the next season.
+function Quests.PassOnSale(now: number): boolean
+	local season = Quests.PassAt(now)
+	return now >= season.startsAt and now < season.endsAt
+end
+
+-- The first season that starts after `now`, or nil when none is scheduled yet.
+function Quests.NextSeason(now: number)
+	local nextSeason = nil
+	for _, season in Quests.Seasons do
+		if season.startsAt > now and (nextSeason == nil or season.startsAt < nextSeason.startsAt) then
+			nextSeason = season
+		end
+	end
+	return nextSeason
+end
+
 -- Codes (case-insensitive). `expires` is a Unix time or nil.
 Quests.Codes = {
 	RANCH = { reward = { { kind = "gems", amount = 50 } } },

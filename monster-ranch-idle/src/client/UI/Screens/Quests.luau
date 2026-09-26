@@ -5,7 +5,8 @@
 	Achievements: every achievement with progress and Claim (Quests.ClaimAchievement { id }).
 	Ranch Pass: tiers from Config.Quests.PassAt(now) with free and premium tracks, the pass XP bar,
 	Claim (Quests.ClaimPass { tier, track }) and a premium lock with "Get Ranch Pass", which
-	prompts the `ranchPass` developer product.
+	prompts the `ranchPass` developer product after Monetization.CanBuy agrees. Outside a season
+	(Config.Quests.PassOnSale) the button is disabled and says when the next pass goes on sale.
 
 	Reads: profile.Quests, profile.Progression.level (tolerated nil).
 ]]
@@ -237,6 +238,9 @@ return {
 				ctx:Toast("Coming soon", "info")
 				return
 			end
+			if not Util.requestOnce(ctx, "Monetization.CanBuy", { product = product.key }) then
+				return
+			end
 			local ok, err = pcall(function()
 				MarketplaceService:PromptProductPurchase(ctx.Player, product.productId)
 			end)
@@ -299,11 +303,22 @@ return {
 				chip.Position = UDim2.new(1, 0, 0.5, 0)
 			else
 				local product = Config.Monetization.ProductByKey.ranchPass
+				local onSale = Q.PassOnSale(now)
+				local nextSeason = Q.NextSeason(now)
+				local text
+				if not onSale and nextSeason then
+					text = string.format("Pass on sale in %s", Format.duration(nextSeason.startsAt - now))
+				elseif not onSale then
+					text = "Pass not on sale"
+				elseif product and product.productId ~= 0 then
+					text = string.format("Get Ranch Pass R$%d", product.price)
+				else
+					text = "Ranch Pass: soon"
+				end
 				Button.new({
-					Text = if product and product.productId ~= 0
-						then string.format("Get Ranch Pass R$%d", product.price)
-						else "Ranch Pass: soon",
-					Color = C.Orange,
+					Text = text,
+					Color = if onSale then C.Orange else C.Gray,
+					Disabled = not onSale,
 					Size = UDim2.fromOffset(236, 54),
 					TextSize = Theme.TextSize.Body,
 					AnchorPoint = Vector2.new(1, 0.5),
