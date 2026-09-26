@@ -58,6 +58,9 @@ local Config = {
 	Codex = require(script.Codex),
 	-- Glow-up Q: bond hearts, care gestures, bond tricks
 	Bond = require(script.Bond),
+	-- Glow-up W: the Titanic size tier and numbered limited editions
+	Titanic = require(script.Titanic),
+	Editions = require(script.Editions),
 }
 
 return Config

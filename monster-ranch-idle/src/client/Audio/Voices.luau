@@ -44,7 +44,9 @@ local function voiceInfo(target: any)
 			line = line,
 			stage = target:GetAttribute("Stage"),
 			height = target:GetAttribute("Height"),
-		}, target
+			titanic = target:GetAttribute("Titanic") == true, -- glow-up W: a deeper cry
+		},
+			target
 	elseif type(target) == "table" and type(target.line) == "string" then
 		local def = Config.Species.ById[target.line]
 		local height = nil
@@ -53,7 +55,7 @@ local function voiceInfo(target: any)
 		if def and type(target.weight) == "number" and type(def.weight) == "number" and def.weight > 0 and target.weight > 0 then
 			height = 3 * (target.weight / def.weight) ^ (1 / 3)
 		end
-		return { line = target.line, stage = target.stage, height = height }, nil
+		return { line = target.line, stage = target.stage, height = height, titanic = target.titanic == true }, nil
 	end
 	return nil, nil
 end

@@ -363,6 +363,9 @@ function Vfx.AttachMonster(model: Model, appearance): number
 	if type(appearance.aura) == "string" and Presets.Mastery then
 		add(Presets.Mastery[appearance.aura], "mastery", 1)
 	end
+	if appearance.titanic == true then -- glow-up W
+		add(Presets.Titanic, "variant", 1)
+	end
 
 	if #entry.recs == 0 then
 		return 0

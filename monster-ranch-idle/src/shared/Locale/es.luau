@@ -2103,4 +2103,12 @@ return {
 	["{1} loved that! +1 bond"] = "¡A {1} le encantó! +1 de vínculo",
 	["Your monster"] = "Tu monstruo",
 	["Best friends"] = "Mejores amigos",
+	-- Glow-up W: Titanic monsters and limited editions
+	["TITANIC"] = "TITÁNICO",
+	["Titanic"] = "Titánico",
+	["LIMITED"] = "LIMITADO",
+	["#{1}/{2}"] = "#{1}/{2}",
+	["Limited edition #{1} of {2}"] = "Edición limitada #{1} de {2}",
+	["Huge {1} · Titanic {2}"] = "Enorme {1} · Titánico {2}",
+	["Limited editions: each line is numbered, {1} per line"] = "Ediciones limitadas: cada línea va numerada, {1} por línea",
 }

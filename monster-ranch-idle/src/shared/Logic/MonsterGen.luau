@@ -11,7 +11,8 @@
 	  lucky = boolean?,          -- use Lucky Hatcher variant odds when rolling
 	  traits = { id, id }?,      -- rolled when nil
 	  hidden = id?,              -- rolled when nil
-	  weight = number?,          -- rolled when nil
+	  weight = number?,          -- rolled when nil (with the Titanic tier, see RollSize)
+	  titanic = boolean?,        -- glow-up W: true forces the Titanic tier (tests, grants)
 	  muts = { string }?,
 	  gen = number?,             -- generation (0 hatched, parents' max + 1 when bred)
 	}
@@ -23,6 +24,7 @@ local Species = Config.Species
 local Traits = Config.Traits
 local Rarities = Config.Rarities
 local Economy = Config.Economy
+local Titanic = require(script.Parent.Titanic)
 
 local MonsterGen = {}
 
@@ -37,13 +39,16 @@ function MonsterGen.RollVariant(rng, lucky: boolean?): number
 	return 0
 end
 
--- Weight in kg: 1% chance of a "huge" roll (1.8×–2.0× average), otherwise a bell curve
--- around the average clamped to 0.5×–1.79×.
-function MonsterGen.RollWeight(rng, lineId: string): number
+-- Weight in kg and the size tier. One draw decides the tier (Logic/Titanic.Classify): below
+-- Config.Titanic.Chance a Titanic (2.2×–2.5× average), below HugeChance (1%) a Huge (1.8×–2.0×),
+-- otherwise a bell curve around the average clamped to 0.5×–1.79×. Glow-up W split the old 1%
+-- Huge draw instead of adding one, so every seeded roll after it is unchanged.
+function MonsterGen.RollSize(rng, lineId: string): (number, boolean)
 	local avg = Species.ById[lineId].weight
+	local tier = Titanic.Classify(rng:Next())
 	local mult
-	if rng:Chance(0.01) then
-		mult = rng:Float(1.8, 2.0)
+	if tier then
+		mult = Titanic.WeightMult(tier, rng:Next())
 	else
 		local sum = 0
 		for _ = 1, 4 do
@@ -52,7 +57,11 @@ function MonsterGen.RollWeight(rng, lineId: string): number
 		-- sum of 4 uniforms: mean 2, sd ≈ 0.577 → scale to mean 1, sd ≈ 0.18
 		mult = math.clamp(1 + (sum - 2) * 0.31, 0.5, 1.79)
 	end
-	return math.floor(avg * mult * 100 + 0.5) / 100
+	return math.floor(avg * mult * 100 + 0.5) / 100, tier == "titanic"
+end
+
+function MonsterGen.RollWeight(rng, lineId: string): number
+	return (MonsterGen.RollSize(rng, lineId))
 end
 
 local function pickTrait(rng, exclude: { [number]: boolean }, allowHiddenOnly: boolean): number
@@ -98,16 +107,25 @@ function MonsterGen.New(rng, spec, now: number)
 		traits = traits or rolledTraits
 		hidden = hidden or rolledHidden
 	end
+	-- Same draw order as before glow-up W (variant, then size), so seeded rolls are unchanged.
+	local variant = spec.variant or MonsterGen.RollVariant(rng, spec.lucky)
+	local weight, titanic = spec.weight, spec.titanic == true
+	if weight == nil then
+		local rolled
+		weight, rolled = MonsterGen.RollSize(rng, spec.line)
+		titanic = titanic or rolled
+	end
 	return {
 		line = spec.line,
 		stage = stage,
 		form = form,
 		rarity = spec.rarity,
-		variant = spec.variant or MonsterGen.RollVariant(rng, spec.lucky),
+		variant = variant,
 		muts = spec.muts and table.clone(spec.muts) or {},
 		traits = table.clone(traits),
 		hidden = hidden,
-		weight = spec.weight or MonsterGen.RollWeight(rng, spec.line),
+		weight = weight,
+		titanic = if titanic then true else nil, -- glow-up W: absent on ordinary monsters
 		lv = 1,
 		stars = 1,
 		mood = Economy.Mood.start,

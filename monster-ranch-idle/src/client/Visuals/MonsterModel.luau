@@ -13,6 +13,8 @@
 	  • appearance.acc { [slot] = accessoryId } draws Config.Accessories placeholders (1.5), on
 	    3D monsters too (anchored to the rig's bones through MeshMonster.Slot, and kept on the
 	    animated bones by MonsterAnimator; +1 invisible anchor part per worn slot there)
+	  • opts.inPen caps a Titanic's size (Config.Titanic.PenScale) so it stays inside its fence;
+	    attribute Titanic = true on a Titanic (Audio/Voices deepens its cry)
 	  • opts.look forces a 3D monster's texture look ("golden" for Hall of Fame statues);
 	    otherwise Golden / Rainbow / Shadow come from the appearance (MonsterLooks)
 	  • particle effects (element aura, mutations, shiny / rainbow, epic+ ground glow) come from
@@ -32,6 +34,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local MeshMonster = require(script.Parent.MeshMonster)
 local Vfx = require(script.Parent.Vfx)
+local Titanic = require(ReplicatedStorage.Shared.Logic.Titanic)
 
 local MonsterModel = {}
 
@@ -342,14 +345,11 @@ local function colorsFor(appearance)
 	return element, body, belly, accent
 end
 
--- Scale from stage and weight (cube root so heavy monsters are bigger, not absurd).
-function MonsterModel.ScaleFor(appearance): number
+-- Scale from stage and weight (cube root so heavy monsters are bigger, not absurd). A Titanic
+-- (glow-up W) is Config.Titanic.Scale instead, capped at PenScale in a pen (Logic/Titanic).
+function MonsterModel.ScaleFor(appearance, inPen: boolean?): number
 	local stageScale = Config.Economy.Stages[appearance.stage or 1].scale
-	local def = Config.Species.ById[appearance.line]
-	local avg = def and def.weight or 1
-	local w = appearance.weight or avg
-	local weightScale = math.clamp((w / avg) ^ (1 / 3), 0.8, 1.3)
-	return stageScale * weightScale
+	return stageScale * Titanic.SizeMult(appearance, inPen)
 end
 
 -- Particle effects on a finished model; a failure here never costs the monster its body.
@@ -363,15 +363,18 @@ local function attachVfx(model: Model, appearance, options)
 	end
 end
 
-function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: number?, vfx: boolean?, look: string? }?)
+function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: number?, vfx: boolean?, look: string?, inPen: boolean? }?)
 	local options = opts or {}
-	local s = BASE_SIZE * MonsterModel.ScaleFor(appearance) * (options.scale or 1)
+	local s = BASE_SIZE * MonsterModel.ScaleFor(appearance, options.inPen) * (options.scale or 1)
 	if MeshMonster.Has(appearance.form) then
 		local ok, meshModel = pcall(MeshMonster.Build, appearance, s, options.anchored ~= false, options.look)
 		if ok then
 			local worn, err = pcall(addMeshAccessories, meshModel, appearance)
 			if not worn then
 				warn("[MonsterModel] accessories failed for " .. tostring(appearance.form) .. ": " .. tostring(err))
+			end
+			if appearance.titanic == true then
+				meshModel:SetAttribute("Titanic", true)
 			end
 			attachVfx(meshModel, appearance, options)
 			return meshModel
@@ -662,6 +665,9 @@ function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: numbe
 	model:SetAttribute("Variant", appearance.variant or 0)
 	model:SetAttribute("Rainbow", appearance.variant == 2)
 	model:SetAttribute("Height", height)
+	if appearance.titanic == true then
+		model:SetAttribute("Titanic", true)
+	end
 	attachVfx(model, appearance, options)
 	return model
 end

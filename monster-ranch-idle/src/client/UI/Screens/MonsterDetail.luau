@@ -39,6 +39,7 @@ local ViewportMonster = require(UI.Components.ViewportMonster)
 local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local WalkToggle = require(script.Parent.Parts.WalkToggle) -- glow-up T
 local BondBadge = require(script.Parent.Parts.BondBadge)
+local ShowpieceChips = require(script.Parent.Parts.ShowpieceChips) -- glow-up W
 
 local New = Create.New
 local C = Theme.Colors
@@ -637,6 +638,7 @@ function MonsterDetail.Build(ctx)
 		end
 		MasteryBadge.chip(ctx, m.line, headerChips, 3) -- 3.3: the line's mastery tier
 		BondBadge.chip(ctx, currentId, headerChips, 4) -- glow-up Q: bond hearts
+		ShowpieceChips.add(m, headerChips, 5) -- glow-up W: TITANIC, #37/500
 		lockButton:SetText(if m.locked then "Locked" else "Lock")
 		local ridingId = StoreKit.tbl(store, "session.Riding").mount
 		rideButton:SetText(if ridingId == currentId then "Get off" else "Ride")
@@ -645,7 +647,14 @@ function MonsterDetail.Build(ctx)
 		lockButton:SetColor(if m.locked then C.Orange else C.Gray)
 
 		-- Portrait
-		local apSig = table.concat({ m.form, stage, m.variant or 0, table.concat(StoreKit.asTable(m.muts), ","), m.weight or 0 }, "|")
+		local apSig = table.concat({
+			m.form,
+			stage,
+			m.variant or 0,
+			table.concat(StoreKit.asTable(m.muts), ","),
+			m.weight or 0,
+			if m.titanic == true then "T" else "",
+		}, "|")
 		if apSig ~= lastApSig then
 			lastApSig = apSig
 			local ok, ap = pcall(Appearance.Of, m)
@@ -661,12 +670,12 @@ function MonsterDetail.Build(ctx)
 		for i, mut in StoreKit.asTable(m.muts) do
 			Widgets.MutationChip(mut, portraitChips).LayoutOrder = 5 + i
 		end
-		local huge = Formulas.IsHuge(m)
+		local sizeTag = ShowpieceChips.sizeTag(m)
 		portraitFoot.Text = string.format(
 			"%s · %s%s",
 			Config.Economy.Stages[stage].name,
 			Format.weight(tonumber(m.weight) or def.weight),
-			if huge then " · HUGE" else ""
+			if sizeTag == "TITANIC" then " · TITANIC" elseif sizeTag == "HUGE" then " · HUGE" else ""
 		)
 		portraitMood.Text = string.format("Mood %d", math.floor(tonumber(m.mood) or Config.Economy.Mood.start))
 		rateLabel.Text = string.format("Base income %s coins/s", Format.short(math.floor(Formulas.CoinRate(m) * 10 + 0.5) / 10))

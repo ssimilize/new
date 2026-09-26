@@ -17,7 +17,7 @@
 	  Audio.StreakPitch(count) -> number        count 1 = 1.0, one semitone higher per repeat (cap)
 	  Audio.Hash(text) -> 0..1                  deterministic (FNV-1a)
 	  Audio.VoiceKey(archetype) -> "Voice<Archetype>"
-	  Audio.VoicePitch({ line, stage, height }) -> number   smaller and younger = higher; each
+	  Audio.VoicePitch({ line, stage, height, titanic? }) -> number   smaller and younger = higher (a Titanic lower); each
 	                                            line gets its own fixed offset from its id
 	  Audio.HatchChain(rarity, variant) -> { key }          first key with an id wins
 	  Audio.MusicChain(state) -> { key }        state = { raid, racing, battle, stampede, sky, hub,
@@ -28,6 +28,7 @@
 ]]
 
 local Config = require(script.Parent.Parent.Config)
+local Titanic = require(script.Parent.Titanic)
 
 local Audio = {}
 
@@ -185,7 +186,7 @@ function Audio.VoicePitch(info): number
 	local height = number(info.height, REF_HEIGHT)
 	local size = if height > 0 then math.clamp((REF_HEIGHT / height) ^ 0.3, 0.8, 1.25) else 1
 	local offset = if type(info.line) == "string" then (Audio.Hash(info.line) * 2 - 1) * LINE_SPREAD else 0
-	return stage * size * (1 + offset)
+	return stage * size * (1 + offset) * Titanic.CryPitch(info)
 end
 
 function Audio.HatchChain(rarity: number?, variant: number?): { string }
