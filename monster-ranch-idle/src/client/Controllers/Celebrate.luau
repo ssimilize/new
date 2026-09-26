@@ -712,7 +712,11 @@ function Celebrate:IsCovered(): boolean
 		return true
 	end
 	local hatchery = ctx:GetController("Hatchery")
-	return hatchery ~= nil and hatchery:IsShowing()
+	if hatchery ~= nil and hatchery:IsShowing() then
+		return true
+	end
+	local camera = ctx:GetController("CameraDirector") -- glow-up N: a shot has the camera
+	return camera ~= nil and camera:IsBusy()
 end
 
 function Celebrate:Pending(): number

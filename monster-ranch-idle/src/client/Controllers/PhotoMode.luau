@@ -720,6 +720,10 @@ function PhotoMode:Begin(api)
 	if session then
 		self:End()
 	end
+	local director = ctx:GetController("CameraDirector") -- glow-up N: never start mid-shot; end it first
+	if director then
+		director:Stop()
+	end
 	local current = ctx.Router:Current()
 	if current and current ~= SCREEN then
 		ctx.Router:Close(current)

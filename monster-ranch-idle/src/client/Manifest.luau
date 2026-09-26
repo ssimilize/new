@@ -46,6 +46,9 @@ return {
 		"Stampede",
 		-- Photo mode: free camera, filters, frames, stickers, CaptureService
 		"PhotoMode",
+		-- Glow-up N: camera shots (hatch in the world, evolution, star-up / level-up looks)
+		"CameraDirector",
+		"Cinematics",
 		-- Glow-up · daily streak auto-open + reminder opt-in
 		"DailyLogin",
 		-- Glow-up L: emote wheel, Friends button, VIP balcony pads

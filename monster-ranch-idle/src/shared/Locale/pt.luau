@@ -2103,4 +2103,7 @@ return {
 	["{1} loved that! +1 bond"] = "{1} adorou! +1 de vínculo",
 	["Your monster"] = "Seu monstro",
 	["Best friends"] = "Melhores amigos",
+	-- Glow-up N: the hatch in the world
+	["NEW!"] = "NOVO!",
+	["SHINY!"] = "BRILHANTE!",
 }
