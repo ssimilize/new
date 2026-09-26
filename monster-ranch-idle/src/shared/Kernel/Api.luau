@@ -454,6 +454,10 @@ Api.Actions = {
 		rate = 0.2,
 		returns = "{ passes: { [key]: boolean } }  -- after a client purchase prompt closes",
 	},
+	-- Asked before a product prompt: fails with why it can't be bought now (owned, off season).
+	["Monetization.CanBuy"] = { schema = T.struct({ product = T.key(Config.Monetization.ProductByKey) }), rate = 2, returns = "nil" },
+	-- VIP Rancher: one crate per UTC day (Config.Monetization.VipCrate); also fires Rewards.Granted.
+	["Monetization.ClaimVipCrate"] = { schema = T.none, rate = 1, returns = "{ rewards: { Reward }, day: number }" },
 }
 
 --[[
@@ -500,8 +504,8 @@ Api.State = {
 		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id } }",
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true } }",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
-		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true } }",
-		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true } }",
+		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true }, pass, passCredit }",
+		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true }, vip = { day, opened } }",
 		Leaderboards = "{ week, stampede }  -- this week's Stampede damage",
 		Events = "{ event, day, earned, login }  -- event tokens earned today (daily cap)",
 		EggHunt = "{ round, found = { spotIndex }, day, finds, total }",
@@ -548,6 +552,7 @@ Api.State = {
 		Riding = "{ riders = { ['u'..userId]: { appearance, speed } } }",
 		Contests = "{ state: 'idle'|'entry'|'runway'|'results', show, theme, endsAt, nextAt, entries = { { userId, name, appearance } }, current, results = { { userId, name, appearance, score, votes, rank } } }",
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open, banner } }, ladder = { week, at, rows = { { rank, clubId, name, tag, color, emblem, points } } } }",
+		Monetization = "{ vip = { ['u'..userId]: true } }  -- VIP Rancher owners in this server (chat tags)",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 	},
 }

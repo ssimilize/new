@@ -10,6 +10,7 @@
 	  codes        = { [CODE] = true }                   -- upper-case code keys
 	  pass         = { season, xp, premium, claimed = { free = { [tier] = boolean }, premium = { [tier] = boolean } } }
 	                 -- claimed tracks are contiguous arrays (false = not claimed) so they save cleanly
+	  passCredit   = n                                   -- Ranch Passes paid for but banked for a later season
 
 	Tutorial: the current step advances on its `topic` (with `filter`) up to `target`; `ack` steps
 	complete through Quests.Ack. Completing a step grants its reward, fires Quests.StepDone and logs
@@ -22,7 +23,11 @@
 	(Pass.startsAt ≤ now < Pass.endsAt, Pass = Config.Quests.PassAt(now), the latest season that has
 	started). Earned tiers stay claimable until the next season,
 	which resets pass progress. Premium needs the "Quests.RanchPass" product (registered with
-	Monetization in Start) bought for the current season.
+	Monetization in Start) bought for the current season. It is sold only while a season runs
+	(Config.Quests.PassOnSale; the product check refuses it otherwise, and when premium is already
+	on). A receipt that arrives anyway, off season or for a second pass in one season, is banked in
+	`passCredit` and unlocks premium automatically once a season is open without it (on join, on
+	the 30 s sweep, or on any pass XP), so nobody pays for nothing.
 
 	Public API (other systems):
 	  Quests:TutorialStep(player) -> stepIndex, stepId?      -- stepId nil when the tutorial is done
@@ -32,6 +37,7 @@
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local QuestsConfig = require(Shared.Config).Quests
+local Format = require(Shared.Logic.Format)
 local Objectives = require(script.Objectives)
 
 local Quests = {
@@ -72,6 +78,7 @@ Quests.Profile = {
 			achievements = {},
 			codes = {},
 			pass = newPass(),
+			passCredit = 0,
 		}
 	end,
 }
@@ -109,23 +116,38 @@ local function seasonOpen(): boolean
 	return now >= def.startsAt and now < def.endsAt
 end
 
+-- A banked pass (see the header) unlocks the first open season that doesn't have premium yet.
+local function applyPassCredit(player, s)
+	local credit = tonumber(s.passCredit) or 0
+	if credit <= 0 or s.pass.premium or not seasonOpen() then
+		return
+	end
+	s.passCredit = credit - 1
+	s.pass.premium = true
+	ctx:Dirty(player, "passCredit")
+	ctx:Dirty(player, "pass", "premium")
+	ctx:Notify(player, "Your saved Ranch Pass unlocked this season's premium rewards!", "success")
+	ctx:RequestSave(player)
+end
+
 local function ensurePass(player, s)
 	local def = currentPass()
 	if s.pass.season ~= def.season then
 		s.pass = newPass()
 		ctx:Dirty(player, "pass")
-		return
-	end
-	-- A live config may add tiers mid-season: keep the claim arrays contiguous.
-	for _, track in TRACKS do
-		local list = s.pass.claimed[track]
-		if #list < #def.tiers then
-			for i = #list + 1, #def.tiers do
-				list[i] = false
+	else
+		-- A live config may add tiers mid-season: keep the claim arrays contiguous.
+		for _, track in TRACKS do
+			local list = s.pass.claimed[track]
+			if #list < #def.tiers then
+				for i = #list + 1, #def.tiers do
+					list[i] = false
+				end
+				ctx:Dirty(player, "pass")
 			end
-			ctx:Dirty(player, "pass")
 		end
 	end
+	applyPassCredit(player, s)
 end
 
 local function addPassXP(player, s, amount: number)
@@ -143,18 +165,46 @@ local function onRanchPassPurchased(player, _product, _receiptInfo): boolean
 		return false
 	end
 	ensurePass(player, s)
-	if ctx:Now() >= currentPass().endsAt then
-		warn("[Quests] Ranch Pass bought after the season ended; not granted")
-		return false
+	local now = ctx:Now()
+	if QuestsConfig.PassOnSale(now) and not s.pass.premium then
+		s.pass.premium = true
+		ctx:Dirty(player, "pass", "premium")
+		ctx:Notify(player, "Ranch Pass unlocked! Premium rewards are ready to claim.", "success")
+		return true
 	end
-	if s.pass.premium then
-		warn(string.format("[Quests] %s already has this season's Ranch Pass; not granted twice", tostring(player.UserId)))
-		return false
+	-- Off season, or a second pass this season (the Store refuses both): bank it, never refuse
+	-- a receipt the player already paid for.
+	s.passCredit = (tonumber(s.passCredit) or 0) + 1
+	ctx:Dirty(player, "passCredit")
+	local nextSeason = QuestsConfig.NextSeason(now)
+	if nextSeason then
+		local text = string.format("Your Ranch Pass is saved for Season %d and unlocks when it starts.", nextSeason.season)
+		ctx:Notify(player, text, "success")
+	else
+		ctx:Notify(player, "Your Ranch Pass is saved and unlocks when the next season starts.", "success")
 	end
-	s.pass.premium = true
-	ctx:Dirty(player, "pass", "premium")
-	ctx:Notify(player, "Ranch Pass unlocked! Premium rewards are ready to claim.", "success")
 	return true
+end
+
+-- Asked before the purchase prompt (Monetization.CanBuy).
+local function canBuyRanchPass(player, _product): (boolean, string?)
+	local s = ctx:Section(player)
+	if not s then
+		return false, "Your ranch is still loading"
+	end
+	local now = ctx:Now()
+	if not QuestsConfig.PassOnSale(now) then
+		local nextSeason = QuestsConfig.NextSeason(now)
+		if nextSeason then
+			return false, string.format("The next Ranch Pass goes on sale in %s", Format.duration(nextSeason.startsAt - now))
+		end
+		return false, "No Ranch Pass is on sale right now"
+	end
+	ensurePass(player, s)
+	if s.pass.premium then
+		return false, "You already have this season's Ranch Pass"
+	end
+	return true, nil
 end
 
 -- Tutorial -----------------------------------------------------------------------------
@@ -391,6 +441,7 @@ function Quests.Init(context)
 			local s = ctx:Section(player)
 			if s then
 				ensureDaily(player, s)
+				ensurePass(player, s) -- a new season: fresh pass, and any banked pass unlocks
 			end
 		end
 	end)
@@ -511,6 +562,7 @@ function Quests.Start()
 	local Monetization = ctx:GetSystem("Monetization")
 	if Monetization then
 		Monetization:RegisterProduct("Quests.RanchPass", onRanchPassPurchased)
+		Monetization:RegisterProductCheck("Quests.RanchPass", canBuyRanchPass)
 	end
 end
 

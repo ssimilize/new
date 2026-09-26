@@ -8,7 +8,7 @@
 	                (locked until Config.Market.Unlock)
 	  right stack   Expeditions (finished badge) · Stampede card · Quests (claimable badge)
 	                · Breeding · Hall of Fame (locked until their Ranch Level)
-	  bottom-centre Ranch · "Collect all +X" (live jar total, session.Ranch) · Store
+	  bottom-centre Ranch · "Collect all +X" (live jar total, session.Ranch) · Store ("!" when the VIP crate is ready)
 
 	Public:
 	  Hud:GetTarget(name) -> GuiObject?   tutorial arrow targets: incubator, jar, shop, monster,
@@ -26,6 +26,7 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
+local Vip = require(Shared.Logic.Vip)
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -243,6 +244,14 @@ local function refreshBadges()
 	local claim = StoreKit.claimableQuests(ctx.Store)
 	buttons.Quests.badge:Set(if claim > 0 then tostring(claim) else nil)
 	buttons.Monsters.badge:Set(if growReady > 0 then "!" else nil)
+	if buttons.Store and buttons.Store.badge then
+		-- VIP Rancher: today's crate is waiting in the Store.
+		local passes = ctx.Store:Get("session.Monetization.passes")
+		local vip = ctx.Store:Get("profile.Monetization.vip")
+		local owned = type(passes) == "table" and passes[Config.Monetization.VipCrate.pass] == true
+		local ready = Vip.CrateReady(owned, type(vip) == "table" and vip.day or nil, Vip.Day(now))
+		buttons.Store.badge:Set(if ready then "!" else nil)
+	end
 end
 
 local function refreshMonsters()
@@ -617,7 +626,7 @@ local function build()
 			openScreen("Store")
 		end,
 	})
-	buttons.Store = { gui = storeButton.Root, button = storeButton, color = C.Pink }
+	buttons.Store = { gui = storeButton.Root, button = storeButton, color = C.Pink, badge = Tiles.badge(storeButton.Root) }
 
 	centre = { bottom }
 end

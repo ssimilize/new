@@ -168,8 +168,10 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Leaderboards**: `Leaderboards:Value(player, boardId) -> (value, label?)`, `:Titles(userId) -> { boardId }`. Reads `Monsters:All`/`:CodexCount`, `HallOfFame:RetiredCount`, `Expeditions:Cleared` (all optional) and the `BossDamage` topic. Publishes `global.Leaderboards` (see Api.State); global IO through `ctx.Services.Leaderboards.Submit/Top` and `Services.Players.NameOf`, inside `Services.Spawn`.
 
 ### S6: Monetization, Quests, HallOfFame
-- **Monetization**: `Monetization:HasPass(player, key) -> bool`, `:RegisterProduct(handlerKey, fn(player, product, receiptInfo) -> bool)`, `:WatchAd(player, placement) -> bool` (yields; enforces daily caps), `:AdsLeft(player, placement) -> n`, `:PaidRandomAllowed(player) -> bool`. ProcessReceipt is idempotent (private `receipts`). Publishes `PassesChanged`, `RateModifiersChanged`, `Purchase`, `AdWatched`.
-- **Quests**: tutorial (`Config.Quests.Tutorial`), dailies, achievements, codes, Ranch Pass handler `Quests.RanchPass`. Sends onboarding funnel steps through `ctx.Analytics.Onboarding`.
+- **Monetization**: `Monetization:HasPass(player, key) -> bool`, `:RegisterProduct(handlerKey, fn(player, product, receiptInfo) -> bool)`, `:RegisterProductCheck(handlerKey, fn(player, product) -> (bool, reason?))`, `:CanBuy(player, productKey) -> (bool, reason?)`, `:WatchAd(player, placement) -> bool` (yields; enforces daily caps), `:AdsLeft(player, placement) -> n`, `:PaidRandomAllowed(player) -> bool`. ProcessReceipt is idempotent (private `receipts`). Publishes `PassesChanged`, `RateModifiersChanged`, `Purchase`, `AdWatched`.
+  - **Purchases always deliver.** Clients ask `Monetization.CanBuy { product }` before a product prompt; it refuses a once-per-account product already bought and whatever a handler's check refuses (the Ranch Pass outside a season, or a second one in a season). A receipt that arrives anyway is never left unprocessed: a repeat once-per-account product pays `Config.Monetization.GemValue(price)` gems (best gem-pack rate; receipt recorded with `fallback = "gems"`), and the Ranch Pass is banked in `profile.Quests.passCredit` for the next season.
+  - **VIP Rancher** (pass `vip`): +4 h jar cap (Ranch), `Monetization.ClaimVipCrate` (one crate per UTC day, missed days don't stack; `Config.Monetization.VipCrate` rolled by `Logic/Vip.RollCrate`, seeded by userId and day; the fixed gift where paid random items are restricted; contents arrive as `Rewards.Granted`), and a gold [VIP] chat tag: the server lists owners in `global.Monetization.vip`, the client's `ChatTags` controller prefixes their messages through `TextChatService.OnIncomingMessage` (dormant under the legacy chat).
+- **Quests**: tutorial (`Config.Quests.Tutorial`), dailies, achievements, codes, Ranch Pass handler `Quests.RanchPass` and its product check (`Config.Quests.PassOnSale(now)`, `NextSeason(now)`). Sends onboarding funnel steps through `ctx.Analytics.Onboarding`.
 - **HallOfFame**: `HallOfFame:GetLegacy(player, element) -> pct`, `:UpgradeLevel(player, id) -> n`, `:Statues(player) -> { Appearance }`. In `Start()` registers: Ranch rate modifier `legacy` and jar bonus `jar_cap`, Eggs speed `incubator_speed`, Monsters mood floor, Boss damage `boss_power`, Breeding per-day `daily_breed`, Expeditions loot `expedition_loot`.
 
 ### 1.4: Rebirth, EggHunt
@@ -292,7 +294,7 @@ Canonical names (the HUD, world prompts and other screens open these):
 | `Store` | C3 | `{ tab? = "food"|"decor"|"passes"|"gems"|"codes" }` |
 | `Settings` | C3 | — |
 
-Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2) · `Soundscape` (audio).
+Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2) · `Soundscape` (audio) · `ChatTags` (VIP chat tag).
 
 - **Localize (3.2):** watches every TextLabel / TextButton (and TextBox placeholder) under the PlayerGui and the Workspace. It keeps the English a text object was given (`Localize:Source(obj)`) and shows `Locale.Translate` of it. A longer translation is shrunk to no more than the English's room (not below 75 %). Opt out with the attribute `Localize = false`. It is first in the client Manifest.
 - **Gamepad (3.2):** dormant until the last input comes from a pad.
@@ -393,10 +395,12 @@ profile.Quests = {
   achievements = { [id] = { progress, claimed } },
   codes = { [CODE] = true },
   pass = { season, xp, premium, claimed = { free = { [tier] = true }, premium = { [tier] = true } } },
+  passCredit,                                            -- Ranch Passes paid for, banked for the next open season
 }
 
-profile.Monetization = { ads = { day, counts = { [placement] = n } }, once = { [productKey] = true } }   -- receipts: private
+profile.Monetization = { ads = { day, counts = { [placement] = n } }, once = { [productKey] = true }, vip = { day, opened } }   -- receipts: private; v2 adds vip
 session.Monetization = { passes = { [passKey] = boolean }, paidRandomAllowed }
+global.Monetization  = { vip = { ["u" .. userId] = true } }   -- VIP Rancher owners in this server (chat tags)
 
 profile.HallOfFame = { entries = { { appearance, retiredAt, rarity, element } }, legacy = { [element] = pct }, upgrades = { [upgradeId] = level } }  -- newest first, ≤ 100
 ```

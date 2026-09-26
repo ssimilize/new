@@ -6,8 +6,14 @@
 	from profile.Shop.
 	Passes: Config.Monetization.Passes, owned from session.Monetization.passes, bought with
 	MarketplaceService:PromptGamePassPurchase; after PromptGamePassPurchaseFinished the
-	client calls Monetization.RefreshPasses. Id 0 shows "Coming soon".
-	Gems: developer products (PromptProductPurchase); totems are server-wide.
+	client calls Monetization.RefreshPasses. Id 0 shows "Coming soon". The VIP card also
+	has "Crate odds" (Config.Monetization.VipCrate, the fixed gift where paid random items
+	are restricted) and, for owners, "Open VIP crate" (Monetization.ClaimVipCrate; the
+	contents arrive as the usual Rewards.Granted card) once per UTC day.
+	Gems: developer products (PromptProductPurchase, after Monetization.CanBuy says yes);
+	totems are server-wide. Once-per-account products list their grant from config and show
+	"Owned ✓" once bought; the Ranch Pass is disabled outside a season (Config.Quests.PassOnSale)
+	with when the next one goes on sale.
 	Codes: a TextBox → Quests.Redeem.
 ]]
 
@@ -17,6 +23,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
+local Vip = require(Shared.Logic.Vip)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -27,6 +34,7 @@ local Widgets = require(UI.Components.Widgets)
 local Icon = require(UI.Components.Icon)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local Util = require(script.Parent.Parts.Util)
+local Dialog = require(script.Parent.Parts.Dialog)
 
 local New = Create.New
 local C = Theme.Colors
@@ -49,13 +57,31 @@ local function priceOf(price)
 	return nil, 0
 end
 
+-- Starter Pack text is built from its grant (itemsText) so the card always lists what it gives.
 local PRODUCT_TEXT = {
-	starterPack = "Crystal Egg, 300 gems and a Hay Bale. Once per account.",
 	totemRain = "Summons Rain for everyone on this server.",
 	totemThunder = "Summons a Thunderstorm for everyone on this server.",
 	totemStarfall = "Summons a Starfall for everyone on this server.",
 	ranchPass = "Unlocks the premium track of this season's Ranch Pass.",
 }
+
+-- One reward as shop text: currencies get their noun ("300 gems"), items their name.
+local CURRENCY_TEXT = { gems = "%s gems", treats = "%s treats", stardust = "%s Stardust" }
+local function itemText(item): string
+	local fmt = CURRENCY_TEXT[item.kind]
+	if fmt then
+		return string.format(fmt, Format.short(item.amount or 0))
+	end
+	return Util.rewardText(item)
+end
+
+local function itemsText(items): string
+	local parts = {}
+	for _, item in items or {} do
+		table.insert(parts, itemText(item))
+	end
+	return table.concat(parts, ", ")
+end
 
 return {
 	Name = "Store",
@@ -138,6 +164,10 @@ return {
 		local function promptProduct(product)
 			if product.productId == 0 then
 				ctx:Toast("Coming soon", "info")
+				return
+			end
+			-- The server refuses what it couldn't honour (owned, off season) before Robux move.
+			if not Util.requestOnce(ctx, "Monetization.CanBuy", { product = product.key }) then
 				return
 			end
 			local ok, err = pcall(function()
@@ -393,19 +423,110 @@ return {
 			})
 		end
 
+		local function offButton(parent, text: string)
+			Button.new({
+				Text = text,
+				Color = C.Gray,
+				Size = UDim2.new(1, -16, 0, 48),
+				TextSize = Theme.TextSize.Body,
+				AnchorPoint = Vector2.new(0.5, 1),
+				Position = UDim2.new(0.5, 0, 1, -8),
+				Disabled = true,
+				Parent = parent,
+			})
+		end
+
+		-- VIP crate ---------------------------------------------------------------------------
+
+		local crate = M.VipCrate
+		local function crateReady(): boolean
+			local owned = ctx.Store:Get("session.Monetization.passes") or {}
+			local vip = ctx.Store:Get("profile.Monetization.vip")
+			return Vip.CrateReady(owned[crate.pass] == true, type(vip) == "table" and vip.day or nil, Vip.Day(ctx:Now()))
+		end
+
+		local function oddsRow(parent, order: number, left: string, right: string)
+			local row = New("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, -24, 0, 30),
+				LayoutOrder = order,
+				Parent = parent,
+			})
+			Util.text({
+				Text = left,
+				Font = Theme.Fonts.Display,
+				TextSize = Theme.TextSize.Body,
+				TextColor3 = C.Gold,
+				Size = UDim2.new(0, 90, 1, 0),
+				Parent = row,
+			})
+			Util.text({
+				Text = right,
+				TextSize = Theme.TextSize.Body,
+				Position = UDim2.fromOffset(96, 0),
+				Size = UDim2.new(1, -96, 1, 0),
+				Parent = row,
+			})
+		end
+
+		local function showCrateOdds()
+			local random = ctx.Store:Get("session.Monetization.paidRandomAllowed") ~= false
+			Dialog.show(ctx.UI.Top, {
+				Title = "VIP crate",
+				Color = C.Gold,
+				Size = Vector2.new(540, 400),
+				Text = if random
+					then "One crate every day with VIP Rancher. Missed days don't stack. Each crate holds one of:"
+					else "One crate every day with VIP Rancher. Missed days don't stack. Each crate holds:",
+				Build = function(body)
+					if not random then
+						oddsRow(body, 2, "100%", itemsText(crate.fixed))
+						return
+					end
+					for i, entry in Vip.CrateOdds(crate) do
+						local pct = if entry.pct >= 1 then string.format("%d%%", math.floor(entry.pct + 0.5)) else "<1%"
+						oddsRow(body, i + 1, pct, itemsText(entry.reward))
+					end
+				end,
+			})
+		end
+
+		local function openCrate()
+			if not crateReady() then
+				ctx:Toast("You already opened today's VIP crate. Come back tomorrow!", "info")
+				return
+			end
+			-- The contents arrive as the usual reward card (Rewards.Granted).
+			Util.requestOnce(ctx, "Monetization.ClaimVipCrate")
+		end
+
 		local function drawPasses()
 			local grid = Widgets.Scroll({ Cell = Vector2.new(234, 176), Padding = 10, Parent = content })
 			local owned = ctx.Store:Get("session.Monetization.passes") or {}
 			for i, pass in M.Passes do
 				local cell = Util.card({ LayoutOrder = i, Parent = grid })
+				local isVip = pass.key == crate.pass
 				Util.text({
 					Text = pass.name,
 					Font = Theme.Fonts.Display,
 					TextSize = Theme.TextSize.Body + 1,
 					Position = UDim2.fromOffset(12, 8),
-					Size = UDim2.new(1, -24, 0, 26),
+					Size = UDim2.new(1, if isVip then -110 else -24, 0, 26),
 					Parent = cell,
 				})
+				if isVip then
+					Button.new({
+						Name = "CrateOdds",
+						Text = "Crate odds",
+						Color = C.Gold,
+						Size = UDim2.fromOffset(92, 44),
+						TextSize = Theme.TextSize.Small,
+						AnchorPoint = Vector2.new(1, 0),
+						Position = UDim2.new(1, -6, 0, 4),
+						Parent = cell,
+						OnClick = showCrateOdds,
+					})
+				end
 				Util.text({
 					Text = pass.desc,
 					TextColor3 = C.TextMuted,
@@ -414,7 +535,23 @@ return {
 					Size = UDim2.new(1, -24, 0, 70),
 					Parent = cell,
 				})
-				if owned[pass.key] == true then
+				if isVip and owned[pass.key] == true then
+					if crateReady() then
+						Button.new({
+							Name = "OpenVipCrate",
+							Text = "Open VIP crate",
+							Color = C.Gold,
+							Size = UDim2.new(1, -16, 0, 48),
+							TextSize = Theme.TextSize.Body,
+							AnchorPoint = Vector2.new(0.5, 1),
+							Position = UDim2.new(0.5, 0, 1, -8),
+							Parent = cell,
+							OnClick = openCrate,
+						})
+					else
+						offButton(cell, "Opened today ✓")
+					end
+				elseif owned[pass.key] == true then
 					Util.text({
 						Text = "Owned ✓",
 						Font = Theme.Fonts.Display,
@@ -450,6 +587,8 @@ return {
 			local grid = Widgets.Scroll({ Cell = Vector2.new(234, 180), Padding = 10, Parent = content })
 			local once = ctx.Store:Get("profile.Monetization.once") or {}
 			local pass = ctx.Store:Get("profile.Quests.pass")
+			local credit = ctx.Store:Get("profile.Quests.passCredit")
+			local now = ctx:Now()
 			for i, product in M.Products do
 				local cell = Util.card({ LayoutOrder = i, Parent = grid })
 				local icon = productIcon(product)
@@ -464,6 +603,11 @@ return {
 					Parent = cell,
 				})
 				local desc = PRODUCT_TEXT[product.key]
+				if not desc and product.oncePerAccount and product.grant then
+					desc = string.format("%s. Once per account.", itemsText(product.grant))
+				elseif product.key == "ranchPass" and (tonumber(credit) or 0) > 0 then
+					desc = "A saved Ranch Pass unlocks the next season's premium track."
+				end
 				if not desc and product.grant then
 					local parts = {}
 					for _, item in product.grant do
@@ -484,8 +628,9 @@ return {
 						product.key == "ranchPass"
 						and type(pass) == "table"
 						and pass.premium == true
-						and pass.season == Config.Quests.PassAt(ctx:Now()).season
+						and pass.season == Config.Quests.PassAt(now).season
 					)
+				local offSeason = product.key == "ranchPass" and not Config.Quests.PassOnSale(now)
 				if bought then
 					Util.text({
 						Text = "Owned ✓",
@@ -497,6 +642,13 @@ return {
 						Size = UDim2.new(1, -16, 0, 48),
 						Parent = cell,
 					})
+				elseif offSeason then
+					local nextSeason = Config.Quests.NextSeason(now)
+					local label = "Not on sale"
+					if nextSeason then
+						label = string.format("On sale in %s", Format.duration(nextSeason.startsAt - now))
+					end
+					offButton(cell, label)
 				else
 					robuxButton(cell, product.price, product.productId, function()
 						promptProduct(product)
@@ -609,7 +761,14 @@ return {
 				if type(params) == "table" and table.find(TABS, params.tab) then
 					tabs:Select(params.tab)
 				end
-				for _, path in { "profile.Currency", "profile.Shop", "session.Monetization", "profile.Monetization", "profile.Quests.pass" } do
+				for _, path in {
+					"profile.Currency",
+					"profile.Shop",
+					"session.Monetization",
+					"profile.Monetization",
+					"profile.Quests.pass",
+					"profile.Quests.passCredit",
+				} do
 					bag.add(ctx.Store:Observe(path, refresh))
 				end
 				refresh()
