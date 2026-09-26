@@ -538,6 +538,12 @@ Api.Actions = {
 		rate = 1,
 		returns = "{ hearts: number, points: number, gained: boolean, learned: trickId|false }",
 	},
+
+	-- Postcards (glow-up X) · Config/Postcards, Logic/Postcards, Systems/Postcards --------------
+	-- ★ keeps a postcard in the album for good (at most Config.Postcards.maxFavourites).
+	["Postcards.Favourite"] = { schema = T.struct({ card = id, on = T.boolean }), rate = 3, returns = "{ fav: boolean, kept: boolean }" },
+	-- An own postcard to a Roblox friend's album (Gifts' sender gates, Config.Postcards.Send caps).
+	["Postcards.Send"] = { schema = T.struct({ card = id, to = T.userId }), rate = 1, returns = "{ left: number }" },
 }
 
 --[[
@@ -610,6 +616,7 @@ Api.State = {
 		Companions = "{ ids = { monsterId } }  -- glow-up T: who walks with the player",
 		Codex = "{ claimed = { [milestoneId]: unix }, owed = { itemId } }  -- glow-up O (badges private)",
 		Bond = "{ list = { [monsterId]: { pts, pet: unix?, brush: unix?, play: unix? } }, cares }  -- see Systems/Bond",
+		Postcards = "{ cards = { [cardId]: Card }, seq, day, sent, to = { ['u'..userId]: n }, totalSent, totalReceived }  -- glow-up X (Logic/Postcards)",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -678,7 +685,7 @@ Api.Topics = {
 	PenChanged = "(player, { pen: number })",
 	StageCleared = "(player, { region: string, stage: number, first: boolean, squad: { id }? })",
 	ExpeditionStarted = "(player, { slot: number, duration: number })",
-	ExpeditionClaimed = "(player, { slot: number, duration: number })",
+	ExpeditionClaimed = "(player, { slot: number, duration: number, region: string, stage: number, squad: { id }, loot: { Reward } })",
 	BossJoined = "(player, {})",
 	BossEnded = "(nil, { bossId: string, won: boolean })",
 	BossDamage = "(player, { damage: number, rank: number })  -- per participant when a Stampede ends",

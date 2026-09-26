@@ -216,6 +216,19 @@ return {
 			end,
 		})
 		modeTabs.Root.LayoutOrder = 1
+		-- Glow-up X: the postcards squads send home (Screens/Album).
+		Button.new({
+			Name = "AlbumButton",
+			Text = "Album",
+			Color = C.Orange,
+			Size = UDim2.fromOffset(110, 44),
+			TextSize = Theme.TextSize.Body,
+			LayoutOrder = 2,
+			Parent = panel.HeaderRight,
+			OnClick = function()
+				ctx.Router:Open("Album", { region = region })
+			end,
+		})
 
 		local regionRow = New("Frame", {
 			Name = "Regions",
