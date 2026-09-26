@@ -23,6 +23,23 @@ Breeding.Hybrids = {
 	["ember+stone"] = "lavashell",
 	["gloom+spark"] = "eclipsette",
 	["gloom+sprout"] = "mirebloom",
+	-- Update 3.3
+	["ember+gloom"] = "smoglet",
+	["gloom+tide"] = "inklet",
+	["gloom+stone"] = "gargit",
+	["spark+stone"] = "lodebug",
+	-- Update 3.4: every pair of the six launch elements now breeds a hybrid.
+	["ember+sprout"] = "pepperpip",
+	["spark+tide"] = "sparkeel",
+	["sprout+stone"] = "cobbun",
+	-- Update 3.5: Light & Void hybrids.
+	["light+sprout"] = "heliopup",
+	["light+stone"] = "prismite",
+	["gloom+light"] = "dusklet",
+	["tide+void"] = "voidrop",
+	["sprout+void"] = "weevoid",
+	["stone+void"] = "shardlet",
+	["ember+light"] = "candlet",
 }
 
 function Breeding.HybridFor(elementA: string, elementB: string): string?

@@ -69,6 +69,7 @@ local VALUE_FIELDS = {
 	muts = true,
 	traits = true,
 	hidden = true,
+	genes = true,
 	weight = true,
 	lv = true,
 	stars = true,

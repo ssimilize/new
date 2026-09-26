@@ -83,7 +83,9 @@ return function(t)
 				for _, el in Config.Species.ById[spec.line].elements do
 					seen[el] = true
 				end
-				expect(Config.Species.ById[spec.line].added).toBe("2.0")
+				-- The 2.0 lines, and Lumisnail and Nullbun from update 3.3.
+				local added = Config.Species.ById[spec.line].added
+				expect(added == "2.0" or added == "3.3").toBe(true)
 			end
 			expect(seen.light and seen.void).toBe(true)
 			local R = Config.Regions

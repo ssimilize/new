@@ -15,10 +15,12 @@
 	  titanic = boolean?,        -- glow-up W: true forces the Titanic tier (tests, grants)
 	  muts = { string }?,
 	  gen = number?,             -- generation (0 hatched, parents' max + 1 when bred)
+	  genes = Genes?,            -- stat genes (Logic/Genetics); rolled last when nil
 	}
 ]]
 
 local Config = require(script.Parent.Parent.Config)
+local Genetics = require(script.Parent.Genetics)
 
 local Species = Config.Species
 local Traits = Config.Traits
@@ -115,7 +117,7 @@ function MonsterGen.New(rng, spec, now: number)
 		weight, rolled = MonsterGen.RollSize(rng, spec.line)
 		titanic = titanic or rolled
 	end
-	return {
+	local record = {
 		line = spec.line,
 		stage = stage,
 		form = form,
@@ -139,6 +141,10 @@ function MonsterGen.New(rng, spec, now: number)
 		born = now,
 		gen = spec.gen or 0,
 	}
+	-- Rolled after everything else so the rolls above stay as they were before genes.
+	-- Given genes are kept pair by pair; a missing pair (Luck in pre-3.7 genes) is rolled.
+	record.genes = if type(spec.genes) == "table" then Genetics.Fill(spec.genes, rng) else Genetics.Roll(rng)
+	return record
 end
 
 return MonsterGen

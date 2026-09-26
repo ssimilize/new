@@ -10,6 +10,7 @@
 	Loot.Expected(regionId, stage, durationSeconds, lootPct?) -> { coins, food, treats, eggs = { [eggType]: expected } }
 	  (UI preview without randomness)
 	Loot.Merge(lists) -> { Reward }   -- sums rewards of the same kind and id
+	Loot.LuckBonus(lucks) -> pct       -- 3.7: a squad's Luck stats as a loot bonus (≤ LuckLootMax)
 
 	Per minute on a stage with global index g (Config.Regions.LootPerMinute):
 	  coins, food (70% the region's flavour, the rest random flavours), treats,
@@ -28,6 +29,20 @@ local Loot = {}
 
 Loot.RegionFoodShare = 0.7
 Loot.RandomFoodChunks = 3 -- the non-region food is split over up to this many random rolls
+-- Update 3.7: each squad member adds LuckLootK × luck / (luck + LuckLootScale), the squad at most
+-- LuckLootMax: a maxed Mythic (Luck 156) adds about +3.4%, five of them hit the +15% cap.
+Loot.LuckLootK = 0.1
+Loot.LuckLootScale = 300
+Loot.LuckLootMax = 0.15
+
+function Loot.LuckBonus(lucks: { number }): number
+	local total = 0
+	for _, luck in lucks do
+		local l = math.max(0, luck)
+		total += Loot.LuckLootK * l / (l + Loot.LuckLootScale)
+	end
+	return math.min(Loot.LuckLootMax, total)
+end
 
 local function multipliers(durationSeconds: number, lootPct: number?, partial: boolean?): number
 	local bonus = if partial then 1 else (Regions.DurationBonus[durationSeconds] or 1)

@@ -4,7 +4,8 @@
 	  top-left      coins / gems / food pills (count-up; gems → Store "gems", food → Store "food")
 	  top-right     Ranch Level + XP bar (Config.Unlocks.XPToNext) · ⚙ Settings button beside it
 	  top-centre    server weather banner (global.Weather) with mutation hint and countdown
-	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market · Daily
+	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market · Daily ·
+	                Jobs (3.7: badge = workers whose storage is full)
 	                (locked until Config.Market.Unlock)
 	  right stack   Expeditions (finished badge) · Stampede card · Quests (claimable badge)
 	                · Breeding · Hall of Fame (locked until their Ranch Level)
@@ -38,6 +39,7 @@ local Vip = require(Shared.Logic.Vip)
 local LoginStreak = require(Shared.Logic.LoginStreak)
 local MasteryLogic = require(Shared.Logic.Mastery)
 local CodexLogic = require(Shared.Logic.Codex) -- glow-up O: claimable milestones badge
+local JobsLogic = require(Shared.Logic.Jobs)
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -94,6 +96,12 @@ end
 
 -- Builders --------------------------------------------------------------------------
 
+-- The left stack holds 7 buttons since 3.7 (Daily + Jobs). At the side buttons' usual 52 px + 10 px
+-- it ran to design y 496 and the Tutorial card (bottom-left, top at ~446 on a phone) hid Jobs;
+-- 46 px + 6 px ends it at 430, the clearance the 6-button stack had.
+local LEFT_BUTTON_HEIGHT = 46
+local LEFT_GAP = 6
+
 local function sideButton(
 	parent: Instance,
 	name: string,
@@ -109,7 +117,7 @@ local function sideButton(
 		Name = name,
 		Text = text,
 		Color = color,
-		Size = UDim2.fromOffset(140, 52),
+		Size = UDim2.fromOffset(140, if parent.Name == "LeftStack" then LEFT_BUTTON_HEIGHT else 52),
 		TextSize = Theme.TextSize.Body + 1,
 		Icon = icon,
 		LayoutOrder = order,
@@ -337,6 +345,14 @@ local function refreshBadges()
 	buttons.Daily.badge:Set(if daily then "!" else nil)
 	-- Glow-up O: Codex milestones ready to claim.
 	buttons.Codex.badge:Set(if codexClaimable > 0 then tostring(codexClaimable) else nil)
+	-- 3.7: Jobs workers whose storage is full.
+	local full = 0
+	for _, slot in StoreKit.tbl(ctx.Store, "profile.Jobs.slots") do
+		if type(slot) == "table" and JobsLogic.IsFull(slot, now) then
+			full += 1
+		end
+	end
+	buttons.Jobs.badge:Set(if full > 0 then tostring(full) else nil)
 end
 
 local function refreshCodex()
@@ -619,9 +635,9 @@ local function build()
 	local left = Tiles.col({
 		Name = "LeftStack",
 		Position = UDim2.fromOffset(16, 72),
-		Size = UDim2.fromOffset(150, 370),
+		Size = UDim2.fromOffset(150, 7 * LEFT_BUTTON_HEIGHT + 6 * LEFT_GAP),
 		Parent = root,
-	}, 10)
+	}, LEFT_GAP)
 	sideButton(left, "Shop", "Shop", C.Orange, Icon.new("coin", 28), 1, function()
 		openScreen("EggShop")
 	end)
@@ -640,6 +656,9 @@ local function build()
 	sideButton(left, "Daily", "Daily", C.Gold, Icon.new("star", 28), 6, function()
 		openScreen("LoginStreak")
 	end)
+	sideButton(left, "Jobs", "Jobs", C.Purple, previewIcon("pebblet", 30), 7, function()
+		openScreen("Jobs")
+	end, Config.Jobs.Unlock)
 
 	-- Right stack
 	local right = Tiles.col({
@@ -910,6 +929,7 @@ function Hud.Init(context)
 	ctx.Store:Observe("profile.LoginStreak", refreshBadges)
 	ctx.Store:Observe("profile.Codex", refreshCodex)
 	ctx.Store:Observe("profile.Monsters.codex", refreshCodex)
+	ctx.Store:Observe("profile.Jobs.slots", refreshBadges)
 	ctx.Bus:Subscribe("Hud.Flash", flash)
 	ctx.Net:On("Market.MailCollected", onMailCollected)
 	ctx.Router.Opened:Connect(refreshCentre)

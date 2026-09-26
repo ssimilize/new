@@ -2009,6 +2009,742 @@
         "frostfall"
       ],
       "weight": 2.6
+    },
+    {
+      "added": "3.3",
+      "archetype": "slug",
+      "elements": [
+        "ember",
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "smoglet",
+          "name": "Smoglet",
+          "stage": 1
+        },
+        {
+          "id": "soothorn",
+          "name": "Soothorn",
+          "stage": 2
+        },
+        {
+          "id": "pyreshade",
+          "name": "Pyreshade",
+          "stage": 3
+        }
+      ],
+      "id": "smoglet",
+      "order": 64,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 4.5
+    },
+    {
+      "added": "3.3",
+      "archetype": "slug",
+      "elements": [
+        "tide",
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "inklet",
+          "name": "Inklet",
+          "stage": 1
+        },
+        {
+          "id": "murkling",
+          "name": "Murkling",
+          "stage": 2
+        },
+        {
+          "id": "inkraken",
+          "name": "Inkraken",
+          "stage": 3
+        }
+      ],
+      "id": "inklet",
+      "order": 65,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 3.5
+    },
+    {
+      "added": "3.3",
+      "archetype": "bug",
+      "elements": [
+        "stone",
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "gargit",
+          "name": "Gargit",
+          "stage": 1
+        },
+        {
+          "id": "gargarock",
+          "name": "Gargarock",
+          "stage": 2
+        },
+        {
+          "id": "gargolith",
+          "name": "Gargolith",
+          "stage": 3
+        }
+      ],
+      "id": "gargit",
+      "order": 66,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 12
+    },
+    {
+      "added": "3.3",
+      "archetype": "bug",
+      "elements": [
+        "spark",
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "lodebug",
+          "name": "Lodebug",
+          "stage": 1
+        },
+        {
+          "id": "ferrobeetle",
+          "name": "Ferrobeetle",
+          "stage": 2
+        },
+        {
+          "id": "magnetitan",
+          "name": "Magnetitan",
+          "stage": 3
+        }
+      ],
+      "id": "lodebug",
+      "order": 67,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 6
+    },
+    {
+      "added": "3.3",
+      "archetype": "bug",
+      "elements": [
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "pitling",
+          "name": "Pitling",
+          "stage": 1
+        },
+        {
+          "id": "sandlion",
+          "name": "Sandlion",
+          "stage": 2
+        },
+        {
+          "id": "dunemaw",
+          "name": "Dunemaw",
+          "stage": 3
+        }
+      ],
+      "id": "pitling",
+      "order": 68,
+      "pools": [
+        "dunes"
+      ],
+      "weight": 4
+    },
+    {
+      "added": "3.3",
+      "archetype": "bug",
+      "elements": [
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "rimebug",
+          "name": "Rimebug",
+          "stage": 1
+        },
+        {
+          "id": "icicarab",
+          "name": "Icicarab",
+          "stage": 2
+        },
+        {
+          "id": "frostscarab",
+          "name": "Frostscarab",
+          "stage": 3
+        }
+      ],
+      "id": "rimebug",
+      "order": 69,
+      "pools": [
+        "glacier"
+      ],
+      "weight": 3
+    },
+    {
+      "added": "3.3",
+      "archetype": "slug",
+      "elements": [
+        "light"
+      ],
+      "forms": [
+        {
+          "id": "lumisnail",
+          "name": "Lumisnail",
+          "stage": 1
+        },
+        {
+          "id": "prismsnail",
+          "name": "Prismsnail",
+          "stage": 2
+        },
+        {
+          "id": "haloshell",
+          "name": "Haloshell",
+          "stage": 3
+        }
+      ],
+      "id": "lumisnail",
+      "order": 70,
+      "pools": [
+        "sky"
+      ],
+      "weight": 2.2
+    },
+    {
+      "added": "3.3",
+      "archetype": "bunny",
+      "elements": [
+        "void"
+      ],
+      "forms": [
+        {
+          "id": "nullbun",
+          "name": "Nullbun",
+          "stage": 1
+        },
+        {
+          "id": "riftrabbit",
+          "name": "Riftrabbit",
+          "stage": 2
+        },
+        {
+          "id": "umbrahare",
+          "name": "Umbrahare",
+          "stage": 3
+        }
+      ],
+      "id": "nullbun",
+      "order": 71,
+      "pools": [
+        "sky"
+      ],
+      "weight": 2.4
+    },
+    {
+      "added": "3.4",
+      "archetype": "sprite",
+      "elements": [
+        "ember",
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "pepperpip",
+          "name": "Pepperpip",
+          "stage": 1
+        },
+        {
+          "id": "chiliflit",
+          "name": "Chiliflit",
+          "stage": 2
+        },
+        {
+          "id": "scorchpepper",
+          "name": "Scorchpepper",
+          "stage": 3
+        }
+      ],
+      "id": "pepperpip",
+      "order": 72,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 0.6
+    },
+    {
+      "added": "3.4",
+      "archetype": "slug",
+      "elements": [
+        "tide",
+        "spark"
+      ],
+      "forms": [
+        {
+          "id": "sparkeel",
+          "name": "Sparkeel",
+          "stage": 1
+        },
+        {
+          "id": "ampereel",
+          "name": "Ampereel",
+          "stage": 2
+        },
+        {
+          "id": "thundereel",
+          "name": "Thundereel",
+          "stage": 3
+        }
+      ],
+      "id": "sparkeel",
+      "order": 73,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 3
+    },
+    {
+      "added": "3.4",
+      "archetype": "bunny",
+      "elements": [
+        "stone",
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "cobbun",
+          "name": "Cobbun",
+          "stage": 1
+        },
+        {
+          "id": "cairnhop",
+          "name": "Cairnhop",
+          "stage": 2
+        },
+        {
+          "id": "menhare",
+          "name": "Menhare",
+          "stage": 3
+        }
+      ],
+      "id": "cobbun",
+      "order": 74,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 5
+    },
+    {
+      "added": "3.4",
+      "archetype": "blob",
+      "elements": [
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "podling",
+          "name": "Podling",
+          "stage": 1
+        },
+        {
+          "id": "sprigpod",
+          "name": "Sprigpod",
+          "stage": 2
+        },
+        {
+          "id": "bloompod",
+          "name": "Bloompod",
+          "stage": 3
+        }
+      ],
+      "id": "podling",
+      "order": 75,
+      "pools": [
+        "springbloom"
+      ],
+      "weight": 3.5
+    },
+    {
+      "added": "3.4",
+      "archetype": "slug",
+      "elements": [
+        "stone",
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "castlet",
+          "name": "Castlet",
+          "stage": 1
+        },
+        {
+          "id": "turretsnail",
+          "name": "Turretsnail",
+          "stage": 2
+        },
+        {
+          "id": "citadelsnail",
+          "name": "Citadelsnail",
+          "stage": 3
+        }
+      ],
+      "id": "castlet",
+      "order": 76,
+      "pools": [
+        "summersplash"
+      ],
+      "weight": 6
+    },
+    {
+      "added": "3.4",
+      "archetype": "sprite",
+      "elements": [
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "boolet",
+          "name": "Boolet",
+          "stage": 1
+        },
+        {
+          "id": "hauntlet",
+          "name": "Hauntlet",
+          "stage": 2
+        },
+        {
+          "id": "moonhaunt",
+          "name": "Moonhaunt",
+          "stage": 3
+        }
+      ],
+      "id": "boolet",
+      "order": 77,
+      "pools": [
+        "harvestmoon"
+      ],
+      "weight": 0.3
+    },
+    {
+      "added": "3.4",
+      "archetype": "moth",
+      "elements": [
+        "light"
+      ],
+      "forms": [
+        {
+          "id": "silklet",
+          "name": "Silklet",
+          "stage": 1
+        },
+        {
+          "id": "silkwing",
+          "name": "Silkwing",
+          "stage": 2
+        },
+        {
+          "id": "jadelumen",
+          "name": "Jadelumen",
+          "stage": 3
+        }
+      ],
+      "id": "silklet",
+      "order": 78,
+      "pools": [
+        "lunarlanterns"
+      ],
+      "weight": 0.7
+    },
+    {
+      "added": "3.4",
+      "archetype": "bunny",
+      "elements": [
+        "light",
+        "spark"
+      ],
+      "forms": [
+        {
+          "id": "twinklet",
+          "name": "Twinklet",
+          "stage": 1
+        },
+        {
+          "id": "starlop",
+          "name": "Starlop",
+          "stage": 2
+        },
+        {
+          "id": "constellhare",
+          "name": "Constellhare",
+          "stage": 3
+        }
+      ],
+      "id": "twinklet",
+      "order": 79,
+      "pools": [
+        "celestial"
+      ],
+      "weight": 2.6
+    },
+    {
+      "added": "3.5",
+      "archetype": "fox",
+      "elements": [
+        "light",
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "heliopup",
+          "name": "Heliopup",
+          "stage": 1
+        },
+        {
+          "id": "heliolynx",
+          "name": "Heliolynx",
+          "stage": 2
+        },
+        {
+          "id": "solarvixen",
+          "name": "Solarvixen",
+          "stage": 3
+        }
+      ],
+      "id": "heliopup",
+      "order": 80,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 3
+    },
+    {
+      "added": "3.5",
+      "archetype": "golem",
+      "elements": [
+        "light",
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "prismite",
+          "name": "Prismite",
+          "stage": 1
+        },
+        {
+          "id": "crystallum",
+          "name": "Crystallum",
+          "stage": 2
+        },
+        {
+          "id": "radiolith",
+          "name": "Radiolith",
+          "stage": 3
+        }
+      ],
+      "id": "prismite",
+      "order": 81,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 15
+    },
+    {
+      "added": "3.5",
+      "archetype": "moth",
+      "elements": [
+        "light",
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "dusklet",
+          "name": "Dusklet",
+          "stage": 1
+        },
+        {
+          "id": "gloamwing",
+          "name": "Gloamwing",
+          "stage": 2
+        },
+        {
+          "id": "twilightmoth",
+          "name": "Twilightmoth",
+          "stage": 3
+        }
+      ],
+      "id": "dusklet",
+      "order": 82,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 1
+    },
+    {
+      "added": "3.5",
+      "archetype": "blob",
+      "elements": [
+        "void",
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "voidrop",
+          "name": "Voidrop",
+          "stage": 1
+        },
+        {
+          "id": "trenchdrop",
+          "name": "Trenchdrop",
+          "stage": 2
+        },
+        {
+          "id": "abyssdrop",
+          "name": "Abyssdrop",
+          "stage": 3
+        }
+      ],
+      "id": "voidrop",
+      "order": 83,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 7
+    },
+    {
+      "added": "3.5",
+      "archetype": "bug",
+      "elements": [
+        "void",
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "weevoid",
+          "name": "Weevoid",
+          "stage": 1
+        },
+        {
+          "id": "shadeweevil",
+          "name": "Shadeweevil",
+          "stage": 2
+        },
+        {
+          "id": "voidthorn",
+          "name": "Voidthorn",
+          "stage": 3
+        }
+      ],
+      "id": "weevoid",
+      "order": 84,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 2
+    },
+    {
+      "added": "3.5",
+      "archetype": "sprite",
+      "elements": [
+        "void",
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "shardlet",
+          "name": "Shardlet",
+          "stage": 1
+        },
+        {
+          "id": "riftshard",
+          "name": "Riftshard",
+          "stage": 2
+        },
+        {
+          "id": "singulith",
+          "name": "Singulith",
+          "stage": 3
+        }
+      ],
+      "id": "shardlet",
+      "order": 85,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 4
+    },
+    {
+      "added": "3.5",
+      "archetype": "slug",
+      "elements": [
+        "ember",
+        "light"
+      ],
+      "forms": [
+        {
+          "id": "candlet",
+          "name": "Candlet",
+          "stage": 1
+        },
+        {
+          "id": "waxwick",
+          "name": "Waxwick",
+          "stage": 2
+        },
+        {
+          "id": "chandelisnail",
+          "name": "Chandelisnail",
+          "stage": 3
+        }
+      ],
+      "id": "candlet",
+      "order": 86,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 2.5
+    },
+    {
+      "added": "3.5",
+      "archetype": "bunny",
+      "elements": [
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "seahop",
+          "name": "Seahop",
+          "stage": 1
+        },
+        {
+          "id": "pearlhare",
+          "name": "Pearlhare",
+          "stage": 2
+        },
+        {
+          "id": "nacrehare",
+          "name": "Nacrehare",
+          "stage": 3
+        }
+      ],
+      "id": "seahop",
+      "order": 87,
+      "pools": [
+        "pearl"
+      ],
+      "weight": 2.8
     }
   ]
 }

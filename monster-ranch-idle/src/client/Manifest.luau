@@ -93,6 +93,7 @@ return {
 		-- C3 · Adventure & social
 		"Expeditions",
 		"Breeding",
+		"Jobs", -- 3.7 · Ranch Jobs
 		"Trade",
 		"Boss",
 		"HallOfFame",

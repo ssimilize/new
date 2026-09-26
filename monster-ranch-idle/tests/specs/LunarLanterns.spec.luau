@@ -147,8 +147,9 @@ return function(t)
 			for _ in lines do
 				count += 1
 			end
-			expect(count).toBe(3)
-			expect(lines.lanternling).toBe(true)
+			-- The three 1.2 lines and Silklet from update 3.4.
+			expect(count).toBe(4)
+			expect(lines.lanternling and lines.silklet).toBe(true)
 		end)
 	end)
 end
