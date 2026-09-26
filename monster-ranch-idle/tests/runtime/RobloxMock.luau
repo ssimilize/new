@@ -1540,7 +1540,8 @@ define("Workspace", {
 			if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" then
 				error("Raycast expects (Vector3, Vector3, RaycastParams?)", 2)
 			end
-			if params ~= nil and luneTypeof(params) ~= "RaycastParams" and typeof(params) ~= "RaycastParams" then
+			-- RaycastParams from the world's globals are tables the world's typeof knows (Lune's does not).
+			if params ~= nil and luneTypeof(params) ~= "RaycastParams" and recOf(self).world:typeof(params) ~= "RaycastParams" then
 				error("Raycast params must be RaycastParams", 2)
 			end
 			return recOf(self).world.raycastResult

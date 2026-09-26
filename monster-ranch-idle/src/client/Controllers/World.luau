@@ -18,8 +18,8 @@
 	monster, MonsterDetail) and "rebirth" (character + Star Altar, the Rebirth screen). Coin and
 	heart bursts use the coin / heart sprites, or the plain emitters while those are not uploaded.
 
-	Taps on monsters are raycast against their Body parts: own monster -> MonsterDetail,
-	someone else's -> Social.Pet with hearts. Taps on own eggs open Incubators.
+	Taps on monsters are raycast against their Body parts (a 3D monster's invisible Hit box):
+	own monster -> MonsterDetail, someone else's -> Social.Pet with hearts. Taps on own eggs open Incubators.
 	The local character is moved to its plot once global.Plots lists the local UserId, and
 	again on every respawn. Client bus: subscribes to "World.FocusPlot" (plotIndex).
 
@@ -353,6 +353,24 @@ end
 
 -- Model pool ------------------------------------------------------------------------------
 
+local function accessoryKey(acc): string
+	if type(acc) ~= "table" then
+		return ""
+	end
+	local list = {}
+	for slot, id in acc do
+		table.insert(list, tostring(slot) .. "=" .. tostring(id))
+	end
+	table.sort(list)
+	return table.concat(list, "+")
+end
+
+-- The part a tap raycasts: a placeholder's "Body", a 3D monster's invisible "Hit" box.
+local function tapPart(model: Model): BasePart?
+	local part = model:FindFirstChild("Body") or model:FindFirstChild("Hit")
+	return if part and part:IsA("BasePart") then part else nil
+end
+
 local function appearanceKey(a): string
 	return table.concat({
 		tostring(a.line),
@@ -363,6 +381,7 @@ local function appearanceKey(a): string
 		table.concat(a.muts or {}, "+"),
 		tostring(math.floor((a.weight or 0) * 10 + 0.5)),
 		tostring(a.archetype),
+		accessoryKey(a.acc), -- worn accessories are built into the model
 	}, "|")
 end
 
@@ -389,8 +408,8 @@ local function acquireModel(appearance, key: string): Model?
 	if hasMutation(appearance, "prismatic") then
 		model:SetAttribute("Prismatic", true)
 	end
-	local body = model:FindFirstChild("Body")
-	if body and body:IsA("BasePart") then
+	local body = tapPart(model)
+	if body then
 		body.CanQuery = true
 	end
 	return model
@@ -460,7 +479,7 @@ local function spawnEntry(view, id: string, appearance, key: string, pen: number
 		return nil
 	end
 	local height = model:GetAttribute("Height")
-	local body = model:FindFirstChild("Body")
+	local body = tapPart(model)
 	local entry = {
 		id = id,
 		key = key,
@@ -469,7 +488,7 @@ local function spawnEntry(view, id: string, appearance, key: string, pen: number
 		owner = view.userId,
 		name = appearance.name,
 		model = model,
-		body = if body and body:IsA("BasePart") then body else nil,
+		body = body,
 		animator = MonsterAnimator.new(model),
 		margin = 1.5 + (if type(height) == "number" then height * 0.4 else 1.2),
 		nextAt = 0,
@@ -534,7 +553,8 @@ end
 local function goldTint(model: Model)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") then
-			if d.Name ~= "Root" then
+			-- A 3D monster's textured Mesh ignores Color: it wears the Golden look (MonsterLooks) instead.
+			if d.Name ~= "Root" and d.Name ~= "Mesh" and d.Name ~= "Hit" then
 				local c = d.Color
 				local lum = 0.3 * c.R + 0.59 * c.G + 0.11 * c.B
 				d.Color = GOLD_DARK:Lerp(GOLD_LIGHT, math.clamp(lum * 1.2, 0, 1))
@@ -590,7 +610,7 @@ local function syncStatues(view, data)
 				Parent = view.folder,
 			})
 			table.insert(view.statues, pedestal)
-			local ok, model = pcall(MonsterModel.Build, appearance, { vfx = false }) -- statues: no particles
+			local ok, model = pcall(MonsterModel.Build, appearance, { vfx = false, look = "golden" }) -- statues: no particles
 			if ok then
 				goldTint(model)
 				model.Name = "Statue"

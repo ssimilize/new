@@ -55,6 +55,7 @@ local VISIBLE_FIELDS = {
 	loc = true,
 	pen = true,
 	busy = true,
+	acc = true, -- worn accessories are drawn on the monster
 }
 
 local function emptyPlot()
