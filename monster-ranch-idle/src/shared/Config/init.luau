@@ -19,6 +19,7 @@ local Config = {
 	Unlocks = require(script.Unlocks),
 	Regions = require(script.Regions),
 	Boss = require(script.Boss),
+	Titan = require(script.Titan), -- glow-up TT: scheduled cross-server titan invasions
 	Breeding = require(script.Breeding),
 	HallOfFame = require(script.HallOfFame),
 	Rebirth = require(script.Rebirth),

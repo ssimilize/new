@@ -24,6 +24,7 @@ return {
 		-- S4 · Adventure
 		"Expeditions",
 		"Boss",
+		"Titan", -- glow-up TT: scheduled cross-server titan invasions
 		-- S5 · Social & world
 		"Breeding",
 		"Weather",

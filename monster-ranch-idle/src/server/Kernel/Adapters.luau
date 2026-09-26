@@ -913,6 +913,37 @@ function Adapters.Roblox()
 		end,
 	}
 
+	-- Titan invasions (glow-up TT): one MemoryStore hash map entry per scheduled invasion (key =
+	-- the schedule slot's startsAt), holding the shared HP pool and which servers are fighting.
+	-- Every server folds its own damage in with an atomic Update every Config.Titan.ReportSeconds,
+	-- so this is MemoryStore, not a DataStore key (which throttles writes to one key); the entry
+	-- expires a day after its last write. Get never writes. Both yield: the Titan system calls
+	-- them through Services.Spawn. VERIFY in a live server: request units with many servers.
+	local TITAN_TTL = 24 * 3600
+	local titanOk, titanMap = pcall(function()
+		return MemoryStoreService:GetHashMap("MonsterRanch_Titan_v1")
+	end)
+	adapters.Titan = if titanOk
+		then {
+			Get = function(key: string): (boolean, any)
+				local ok, record = pcall(function()
+					return titanMap:GetAsync(key)
+				end)
+				return ok, if ok then record else nil
+			end,
+			Update = function(key: string, transform): (boolean, any)
+				local result = nil
+				local ok = pcall(function()
+					titanMap:UpdateAsync(key, function(current)
+						result = transform(current)
+						return result
+					end, TITAN_TTL)
+				end)
+				return ok, if ok then result else nil
+			end,
+		}
+		else nil
+
 	adapters.Workspace = workspace
 	-- A MeshPart from a published Mesh asset, for World/Dress. Yields; nil if it fails to load.
 	-- A server dressing the world asks for ~90 meshes in a row, and a load in that burst can fail

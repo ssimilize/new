@@ -284,6 +284,21 @@ table.insert(Eggs.List, {
 	pattern = "cracks",
 })
 
+-- Glow-up TT: won only by helping bring down a titan (joined and dealt damage); odds are
+-- weighted toward Epic and up (the "special hatch table" every helper sees before joining).
+table.insert(Eggs.List, {
+	id = "titan",
+	name = "Titan Egg",
+	order = 19,
+	price = nil,
+	hatchSeconds = 7200,
+	unlock = "boss",
+	odds = { 0, 0, 0, 20, 55, 25 },
+	pool = "common",
+	colors = { shell = "#4A2E7A", spots = "#FFD24A" },
+	pattern = "cracks",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e

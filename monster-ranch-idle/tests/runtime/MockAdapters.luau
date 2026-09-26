@@ -48,6 +48,8 @@ function MockAdapters.network()
 		reported = {}, -- design ids hidden by reports, oldest first (3.0.1)
 		designReads = 0, -- Designs.Get calls, to check caching (3.0.1)
 		designsDown = false,
+		titan = {}, -- Titan invasion pool records by key (glow-up TT)
+		titanDown = false,
 	}
 end
 
@@ -690,6 +692,26 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 		end,
 		Onboarding = function(player, step, stepName)
 			table.insert(a.log.analytics, { kind = "onboarding", player = player, step = step, name = stepName })
+		end,
+	}
+
+	-- Titan invasions (glow-up TT), shared through options.network; network.titanDown fails calls.
+	a.Titan = {
+		Get = function(key)
+			if network.titanDown then
+				return false, nil
+			end
+			return true, deepCopy(network.titan[key])
+		end,
+		Update = function(key, transform)
+			if network.titanDown then
+				return false, nil
+			end
+			local result = transform(deepCopy(network.titan[key]))
+			if result ~= nil then
+				network.titan[key] = deepCopy(result)
+			end
+			return true, deepCopy(result)
 		end,
 	}
 

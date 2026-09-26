@@ -914,6 +914,13 @@ def paint_leviathan(cv, s, k):
     paint_fissures(cv, s, darken(s, 0.55), k, WHITE, extra=scales)
 
 
+def paint_titan(cv, s, k):
+    """Titan Egg (glow-up TT): gold fissures glowing on a storm-purple shell, gold sparks."""
+    paint_fissures(cv, s, darken(s, 0.45), k, hexc("#FFF6C8"))
+    for u, v in cv.scatter(18, 0.1, 0.12, 0.88):
+        cv.paint((u, v), 0.04, lambda x, y: sd_sparkle(x, y, 0.02), lighten(k, 0.35))
+
+
 def paint_snow(cv: Canvas, s, k, flakes=16):
     """Snowflake eggs: crisp six-armed flakes, a frosty lower half and frost dust."""
     cv.base(mix(s, hexc("#BFE3FF"), 0.55), lighten(s, 0.4))
@@ -967,6 +974,7 @@ PAINTERS = {
     "stampede": paint_stampede,
     "raid": paint_raid,
     "leviathan": paint_leviathan,
+    "titan": paint_titan,
     "frostfall": paint_frostfall,
     "glacier": paint_glacier,
 }

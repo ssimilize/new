@@ -237,6 +237,61 @@ local function showBossResult(payload)
 	showResultPopup(payload, true)
 end
 
+-- Glow-up TT: no in-world fountain for the titan (see Controllers/TitanInvasion); rewards
+-- (including the Titan Egg) always show in the popup and fly to the HUD from there.
+local function showTitanResult(payload)
+	if type(payload) ~= "table" then
+		return
+	end
+	Dialog.show(ctx.UI.Top, {
+		Title = if payload.won then "The titan falls!" else "The titan got away...",
+		Color = Color3.fromHex("#6A3FA0"),
+		Size = Vector2.new(560, if payload.egg then 400 else 300),
+		Build = function(content)
+			Util.text({
+				Text = string.format("%s dealt", Format.short(math.floor(payload.damage or 0))),
+				TextSize = Theme.TextSize.Body,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Size = UDim2.new(1, 0, 0, 24),
+				LayoutOrder = 2,
+				Parent = content,
+			})
+			Util.rewardRow(payload.rewards or {}, content, { LayoutOrder = 3, IconSize = 30, Align = Enum.HorizontalAlignment.Center })
+			if payload.egg then
+				local row = New("Frame", {
+					BackgroundColor3 = Color3.fromHex("#E7DBFA"),
+					Size = UDim2.new(1, 0, 0, 72),
+					LayoutOrder = 4,
+					Parent = content,
+				}, {
+					Create.Corner(12),
+					Create.Stroke(2.5, C.Gold),
+					Create.List("x", 10, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center),
+				})
+				local egg = MonsterIcon.egg(Config.Titan.Rewards.egg, 60)
+				egg.LayoutOrder = 1
+				egg.Parent = row
+				Util.text({
+					Text = "You got a Titan Egg!",
+					Font = Theme.Fonts.Display,
+					TextSize = Theme.TextSize.Header,
+					AutomaticSize = Enum.AutomaticSize.X,
+					Size = UDim2.new(0, 0, 1, 0),
+					TextWrapped = false,
+					LayoutOrder = 2,
+					Parent = row,
+				})
+			end
+		end,
+		Buttons = { { Text = "Nice!", Color = C.Green } },
+	})
+	ctx:Sound("Victory")
+	local kit = ctx:GetController("Celebrate")
+	if kit and type(payload.rewards) == "table" then
+		kit:Reward(payload.rewards, { minSize = if payload.egg then "big" else nil })
+	end
+end
+
 function Broadcasts.Init(context)
 	ctx = context
 	container = New("Frame", {
@@ -263,6 +318,7 @@ function Broadcasts.Init(context)
 
 	ctx.Net:On("Social.Broadcast", show)
 	ctx.Net:On("Boss.Result", showBossResult)
+	ctx.Net:On("Titan.Result", showTitanResult)
 end
 
 function Broadcasts.Start() end

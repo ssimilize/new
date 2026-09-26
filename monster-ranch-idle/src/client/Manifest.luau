@@ -46,6 +46,8 @@ return {
 		"Stampede",
 		-- Glow-up U: the Stampede live in the world (arena, giant, squads, cheer bolts, storm)
 		"StampedeArena",
+		-- Glow-up TT: scheduled titan invasions (bigger banner, the shared HP bar, the giant)
+		"TitanInvasion",
 		-- Photo mode: free camera, filters, frames, stickers, CaptureService
 		"PhotoMode",
 		-- Glow-up N: camera shots (hatch in the world, evolution, star-up / level-up looks)
