@@ -7,7 +7,8 @@
 	  Weather.Mutated      toast with a mutation chip in the same stack
 	  Progression.LevelUp  gold banner with the new unlocks (Config.Unlocks.Names) in ctx.UI.Top,
 	                       and a shockwave from the HUD level bar (every 10th level is big)
-	  Monsters.Evolved     celebration popup (from → to MonsterIcon) in ctx.UI.Top, queued
+	  Monsters.Evolved     celebration popup (from → to MonsterIcon) in ctx.UI.Top, queued; after
+	                       the in-world evolution when Cinematics:TakeEvolve plays one (glow-up N)
 	  session.WelcomeBack  opens the WelcomeBack screen each time `pending` turns true
 
 	Kernel.Notify toasts are handled by the kernel itself.
@@ -446,6 +447,15 @@ end
 
 local function onEvolved(payload)
 	if type(payload) ~= "table" then
+		return
+	end
+	-- Glow-up N: when the monster is on screen in its pen, Cinematics plays the evolution in the
+	-- world first and this card follows it.
+	local cine = ctx:GetController("Cinematics")
+	if cine and cine:TakeEvolve(payload, function()
+		table.insert(evolveQueue, payload)
+		showNextEvolve()
+	end) then
 		return
 	end
 	table.insert(evolveQueue, payload)

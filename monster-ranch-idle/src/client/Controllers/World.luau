@@ -29,6 +29,9 @@
 	own monster -> MonsterDetail, someone else's -> Social.Pet with hearts. Taps on own eggs open Incubators.
 	The local character is moved to its plot once global.Plots lists the local UserId, and
 	again on every respawn. Client bus: subscribes to "World.FocusPlot" (plotIndex).
+	Glow-up N: the evolve moment and the monsterLevelUp / monsterStarUp bursts ("Vfx.Burst" topic)
+	first offer Cinematics a shot (Evolved / Spotlight); World:OwnMonster and World:IncubatorEgg
+	tell it where things are.
 	Glow-up L: Community.Trick (server event) plays a trick on that pen monster; World.PlayTrick and
 	World.NearestOwn serve the emote wheel (Controllers/Community).
 
@@ -351,6 +354,10 @@ local function onEvolved(payload)
 		return
 	end
 	moment("evolve:" .. tostring(payload.id), function()
+		local cine = ctx:GetController("Cinematics") -- glow-up N: the evolution shot, when it plays
+		if cine and cine:Evolved(payload) then
+			return
+		end
 		local line = nil
 		local entry = ownEntry(payload.id)
 		if entry then
@@ -367,10 +374,21 @@ local function onBurstTopic(name: any, info: any)
 	if name == "monsterLevelUp" and type(info) == "table" then
 		-- MonsterDetail shows its own shockwave at the click.
 		moment("monsterLevelUp:" .. tostring(info.id), function()
+			local cine = ctx:GetController("Cinematics") -- glow-up N: a short look at the monster
+			if cine and cine:Spotlight(info.id, "monsterLevelUp") then
+				return
+			end
 			momentAt(info.id, "monsterLevelUp")
 			local entry = ownEntry(info.id)
 			if entry then
 				Voices.Cry(entry.model, "levelUp")
+			end
+		end, { flourish = false })
+	elseif name == "monsterStarUp" and type(info) == "table" then -- glow-up N (MonsterDetail star-up)
+		moment("monsterStarUp:" .. tostring(info.id), function()
+			local cine = ctx:GetController("Cinematics")
+			if not (cine and cine:Spotlight(info.id, "starUp")) then
+				momentAt(info.id, "starUp")
 			end
 		end, { flourish = false })
 	elseif name == "rebirth" then
@@ -1389,6 +1407,47 @@ function World:OwnMonstersNear(position: Vector3, radius: number): { { model: Mo
 		return a.distance < b.distance
 	end)
 	return found
+end
+
+-- Glow-up N (Controllers/Cinematics): the local player's pen monster `id` as { model, animator }
+-- (live; do not Destroy them), kept from wandering off for `still` seconds while a shot frames it.
+function World:OwnMonster(id: any, still: number?): { model: Model, animator: any }?
+	local entry = ownEntry(id)
+	if not entry then
+		return nil
+	end
+	if still then
+		entry.nextAt = math.max(entry.nextAt, os.clock() + still)
+	end
+	return { model = entry.model, animator = entry.animator }
+end
+
+-- Glow-up N: the centre of the local player's incubator egg of `eggType` (the one drawn in `slot`
+-- when it matches, else the first ready one whose model is not in `taken`) and its model; an egg
+-- World already cleared gives the pad spot for `slot` and no model. Nil without an own plot.
+function World:IncubatorEgg(eggType: string, slot: number, taken: { [Model]: boolean }?): (CFrame?, Model?)
+	local view = if ownIndex then views[ownIndex] else nil
+	if not view then
+		return nil, nil
+	end
+	local skip = taken or {}
+	local found = view.eggs[slot]
+	if not (found and found.key == eggType and not skip[found.model]) then
+		found = nil
+		for i = 1, #EGG_SPOTS do
+			local egg = view.eggs[i]
+			if egg and egg.key == eggType and egg.ready and not skip[egg.model] then
+				found = egg
+				break
+			end
+		end
+	end
+	if found then
+		return CFrame.new(found.model:GetPivot().Position), found.model
+	end
+	local spot = EGG_SPOTS[math.clamp(math.floor(tonumber(slot) or 1), 1, #EGG_SPOTS)]
+	local top = padTop(view.index)
+	return CFrame.new((top * CFrame.new(spot[1], 1.3, spot[2])).Position), nil
 end
 
 -- Tricks (glow-up L) ------------------------------------------------------------------------------

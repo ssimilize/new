@@ -529,6 +529,7 @@ function MonsterDetail.Build(ctx)
 								else
 									ctx:Sound("StarUp")
 								end
+								ctx.Bus:Publish("Vfx.Burst", "monsterStarUp", { id = id }) -- World: in the pen once this screen closes
 								ctx:Toast(
 									string.format("%s is now ★%d!", name, type(res) == "table" and tonumber(res.stars) or 0),
 									"success"

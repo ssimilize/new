@@ -2015,4 +2015,7 @@ return {
 	["VIP Rancher: the VIP Balcony by the plaza, a gold name, a daily crate and a chat tag."] = "Ranchero VIP: el Balcón VIP junto a la plaza, un nombre dorado, una caja diaria y una etiqueta de chat.",
 	["Go to balcony"] = "Ir al balcón",
 	["See VIP"] = "Ver VIP",
+	-- Glow-up N: the hatch in the world
+	["NEW!"] = "¡NUEVO!",
+	["SHINY!"] = "¡BRILLANTE!",
 }
