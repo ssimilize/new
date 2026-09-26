@@ -35,6 +35,8 @@ return {
 		-- Glow-up T · companions at your side, animated mounts
 		"Companions",
 		"Mounts",
+		-- Glow-up DR · the Deep Reef you dive into, swimming and swimming mounts
+		"DeepReef",
 		-- 3.2 · Frostbite Glacier
 		"Gamepad",
 		-- Particle effects (Visuals/Vfx): landmark ambience

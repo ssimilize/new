@@ -129,7 +129,10 @@ table.insert(World.Hub, {
 -- Glow-up O: the Codex Museum and the Hall of Fame plaza (client-built, Config/Codex) south of the
 -- Market Square, either side of the path to plot 5. Scenery keeps off them (keepOut below).
 World.CodexGrounds = {
-	{ center = { 125, -222 }, size = { 90, 88 } }, -- Codex Museum (Logic/Museum.Layout fits inside)
+	-- Codex Museum (Logic/Museum.Layout fits inside; the south edge is pushed out for glow-up DR's
+	-- 3 new Tide lines, one more depth row in the Tide wing — the north edge stays put, Plot 3's
+	-- clearance runs off it).
+	{ center = { 125, -225 }, size = { 90, 94 } },
 	{ center = { -120, -214 }, size = { 70, 40 } }, -- Hall of Fame plaza
 }
 

@@ -221,6 +221,9 @@ function Audio.MusicChain(state): { string }
 		return { "MusicStampede", "MusicBattle" }
 	end
 	local chain = {}
+	if state.reef then -- glow-up DR: under water in the Deep Reef
+		table.insert(chain, "MusicReef")
+	end
 	if state.sky then
 		table.insert(chain, "MusicSkyIslands")
 	end
@@ -244,6 +247,17 @@ local QUIET_BIRDS = { snow = true, bloodmoon = true }
 
 function Audio.Beds(state): { [string]: number }
 	state = if type(state) == "table" then state else {}
+	if state.reef then
+		-- Glow-up DR: under water nothing from up top carries; only the reef's own bed.
+		return {
+			AmbienceBirds = 0,
+			AmbienceCrickets = 0,
+			AmbienceWind = 0,
+			AmbienceRain = 0,
+			AmbienceHubCrowd = 0,
+			AmbienceReef = 1,
+		}
+	end
 	local weather = if type(state.weather) == "string" then state.weather else "clear"
 	local rain = RAIN[weather] or 0
 	local calm = rain == 0 and not state.sky and not QUIET_BIRDS[weather]
@@ -254,6 +268,7 @@ function Audio.Beds(state): { [string]: number }
 		-- Above the clouds the rain is below you: keep a hint of it.
 		AmbienceRain = if state.sky then rain * 0.35 else rain,
 		AmbienceHubCrowd = if state.hub and not state.sky then 1 - rain * 0.5 else 0,
+		AmbienceReef = 0,
 	}
 end
 

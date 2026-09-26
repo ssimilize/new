@@ -11,6 +11,9 @@
 	  · Only riders in global.Riding.riders are visited (no scan of every player per frame).
 	    Placeholder mounts have no bones and stay as they were.
 
+	  · Glow-up DR: inside the Deep Reef (Logic/Swim.Inside) the walk clip plays slowed as strokes
+	    (Logic/Swim.ClipSpeed), speed is measured in 3D and there are no hops.
+
 	Public: Mounts:StateOf(userId) -> "idle"|"walk"|"hop"|nil, Mounts:SpeedOf(userId) -> number.
 ]]
 
@@ -20,6 +23,7 @@ local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Logic = require(ReplicatedStorage.Shared.Logic.Companions)
+local Swim = require(ReplicatedStorage.Shared.Logic.Swim) -- glow-up DR
 
 local UI = script.Parent.Parent.UI
 local StoreKit = require(UI.Components.StoreKit)
@@ -78,6 +82,22 @@ local function step(dt: number)
 		local pos = hrp.Position
 		local last = r.last
 		r.last = pos
+		-- Glow-up DR: in the Deep Reef a mount swims: the walk clip slowed into strokes (3D speed,
+		-- no hops); the swim controller tilts and bobs rider and mount together.
+		local Reef = Config.DeepReef
+		if Swim.Inside(pos.X, pos.Y, pos.Z, Reef.Area, 2) then
+			if last then
+				local dx, dy, dz = pos.X - last.X, pos.Y - last.Y, pos.Z - last.Z
+				local speed = math.sqrt(dx * dx + dy * dy + dz * dz) / dt
+				if speed <= r.cap * 2 + 8 then
+					r.speed += (speed - r.speed) * math.min(1, Cfg.Smoothing * dt)
+				end
+			end
+			r.hopLeft = 0
+			r.state = if r.speed > 1 then "walk" else "idle"
+			r.gait:Step(r.state, dt, Swim.ClipSpeed(r.speed, Reef.Swim))
+			continue
+		end
 		if last then
 			local dx, dy, dz = pos.X - last.X, pos.Y - last.Y, pos.Z - last.Z
 			local horizontal = math.sqrt(dx * dx + dz * dz) / dt

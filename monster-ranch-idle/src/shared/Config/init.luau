@@ -58,6 +58,8 @@ local Config = {
 	Codex = require(script.Codex),
 	-- Glow-up Q: bond hearts, care gestures, bond tricks
 	Bond = require(script.Bond),
+	-- Glow-up DR: the Deep Reef you dive into, swimming and swimming mounts
+	DeepReef = require(script.DeepReef),
 }
 
 return Config

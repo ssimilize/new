@@ -72,6 +72,12 @@ local function onSky(): boolean
 	return sky ~= nil and type(sky.IsOnIslands) == "function" and sky.IsOnIslands() == true
 end
 
+-- Glow-up DR: swimming in the Deep Reef.
+local function inReef(): boolean
+	local reef = ctx:GetController("DeepReef")
+	return reef ~= nil and type(reef.IsInside) == "function" and reef.IsInside() == true
+end
+
 local function computeState()
 	local current = ctx.Router:Current()
 	local position = characterPosition()
@@ -87,6 +93,7 @@ local function computeState()
 		battle = ctx.UI.Top:FindFirstChild("BattleReplay") ~= nil or (current ~= nil and BATTLE_SCREENS[current] == true),
 		stampede = current == "Boss",
 		sky = onSky(),
+		reef = inReef(),
 		hub = flat <= (Config.World.HubRadius or 95),
 		night = weather.night,
 		weather = weather.id,
@@ -101,7 +108,7 @@ local function apply(s)
 	end
 	local fountain = fountainPosition()
 	if fountain then
-		Audio.SetLoop("AmbienceFountain", if s.sky then 0 else 1, fountain)
+		Audio.SetLoop("AmbienceFountain", if s.sky or s.reef then 0 else 1, fountain)
 	end
 end
 

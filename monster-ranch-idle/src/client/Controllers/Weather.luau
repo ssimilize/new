@@ -234,6 +234,7 @@ local baseLightingBrightness = 2.5
 local clock = 0
 local nextFlashAt = 0
 local flashAt = -10
+local held = false -- glow-up DR: Weather.Hold (the Deep Reef has the light while you swim)
 
 -- Target -------------------------------------------------------------------------------------
 
@@ -474,6 +475,9 @@ end
 
 local function step(dt: number)
 	clock += dt
+	if held then
+		return
+	end
 	local now = ctx:Now()
 
 	if not settled then
@@ -606,6 +610,25 @@ function Weather.Destroy()
 	end
 	emitterPart:Destroy()
 	Lighting.Brightness = baseLightingBrightness
+end
+
+--[[
+	Glow-up DR: Weather.Hold(true) hands the light to another controller (the Deep Reef while you
+	swim): nothing is written and the weather particles stop. Hold(false) takes it back: every
+	property is written again on the next frame, whatever the holder changed meanwhile.
+]]
+function Weather.Hold(on: boolean)
+	held = on == true
+	table.clear(written)
+	if held then
+		for _, emitter in emitters do
+			emitter.Rate = 0
+		end
+	end
+end
+
+function Weather.IsHeld(): boolean
+	return held
 end
 
 return Weather

@@ -81,6 +81,8 @@ Unlocks.Features = {
 	incubator_4 = 62,
 	pen_6 = 66,
 	squad_5 = 70,
+	-- Glow-up DR · Deep Reef
+	region_reef = 64,
 }
 
 -- Player-facing names for the level-up popup.
@@ -126,6 +128,7 @@ Unlocks.Names = {
 	incubator_4 = "Incubator 4",
 	pen_6 = "Pen 6",
 	squad_5 = "Squad size 5",
+	region_reef = "Deep Reef",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

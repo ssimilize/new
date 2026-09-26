@@ -284,6 +284,20 @@ table.insert(Eggs.List, {
 	pattern = "cracks",
 })
 
+-- Glow-up DR · Deep Reef: dropped in the Deep Reef; hatches the Finnip, Glowray and Shellkin lines.
+table.insert(Eggs.List, {
+	id = "reef",
+	name = "Reef Egg",
+	order = 19,
+	price = nil,
+	hatchSeconds = 2700,
+	unlock = "region_reef",
+	odds = { 0, 15, 40, 30, 12, 3 },
+	pool = "reef",
+	colors = { shell = "#2EC4B6", spots = "#FF7AC8" },
+	pattern = "spots",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e
