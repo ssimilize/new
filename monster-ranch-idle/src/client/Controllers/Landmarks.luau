@@ -14,18 +14,22 @@
 	rates through Vfx.SetQuality (World routes the setting). It also drives the night glow: every
 	Lighting.ClockTime change (the Weather controller sweeps it through dusk and dawn) becomes
 	Vfx.SetNight(Vfx.NightFromClock(ClockTime)), for monsters, landmarks and bursts alike.
-	No state, actions or bus topics.
+	Portals (raidPortal, hubPortal and the Sky Gate) also hum: a positional PortalHum loop
+	(Audio.LoopAt), removed with the landmark. No state, actions or bus topics.
 ]]
 
 local Lighting = game:GetService("Lighting")
 
 local Client = script.Parent.Parent
 local Vfx = require(Client.Visuals.Vfx)
+local Audio = require(Client.Audio)
 
 local Landmarks = {
 	Name = "Landmarks",
 	Dependencies = {},
 }
+
+local PORTALS = { raidPortal = true, hubPortal = true, skyGate = true }
 
 local connections = {}
 local attached = {} -- [Instance] = true
@@ -35,6 +39,9 @@ local pending = {} -- [Instance] = true while a re-attach is scheduled
 local function attach(instance: Instance, id: any)
 	if type(id) ~= "string" or attached[instance] then
 		return
+	end
+	if PORTALS[id] then
+		Audio.LoopAt("PortalHum", instance)
 	end
 	if Vfx.AttachLandmark(instance, id) then
 		attached[instance] = true

@@ -3,8 +3,8 @@
 
 	Registered by the Soundscape controller only when RunService:IsStudio(), so live games never
 	have it (it is not in the client Manifest). Lists every key under its kind (Logic/Audio.Kind)
-	with its group, its id or "empty", and Play / Stop. Loops (music, ambience) play alone at full
-	through Audio.Override; one-shots play as the game would (pitch range, cooldown, group
+	with its group, its id (+N variations) or "empty", and Play / Stop. Loops and scatter beds
+	play alone at full through Audio.Override; one-shots play as the game would (pitch range, cooldown, group
 	volume). Voices play at a Baby, Teen and Adult pitch. The Music row previews a context
 	(Soundscape.Preview) so crossfades, beds and thunder can be heard; "Live" hands back control.
 	Developer tool: text is English only (Localize = false).
@@ -182,8 +182,10 @@ return {
 				Create.Padding(0, 8, 0, 8),
 			})
 			small(key, C.Text, 190, row)
-			small(spec.group .. (if spec.looped then " · loop" else ""), C.TextMuted, 120, row)
-			small(if spec.empty then "empty" else spec.id, if spec.empty then C.Red else C.Green, 250, row)
+			local mode = if spec.scatter then " · scatter" elseif spec.looped then " · loop" else ""
+			small(spec.group .. mode, C.TextMuted, 120, row)
+			local idText = if #spec.ids > 1 then string.format("%s +%d", spec.id, #spec.ids - 1) else spec.id
+			small(if spec.empty then "empty" else idText, if spec.empty then C.Red else C.Green, 250, row)
 			if Logic.Kind(key) == "Voices" then
 				for _, stage in VOICE_STAGES do
 					Button.new({
@@ -208,7 +210,7 @@ return {
 					Sound = false,
 					Parent = row,
 					OnClick = function()
-						if spec.looped then
+						if spec.looped or spec.scatter then
 							Audio.Override(key)
 						elseif key == "CoinTick" then
 							for i = 0, 7 do
@@ -228,7 +230,7 @@ return {
 				Sound = false,
 				Parent = row,
 				OnClick = function()
-					if spec.looped then
+					if spec.looped or spec.scatter then
 						Audio.Override(nil)
 					end
 					Audio.Stop(key)

@@ -373,8 +373,10 @@ function BattleReplay.play(ctx, opts)
 			floater(target, "MISS", C.Gray)
 		elseif kind == "heal" then
 			floater(target, "+" .. amount, C.Green)
+			ctx:Sound("Heal")
 		elseif kind == "regen" then
 			floater(ev.actor, "+" .. amount, C.Green)
+			ctx:Sound("Heal", { volume = 0.6 })
 		elseif kind == "shield" then
 			floater(target, "SHIELD +" .. amount, C.Blue)
 		elseif kind == "stun" then

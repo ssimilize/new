@@ -115,13 +115,12 @@ function Voices.Chatter(listener: Vector3?, count: number, range: number): numbe
 	end
 	local near = {}
 	for model in tracked do
-		if model.Parent then
-			local line = model:GetAttribute("Line")
-			if Audio.Filled(Voices.Key(line)) then
-				local distance = (model:GetPivot().Position - listener).Magnitude
-				if distance <= range then
-					table.insert(near, { model = model, distance = distance })
-				end
+		-- PrimaryPart, not GetPivot: this runs every second over every pen monster on the server.
+		local root = model.Parent and model.PrimaryPart
+		if root then
+			local distance = (root.Position - listener).Magnitude
+			if distance <= range and Audio.Filled(Voices.Key(model:GetAttribute("Line"))) then
+				table.insert(near, { model = model, distance = distance })
 			end
 		end
 	end

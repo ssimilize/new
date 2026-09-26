@@ -3,7 +3,8 @@
 	drives music and ambience with it; Audio/Voices adds monster cries on top.
 
 	Entries come from Config.Sounds (string or table, resolved by Logic/Audio). Empty ids are
-	placeholders: every call on one returns nil and creates nothing.
+	placeholders: every call on one returns nil and creates nothing. An entry with `ids` plays a
+	random variation each time, never the same one twice in a row.
 
 	  Audio.Attach(store, sounds)       once per client (ClientKernel.new): SoundGroups Music, Effects,
 	                                    UI, Ambience and Voice under SoundService, their volumes from
@@ -17,7 +18,12 @@
 	  Audio.Streak(key, opts?) -> Sound?   repeats within STREAK_WINDOW climb a semitone each (coin ticks)
 	  Audio.Stop(key)                   stops every copy (and a loop at once)
 	  Audio.SetLoop(key, level, at?)    a looping layer faded toward level (0..1); `at` = Vector3
-	                                    for a positional bed. 0 fades it out and stops it.
+	                                    for a positional bed. 0 fades it out and stops it. A key with
+	                                    `scatter` is a bed of one-shots instead: every scatter.min ..
+	                                    max seconds one variation plays at a random spot around the
+	                                    camera (positional, soft rolloff, the key's pitch range)
+	  Audio.LoopAt(key, target) -> Sound?  a positional loop at a landmark (Instance), removed when
+	                                    the target leaves the Workspace
 	  Audio.SetMusic(chain) -> key?     crossfades to the first filled key of chain (nil = silence)
 	  Audio.Override(key?)              Sound Check: this loop alone at full, every other music
 	                                    and ambience loop faded out; nil gives control back
@@ -45,6 +51,8 @@ local BED_FADE = 3
 local DUCK_ATTACK = 8 -- per second
 local DUCK_RELEASE = 0.9
 local NEAR, FAR = 10, 90
+local SCATTER_RADIUS = { 14, 38 } -- studs from the camera, horizontally
+local SCATTER_HEIGHT = { 1, 10 }
 
 local store = nil
 local sounds = {}
@@ -52,7 +60,8 @@ local specs = {}
 local groups = {} -- [name] = SoundGroup
 local volumes = Logic.GroupVolumes(nil)
 local pools = {} -- [key] = { flat = { entry }, spatial = { entry }, lastAt }
-local loops = {} -- [key] = { sound, level, target, at }
+local loops = {} -- [key] = { sound?, attachment?, level, target, spec, nextAt? (scatter beds) }
+local placed = {} -- [target] = { [key] = Sound } (Audio.LoopAt)
 local streaks = {} -- [key] = { count, lastAt }
 local folder: Folder? = nil
 local carrier: BasePart? = nil
@@ -213,8 +222,14 @@ function Audio.Play(key: string, opts: any?): Sound?
 		end
 	end
 	local entry = acquire(key, spec, position ~= nil)
-	pools[key].lastAt = t
+	pool = pools[key]
+	pool.lastAt = t
 	local sound = entry.sound
+	local id = Logic.PickId(spec, pool.lastId, math.random())
+	pool.lastId = id
+	if sound.SoundId ~= id then
+		sound.SoundId = id
+	end
 	sound.Looped = false
 	sound.PlaybackSpeed = Logic.PickPitch(spec, math.random()) * (tonumber(opts.pitch) or 1)
 	sound.Volume = spec.volume * (tonumber(opts.volume) or 1)
@@ -227,7 +242,7 @@ function Audio.Play(key: string, opts: any?): Sound?
 	sound.TimePosition = 0
 	sound:Play()
 	if spec.duck > 0 then
-		Audio.Duck(spec.duck, 1.4)
+		Audio.Duck(spec.duck, spec.duckHold)
 	end
 	return sound
 end
@@ -256,7 +271,7 @@ end
 
 function Audio.Playing(key: string): boolean
 	local loop = loops[key]
-	if loop and loop.sound.Playing then
+	if loop and loop.sound and loop.sound.Playing then
 		return true
 	end
 	local pool = pools[key]
@@ -283,8 +298,10 @@ function Audio.Stop(key: string)
 	if loop then
 		loop.target = 0
 		loop.level = 0
-		loop.sound.Volume = 0
-		loop.sound:Stop()
+		if loop.sound then
+			loop.sound.Volume = 0
+			loop.sound:Stop()
+		end
 	end
 end
 
@@ -306,7 +323,14 @@ function Audio.SetLoop(key: string, level: number, at: Vector3?)
 		if not spec or spec.empty or (tonumber(level) or 0) <= 0 then
 			return
 		end
+		if spec.scatter then
+			loop = { level = 0, target = 0, spec = spec, nextAt = now() + Logic.ScatterDelay(spec, math.random()) * 0.5 }
+			loops[key] = loop
+			loop.target = math.clamp(tonumber(level) or 0, 0, 1)
+			return
+		end
 		local entry = newSound(spec, at ~= nil)
+		entry.sound.SoundId = Logic.PickId(spec, nil, math.random())
 		entry.sound.Looped = true
 		entry.sound.Volume = 0
 		if entry.attachment and at then
@@ -321,6 +345,31 @@ function Audio.SetLoop(key: string, level: number, at: Vector3?)
 	if at and loop.attachment then
 		loop.attachment.Position = at
 	end
+end
+
+function Audio.LoopAt(key: string, target: Instance): Sound?
+	local spec = Audio.Spec(key)
+	local position = positionOf(target)
+	if not spec or spec.empty or not position then
+		return nil
+	end
+	local byKey = placed[target]
+	if byKey and byKey[key] and byKey[key].Parent then
+		return byKey[key]
+	end
+	local entry = newSound(spec, true)
+	local sound = entry.sound
+	sound.SoundId = Logic.PickId(spec, nil, math.random())
+	sound.Looped = true
+	sound.RollOffMinDistance = 8
+	sound.RollOffMaxDistance = 60
+	entry.attachment.Position = position
+	placed[target] = byKey or {}
+	placed[target][key] = sound
+	-- Start at a random point so two portals humming the same loop do not phase together.
+	sound.TimePosition = math.random() * 3
+	sound:Play()
+	return sound
 end
 
 function Audio.SetMusic(chain: { string }?): string?
@@ -355,6 +404,48 @@ local function isBackground(spec): boolean
 	return spec.group == "Music" or spec.group == "Ambience"
 end
 
+local function scatterAt(): Vector3?
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return nil
+	end
+	local angle = math.random() * math.pi * 2
+	local r = SCATTER_RADIUS[1] + math.random() * (SCATTER_RADIUS[2] - SCATTER_RADIUS[1])
+	local h = SCATTER_HEIGHT[1] + math.random() * (SCATTER_HEIGHT[2] - SCATTER_HEIGHT[1])
+	return camera.CFrame.Position + Vector3.new(math.cos(angle) * r, h, math.sin(angle) * r)
+end
+
+local function stepScatter(key: string, loop, target: number)
+	loop.level = target
+	local t = now()
+	if target <= 0 then
+		loop.nextAt = math.max(loop.nextAt, t)
+		return
+	end
+	if t >= loop.nextAt then
+		loop.nextAt = t + Logic.ScatterDelay(loop.spec, math.random())
+		local at = scatterAt()
+		if at then
+			Audio.Play(key, { at = at, volume = target, near = 18, far = 110 })
+		end
+	end
+end
+
+local function stepPlaced()
+	for target, byKey in placed do
+		if not target:IsDescendantOf(workspace) then
+			for _, sound in byKey do
+				local attachment = sound.Parent
+				sound:Destroy()
+				if attachment then
+					attachment:Destroy()
+				end
+			end
+			placed[target] = nil
+		end
+	end
+end
+
 local function stepLoops(dt: number)
 	for key, loop in loops do
 		local spec = loop.spec
@@ -364,6 +455,10 @@ local function stepLoops(dt: number)
 		end
 		if Audio.Muted(spec.group) then
 			target = 0
+		end
+		if spec.scatter then
+			stepScatter(key, loop, target)
+			continue
 		end
 		local rate = dt / (if spec.group == "Music" then MUSIC_FADE else BED_FADE)
 		local level = loop.level
@@ -418,7 +513,9 @@ function Audio.Preload(group: string)
 	for key in sounds do
 		local spec = Audio.Spec(key)
 		if spec and not spec.empty and spec.group == group then
-			table.insert(list, acquire(key, spec, false).sound)
+			for _, id in spec.ids do
+				table.insert(list, id) -- PreloadAsync takes content ids as well as instances
+			end
 		end
 	end
 	if #list == 0 then
@@ -454,9 +551,15 @@ function Audio.Attach(newStore, soundTable)
 	store:Observe("profile.Settings", function(settings)
 		volumes = Logic.GroupVolumes(settings)
 	end)
+	local placedAcc = 0
 	RunService.Heartbeat:Connect(function(dt)
 		stepGroups(dt)
 		stepLoops(dt)
+		placedAcc += dt
+		if placedAcc >= 2 then
+			placedAcc = 0
+			stepPlaced()
+		end
 	end)
 end
 

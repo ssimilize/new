@@ -54,6 +54,7 @@ end
 local function teleport(at: { number }, lift: number)
 	local character = Players.LocalPlayer.Character
 	if character and character.PrimaryPart then
+		ctx:Sound("Teleport")
 		character:PivotTo(CFrame.new(at[1], at[2] + lift, at[3] + 6))
 	end
 end

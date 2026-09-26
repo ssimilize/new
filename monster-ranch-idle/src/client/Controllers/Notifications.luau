@@ -227,7 +227,9 @@ local function onMutated(payload)
 	})
 	local chip = Widgets.MutationChip(payload.mutation, row)
 	chip.LayoutOrder = 3
-	ctx:Sound("WeatherStart")
+	if not ctx:Sound("Mutation") then
+		ctx:Sound("WeatherStart")
+	end
 	pushFeed(card, 4.5)
 end
 
