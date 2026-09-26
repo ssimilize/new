@@ -7,7 +7,8 @@
 	                 pen theme colours and decor, the owner sign above each plot gate
 	  profile.Ranch + session.Ranch    live coin jars over the local player's own pens
 	                 (BillboardGuis in PlayerGui; tap = Ranch.Collect + coin burst)
-	  global.Weather night flag (monsters nap at night)
+	  global.Weather night and weather: read by Visuals/PenBrain (glow-up S), which decides what pen
+	                 monsters do next from their traits (tickWander calls PenBrain.Tick)
 	  profile.Settings.lowGraphics     fewer animation updates, fewer monsters on other plots, and
 	                 Vfx.SetQuality (other plots' auras off, effect rates and bursts halved)
 
@@ -51,6 +52,7 @@ local Client = script.Parent.Parent
 local MonsterModel = require(Client.Visuals.MonsterModel)
 local EggModel = require(Client.Visuals.EggModel)
 local MonsterAnimator = require(Client.Visuals.MonsterAnimator)
+local PenBrain = require(Client.Visuals.PenBrain) -- glow-up S: what pen monsters do next
 local Vfx = require(Client.Visuals.Vfx)
 local Audio = require(Client.Audio)
 local Voices = require(Client.Audio.Voices)
@@ -102,7 +104,6 @@ local poolCount = 0
 local connections = {}
 local running = false
 local lowGraphics = false
-local night = false
 local latestPlots = nil
 local ownIndex: number? = nil
 local ranchProfile = nil
@@ -1170,45 +1171,9 @@ end
 
 -- Wandering -------------------------------------------------------------------------------------
 
-local function decide(entry, clockNow: number)
-	local animator = entry.animator
-	local roll = math.random()
-	if night and roll < 0.55 then
-		animator:Play("sleep")
-		entry.nextAt = clockNow + 6 + math.random() * 10
-		return
-	end
-	roll = math.random()
-	if roll < 0.62 then
-		local area, hx, hz = penArea(entry.plot, entry.pen)
-		entry.nextAt = math.huge
-		animator:MoveTo(randomPoint(area, hx, hz, entry.margin), function()
-			if entry.alive then
-				entry.nextAt = os.clock() + 1.5 + math.random() * 3.5
-			end
-		end)
-	elseif roll < 0.74 then
-		animator:Play("happy")
-		Voices.Cry(entry.model, "happy")
-		entry.nextAt = clockNow + 2 + math.random() * 2
-	elseif roll < 0.86 then
-		animator:Play("eat")
-		entry.nextAt = clockNow + 2.5 + math.random() * 2.5
-	else
-		animator:Play("idle")
-		entry.nextAt = clockNow + 2 + math.random() * 3
-	end
-end
-
+-- Glow-up S: Visuals/PenBrain decides (traits, night pile, weather, greetings, steering).
 local function tickWander()
-	local clockNow = os.clock()
-	for _, view in views do
-		for _, entry in view.entries do
-			if clockNow >= entry.nextAt and not entry.animator:IsMoving() then
-				decide(entry, clockNow)
-			end
-		end
-	end
+	PenBrain.Tick(os.clock())
 end
 
 -- Taps -------------------------------------------------------------------------------------------
@@ -1485,6 +1450,15 @@ function World.Start()
 	running = true
 
 	connectInput()
+	PenBrain.Attach(ctx, {
+		views = views,
+		area = penArea,
+		penModel = penModel,
+		plotFrame = plotFrame,
+		own = function()
+			return ownIndex
+		end,
+	})
 	table.insert(
 		connections,
 		player.CharacterAdded:Connect(function(character)
@@ -1503,12 +1477,6 @@ function World.Start()
 					onPlots(latestPlots)
 				end
 			end
-		end)
-	)
-	table.insert(
-		connections,
-		ctx.Store:Observe("global.Weather", function(weather)
-			night = type(weather) == "table" and weather.night == true
 		end)
 	)
 	table.insert(
@@ -1537,6 +1505,7 @@ end
 -- Tears everything down (not called by the kernel today; kept so the controller can be unplugged).
 function World.Destroy()
 	running = false
+	PenBrain.Detach()
 	for _, connection in connections do
 		connection:Disconnect()
 	end

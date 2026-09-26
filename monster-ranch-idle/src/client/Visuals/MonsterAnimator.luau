@@ -6,7 +6,8 @@
 		anim:SetBase(CFrame.new(x, floorY, z))    -- ground point + facing (front is -Z)
 		anim:Play("idle")                          -- idle | walk | happy | eat | attack | hurt | sleep
 		anim:Play("sit")                           -- sit (loops) | trick (once) | faint (holds until the next Play)
-		anim:MoveTo(Vector3.new(x, floorY, z), function() end)   -- hop-walk, faces travel direction
+		anim:MoveTo(Vector3.new(x, floorY, z), function() end)   -- hop-walk, turns toward travel direction
+		anim:Play("shake")                         -- shake (once: shaking off rain) | shiver (loops: cold)
 		anim:Destroy()                             -- stops animating (does not destroy the model)
 
 	Extra (non-contract) helpers:
@@ -17,6 +18,13 @@
 	  MonsterAnimator.SetLowGraphics(bool)             fewer updates for every animator
 	  MonsterAnimator.Count()                          live animators (debug)
 	  MonsterAnimator.HasState(state)                  whether :Play knows `state` (else it plays idle)
+	  anim:FaceToward(position)                        turn in place toward a point (smoothly, at rest)
+	  anim:SetPace(k), anim:GetSpeed()                 walking speed multiplier (1 = normal) and the speed
+	  MonsterAnimator.SetTurnRates(walk, face)         radians per second (glow-up S: Config/PenLife.Motion)
+
+	Glow-up S (living pens): a walker turns toward its heading at a limited rate instead of snapping,
+	going slower while it faces away; MoveTo while already walking only retargets (the walk cycle
+	keeps its time, so a brain can steer with short legs). Skinned models shake and shiver over idle.
 
 	One shared RenderStepped connection drives every animator. It connects when the first
 	animator is created and disconnects when the last one is destroyed. Animators further than
@@ -51,13 +59,30 @@ local MID_INTERVAL = 1 / 20
 local LOW_INTERVAL = 1 / 15
 local HUE_STEPS = 72
 
-local ONE_SHOT = { happy = 0.9, eat = 1.6, attack = 0.55, hurt = 0.5, trick = 1.1 }
-local LOOPING = { idle = true, walk = true, sleep = true, wobble = true, sit = true }
+local ONE_SHOT = { happy = 0.9, eat = 1.6, attack = 0.55, hurt = 0.5, trick = 1.1, shake = 0.8 }
+local LOOPING = { idle = true, walk = true, sleep = true, wobble = true, sit = true, shiver = true }
 local HOLD = { faint = true } -- stays until the next Play or MoveTo
 local CLIP_LENGTH = { happy = true, attack = true, hurt = true, trick = true } -- authored ones run their own length
 
 local TAU = math.pi * 2
 local sin, cos, abs, min, clamp = math.sin, math.cos, math.abs, math.min, math.clamp
+local atan2 = math.atan2
+
+local turnRate = 7 -- radians per second while walking
+local faceRate = 4 -- turning in place (FaceToward)
+
+-- Heading of a look vector as a yaw about +Y (front is -Z), and the shortest turn toward another.
+local function yawOf(x: number, z: number): number
+	return atan2(-x, -z)
+end
+
+local function turnToward(from: number, to: number, maxStep: number): number
+	local delta = (to - from + math.pi) % TAU - math.pi
+	if abs(delta) <= maxStep then
+		return to
+	end
+	return from + (if delta > 0 then maxStep else -maxStep)
+end
 
 -- Precomputed colours so hue cycling never allocates per frame.
 local RAINBOW = table.create(HUE_STEPS)
@@ -126,6 +151,8 @@ function MonsterAnimator.new(model: Model)
 		_target = nil :: Vector3?,
 		_onArrive = nil :: (() -> ())?,
 		_speed = 5 + (if type(height) == "number" then height else 3) * 0.6,
+		_pace = 1,
+		_faceYaw = nil :: number?,
 		_intensity = 0,
 		_highlight = nil :: Highlight?,
 		_dead = false,
@@ -141,6 +168,11 @@ function MonsterAnimator.SetLowGraphics(on: boolean)
 	lowGraphics = on == true
 end
 
+function MonsterAnimator.SetTurnRates(walk: number, face: number)
+	turnRate = math.max(0.5, walk)
+	faceRate = math.max(0.5, face)
+end
+
 function MonsterAnimator.Count(): number
 	return #animators
 end
@@ -152,6 +184,7 @@ end
 
 function MonsterAnimator:SetBase(cframe: CFrame)
 	self._base = cframe
+	self._faceYaw = nil
 	self._pos = cframe.Position
 	if self._state ~= "walk" then
 		self.model:PivotTo(cframe)
@@ -160,6 +193,22 @@ end
 
 function MonsterAnimator:GetPosition(): Vector3
 	return self._pos
+end
+
+function MonsterAnimator:SetPace(k: number)
+	self._pace = clamp(k, 0.2, 3)
+end
+
+function MonsterAnimator:GetSpeed(): number
+	return self._speed * self._pace
+end
+
+-- Turns in place toward `position` over the next frames (a walk or SetBase cancels it).
+function MonsterAnimator:FaceToward(position: Vector3)
+	local d = position - self._pos
+	if d.X * d.X + d.Z * d.Z > 1e-4 then
+		self._faceYaw = yawOf(d.X, d.Z)
+	end
 end
 
 function MonsterAnimator:IsMoving(): boolean
@@ -207,7 +256,8 @@ function MonsterAnimator:MoveTo(position: Vector3, onArrive: (() -> ())?)
 	end
 	self._target = Vector3.new(position.X, self._pos.Y, position.Z)
 	self._onArrive = onArrive
-	if not ONE_SHOT[self._state] then
+	self._faceYaw = nil
+	if not ONE_SHOT[self._state] and self._state ~= "walk" then
 		self._state = "walk"
 		self._t = 0
 	end
@@ -294,6 +344,17 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 	local phase = self._phase
 	local offset: CFrame
 
+	local faceYaw = self._faceYaw
+	if faceYaw and state ~= "walk" then
+		local look = self._base.LookVector
+		local yaw = yawOf(look.X, look.Z)
+		local newYaw = turnToward(yaw, faceYaw, faceRate * dt)
+		self._base = CFrame.new(self._pos) * CFrame.Angles(0, newYaw, 0)
+		if newYaw == faceYaw then
+			self._faceYaw = nil
+		end
+	end
+
 	if state == "walk" then
 		local target = self._target
 		if not target then
@@ -303,17 +364,23 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 			local pos = self._pos
 			local delta = target - pos
 			local dist = delta.Magnitude
-			local move = self._speed * dt
+			-- Turn toward the heading at a limited rate; slow down while facing away so the path
+			-- still ends at the target (no orbiting), and never snap round.
+			local look = self._base.LookVector
+			local yaw = yawOf(look.X, look.Z)
+			local want = if dist > 1e-3 then yawOf(delta.X, delta.Z) else yaw
+			local newYaw = turnToward(yaw, want, turnRate * dt)
+			local move = self._speed * self._pace * dt * math.max(0.2, cos(want - newYaw))
 			if dist <= move or dist < 0.05 then
 				self._pos = target
-				self._base = CFrame.lookAt(target, target + self._base.LookVector)
+				self._base = CFrame.new(target) * CFrame.Angles(0, newYaw, 0)
 				self:_arrive()
 				offset = CFrame.identity
 			else
 				local dir = delta / dist
 				local newPos = pos + dir * move
 				self._pos = newPos
-				self._base = CFrame.lookAt(newPos, newPos + dir)
+				self._base = CFrame.new(newPos) * CFrame.Angles(0, newYaw, 0)
 				local hop = (t * 2.6) % 1
 				local height = sin(hop * math.pi) * s * 0.22
 				self:_squash(-0.12 * sin(hop * math.pi) + 0.08 * (if hop < 0.12 then 1 - hop / 0.12 else 0), near)
@@ -367,6 +434,20 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 		local b = sin(t * 1.6 + phase)
 		self:_squash(0.12 + 0.02 * b, near)
 		offset = CFrame.new(0, -s * 0.04, 0) * CFrame.Angles(-0.15, 0, 0)
+	elseif state == "shake" then
+		-- A wet-dog shake: a fast roll that dies away, with a little hop at the start.
+		local p = min(t / self._length, 1)
+		local roll = sin(t * 38) * 0.28 * (1 - p)
+		self:_squash(0.06 * sin(t * 38) * (1 - p), near)
+		offset = CFrame.new(0, sin(min(p * 3, 1) * math.pi) * s * 0.08, 0) * CFrame.Angles(0, sin(t * 19) * 0.12 * (1 - p), roll)
+		if p >= 1 then
+			self:_endOneShot()
+		end
+	elseif state == "shiver" then
+		-- Small and quick, hunched a little: cold, not hurt.
+		local jitter = sin(t * 47 + phase) * 0.035 + sin(t * 31) * 0.02
+		self:_squash(0.06, near)
+		offset = CFrame.new(jitter * s * 0.4, -s * 0.02, 0) * CFrame.Angles(0, 0, jitter)
 	elseif state == "faint" then
 		local e = smooth(min(t / 0.7, 1))
 		self:_squash(0.08 * e, near)
@@ -449,6 +530,8 @@ function MonsterAnimator.SkinnedClip(
 			return state, t, false, false
 		end
 		return "idle", if state == "faint" then 0 else t + phase, true, true
+	elseif state == "shake" or state == "shiver" then
+		return "idle", t + phase, true, true -- procedural over idle (no clip is authored for these)
 	end
 	return "idle", t + phase, true, false
 end
