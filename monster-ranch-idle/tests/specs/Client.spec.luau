@@ -285,7 +285,15 @@ return function(t)
 		end)
 
 		it("survives a long random walk through the whole UI", function()
-			local h = TestKernel.new({ systems = allSystems() })
+			-- A fixed start at nightfall (lamps, lights and night-only paths run the same way on every
+			-- run; the real clock made night-only bugs come and go).
+			local Phase = t.Shared("Logic.WeatherRoll").Phase
+			local start = 1900000000
+			local night, endsAt = Phase(start)
+			if not night then
+				start = endsAt
+			end
+			local h = TestKernel.new({ systems = allSystems(), startTime = start })
 			local player = h:Join()
 			veteran(h, player)
 			local c = ClientHarness.new(h, player)
@@ -548,6 +556,49 @@ return function(t)
 			c:Advance(0.5)
 			expect(decor.Active()).toBe(false)
 			expect(decor.Count(plotIndex)).toBe(1)
+			expectClean(c)
+		end)
+
+		it("keeps the night lights working when a lit layout is rebuilt", function()
+			local Social = t.Shared("Config").Social
+			local Phase = t.Shared("Logic.WeatherRoll").Phase
+			local start = 1900000000
+			local night, endsAt = Phase(start)
+			if not night then
+				start = endsAt + 120 -- two minutes into the night, past the dusk sweep
+			end
+			local h = TestKernel.new({ systems = allSystems(), startTime = start })
+			local player = h:Join()
+			veteran(h, player)
+			local c = ClientHarness.new(h, player)
+			c:Advance(Social.PlotRefreshSeconds + 1)
+			local plotIndex = h:System("Plots"):GetPlot(player)
+			local decor = c.kernel:GetController("Decor")
+
+			local function lit(): number
+				local n = 0
+				for _, d in decor.PlotFolder(plotIndex):GetDescendants() do
+					if d:IsA("PointLight") and d.Enabled then
+						n += 1
+					end
+				end
+				return n
+			end
+			-- The pooled lights go to the lamps nearest the camera: look at this plot.
+			local centre = t.Shared("Config").World.Plots[plotIndex].center
+			local target = t.Roblox.Vector3.new(centre[1], centre[2], centre[3])
+			c.world.workspace.CurrentCamera.CFrame = t.Roblox.CFrame.lookAt(target + t.Roblox.Vector3.new(0, 26, 30), target)
+			local layout = { { id = "wood_lamp", x = -30, z = -25, rot = 0 }, { id = "wood_lamp", x = -24, z = -25, rot = 0 } }
+			h:Call(player, "Decor.Save", { layout = layout })
+			c:Advance(Social.PlotRefreshSeconds + 3)
+			expect(decor.Count(plotIndex)).toBe(2)
+			expect(lit()).toBe(2)
+
+			-- Moving the lamps rebuilds both pieces, and their pooled lights go with them.
+			layout[1].x, layout[2].x = -36, -30
+			h:Call(player, "Decor.Save", { layout = layout })
+			c:Advance(Social.PlotRefreshSeconds + 3)
+			expect(lit()).toBe(2)
 			expectClean(c)
 		end)
 	end)

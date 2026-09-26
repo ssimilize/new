@@ -226,6 +226,13 @@ local function refreshLights()
 			return a.d < b.d
 		end)
 	end
+	-- A lamp rebuilt by a layout change took its light with it (destroyed, Parent locked): drop
+	-- those from the pool rather than parent them again.
+	for i = #lightPool, 1, -1 do
+		if lightPool[i].Parent == nil then
+			table.remove(lightPool, i)
+		end
+	end
 	local max = if Quality.IsLow() then L.lights.maxLow else L.lights.max
 	for i = 1, math.max(#lightPool, math.min(max, #candidates)) do
 		local c = candidates[i]
