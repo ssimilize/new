@@ -56,6 +56,9 @@ return {
 		"Racing",
 		"TradingHub",
 		"Workshop",
+		-- Glow-up · daily login streak + offline reminders
+		"LoginStreak",
+		"Reminders",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

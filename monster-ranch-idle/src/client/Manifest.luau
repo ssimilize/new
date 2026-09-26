@@ -41,6 +41,8 @@ return {
 		"Stampede",
 		-- Photo mode: free camera, filters, frames, stickers, CaptureService
 		"PhotoMode",
+		-- Glow-up · daily streak auto-open + reminder opt-in
+		"DailyLogin",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -79,5 +81,7 @@ return {
 		"Raids",
 		-- Photo mode (non-modal; opened by the HUD camera button, P or D-pad up)
 		"PhotoMode",
+		-- Glow-up · daily login streak
+		"LoginStreak",
 	},
 }

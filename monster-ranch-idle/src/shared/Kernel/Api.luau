@@ -458,6 +458,14 @@ Api.Actions = {
 	["Monetization.CanBuy"] = { schema = T.struct({ product = T.key(Config.Monetization.ProductByKey) }), rate = 2, returns = "nil" },
 	-- VIP Rancher: one crate per UTC day (Config.Monetization.VipCrate); also fires Rewards.Granted.
 	["Monetization.ClaimVipCrate"] = { schema = T.none, rate = 1, returns = "{ rewards: { Reward }, day: number }" },
+
+	-- Login streak + reminders (glow-up) ---------------------------------------------
+	["LoginStreak.Claim"] = {
+		schema = T.none,
+		rate = 1,
+		returns = "{ day, streak, track, shieldUsed, restarted, milestone: number (0 = none), items: { Reward } }",
+	},
+	["Reminders.SetOptIn"] = { schema = T.struct({ on = T.boolean }), rate = 1, returns = "{ on: boolean }" },
 }
 
 --[[
@@ -521,6 +529,8 @@ Api.State = {
 		Raids = "{ day, rewarded, wins, runs }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n }, war = { day, n, claimed } }",
+		LoginStreak = "{ last, streak, pos, track, cycles, total, best, shield, shieldWeek, savedDay }  -- see Logic/LoginStreak",
+		Reminders = "{ on: boolean, asked: boolean, askedAt, stampede: boolean }",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -540,6 +550,7 @@ Api.State = {
 		TradingHub = "{ ad: adId|false, postedAt }",
 		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } }, moderator: boolean, queue = { view + reports, creatorId } }",
 		Arena = "{ rating, tier, attemptsLeft, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
+		Reminders = "{ available: boolean, prompt: boolean }  -- prompt = show Roblox's notification opt-in now",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
@@ -621,6 +632,7 @@ Api.Topics = {
 	MarketListed = "(player, { listing: string, key: string, price: number, club: boolean })",
 	MarketBought = "(player, { listing: string, key: string, kind: string, price: number, club: boolean })",
 	MarketSold = "(nil, { listing, key, kind, price, proceeds, buyer, seller, club })  -- on the buyer's server",
+	StreakClaimed = "(player, { day: number, streak: number, track: number, shieldUsed: boolean, restarted: boolean })",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------
