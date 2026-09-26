@@ -18,6 +18,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Art = require(Shared.Config.DecorArt)
+local PropMeshes = require(Shared.Config.PropMeshes)
+local PropMesh = require(script.Parent.PropMesh)
 
 local DecorModel = {}
 
@@ -135,6 +137,17 @@ function DecorModel.Build(def, origin: CFrame, detail: string, parent: Instance)
 	end
 	model.PrimaryPart = root
 	model.Parent = parent
+	-- A generated mesh (Config/PropMeshes) takes the pieces' place once it loads.
+	local generated = PropMeshes.decor[def.id]
+	if generated and (def.mesh == nil or def.mesh == "") then
+		local parts = {}
+		for _, child in model:GetChildren() do
+			if child:IsA("BasePart") then
+				table.insert(parts, child)
+			end
+		end
+		PropMesh.Replace(generated, parts, origin, model)
+	end
 	return model, root, if def.light then glow else nil
 end
 

@@ -1,0 +1,105 @@
+{
+ "note": "2026-09-26 prop art pass: text-only, reviewed before publishing (_G.RbxGenPublish).",
+ "jobs": [
+  {
+   "key": "b_rock",
+   "prompt": "a mossy grey boulder, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    3,
+    2,
+    3
+   ],
+   "maxTriangles": 2500
+  },
+  {
+   "key": "b_tree",
+   "prompt": "a small round cartoon tree with a fluffy green canopy and a brown trunk, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    4,
+    6,
+    4
+   ],
+   "maxTriangles": 3500
+  },
+  {
+   "key": "b_crystal",
+   "prompt": "a cluster of glowing blue crystals on a small rock base, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    2,
+    3,
+    2
+   ],
+   "maxTriangles": 3000
+  },
+  {
+   "key": "b_pillar",
+   "prompt": "a broken ancient stone column, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    2,
+    5,
+    2
+   ],
+   "maxTriangles": 2500
+  },
+  {
+   "key": "b_coral",
+   "prompt": "a branching pink coral, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    2,
+    3,
+    2
+   ],
+   "maxTriangles": 3000
+  },
+  {
+   "key": "b_cactus",
+   "prompt": "a green saguaro cactus with two arms, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    2,
+    4,
+    2
+   ],
+   "maxTriangles": 2500
+  },
+  {
+   "key": "b_spike",
+   "prompt": "a jagged dark volcanic rock spike, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    2,
+    4,
+    2
+   ],
+   "maxTriangles": 2500
+  },
+  {
+   "key": "b_mushroom",
+   "prompt": "a giant red toadstool mushroom with white spots and a plain white stem, no face, no eyes, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    3,
+    3,
+    3
+   ],
+   "maxTriangles": 2500
+  },
+  {
+   "key": "b_torch",
+   "prompt": "a wooden standing torch with a burning orange flame, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    1,
+    4,
+    1
+   ],
+   "maxTriangles": 2500
+  },
+  {
+   "key": "b_banner",
+   "prompt": "a tall wooden pole with a hanging red cloth banner, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    2,
+    5,
+    1
+   ],
+   "maxTriangles": 2500
+  }
+ ]
+}
