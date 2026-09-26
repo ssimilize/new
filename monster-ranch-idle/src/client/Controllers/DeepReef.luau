@@ -12,11 +12,13 @@
 	  ReturnPad ("Swim up")   the Surface Bell: reverses all of the above and returns to the Dock.
 	  Gate Portal ("Enter")   opens the Expeditions screen on the "reef" region (its own opensAt
 	                          gates the expedition itself, same as every region).
-	  Swimming                while inside: the humanoid is PlatformStand (no walking, no gravity)
+	  Swimming                while inside: the humanoid is PlatformStand (no walking)
 	                          and this steps Logic/Swim each Heartbeat from WASD / the left stick
 	                          (flat) and Space / Ctrl / the triggers (ascend / descend), the
 	                          camera's pitch nudging vertical speed while swimming forward, writing
-	                          the character's CFrame directly (heading, tilt, idle bob). A mounted
+	                          the character's CFrame directly (heading, tilt, idle bob) and its
+	                          velocity (PlatformStand keeps gravity: left alone, the fall speed
+	                          builds every frame and flings the swimmer off the floor). A mounted
 	                          swimmer rides faster (Logic/Swim.Speed); Controllers/Mounts poses it.
 	                          No drowning: there is no air meter.
 
@@ -69,6 +71,8 @@ local colorEffect: ColorCorrectionEffect? = nil
 local trail: ParticleEmitter? = nil
 local savedAmbient: Color3? = nil
 local savedOutdoor: Color3? = nil
+local savedAtmosphere: { [string]: any }? = nil
+local ATMOSPHERE_KEYS = { "Density", "Offset", "Haze", "Glare", "Color", "Decay" }
 
 local function v3(t: { number }): Vector3
 	return Vector3.new(t[1], t[2], t[3])
@@ -130,8 +134,21 @@ local function buildColorEffect()
 	colorEffect = effect
 end
 
+-- Taken once per dive: a second call before giveLightBack would save the reef light as the
+-- "original" and leave an orphaned ReefColor behind.
 local function takeLight()
+	if colorEffect then
+		return
+	end
 	savedAmbient, savedOutdoor = Lighting.Ambient, Lighting.OutdoorAmbient
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+	if atmosphere then
+		local saved = {}
+		for _, key in ATMOSPHERE_KEYS do
+			saved[key] = (atmosphere :: any)[key]
+		end
+		savedAtmosphere = saved
+	end
 	local weather = ctx:GetController("Weather")
 	if weather and weather.Hold then
 		weather.Hold(true)
@@ -159,6 +176,13 @@ local function giveLightBack()
 	if savedOutdoor then
 		Lighting.OutdoorAmbient = savedOutdoor
 	end
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+	if atmosphere and savedAtmosphere then
+		for key, value in savedAtmosphere do
+			(atmosphere :: any)[key] = value
+		end
+	end
+	savedAtmosphere = nil
 	if colorEffect then
 		colorEffect:Destroy()
 		colorEffect = nil
@@ -266,20 +290,25 @@ local function dive()
 	ctx:Sound("ReefDive", { at = at })
 end
 
+-- Ends a swim however it ends (Swim up, a lost or respawned character): the light always comes back.
+local function stopSwimming()
+	swimming = false
+	ContextActionService:UnbindAction("DeepReefVertical")
+	held.up, held.down = false, false
+	giveLightBack()
+	destroyTrail()
+end
+
 local function surface()
 	if not swimming then
 		return
 	end
-	swimming = false
-	ContextActionService:UnbindAction("DeepReefVertical")
-	held.up, held.down = false, false
+	stopSwimming()
 	local humanoid, root = humanoidAndRoot()
 	if humanoid then
 		humanoid.PlatformStand = false
 		humanoid.AutoRotate = true
 	end
-	giveLightBack()
-	destroyTrail()
 	local at = v3(Cfg.Dock.position)
 	if root then
 		root.CFrame = CFrame.new(at.X, at.Y + 3, at.Z + 6)
@@ -290,9 +319,7 @@ end
 local function stepSwim(dt: number)
 	local humanoid, root = humanoidAndRoot()
 	if not humanoid or not root then
-		swimming = false
-		ContextActionService:UnbindAction("DeepReefVertical")
-		held.up, held.down = false, false
+		stopSwimming()
 		return
 	end
 	local camera = workspace.CurrentCamera
@@ -306,6 +333,8 @@ local function stepSwim(dt: number)
 	local tilt = Swim.Tilt(state.vx, state.vy, state.vz, speed, Cfg.Swim.tilt)
 	local bob = if speedNow < 1 then Swim.Bob(os.clock(), Cfg.Swim.bob) else 0
 	root.CFrame = CFrame.new(state.x, state.y + bob, state.z) * CFrame.Angles(0, heading, 0) * CFrame.Angles(tilt, 0, 0)
+	root.AssemblyLinearVelocity = Vector3.new(state.vx, state.vy, state.vz)
+	root.AssemblyAngularVelocity = Vector3.zero
 	if trail then
 		trail.Rate = if speedNow > 2 then Cfg.Life.trail.rate else Cfg.Life.trail.rateLow
 	end
@@ -400,11 +429,7 @@ function DeepReef.Start()
 	end)
 	Players.LocalPlayer.CharacterAdded:Connect(function()
 		if swimming then
-			swimming = false
-			ContextActionService:UnbindAction("DeepReefVertical")
-			held.up, held.down = false, false
-			giveLightBack()
-			destroyTrail()
+			stopSwimming()
 		end
 	end)
 	local acc = 0

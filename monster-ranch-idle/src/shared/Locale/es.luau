@@ -1849,7 +1849,7 @@ return {
 	["The titan falls!"] = "¡El Titán cae!",
 	["The titan got away..."] = "El Titán escapó...",
 	["You got a Titan Egg!"] = "¡Conseguiste un Huevo de Titán!",
-	["{1} servers · {2} players fighting"] = "{1} servidores · {2} jugadores luchando",
+	["Fighting: {1} · Servers: {2}"] = "Luchando: {1} · Servidores: {2}",
 	["Titan Egg"] = "Huevo de Titán",
 	["Colossyth"] = "Colossyth",
 	["The Tidereaver"] = "El Devorador de Mareas",
@@ -2134,6 +2134,7 @@ return {
 	["NEW!"] = "¡NUEVO!",
 	["SHINY!"] = "¡BRILLANTE!",
 	["Cheer!"] = "¡Ánimo!",
+	["X"] = "X", -- close buttons (FredokaOne has no ✕ glyph)
 	["To the arena"] = "A la arena",
 	-- Glow-up X: postcards from expeditions
 	["That postcard isn't in your album"] = "Esa postal no está en tu álbum",
@@ -2337,7 +2338,7 @@ return {
 	["Rotate"] = "Girar",
 	["Undo"] = "Deshacer",
 	["Your ranch layout is saved!"] = "¡El diseño de tu rancho está guardado!",
-	["You have unsaved changes. Tap ✕ again to leave."] = "Tienes cambios sin guardar. Toca ✕ otra vez para salir.",
+	["You have unsaved changes. Tap X again to leave."] = "Tienes cambios sin guardar. Toca X otra vez para salir.",
 	["Your ranch isn't ready yet"] = "Tu rancho todavía no está listo",
 	["There's no free spot for that piece"] = "No hay un lugar libre para esa pieza",
 	["You don't own enough of that decor"] = "No tienes suficiente de esa decoración",

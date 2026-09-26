@@ -214,6 +214,14 @@ function Icon.forReward(kind: string): string
 	elseif kind == "accessory" then
 		return "star"
 	end
+	-- Rewards name currencies in the plural ("coins", "gems", "treats"); the icons are singular.
+	-- Unmapped, every coin / gem chip drew the grey fallback disc (found in Studio 2026-09-26).
+	if not SHEET_NAMES[kind] and not IMAGE_KEYS[kind] and string.sub(kind, -1) == "s" then
+		local single = string.sub(kind, 1, -2)
+		if SHEET_NAMES[single] or IMAGE_KEYS[single] then
+			return single
+		end
+	end
 	return kind
 end
 

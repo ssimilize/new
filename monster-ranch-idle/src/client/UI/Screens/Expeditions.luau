@@ -782,7 +782,7 @@ return {
 						away.Position = UDim2.fromOffset(4, 48)
 					end
 					local remove = Button.new({
-						Text = "✕",
+						Text = "X", -- FredokaOne has no ✕ glyph (it renders blank)
 						Color = C.Red,
 						Size = UDim2.fromOffset(44, 44),
 						TextSize = 18,

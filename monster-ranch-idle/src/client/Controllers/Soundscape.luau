@@ -181,8 +181,9 @@ local function addStudioTools()
 		Color = Theme.Colors.Gray,
 		TextSize = Theme.TextSize.Small,
 		Size = UDim2.fromOffset(150, 44),
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 8, 1, -8),
+		-- Bottom-right: bottom-left sat on the tutorial card.
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, -8, 1, -8),
 		Sound = false,
 		Parent = ctx.UI.Top,
 		OnClick = function()

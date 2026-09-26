@@ -14,6 +14,9 @@
 	  close      {}                            Router:Close
 	  request    { action, payload? }          a Net request as this player, as the UI would send it
 	  config     { path, value }               sets a shared Config value on this client only
+	  battle     { region, stage }             Expeditions.Fight, then plays the replay in the
+	                                           real viewer (3D stage when Battle.Mode says so);
+	                                           returns { mode, win }
 	Every command but store needs the Workspace attribute QA_MemoryProfiles (the server then runs
 	on in-memory stores, so nothing a check does reaches the real save).
 ]]
@@ -57,6 +60,17 @@ end
 
 function commands.request(kernel, args)
 	return pack(kernel.Net:Request(args.action, args.payload))
+end
+
+function commands.battle(kernel, args)
+	local Battle = require(script.Parent.Parent.UI.Screens.Parts.Battle)
+	local ok, res = kernel.Net:Request("Expeditions.Fight", { region = args.region, stage = args.stage or 1 })
+	assert(ok and type(res) == "table" and res.replay, "Expeditions.Fight failed: " .. tostring(res))
+	local ctx = kernel:ScreenContext("QABattle")
+	local opts = { replay = res.replay, win = res.win, rewards = res.rewards, title = "QA battle", stage = args.region }
+	local _, mode = pcall(Battle.Mode, ctx, opts)
+	task.spawn(Battle.play, ctx, opts)
+	return { mode = mode, win = res.win }
 end
 
 function commands.config(_kernel, args)

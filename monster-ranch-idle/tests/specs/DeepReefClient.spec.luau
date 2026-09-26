@@ -126,6 +126,59 @@ return function(t)
 			expectClean(c)
 		end)
 
+		it("gives the light back when the swimmer is lost mid-dive, and a second dive stacks nothing", function()
+			-- Found in Studio 2026-09-26: a swimmer flung off the floor died, the swim loop dropped
+			-- `swimming` without the light, and the reef tint, fog and ambient stayed for good.
+			local h = TestKernel.new({ systems = allSystems(), startTime = AFTER_CAP })
+			local p = h:Join()
+			levelTo(h, p, 64)
+			local c = ClientHarness.new(h, p)
+			c:Advance(2)
+			local reef = c.kernel:GetController("DeepReef")
+			local lighting = c.world.game:GetService("Lighting")
+			local atmosphere = lighting:FindFirstChildOfClass("Atmosphere")
+			local baseAmbient, baseOutdoor = lighting.Ambient, lighting.OutdoorAmbient
+			local baseDensity = atmosphere and atmosphere.Density
+			local function reefColors(): number
+				local n = 0
+				for _, child in lighting:GetChildren() do
+					if child.Name == "ReefColor" then
+						n += 1
+					end
+				end
+				return n
+			end
+
+			reef.Dive()
+			c:Advance(0.5)
+			expect(reef.IsInside()).toBe(true)
+			expect(reefColors()).toBe(1)
+			local root = c.character.PrimaryPart
+			expect(root.AssemblyLinearVelocity.Magnitude < 50).toBe(true)
+
+			c.character:Destroy()
+			c:Advance(0.5)
+			expect(reefColors()).toBe(0)
+			expect(lighting.Ambient).toBe(baseAmbient)
+			expect(lighting.OutdoorAmbient).toBe(baseOutdoor)
+			if atmosphere then
+				expect(atmosphere.Density).toBe(baseDensity)
+			end
+
+			c:_spawnCharacter()
+			c:Advance(0.5)
+			reef.Dive()
+			c:Advance(0.5)
+			reef.Dive() -- a second Dive while inside changes nothing
+			c:Advance(0.2)
+			expect(reefColors()).toBe(1)
+			reef.Surface()
+			c:Advance(0.5)
+			expect(reefColors()).toBe(0)
+			expect(lighting.Ambient).toBe(baseAmbient)
+			expectClean(c)
+		end)
+
 		it("stays shut below Ranch Level 64 and tells you so", function()
 			local h = TestKernel.new({ systems = allSystems() })
 			local p = h:Join()

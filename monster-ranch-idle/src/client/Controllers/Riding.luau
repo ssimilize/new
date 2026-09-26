@@ -149,8 +149,10 @@ function Riding.Start()
 		Color = Theme.Colors.Orange,
 		TextSize = Theme.TextSize.Body,
 		Size = UDim2.fromOffset(150, 52),
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 16, 1, -120),
+		-- Above the bottom bar, left of centre: at the bottom-left it covered the left stack (Daily,
+		-- found in Studio 2026-09-26), and the centre above the bar is the arena / visit buttons'.
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(0.5, -140, 1, -92),
 		Parent = ctx.UI.Hud,
 		OnClick = function()
 			StoreKit.request(ctx, "Riding.Dismount")

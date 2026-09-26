@@ -124,7 +124,7 @@ function EmoteWheel.Build(ctx)
 	})
 	local closeButton = Button.new({
 		Name = "Close",
-		Text = "✕",
+		Text = "X", -- FredokaOne has no ✕ glyph (it renders blank)
 		Color = C.Red,
 		Size = UDim2.fromOffset(48, 48),
 		AnchorPoint = Vector2.new(0.5, 0.5),

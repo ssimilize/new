@@ -163,6 +163,13 @@ return function(t)
 			expect(art.ImageRectOffset.Y).toBe(coin[3])
 			-- kinds without art (egg, lock) keep their shapes
 			expect(find(Icon.new("lock", 28), "Art")).toBeNil()
+			-- reward kinds are plural ("coins", "gems", "treats") and still get their sheet art
+			for _, kind in { "coins", "gems", "treats", "ribbons", "food", "xp" } do
+				local chip = find(Icon.new(Icon.forReward(kind), 28), "Art", "ImageLabel")
+				if chip == nil then
+					error("no icon art for reward kind " .. kind)
+				end
+			end
 			expectClean(c)
 		end)
 
