@@ -41,6 +41,7 @@ return function(t)
 		offset = true,
 		box = true,
 		core = true,
+		night = true,
 	}
 	local ENUMS = {
 		orientation = { "FacingCamera", "FacingCameraWorldUp", "VelocityParallel", "VelocityPerpendicular" },
@@ -186,6 +187,29 @@ return function(t)
 			expect(Presets.Variants.shiny ~= nil and Presets.Variants.rainbow ~= nil).toBe(true)
 			for _, name in { "hatch", "evolve", "monsterLevelUp", "ranchLevelUp", "rebirth", "coins", "hearts" } do
 				expect(type(Presets.Bursts[name]) == "table" and #Presets.Bursts[name] > 0).toBe(true)
+			end
+		end)
+
+		it("defines the night glow over real sprites with sane numbers", function()
+			local N = Presets.Night
+			expect(N ~= nil).toBe(true)
+			expect(N.boost > 0 and N.cap <= 1).toBe(true)
+			expect(N.dawn[1] < N.dawn[2] and N.dawn[2] < N.dusk[1] and N.dusk[1] < N.dusk[2]).toBe(true)
+			for sprite, weight in N.sprites do
+				expect({ sprite, Presets.Sprites[sprite] ~= nil }).toEqual({ sprite, true })
+				expect(weight > 0 and weight <= 1).toBe(true)
+			end
+			-- Matte sprites stay lit like the world: smoke and leaves must not glow in the dark.
+			for _, sprite in { "leaf", "petal", "pebble", "puff", "confetti", "heart", "coin" } do
+				expect({ sprite, N.sprites[sprite] }).toEqual({ sprite, nil })
+			end
+			for _, group in groups() do
+				for i, spec in group.specs do
+					if spec.night ~= nil then
+						local ok = type(spec.night) == "number" and spec.night >= 0 and spec.night <= 1
+						expect({ group.name, i, ok }).toEqual({ group.name, i, true })
+					end
+				end
 			end
 		end)
 
@@ -443,6 +467,74 @@ return function(t)
 			end
 			expect(Vfx.Burst("nope", c.globals.Vector3.new(0, 5, 0))).toBe(0)
 			expect(Vfx.AttachLandmark(model, "nope")).toBe(nil)
+			expectClean(c)
+		end)
+
+		it("glows glowing sprites at night, leaves matte ones alone, and follows the clock", function()
+			local h = TestKernel.new({ systems = allSystems() })
+			local p = h:Join()
+			local c = ClientHarness.new(h, p)
+			c:Advance(1)
+			local Vfx = c:require(c.clientFolder.Visuals.Vfx)
+			local MonsterModel = c:require(c.clientFolder.Visuals.MonsterModel)
+			local N = Presets.Night
+			-- The test world may start at night; the Landmarks controller follows the clock, so set it.
+			local lighting = c.world.game:GetService("Lighting")
+			lighting.ClockTime = 14
+
+			-- The curve: day, night, and halfway through dusk and dawn.
+			expect(Vfx.NightFromClock(14)).toBe(0)
+			expect(Vfx.NightFromClock(0.5)).toBe(1)
+			expect(math.abs(Vfx.NightFromClock((N.dusk[1] + N.dusk[2]) / 2) - 0.5) < 1e-6).toBe(true)
+			expect(math.abs(Vfx.NightFromClock((N.dawn[1] + N.dawn[2]) / 2) - 0.5) < 1e-6).toBe(true)
+			expect(Vfx.NightFromClock(N.dusk[1] + 0.5) < Vfx.NightFromClock(N.dusk[2] - 0.5)).toBe(true)
+
+			-- An ember monster's flame glows at night; a sprout monster's leaves do not.
+			local sprout
+			for _, line in Config.Species.Lines do
+				if line.elements[1] == "sprout" and #line.elements == 1 then
+					sprout = line.id
+					break
+				end
+			end
+			local ember = MonsterModel.Build(look("cindlet", {}), { anchored = true })
+			local leafy = MonsterModel.Build(look(sprout, {}), { anchored = true })
+			local flameSpec = Presets.Auras.ember[1]
+			expect(flameSpec.sprite).toBe("flame")
+			local function byTexture(model, id)
+				for _, e in emitters(model) do
+					if e.Texture == id then
+						return e
+					end
+				end
+				return nil
+			end
+			local flame = byTexture(ember, SpriteIds.flame.color)
+			expect(flame ~= nil).toBe(true)
+			local dayLeaves = {}
+			for _, e in emitters(leafy) do
+				dayLeaves[e] = { e.LightEmission, e.LightInfluence }
+			end
+			expect(flame.LightEmission).toBe(flameSpec.lightEmission)
+
+			Vfx.SetNight(1)
+			local want = math.min(flameSpec.lightEmission + N.boost, math.max(flameSpec.lightEmission, N.cap))
+			expect(math.abs(flame.LightEmission - want) < 1e-6).toBe(true)
+			expect(flame.LightEmission > flameSpec.lightEmission).toBe(true)
+			expect(flame.LightInfluence).toBe(0)
+			expect(next(dayLeaves) ~= nil).toBe(true)
+			for e, day in dayLeaves do
+				expect({ e.LightEmission, e.LightInfluence }).toEqual(day)
+			end
+
+			Vfx.SetNight(0)
+			expect(flame.LightEmission).toBe(flameSpec.lightEmission)
+
+			-- The Landmarks controller follows Lighting.ClockTime.
+			lighting.ClockTime = 0.5
+			expect(math.abs(flame.LightEmission - want) < 1e-6).toBe(true)
+			lighting.ClockTime = 14
+			expect(flame.LightEmission).toBe(flameSpec.lightEmission)
 			expectClean(c)
 		end)
 

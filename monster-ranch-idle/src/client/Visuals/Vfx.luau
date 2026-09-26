@@ -16,6 +16,10 @@
 		    opts.color   Color3 for specs marked useColor (hatch: the rarity colour)
 		    opts.scale   multiplies sizes and speeds (a monster's Height / RefHeight)
 		    opts.elements  { elementId }: also throws each aura's sprites (evolve)
+		Vfx.SetNight(amount)                               0 = day .. 1 = night: glowing sprites glow more
+		                                                   (Config.Vfx.Night); the Landmarks controller
+		                                                   feeds it NightFromClock(Lighting.ClockTime)
+		Vfx.NightFromClock(clockTime) -> number            0..1, smooth through dusk and dawn
 		Vfx.SetQuality(low)                                low graphics: other plots' auras and rarity
 		                                                   glows off, mutation / variant / landmark rates
 		                                                   halved, bursts halved
@@ -56,10 +60,11 @@ local HOVERING = { moth = true, sprite = true }
 local KIND_OFF_ON_OTHER_PLOTS = { aura = true, rarity = true }
 local KIND_HALVED = { mutation = true, variant = true, landmark = true }
 
-type Rec = { emitter: ParticleEmitter, rate: number, kind: string }
+type Rec = { emitter: ParticleEmitter, rate: number, kind: string, spec: any }
 type Entry = { recs: { Rec }, owned: boolean, made: { Instance }, connection: RBXScriptConnection? }
 
 local low = false
+local night = 0 -- 0 = day .. 1 = night (Vfx.SetNight)
 local registry: { [Instance]: Entry } = setmetatable({}, { __mode = "k" }) :: any
 local pools: { [string]: { { part: BasePart, emitter: ParticleEmitter, spec: any } } } = {}
 local container: Folder? = nil
@@ -173,11 +178,29 @@ local function factor(kind: string, owned: boolean): number
 	return if KIND_HALVED[kind] then 0.5 else 1
 end
 
+-- The night glow: LightEmission lifted and LightInfluence lowered by the sprite's weight
+-- (Config.Vfx.Night) times how dark it is. By day this is the spec's own values.
+local function lit(emitter: ParticleEmitter, spec)
+	local base = spec.lightEmission or 0.2
+	local influence = spec.lightInfluence or 0.3
+	local cfg = Presets.Night
+	local weight = if type(spec.night) == "number" then spec.night elseif cfg then cfg.sprites[spec.sprite] or 0 else 0
+	local k = weight * night
+	if cfg and k > 0 then
+		emitter.LightEmission = math.min(base + cfg.boost * k, math.max(base, cfg.cap))
+		emitter.LightInfluence = influence * (1 - k)
+	else
+		emitter.LightEmission = base
+		emitter.LightInfluence = influence
+	end
+end
+
 local function apply(entry: Entry)
 	for _, rec in entry.recs do
 		local f = factor(rec.kind, entry.owned)
 		rec.emitter.Rate = rec.rate * f
 		rec.emitter.Enabled = f > 0
+		lit(rec.emitter, rec.spec)
 	end
 end
 
@@ -270,7 +293,7 @@ function Vfx.AttachMonster(model: Model, appearance): number
 			local emitter = build(spec, k)
 			if emitter then
 				emitter.Parent = anchorFor(spec)
-				table.insert(entry.recs, { emitter = emitter, rate = (spec.rate or 0) * share, kind = kind })
+				table.insert(entry.recs, { emitter = emitter, rate = (spec.rate or 0) * share, kind = kind, spec = spec })
 			end
 		end
 	end
@@ -365,7 +388,7 @@ function Vfx.AttachLandmark(instance: Instance, id: string): Folder?
 			local p = invisiblePart("Emitter" .. i, if box then Vector3.new(box[1], box[2], box[3]) else POINT, cf, true)
 			emitter.Parent = p
 			p.Parent = folder
-			table.insert(entry.recs, { emitter = emitter, rate = spec.rate or 0, kind = "landmark" })
+			table.insert(entry.recs, { emitter = emitter, rate = spec.rate or 0, kind = "landmark", spec = spec })
 		end
 	end
 	folder.Parent = holder()
@@ -439,6 +462,7 @@ local function fire(list, cf: CFrame, color: Color3?, count: (any) -> number): n
 		end
 		local n = count(rec.spec)
 		if n > 0 then
+			lit(rec.emitter, rec.spec)
 			rec.emitter:Emit(if low then math.ceil(n / 2) else n)
 			fired += 1
 		end
@@ -472,6 +496,38 @@ function Vfx.Burst(name: string, where: CFrame | Vector3, opts: { color: Color3?
 end
 
 -- ─── Quality and cleanup ─────────────────────────────────────────────────────────────
+
+-- 0 by day, 1 at night, a smooth ramp through Config.Vfx.Night's dusk and dawn hours.
+function Vfx.NightFromClock(clockTime: number): number
+	local cfg = Presets.Night
+	if not cfg or type(clockTime) ~= "number" then
+		return 0
+	end
+	local c = clockTime % 24
+	local function ramp(from: number, to: number): number
+		local p = math.clamp((c - from) / (to - from), 0, 1)
+		return p * p * (3 - 2 * p)
+	end
+	if c >= cfg.dawn[1] and c <= cfg.dawn[2] then
+		return 1 - ramp(cfg.dawn[1], cfg.dawn[2])
+	elseif c >= cfg.dusk[1] and c <= cfg.dusk[2] then
+		return ramp(cfg.dusk[1], cfg.dusk[2])
+	elseif c > cfg.dawn[2] and c < cfg.dusk[1] then
+		return 0
+	end
+	return 1
+end
+
+function Vfx.SetNight(amount: number)
+	local value = math.clamp(tonumber(amount) or 0, 0, 1)
+	if math.abs(value - night) < 0.01 and not (value == 0 and night ~= 0) and not (value == 1 and night ~= 1) then
+		return
+	end
+	night = value
+	for _, entry in registry do
+		apply(entry)
+	end
+end
 
 function Vfx.SetQuality(isLow: boolean)
 	low = isLow == true
