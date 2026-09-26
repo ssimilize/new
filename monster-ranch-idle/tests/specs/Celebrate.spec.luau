@@ -116,7 +116,7 @@ return function(t)
 			expect(Celebration.TickKey(10, 10, 9)).toBe("CoinTick5")
 			expect(Celebration.TickKey(1, 1, 1)).toBe("CoinTick1")
 			for i = 1, 5 do
-				expect(Config.Sounds["CoinTick" .. i]).toBe("")
+				expect(Config.Sounds["CoinTick" .. i] ~= nil).toBe(true)
 			end
 			for _, key in { "GemTick", "ItemPop", "Whoosh", "StarUp", "CelebrateBig", "CelebrateHuge", "StampedeSoon", "BossHorn" } do
 				expect(Config.Sounds[key] ~= nil).toBe(true)

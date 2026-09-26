@@ -76,6 +76,9 @@ local function runSpec(file: string)
 			return
 		end
 		table.clear(warnings)
+		if process.env.TEST_PROGRESS ~= nil then
+			print("  · " .. full)
+		end
 		local ok, err = xpcall(fn, debug.traceback)
 		if ok then
 			passed += 1
@@ -95,7 +98,11 @@ for _, entry in fs.readDir(ROOT .. "/tests/specs") do
 end
 table.sort(files)
 
+local progress = process.env.TEST_PROGRESS ~= nil -- TEST_PROGRESS=1 names each spec file as it starts (to find a hang)
 for _, file in files do
+	if progress then
+		print("▶ " .. file)
+	end
 	local ok, err = xpcall(runSpec, debug.traceback, file)
 	if not ok then
 		failed += 1
