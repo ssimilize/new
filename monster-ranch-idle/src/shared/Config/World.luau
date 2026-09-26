@@ -185,6 +185,10 @@ World.Scenery = {
 	outside = { kinds = { "oak", "oakLight", "pine" }, size = { 22, 32 }, step = 26, depth = { 16, 150 } },
 }
 
+-- Glow-up LR: the live race track (Config.LiveRace.Track, a loop 224 x 104 studs round its centre,
+-- plus the start pad and podium on its north side) stays clear of scenery.
+table.insert(World.Scenery.keepOut, { center = { -210, 332 }, size = { 244, 140 } })
+
 -- Update 2.0 · Sky Islands: floating islands high above the map, joined by cloud bridges.
 -- The launch pad in the Market Square flies players to the landing island's return pad;
 -- the Sky Gate there opens the Sky Islands expeditions. Island `center` is the top of the

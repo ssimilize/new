@@ -79,6 +79,9 @@ return {
 		"Visits",
 		-- Glow-up Z · build your ranch (free decor placement)
 		"Decor",
+		-- Glow-up LR · live races on the track, racing gear
+		"LiveRace",
+		"RaceGear",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},
