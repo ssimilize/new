@@ -56,7 +56,7 @@ return {
 	-- all of it given back when the stage goes.
 	light = {
 		effects = { "WeatherColor", "TitanStorm", "StampedeStorm", "ReefColor", "AmbienceGoldenHour" },
-		atmosphere = { density = 0.2, offset = 0, haze = 0.4, glare = 0, color = "#C9D6E3", decay = "#7C8A99" },
+		atmosphere = { density = 0.1, offset = 0, haze = 0, glare = 0, color = "#A9C1DA", decay = "#5E7389" },
 	},
 
 	layout = { front = 6, spacing = 4.4, rowDepth = 4, perRow = 4, bossBack = 3 },
