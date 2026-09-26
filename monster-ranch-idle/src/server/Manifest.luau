@@ -76,6 +76,8 @@ return {
 		"Editions",
 		-- Glow-up Y · likes that pay, the crown, ranch visits and Ranch of the Week
 		"Visits",
+		-- Glow-up Z · build your ranch (free decor placement)
+		"Decor",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

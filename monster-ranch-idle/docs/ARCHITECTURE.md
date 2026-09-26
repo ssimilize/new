@@ -318,6 +318,39 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Public API:** `Visits:WeekLikes(player)`, `Visits:Crown() -> userId?`, `Visits:SaveSnapshot(player) -> boolean`.
 - **Client:** controller `Visits` (crown model + spin, the Visiting Showcase bar (Like / Go there / Leave), the Ranch of the Week stage, models built only near the camera), `Visuals/RanchShowcase.Build(snap, origin, opts?) -> (Model, stats)` (a compact ranch drawn with the real `PenDress` plan). Friends screen row "Visit ranch" (`ctx:GetController("Visits").Visit(userId, name)`).
 
+### Glow-up Z: Build your ranch (free decor placement)
+- **Data**: `Config/Decor` (60+ pieces plus the pre-glow-up-Z mood set, `Layout` tuning: `grid`, cap by
+  Ranch Level, `keepOut` rects, pen `penInset`/`penOutset`/`propClear`, `legacySpots` for migration,
+  night `lights`, LOD distances), `Config/DecorArt` (`Models[modelId](a, b, def) -> { piece }`, parts
+  only, `maxParts` budget; a piece with a non-empty `mesh` id draws as one part instead, the art swap
+  point). Pieces carry `kind` (tray tab), `spot = "toy"` (pen monsters play there, like `Config.Pens`
+  spots), `light` (lit at night), `starter` (free copies granted once), `event`/`set` (Store grouping).
+- **Rules** (`Logic/DecorLayout`, pure, unit-tested): `Cap(level)`, `Half(def, rot)`, `Check(entry)`,
+  `Overlaps`, `Problems(list)` (placement mode's red), `Validate(list, level, available)`,
+  `PenOf(entry)`, `PenDecor(list, pen, perPen)` (mood pieces standing in a pen, Config.Decor.PerPen
+  best first), `FreeSpot`, `Migrate(pens, list)` (old `Ranch` pen-slot decor onto the layout at the old
+  slot spots or the nearest free spot), `Clean`, `Same`.
+- **Decor** (server, depends on Progression + Shop, optionally Ranch): save `profile.Decor = { layout
+  = { { id, x, z, rot } }, migrated, starter }` (plot-local grid units, `rot` 0..7 × 45°). On
+  `PlayerReady`: grants the starter set once (`Shop:AddDecor`), then moves any old `Ranch` pen-slot
+  decor onto the layout once (`Ranch:TakePenDecor`; leftovers return to storage). Action `Decor.Save
+  { layout }` re-validates ownership (storage + already placed), bounds/overlaps/pen-rails and the
+  cap, taking/returning `Shop` decor to match; failures change nothing. Public: `Decor:Layout(player)`,
+  `:PenDecor(player, pen)`, `:Placed(player, decorId)`. Publishes `PlotChanged`.
+- **Ranch** gains `Ranch:TakePenDecor(player) -> { [pen]: { decorId } }` (empties the old pen slots for
+  the migration) and reads the Decor layout's `PenDecor` into its mood-aura pass alongside any
+  remaining pen-slot decor.
+- **Replication**: `global.Plots[i].layout = { { id, x, z, rot } }` (`Decor:Layout`, `Plots` optional
+  dependency).
+- **Client**: controller `Decor` (draws every plot's layout with `Visuals/DecorModel`, diffed by key;
+  own plot full detail, other plots drop `small` parts past `farDistance` and stop drawing past
+  `hideDistance`; night lights on `light` pieces, a pooled few nearest the camera) and its placement
+  mode (`Decor.Enter/Exit`, a draft copy of the layout, `Add/Select/MoveTo/Nudge/Rotate/Remove/Undo`,
+  `Save` posts `Decor.Save`; touch, mouse and gamepad input; hides the HUD and looks down on the own
+  plot). Screen `Decorate` (non-modal; tray tabs by `kind`, Rotate/Remove/Undo, Save/leave) opened from
+  the HUD's 🔨 button and the Ranch screen's "Build your ranch" (which replaces the old per-pen decor
+  picker; `Ranch.PlaceDecor` still exists for the migration path).
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 
@@ -368,9 +401,11 @@ Canonical names (the HUD, world prompts and other screens open these):
 | `Quests` | C3 | `{ tab? }` |
 | `Store` | C3 | `{ tab? = "food"|"decor"|"passes"|"gems"|"codes" }` |
 | `Settings` | C3 | — |
+| `Decorate` | glow-up Z | — (non-modal; placement mode's toolbar and tray) |
 
 Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2) · `Soundscape` (audio) · `ChatTags` (VIP chat tag) · `Celebrate`, `Stampede`, `PhotoMode`, `DailyLogin`, `Community` (glow-up) · `CameraDirector`, `Cinematics` (glow-up N) · `Sky`, `Lamplight`, `SceneryMotion`, `Critters` (ambience).
 Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2) · `Soundscape` (audio) · `ChatTags` (VIP chat tag) · `Celebrate`, `Stampede`, `StampedeArena`, `PhotoMode`, `DailyLogin`, `Community` (glow-up) · `Sky`, `Lamplight`, `SceneryMotion`, `Critters` (ambience).
+Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2) · `Soundscape` (audio) · `ChatTags` (VIP chat tag) · `Celebrate`, `Stampede`, `PhotoMode`, `DailyLogin`, `Community` (glow-up) · `Sky`, `Lamplight`, `SceneryMotion`, `Critters` (ambience) · `Decor` (glow-up Z: plot decor + placement mode).
 
 - **Layers:** `ctx.UI.Hud`, `Screens`, `Overlay`, `Top` and `Feedback` (glow-up), in that drawing order. `Feedback` holds the feedback queue, flying rewards and the Stampede banner, so feedback is never hidden behind the popup it is about.
 - **Feedback queue (`UI/Components/Toasts`):** toasts and reward cards share one stack above the bottom bar. `Toasts.show(text, kind, seconds?)` (`ctx:Toast`), `Toasts.push(gui, seconds?) -> dismiss()`, `Toasts.dismiss(gui)`. At most 4 items; they pop in, shrink out, and a repeated toast refreshes the one showing.

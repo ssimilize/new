@@ -6,7 +6,8 @@
 	    pens = { { theme, decor = { decorId }, monsters = { { id, appearance } }, capacity, jarTier } },
 	    statues = { Appearance },
 	    incubators = { { type, endsAt } },
-	    garden = { tier, plots = { { flavor, readyAt } } } | false }   -- glow-up R (Ranch:PublicGarden)
+	    garden = { tier, plots = { { flavor, readyAt } } } | false,    -- glow-up R (Ranch:PublicGarden)
+	    layout = { { id, x, z, rot } } }   -- glow-up Z: placed decor (Decor:Layout), plot-local grid units
 
 	A player gets the lowest free plot when they become ready (bus PlayerReady) and frees it when
 	they leave. Plot contents are rebuilt from other systems' public APIs:
@@ -28,7 +29,7 @@
 local Plots = {
 	Name = "Plots",
 	Dependencies = { "Monsters", "Progression" },
-	OptionalDependencies = { "Social", "Ranch", "HallOfFame", "Eggs" },
+	OptionalDependencies = { "Social", "Ranch", "HallOfFame", "Eggs", "Decor" },
 }
 
 local PLOT_COUNT = 6
@@ -61,7 +62,7 @@ local VISIBLE_FIELDS = {
 }
 
 local function emptyPlot()
-	return { userId = 0, name = "", level = 0, likes = 0, pens = {}, statues = {}, incubators = {}, garden = false }
+	return { userId = 0, name = "", level = 0, likes = 0, pens = {}, statues = {}, incubators = {}, garden = false, layout = {} }
 end
 
 -- Calls an optional system's method; returns nil if the system is absent or the call fails.
@@ -121,6 +122,7 @@ local function buildPlot(player)
 		statues = statues,
 		incubators = incubators,
 		garden = optional("Ranch", "PublicGarden", player) or false, -- glow-up R
+		layout = optional("Decor", "Layout", player) or {}, -- glow-up Z
 	}
 end
 

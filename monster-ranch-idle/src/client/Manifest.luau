@@ -72,6 +72,8 @@ return {
 		-- Glow-up X: a postcard from every finished expedition (the card, the send picker)
 		"Postcards",
 		"Visits", -- glow-up Y: the crown, the Visiting Showcase, Ranch of the Week
+		-- Glow-up Z: every plot's placed decor, night lights, placement mode's world side
+		"Decor",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -121,5 +123,7 @@ return {
 		"Care",
 		-- Glow-up X · postcards from expeditions
 		"Album",
+		-- Glow-up Z · build your ranch: placement mode's toolbar and tray (non-modal)
+		"Decorate",
 	},
 }
