@@ -2206,4 +2206,7 @@ return {
 	["Showing {1}'s ranch in the Visiting Showcase"] = "Mostrando o rancho de {1} na Vitrine de Visitas",
 	["Visit ranch"] = "Visitar rancho",
 	["See {1}'s ranch"] = "Ver o rancho de {1}",
+	-- Glow-up V: the 3D battle stage
+	["Tap to speed up"] = "Toque para acelerar",
+	["2× speed"] = "Velocidade 2×",
 }

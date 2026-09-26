@@ -9,15 +9,21 @@
 		                    the shot ends when it returns (default: hold `shot.hold` seconds)
 		    shot.onDone     fn(ran: boolean) always called once: ran = false when the shot could not
 		                    start (see CanStart) and nothing was shown
+		    shot.stage      glow-up V (a fight on the 3D battle stage): cuts in and out instead of
+		                    gliding, no letterbox / tap catcher (the caller draws its own), and a
+		                    Router screen being open neither stops it starting nor cuts it short
 		handle:Wait(seconds) -> skipped           yields; returns at once (true) after a skip
 		handle:Skipped() -> boolean
 		handle:Frame(position, height, seconds?)  glide to frame another subject
+		handle:Look(eye, at, seconds?)            glide to an explicit eye and look point (0 = cut)
+		handle:Aborted() -> boolean               the camera was taken back (PhotoMode, a mount...)
 		handle.reduced                            reduced motion (cuts, no shake); handle.low = lowGraphics
 		CameraDirector:Skip()                     the playing shot hurries to its end (any tap does it)
 		CameraDirector:Stop()                     ends every shot now and cuts back (PhotoMode:Begin)
 		CameraDirector:IsBusy() -> boolean        a shot is playing or the camera is not handed back yet
-		CameraDirector:CanStart() -> boolean      the world is the player's to look at: no PhotoMode,
-		                                          no Router screen, no UI/Focus modal, not riding
+		CameraDirector:CanStart(stage?) -> boolean   the world is the player's to look at: no PhotoMode,
+		                                          no Router screen (unless stage), no UI/Focus modal,
+		                                          not riding
 
 	While a shot plays: letterbox bars and a full-screen tap catcher with "Tap to skip" in UI.Top
 	(taps do not reach the world), the HUD layer hidden. A Router screen opening, PhotoMode or
@@ -87,8 +93,8 @@ local function photoActive(): boolean
 	return photo ~= nil and photo:IsActive()
 end
 
-local function mayContinue(): boolean
-	return not photoActive() and ctx.Router:Current() == nil and not riding()
+local function mayContinue(stage: boolean?): boolean
+	return not photoActive() and (stage == true or ctx.Router:Current() == nil) and not riding()
 end
 
 local function framing(position: Vector3, height: number, from: Vector3): CFrame
@@ -154,7 +160,16 @@ local function buildChrome()
 	})
 end
 
-local function showChrome()
+local function showChrome(bare: boolean?)
+	if bare then
+		-- A stage shot draws its own chrome; only the HUD steps aside.
+		local hud = ctx.UI.Hud
+		if hud and hudWasVisible == nil then
+			hudWasVisible = hud.Visible
+			hud.Visible = false
+		end
+		return
+	end
 	buildChrome()
 	chrome.root.Visible = true
 	chrome.hint.Visible = true
@@ -211,7 +226,7 @@ local function step()
 	if not (saved and camera and rig) then
 		return
 	end
-	if current and not current.aborted and not mayContinue() then
+	if current and not current.aborted and not mayContinue(current.stage) then
 		CameraDirector:Stop()
 		return
 	end
@@ -248,7 +263,7 @@ local function glideTo(toCF: CFrame, focus: Vector3, seconds: number)
 	step()
 end
 
-local function takeCamera(): boolean
+local function takeCamera(bare: boolean?): boolean
 	local camera = workspace.CurrentCamera
 	if not camera then
 		return false
@@ -263,7 +278,7 @@ local function takeCamera(): boolean
 	}
 	camera.CameraType = Enum.CameraType.Scriptable
 	bind()
-	showChrome()
+	showChrome(bare)
 	return true
 end
 
@@ -314,17 +329,29 @@ function Handle:Frame(position: Vector3, height: number, seconds: number?)
 	glideTo(cf, position + Vector3.new(0, height * CAM.lookUp, 0), seconds or CAM.glideIn)
 end
 
+function Handle:Look(eye: Vector3, at: Vector3, seconds: number?)
+	if self.state.aborted or not saved then
+		return
+	end
+	glideTo(CFrame.lookAt(eye, at), at, seconds or CAM.glideIn)
+end
+
+function Handle:Aborted(): boolean
+	return self.state.aborted
+end
+
 local function playOne(shot)
-	local state = { skipped = false, aborted = false }
+	local stage = shot.stage == true
+	local state = { skipped = false, aborted = false, stage = stage }
 	current = state
 	local handle = setmetatable({ state = state, reduced = reducedMotion(), low = lowGraphics() }, Handle)
 	if not saved then
-		takeCamera()
-		if not reducedMotion() then
+		takeCamera(stage)
+		if not reducedMotion() and not stage then
 			ctx:Sound("Whoosh")
 		end
 	end
-	handle:Frame(shot.position, shot.height or 4)
+	handle:Frame(shot.position, shot.height or 4, if stage then 0 else nil)
 	local ok, err = xpcall(function()
 		if shot.run then
 			shot.run(handle)
@@ -350,9 +377,11 @@ end
 
 local function work()
 	working = true
+	local cutHome = false
 	while #queue > 0 do
 		local shot = table.remove(queue, 1)
-		if saved or CameraDirector:CanStart() then
+		cutHome = shot.stage == true
+		if saved or CameraDirector:CanStart(shot.stage) then
 			local state = playOne(shot)
 			finish(shot, true)
 			if state.aborted then
@@ -365,7 +394,7 @@ local function work()
 	if saved then
 		-- Glide home, then hand the camera back.
 		local keep = saved
-		glideTo(keep.CFrame, keep.Focus.Position, CAM.glideOut)
+		glideTo(keep.CFrame, keep.Focus.Position, if cutHome then 0 else CAM.glideOut)
 		local deadline = os.clock() + (if rig then rig.glide else 0)
 		while saved == keep and os.clock() < deadline do
 			RunService.Heartbeat:Wait() -- a frame (task.wait() would not advance the clock in the Lune mock)
@@ -410,8 +439,8 @@ function CameraDirector:IsBusy(): boolean
 	return working or saved ~= nil
 end
 
-function CameraDirector:CanStart(): boolean
-	return workspace.CurrentCamera ~= nil and mayContinue() and Focus.top() == nil
+function CameraDirector:CanStart(stage: boolean?): boolean
+	return workspace.CurrentCamera ~= nil and mayContinue(stage) and Focus.top() == nil
 end
 
 function CameraDirector:ReducedMotion(): boolean

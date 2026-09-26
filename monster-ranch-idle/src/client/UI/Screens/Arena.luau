@@ -28,7 +28,7 @@ local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local StoreKit = require(UI.Components.StoreKit)
 local Util = require(script.Parent.Parts.Util)
-local BattleReplay = require(script.Parent.Parts.BattleReplay)
+local Battle = require(script.Parent.Parts.Battle)
 
 local New = Create.New
 local C = Theme.Colors
@@ -128,13 +128,14 @@ return {
 					return
 				end
 				local sign = if (res.delta or 0) >= 0 then "+" else ""
-				BattleReplay.play(ctx, {
+				Battle.play(ctx, {
 					replay = res.replay,
 					win = res.win,
 					rewards = res.rewards,
 					title = string.format("Arena · vs %s", candidate.name or "?"),
 					winText = string.format("Victory! Rating %s%d → %d", sign, res.delta or 0, res.rating or 0),
 					loseText = string.format("Defeat. Rating %s%d → %d", sign, res.delta or 0, res.rating or 0),
+					stage = "arena",
 				})
 			end)
 		end
