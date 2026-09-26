@@ -155,7 +155,7 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 ### S4: Expeditions, Boss
 - **Regions** (`Config/Regions`): read stage layout through `Regions.Stages(regionId)`, `Regions.Band(regionId, stage)` (main band or the `depths` band, with its unlock, levels, rarity, enemy lines and colours), `Regions.MaxStages` and `Regions.GlobalIndex(regionId, stage)`. See `docs/UPDATES.md` (1.1).
 - **Expeditions**: `Expeditions:GetSquad(player) -> {ids}`, `:SquadPower(player) -> number`, `:Cleared(player, region) -> stage`, `:RegisterLootModifier(key, fn(player) -> pct)`. Uses `Logic/BattleSim` (deterministic, seeded) and `Logic/Loot`. Busy tag `"expedition"`. Caravans in `global.Expeditions.caravans` and `session.Expeditions`.
-- **Boss**: `Boss:State() -> global table`, `:RegisterDamageModifier(key, fn(player) -> pct)`. Uses `Expeditions:GetSquad`. Publishes `BossJoined`, `BossEnded`; fires `Boss.Result`.
+- **Boss**: `Boss:State() -> global table`, `:RegisterDamageModifier(key, fn(player) -> pct)`. Uses `Expeditions:GetSquad`. Publishes `BossJoined`, `BossEnded`; fires `Boss.Result`, and to every player on the server `Boss.Starting { bossId, startsAt }` when the lobby opens (`Config.Boss.LobbySeconds` before the start) and `Boss.Started { bossId, startsAt, endsAt }` when the fight goes live.
 
 ### S5: Breeding, Weather, Social, Trade, Plots
 - **Breeding**: `Breeding:RegisterBreedsPerDayBonus(key, fn(player) -> n)`. Uses `Logic/Breeding` (`Outcomes(a, b)` for previews, `Roll(rng, a, b)`). Busy tag `"breeding"`. Queries `Monetization:HasPass(player, "breedingPod")`.
@@ -294,7 +294,23 @@ Canonical names (the HUD, world prompts and other screens open these):
 | `Store` | C3 | `{ tab? = "food"|"decor"|"passes"|"gems"|"codes" }` |
 | `Settings` | C3 | — |
 
-Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2) · `Soundscape` (audio) · `ChatTags` (VIP chat tag).
+Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2) · `Soundscape` (audio) · `ChatTags` (VIP chat tag) · `Celebrate`, `Stampede` (glow-up).
+
+- **Layers:** `ctx.UI.Hud`, `Screens`, `Overlay`, `Top` and `Feedback` (glow-up), in that drawing order. `Feedback` holds the feedback queue, flying rewards and the Stampede banner, so feedback is never hidden behind the popup it is about.
+- **Feedback queue (`UI/Components/Toasts`):** toasts and reward cards share one stack above the bottom bar. `Toasts.show(text, kind, seconds?)` (`ctx:Toast`), `Toasts.push(gui, seconds?) -> dismiss()`, `Toasts.dismiss(gui)`. At most 4 items; they pop in, shrink out, and a repeated toast refreshes the one showing.
+- **Celebrate (glow-up):** one API for every reward that lands and every celebration. Sizes `small | medium | big | huge` come from `Logic/Celebration` (`Size(items, income)`, `CoinSize`, `GemSize`, `Plan(size, low)`, `TickKey`).
+  ```lua
+  Celebrate:Reward(items, { from?, size?, minSize?, hold?, label? }) -> size  -- fly to the HUD counters
+  Celebrate:Hold({ "coins" | "gems" | "food" }) -> handle     -- before a request; handle:Release(kind?, seconds?)
+  Celebrate:Play(size)                    -- shower + confetti (big+), camera shake + FOV kick (huge), rumble, sound
+  Celebrate:CountUp(label, from, to, size, format) -> stop
+  Celebrate:Shockwave(gui, color?)  ·  Celebrate:Slam(gui, color?)  ·  Celebrate:Flourish(gui?)
+  Celebrate:Moment(key, fn, { settle?, flourish?, at? })  -- hold an in-world moment while the world is covered
+  Celebrate:IsCovered() -> boolean  ·  Celebrate:Pending() -> number
+  ```
+  `from` is a GuiObject, a world position (BasePart, Vector3, CFrame; projected through the camera) or a Feedback-layer `Vector2`. "Covered" means a Router screen is open, a `UI/Focus` modal is up, or the hatch reveal is showing. Low graphics keeps the counters and a short "+N" cue and drops swarms, shake, FOV kick, shockwaves and sparkles. New sound keys: `CoinTick1`..`CoinTick5`, `GemTick`, `ItemPop`, `Whoosh`, `StarUp`, `CelebrateBig`, `CelebrateHuge`, `StampedeSoon`.
+- **Hud counters (glow-up):** `Hud:HoldCounter(kind)`, `:ReleaseCounter(kind, seconds?)`, `:PulseCounter(kind)` for `coins`, `gems`, `food`; `Hud:GetTarget` also returns `coins`, `gems`, `food` and `level`.
+- **Stampede (glow-up):** `Boss.Starting` and `Boss.Started` show a banner on the Feedback layer to everyone (Join opens the Boss screen when unlocked) and play `StampedeSoon` / `BossHorn`. `Stampede:Banner() -> GuiObject?`. The HUD's Stampede card glows and shows a badge while the fight is in its lobby or live.
 
 - **Localize (3.2):** watches every TextLabel / TextButton (and TextBox placeholder) under the PlayerGui and the Workspace. It keeps the English a text object was given (`Localize:Source(obj)`) and shows `Locale.Translate` of it. A longer translation is shrunk to no more than the English's room (not below 75 %). Opt out with the attribute `Localize = false`. It is first in the client Manifest.
 - **Gamepad (3.2):** dormant until the last input comes from a pad.
@@ -303,10 +319,10 @@ Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`
   - **Minigames:** a screen root with a string attribute `GamepadLegend` hides the cursor, and the screen reads the pad itself (Racing, Surf).
   - **Modal cards** (Dialog, InsetPopup, hatch reveal, evolution popup) call `Focus.push(root, close?)` while open.
 
-Client bus topics (free-form, client only): `"Weather.Lightning"` `(strength 0..1)` published by Weather at each lightning flash (Soundscape times thunder to it); `"Tutorial.Arrow"` `(target: string?)` where the HUD exposes targets `incubator`, `jar`, `shop`, `monster`, `expeditions`, `weather`; `"World.FocusPlot"` `(plotIndex)`; `"Hud.Flash"` `(buttonName)`; `"Vfx.Burst"` `(name, { id }?)` where World takes `monsterLevelUp` (MonsterDetail) and `rebirth` (Rebirth).
+Client bus topics (free-form, client only): `"Weather.Lightning"` `(strength 0..1)` published by Weather at each lightning flash (Soundscape times thunder to it); `"Tutorial.Arrow"` `(target: string?)` where the HUD exposes targets `incubator`, `jar`, `shop`, `monster`, `expeditions`, `weather`; `"World.FocusPlot"` `(plotIndex)`; `"Hud.Flash"` `(buttonName)`; `"Vfx.Burst"` `(name, { id }?)` where World takes `monsterLevelUp` (MonsterDetail) and `rebirth` (Rebirth). World plays every moment burst through `Celebrate:Moment`, so a burst fired under a screen or popup waits until the view clears.
 
 ### UI kit
-`UI/Theme`, `UI/Create` (`New`, `Corner`, `Stroke`, `TextStroke`, `Padding`, `List`, `Grid`, `Shade`, `Text`), `UI/Anim` (`popIn`, `pulse`, `shake`, `countUp`, `bob`, `tween`), `UI/Layers`, `UI/Focus` (3.2: `push`, `remove`, `top`, `isShown`, `Changed`). `Router:Root(name)` returns a built screen's root. Components: `Button`, `Panel`, `Icon`, `Widgets` (`Pill`, `Bar`, `Chip`, `RarityChip`, `ElementChip`, `MutationChip`, `VariantChip`, `Scroll`, `List`, `Tabs`, `Countdown`, `Amount`), `Toasts`, `MonsterIcon` (`new`, `egg`, `silhouette`, `card`). Design size is 1100 × 560 (landscape phone); every tap target is at least 44 px.
+`UI/Theme`, `UI/Create` (`New`, `Corner`, `Stroke`, `TextStroke`, `Padding`, `List`, `Grid`, `Shade`, `Text`), `UI/Anim` (`popIn`, `pulse`, `shake` (rotates inside list/grid layouts, which own Position), `countUp` (returns `stop()`), `bob`, `tween`), `UI/Layers`, `UI/Focus` (3.2: `push`, `remove`, `top`, `isShown`, `Changed`). `Router:Root(name)` returns a built screen's root. Components: `Button`, `Panel`, `Icon`, `Widgets` (`Pill`, `Bar`, `Chip`, `RarityChip`, `ElementChip`, `MutationChip`, `VariantChip`, `Scroll`, `List`, `Tabs`, `Countdown`, `Amount`), `Toasts`, `MonsterIcon` (`new`, `egg`, `silhouette`, `card`). Design size is 1100 × 560 (landscape phone); every tap target is at least 44 px.
 
 ### Visuals (art swap point)
 - `Visuals/MonsterModel.Build(appearance, opts) -> Model` (contract in the file header).

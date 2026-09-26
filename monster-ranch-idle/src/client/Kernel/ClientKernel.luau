@@ -10,7 +10,7 @@
 	  ctx.Net:On(event, fn)
 	  ctx.Store:Get(path) / ctx.Store:Observe(path, fn) / ctx.Store:WhenReady(fn)
 	  ctx.Router:Open(screenName, params) / Close(name?) / IsOpen(name) / Root(name)
-	  ctx.UI.Hud / ctx.UI.Screens / ctx.UI.Overlay / ctx.UI.Top   (scaled layers)
+	  ctx.UI.Hud / ctx.UI.Screens / ctx.UI.Overlay / ctx.UI.Top / ctx.UI.Feedback   (scaled layers)
 	  ctx.Bus:Publish(topic, ...) / ctx.Bus:Subscribe(topic, fn)  (client-only topics)
 	  ctx:GetController(name)
 	  ctx:Now()                    server-synchronised unix time
@@ -48,7 +48,7 @@ function ClientKernel.new()
 	self._controllers = {}
 	self._order = {}
 	self.Router = Router.new(self)
-	Toasts.init(self.UI.Overlay)
+	Toasts.init(self.UI.Feedback)
 	Audio.Attach(self.Store, self.Config.Sounds)
 	self.Net:On("Kernel.Notify", function(payload)
 		Toasts.show(payload.text, payload.kind)

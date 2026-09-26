@@ -12,7 +12,15 @@
 
 	Public:
 	  Hud:GetTarget(name) -> GuiObject?   tutorial arrow targets: incubator, jar, shop, monster,
-	                                      expeditions, weather, quests (+ any button name)
+	                                      expeditions, weather, quests (+ any button name); the
+	                                      counters coins, gems, food and the level bar (level)
+	  Hud:HoldCounter(kind)               kind = "coins" | "gems" | "food": the pill keeps showing
+	                                      its current number while a reward flies in (Celebrate)
+	  Hud:ReleaseCounter(kind, seconds?)  counts up to the real balance over `seconds`
+	  Hud:PulseCounter(kind)              a bump as a flying icon lands
+	Holds nest, and each one lets go by itself after HOLD_LIMIT seconds.
+	While a Stampede is in its lobby or live, the Stampede card glows gold, pulses and shows a
+	badge until you join (the countdown on it is the time to the start / the end).
 	Client bus: "Hud.Flash" (buttonName | targetName) pulses that button.
 	The centre (weather banner, bottom bar) hides while a modal screen is open.
 	Market.MailCollected (update 1.3) shows as a toast ("Your Rare Cindlet sold for 12K!").
@@ -137,6 +145,8 @@ local function previewIcon(lineId: string, size: number): GuiObject
 	return Icon.new("star", size)
 end
 
+local HOLD_LIMIT = 6 -- seconds a counter may be held before it lets go by itself
+
 local function pill(parent: Instance, kind: string, order: number, onTap: (() -> ())?)
 	-- The pill lays out its children, so the tap target lives on a plain holder around it.
 	local holder = Tiles.frame({ AutomaticSize = Enum.AutomaticSize.XY, Size = UDim2.new(), LayoutOrder = order, Parent = parent })
@@ -144,19 +154,54 @@ local function pill(parent: Instance, kind: string, order: number, onTap: (() ->
 	if onTap then
 		Tiles.tap(holder, onTap)
 	end
-	local state = { shown = 0, pill = p }
+	-- shown: the balance in the Store; display: the number on screen right now.
+	local state = { shown = 0, display = 0, holds = 0, holdToken = 0, stop = nil :: (() -> ())?, pill = p }
+	local function countTo(value: number, seconds: number)
+		if state.stop then
+			state.stop()
+		end
+		state.stop = Anim.countUp(p.Label, state.display, value, seconds, function(n)
+			state.display = n
+			return Format.short(math.floor(n + 0.5))
+		end)
+	end
 	function state.set(value: number)
 		if value == state.shown then
 			return
 		end
 		local from = state.shown
 		state.shown = value
-		Anim.countUp(p.Label, from, value, 0.6, function(n)
-			return Format.short(math.floor(n + 0.5))
-		end)
+		if state.holds > 0 then
+			return -- a reward is still flying in; release() shows the new total
+		end
+		countTo(value, 0.6)
 		if value > from then
 			Anim.pulse(p.Root, 0.06)
 		end
+	end
+	function state.release(seconds: number?)
+		if state.holds <= 0 then
+			return
+		end
+		state.holds -= 1
+		if state.holds == 0 then
+			countTo(state.shown, seconds or 0.6)
+		end
+	end
+	function state.hold()
+		state.holds += 1
+		state.holdToken += 1
+		local token = state.holdToken
+		if state.stop then
+			state.stop() -- freeze on the number the player is looking at
+			state.stop = nil
+		end
+		task.delay(HOLD_LIMIT, function()
+			if state.holdToken == token and state.holds > 0 then
+				state.holds = 1
+				state.release(0.6)
+			end
+		end)
 	end
 	return state
 end
@@ -166,7 +211,7 @@ end
 local pills = {}
 local level = { label = nil, pct = nil, bar = nil }
 local weather = { frame = nil, text = nil, time = nil }
-local stampede = { title = nil, time = nil, iconHolder = nil, bossId = nil }
+local stampede = { title = nil, time = nil, iconHolder = nil, bossId = nil, card = nil, stroke = nil, live = false, pulseAt = 0 }
 local collect = { button = nil, last = -1 }
 local growReady = 0
 
@@ -294,6 +339,21 @@ local function refreshStampede(now: number)
 	end
 	stampede.title.Text = title
 	stampede.time.Text = if target then Format.clock(math.max(0, target - now)) else ""
+	-- Lobby or live: the card glows and pulses (with a badge until you join) so the fight is
+	-- visible from the ranch; one tap opens the Boss screen.
+	local live = (boss.state == "active" or boss.state == "lobby") and not isLocked(buttons.Stampede)
+	local joined = StoreKit.tbl(ctx.Store, "session.Boss").joined == true
+	if live ~= stampede.live then
+		stampede.live = live
+		stampede.stroke.Color = if live then C.Gold else C.White
+		stampede.stroke.Thickness = if live then 4 else 2.5
+		stampede.card.BackgroundColor3 = if live then Color3.fromHex("#7A2A1F") else C.Dark
+	end
+	buttons.Stampede.badge:Set(if live and not joined then "!" else nil)
+	if live and not joined and now - stampede.pulseAt >= 2 then
+		stampede.pulseAt = now
+		Anim.pulse(stampede.card, 0.1)
+	end
 	local def = bossRotation(boss.bossId)
 	if def and def.id ~= stampede.bossId then
 		stampede.bossId = def.id
@@ -370,6 +430,7 @@ local function build()
 	end)
 	targets.coins = pills.coins.pill.Root
 	targets.gems = pills.gems.pill.Root
+	targets.food = pills.food.pill.Root
 
 	-- Ranch Level (top-right)
 	local lvFrame = Tiles.frame({
@@ -511,6 +572,8 @@ local function build()
 		LayoutOrder = 2,
 		Parent = right,
 	}, { Create.Corner(Theme.Radius.Button), Create.Stroke(2.5, C.White, 0.1) })
+	stampede.card = card
+	stampede.stroke = card:FindFirstChildOfClass("UIStroke")
 	stampede.iconHolder = Tiles.frame({ Position = UDim2.fromOffset(6, 9), Size = UDim2.fromOffset(40, 40), Parent = card })
 	stampede.title = Create.Text({
 		Text = "STAMPEDE",
@@ -599,13 +662,23 @@ local function build()
 		LayoutOrder = 2,
 		Parent = bottom,
 		OnClick = function()
+			-- Hold the coin counter so it counts up as the coins land, not when the reply does.
+			local kit = ctx:GetController("Celebrate")
+			local hold = kit and kit:Hold({ "coins" })
 			local ok, res = StoreKit.request(ctx, "Ranch.CollectAll")
-			if ok then
-				local coins = type(res) == "table" and tonumber(res.coins) or 0
-				if coins > 0 then
-					ctx:Sound("CoinCollect")
-					ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+			local coins = if ok and type(res) == "table" then tonumber(res.coins) or 0 else 0
+			if coins > 0 then
+				ctx:Sound("CoinCollect")
+				if kit then
+					kit:Reward({ { kind = "coins", amount = coins } }, { from = collect.button.Root, hold = hold })
 				else
+					ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+				end
+			elseif hold then
+				hold:Release()
+			end
+			if ok then
+				if coins <= 0 then
 					ctx:Toast("The jars are empty. Come back soon!", "info")
 				end
 				collect.last = -1
@@ -704,10 +777,36 @@ function Hud:Flash(name: string)
 	flash(name)
 end
 
+function Hud:HoldCounter(kind: string)
+	local state = pills[kind]
+	if state then
+		state.hold()
+	end
+end
+
+function Hud:ReleaseCounter(kind: string, seconds: number?)
+	local state = pills[kind]
+	if state then
+		state.release(seconds)
+	end
+end
+
+function Hud:PulseCounter(kind: string)
+	local state = pills[kind]
+	if state then
+		Anim.pulse(state.pill.Root, 0.12)
+	end
+end
+
 function Hud.Init(context)
 	ctx = context
 	build()
 	ctx.Store:Observe("profile.Currency", refreshCurrency)
+	ctx.Store:Observe("session.Boss", function()
+		if ctx.Store.Ready then
+			refreshStampede(ctx:Now())
+		end
+	end)
 	ctx.Store:Observe("profile.Progression", refreshLevel)
 	ctx.Store:Observe("global.Weather", refreshWeather)
 	ctx.Store:Observe("profile.Monsters.list", refreshMonsters)

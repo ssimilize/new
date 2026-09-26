@@ -186,6 +186,10 @@ return {
 			local ok = Util.request(ctx, "Monetization.RefreshPasses")
 			if ok then
 				ctx:Toast("Pass unlocked. Thank you!", "success")
+				local kit = ctx:GetController("Celebrate")
+				if kit then
+					kit:Play("big")
+				end
 			end
 		end))
 		lifetime.add(panel.Root.Destroying:Connect(function()

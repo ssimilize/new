@@ -1,9 +1,12 @@
 --[[
 	Notifications (C2): popups for server events.
 
-	  Rewards.Granted      stacked reward card above the bottom bar (ctx.UI.Overlay), auto-dismiss
+	  Rewards.Granted      reward card in the one feedback queue (Toasts.push, on ctx.UI.Feedback,
+	                       shared with toasts so they never overlap); its coins, gems and items fly
+	                       from the card into the HUD (Celebrate:Reward; purchases are at least big)
 	  Weather.Mutated      toast with a mutation chip in the same stack
-	  Progression.LevelUp  gold banner with the new unlocks (Config.Unlocks.Names) in ctx.UI.Top
+	  Progression.LevelUp  gold banner with the new unlocks (Config.Unlocks.Names) in ctx.UI.Top,
+	                       and a shockwave from the HUD level bar (every 10th level is big)
 	  Monsters.Evolved     celebration popup (from → to MonsterIcon) in ctx.UI.Top, queued
 	  session.WelcomeBack  opens the WelcomeBack screen each time `pending` turns true
 
@@ -30,49 +33,23 @@ local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local StoreKit = require(UI.Components.StoreKit)
 local Tiles = require(UI.Components.Tiles)
+local Toasts = require(UI.Components.Toasts)
 
 local New = Create.New
 local C = Theme.Colors
 
 local Notifications = {
 	Name = "Notifications",
-	Dependencies = { "Hud" },
+	Dependencies = { "Hud", "Celebrate" },
 }
 
 local ctx
-local feed: Frame -- reward cards + mutation toasts (bottom-centre, stacks upward)
-local MAX_FEED = 3
-local feedOrder = 0
 
--- Feed (reward cards, mutation toasts) ----------------------------------------------
+-- Feed (reward cards, mutation toasts): the shared feedback queue in UI/Components/Toasts. ---
 
 local function pushFeed(card: GuiObject, seconds: number)
-	local items = {}
-	for _, child in feed:GetChildren() do
-		if child:IsA("GuiObject") then
-			table.insert(items, child)
-		end
-	end
-	table.sort(items, function(a, b)
-		return a.LayoutOrder < b.LayoutOrder
-	end)
-	while #items >= MAX_FEED do
-		table.remove(items, 1):Destroy()
-	end
-	feedOrder += 1
-	card.LayoutOrder = feedOrder
-	card.Parent = feed
-	Anim.popIn(card, 0.2)
-	Tiles.tap(card, function()
-		card:Destroy()
-	end, 50)
-	task.delay(seconds, function()
-		if card.Parent then
-			Anim.tween(card, { BackgroundTransparency = 1 }, 0.2)
-			task.wait(0.2)
-			card:Destroy()
-		end
-	end)
+	local dismiss = Toasts.push(card, seconds)
+	Tiles.tap(card, dismiss, 50)
 end
 
 -- Returns the card (tap target, no layout) and its content frame (vertical list).
@@ -192,6 +169,17 @@ local function onRewards(payload)
 		ctx:Sound("CoinCollect")
 	end
 	pushFeed(card, 3.5)
+	local kit = ctx:GetController("Celebrate")
+	if kit then
+		local source = tostring(payload.source or "")
+		-- Wait a frame so the card has its place in the stack before things fly out of it.
+		task.defer(function()
+			kit:Reward(payload.items, {
+				from = card,
+				minSize = if string.sub(source, 1, 9) == "purchase:" then "big" else nil,
+			})
+		end)
+	end
 end
 
 local function onMutated(payload)
@@ -302,7 +290,13 @@ local function onLevelUp(payload)
 	end
 	table.insert(levelQueue, payload)
 	showNextLevel()
+	local kit = ctx:GetController("Celebrate")
 	local hud = ctx:GetController("Hud")
+	if kit and hud then
+		local level = tonumber(payload.level) or 0
+		kit:Shockwave(hud:GetTarget("level"), C.Blue)
+		kit:Play(if level > 0 and level % 10 == 0 then "big" else "medium")
+	end
 	if hud and #StoreKit.asTable(payload.unlocks) > 0 then
 		hud:Flash("Ranch")
 	end
@@ -470,15 +464,6 @@ end
 
 function Notifications.Init(context)
 	ctx = context
-	feed = New("Frame", {
-		Name = "RewardFeed",
-		BackgroundTransparency = 1,
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -92),
-		Size = UDim2.fromOffset(640, 260),
-		Parent = ctx.UI.Overlay,
-	}, { Create.List("y", 8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Bottom) })
-
 	ctx.Net:On("Rewards.Granted", onRewards)
 	ctx.Net:On("Weather.Mutated", onMutated)
 	ctx.Net:On("Progression.LevelUp", onLevelUp)

@@ -361,7 +361,8 @@ function Ranch.Build(ctx)
 			Size = UDim2.new(1, -250, 0, 24),
 			Parent = jarCard,
 		})
-		local collectButton = Button.new({
+		local collectButton
+		collectButton = Button.new({
 			Text = "Collect",
 			Color = C.Green,
 			Icon = Icon.new("coin", 24),
@@ -370,11 +371,20 @@ function Ranch.Build(ctx)
 			Position = UDim2.new(1, -12, 0, 8),
 			Parent = jarCard,
 			OnClick = function()
+				local kit = ctx:GetController("Celebrate")
+				local hold = kit and kit:Hold({ "coins" })
 				local ok, res = StoreKit.request(ctx, "Ranch.Collect", { pen = penIndex })
+				local coins = if ok and type(res) == "table" then tonumber(res.coins) or 0 else 0
 				if ok then
-					local coins = type(res) == "table" and tonumber(res.coins) or 0
 					ctx:Sound("CoinCollect")
-					ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+					if kit and coins > 0 then
+						kit:Reward({ { kind = "coins", amount = coins } }, { from = collectButton and collectButton.Root, hold = hold })
+					else
+						ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+					end
+				end
+				if hold and coins <= 0 then
+					hold:Release()
 				end
 			end,
 		})

@@ -1813,4 +1813,9 @@ return {
 	["Not on sale"] = "Não está à venda",
 	["Pass on sale in {1}"] = "Passe à venda em {1}",
 	["Pass not on sale"] = "Passe não está à venda",
+	-- Glow-up: the Stampede call (Controllers/Stampede).
+	["The Stampede is coming!"] = "A Debandada está chegando!",
+	["The Stampede is here!"] = "A Debandada chegou!",
+	["The Stampede starts in {1}!"] = "A Debandada começa em {1}!",
+	["{1} · {2} left"] = "{1} · faltam {2}",
 }

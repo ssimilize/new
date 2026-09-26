@@ -36,6 +36,9 @@ return {
 		"Landmarks",
 		-- Audio (client/Audio): music, ambience beds, monster chatter; Sound Check in Studio
 		"Soundscape",
+		-- Glow-up: celebrations that travel, the moment queue, the Stampede call
+		"Celebrate",
+		"Stampede",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

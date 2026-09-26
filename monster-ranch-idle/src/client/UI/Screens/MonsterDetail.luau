@@ -521,7 +521,13 @@ function MonsterDetail.Build(ctx)
 						function()
 							local ok, res = StoreKit.request(ctx, "Monsters.StarUp", { id = id, fodder = ids[1] })
 							if ok then
-								ctx:Sound("StarUp")
+								local kit = ctx:GetController("Celebrate")
+								if kit then
+									kit:Slam(starsLabel, C.Orange) -- plays StarUp
+									kit:Play("medium")
+								else
+									ctx:Sound("StarUp")
+								end
 								ctx:Toast(
 									string.format("%s is now ★%d!", name, type(res) == "table" and tonumber(res.stars) or 0),
 									"success"
@@ -821,6 +827,12 @@ function MonsterDetail.Build(ctx)
 	local function levelUp(times: number)
 		local id = currentId
 		if StoreKit.request(ctx, "Monsters.LevelUp", { id = id, times = times }) then
+			-- A shockwave from the level bar now; the in-world stars wait until this screen closes.
+			local kit = ctx:GetController("Celebrate")
+			if kit then
+				kit:Shockwave(levelBar.Root, C.Blue)
+				ctx:Sound("LevelUp")
+			end
 			ctx.Bus:Publish("Vfx.Burst", "monsterLevelUp", { id = id }) -- World: stars at the pen monster
 		end
 	end

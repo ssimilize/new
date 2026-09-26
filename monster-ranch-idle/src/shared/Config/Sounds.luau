@@ -107,4 +107,19 @@ return {
 	VoiceBug = { id = "", volume = 0.55, cooldown = 0.1, maxConcurrent = 3 },
 	VoiceGolem = { id = "", volume = 0.6, cooldown = 0.1, maxConcurrent = 3 },
 	VoiceSprite = { id = "", volume = 0.5, cooldown = 0.1, maxConcurrent = 3 },
+
+	-- Celebrations and the Stampede call (Controllers/Celebrate, Controllers/Stampede) --------
+	-- CoinTick1..5 are the coin tick at rising pitch: a stream of landing coins climbs them
+	-- (Logic/Celebration.TickKey). Keep their ids equal to CoinTick's.
+	CoinTick1 = { id = "", volume = 0.4, pitch = 1, cooldown = 0.03, maxConcurrent = 4 },
+	CoinTick2 = { id = "", volume = 0.4, pitch = 1.06, cooldown = 0.03, maxConcurrent = 4 },
+	CoinTick3 = { id = "", volume = 0.4, pitch = 1.12, cooldown = 0.03, maxConcurrent = 4 },
+	CoinTick4 = { id = "", volume = 0.4, pitch = 1.19, cooldown = 0.03, maxConcurrent = 4 },
+	CoinTick5 = { id = "", volume = 0.4, pitch = 1.26, cooldown = 0.03, maxConcurrent = 4 },
+	GemTick = { id = "", volume = 0.45, pitch = { 0.98, 1.06 }, cooldown = 0.05, maxConcurrent = 3 },
+	ItemPop = { id = "", volume = 0.5, pitch = { 0.96, 1.04 }, cooldown = 0.1 },
+	Whoosh = { id = "", volume = 0.4, pitch = { 0.95, 1.08 }, cooldown = 0.15 },
+	CelebrateBig = { id = "", volume = 0.65, duck = 0.5, cooldown = 0.5 },
+	CelebrateHuge = { id = "", volume = 0.75, duck = 0.7, cooldown = 1 },
+	StampedeSoon = { id = "", volume = 0.6, duck = 0.4, cooldown = 5 },
 }

@@ -1754,6 +1754,28 @@ define("UserInputService", {
 	},
 })
 
+-- HapticService: a connected pad vibrates; the latest motor values are kept in
+-- world.input.motors[padName][motorName] so a test can read what the game asked for.
+define("HapticService", {
+	methods = {
+		IsVibrationSupported = function(self, pad)
+			return table.find(recOf(self).world.input.gamepads, pad) ~= nil
+		end,
+		IsMotorSupported = function(self, pad, _motor)
+			return table.find(recOf(self).world.input.gamepads, pad) ~= nil
+		end,
+		SetMotor = function(self, pad, motor, value: number)
+			if luneTypeof(pad) ~= "EnumItem" or luneTypeof(motor) ~= "EnumItem" or type(value) ~= "number" then
+				error("SetMotor(inputType: Enum.UserInputType, motor: Enum.VibrationMotor, value: number)", 2)
+			end
+			local input = recOf(self).world.input
+			input.motors = input.motors or {}
+			input.motors[pad.Name] = input.motors[pad.Name] or {}
+			input.motors[pad.Name][motor.Name] = value
+		end,
+	},
+})
+
 -- ContextActionService: bindings are recorded in world.input.actions; ClientHarness:Press
 -- routes a key through them (highest priority first, newest first on ties) before the GUI
 -- and UserInputService see it, the order the engine uses.

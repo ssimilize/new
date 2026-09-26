@@ -24,6 +24,10 @@
 	Boss Brawler is weighted by each squad member's share of the squad's power.
 	Max HP = Σ squad power × Duration × HpPerSquadPower × 0.8.
 
+	Announcements (to every player on the server, joined or not):
+	  Boss.Starting { bossId, startsAt }          when the lobby opens (LobbySeconds before the start)
+	  Boss.Started  { bossId, startsAt, endsAt }  the horn, when the fight goes live
+
 	End: everyone who joined and is still on the server gets the participation chest (players
 	below minDamageShare only if they cheered). The top 3 by damage get a Stampede Egg; others
 	with ≥ shareForEggChance of the damage have an eggChance roll. Fires Boss.Result per
@@ -126,6 +130,7 @@ local function openLobby()
 	for _, player in ctx:Players() do
 		setSession(player, false, 0, 0)
 	end
+	ctx.Net:FireAll("Boss.Starting", { bossId = G.bossId, startsAt = G.startsAt })
 end
 
 local function hpShare(power: number, seconds: number): number
@@ -142,6 +147,7 @@ local function activate()
 	G.maxHp = math.floor(hpShare(total, Cfg.Duration))
 	G.hp = G.maxHp
 	ctx:DirtyGlobal()
+	ctx.Net:FireAll("Boss.Started", { bossId = G.bossId, startsAt = G.startsAt, endsAt = G.endsAt })
 end
 
 -- Damage ------------------------------------------------------------------------------------
