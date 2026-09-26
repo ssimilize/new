@@ -33,7 +33,8 @@
 	  Ranch:RegisterJarBonus(key, fn(player) -> seconds)
 	  Ranch:RegisterRateMultiplier(key, fn(player) -> factor)  -- e.g. Rebirth Stars (×1.5, ×2, …)
 	  Ranch:ResetForRebirth(player, theme?)                   -- one fresh pen, tiers 1, decor back to storage
-	  Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id } } }
+	  Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id }, capacity, jarTier } }
+	  Ranch:PublicGarden(player) -> { tier, plots = { { flavor, readyAt } } }?   -- glow-up R
 	  Ranch:Refresh(player)                                   -- recompute after an input changed
 	  Ranch:HoldAutoCollect(player, hold)                     -- WelcomeBack keeps jars for its claim
 
@@ -481,9 +482,28 @@ function Ranch:PublicPens(player)
 		return out
 	end
 	for _, pen in s.pens do
-		table.insert(out, { theme = pen.theme, decor = table.clone(pen.decor), monsters = table.clone(pen.monsters) })
+		table.insert(out, {
+			theme = pen.theme,
+			decor = table.clone(pen.decor),
+			monsters = table.clone(pen.monsters),
+			capacity = pen.capacity, -- glow-up R: pens show their upgrades to everyone
+			jarTier = pen.jarTier,
+		})
 	end
 	return out
+end
+
+-- Glow-up R: the Feed Garden as other players see it (drawn by the Pens controller).
+function Ranch:PublicGarden(player)
+	local s = section(player)
+	if not s or type(s.garden) ~= "table" then
+		return nil
+	end
+	local plots = {}
+	for i, plot in s.garden.plots or {} do
+		plots[i] = { flavor = plot.flavor or false, readyAt = plot.readyAt or 0 }
+	end
+	return { tier = s.garden.tier or 1, plots = plots }
 end
 
 function Ranch:HoldAutoCollect(player, hold: boolean)
@@ -662,6 +682,7 @@ local function upgrade(player, target: string, penIndex: number?): number
 			garden.plots[i] = { flavor = false, readyAt = 0 }
 		end
 		ctx:Dirty(player, "garden")
+		ctx.Bus:Publish("PlotChanged", player, {}) -- glow-up R: the garden is drawn on the plot
 		return garden.tier
 	end
 	ctx:Fail("Unknown upgrade")
@@ -814,6 +835,7 @@ function Ranch.Init(context)
 		plot.flavor = payload.flavor
 		plot.readyAt = ctx:Now() + Economy.Garden.growSeconds
 		ctx:Dirty(player, "garden")
+		ctx.Bus:Publish("PlotChanged", player, {}) -- glow-up R: the garden is drawn on the plot
 		return { readyAt = plot.readyAt }
 	end)
 
@@ -839,6 +861,7 @@ function Ranch.Init(context)
 			end
 		end
 		ctx:Dirty(player, "garden")
+		ctx.Bus:Publish("PlotChanged", player, {}) -- glow-up R: the garden is drawn on the plot
 		return { food = food }
 	end)
 

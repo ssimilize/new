@@ -3,9 +3,10 @@
 
 	Global state (global.Plots): always 6 entries (Config.World plots); an empty plot has userId = 0.
 	  { userId, name, level, likes,
-	    pens = { { theme, decor = { decorId }, monsters = { { id, appearance } } } },
+	    pens = { { theme, decor = { decorId }, monsters = { { id, appearance } }, capacity, jarTier } },
 	    statues = { Appearance },
-	    incubators = { { type, endsAt } } }
+	    incubators = { { type, endsAt } },
+	    garden = { tier, plots = { { flavor, readyAt } } } | false }   -- glow-up R (Ranch:PublicGarden)
 
 	A player gets the lowest free plot when they become ready (bus PlayerReady) and frees it when
 	they leave. Plot contents are rebuilt from other systems' public APIs:
@@ -59,7 +60,7 @@ local VISIBLE_FIELDS = {
 }
 
 local function emptyPlot()
-	return { userId = 0, name = "", level = 0, likes = 0, pens = {}, statues = {}, incubators = {} }
+	return { userId = 0, name = "", level = 0, likes = 0, pens = {}, statues = {}, incubators = {}, garden = false }
 end
 
 -- Calls an optional system's method; returns nil if the system is absent or the call fails.
@@ -90,6 +91,9 @@ local function buildPens(player)
 			theme = pen.theme or false,
 			decor = table.clone(pen.decor or {}),
 			monsters = monsters,
+			-- Glow-up R: upgrades are drawn on the pen (Controllers/Pens).
+			capacity = tonumber(pen.capacity) or Config.Economy.Pens.startCapacity,
+			jarTier = tonumber(pen.jarTier) or 1,
 		})
 	end
 	return pens
@@ -115,6 +119,7 @@ local function buildPlot(player)
 		pens = buildPens(player),
 		statues = statues,
 		incubators = incubators,
+		garden = optional("Ranch", "PublicGarden", player) or false, -- glow-up R
 	}
 end
 

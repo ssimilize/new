@@ -261,6 +261,13 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Riding** gains `Riding:MountOf(player) -> monsterId?`.
 - **Client:** controller `Companions` (follow, LOD, HUD badge; `PoseSubjects(position, radius, found)` feeds `World:OwnMonstersNear`, so photo mode's Pose reaches companions; `StateOf(userId, index)`, `ModelOf`, `Count` for tests), controller `Mounts` (poses every rider's welded `Mount`: walk / idle / hop from the root part's measured speed; `StateOf(userId)`, `SpeedOf(userId)`), `Visuals/Gait` (`new(model)`, `:Step(state, dt, speed) -> bob`, `:Play("trick"|"happy") -> boolean`, `:State()`: authored clips for a model its caller moves, walk clip rate from `Logic/Companions.ClipRate`), `UI/Screens/Parts/WalkToggle` (MonsterDetail's "Walk with me" / "Stop walking"; a full list drops its first entry).
 
+### Glow-up R: Pens that grow
+- **Data / rules:** `Config/Pens` (fence tiers by `jarTier`, `Upgrades` by `capacity`, `Themes[penThemeId]` = floor / rail materials + signature props, `Habitats[elementId]`, `Props[id]` = pieces + `spot` + `mesh`/`texture`/`meshSize`, `Garden`, `Budget`), `Logic/Pens` (`Fence`, `Upgrades`, `Theme`, `Dominant`, `Plan`, `Pieces`, `PartCount`, `CropStage`, `GardenKey`), unit-tested in `Pens.spec`.
+- **Replication:** `global.Plots[i].pens[p]` gains `capacity`, `jarTier`; `global.Plots[i].garden` (`Ranch:PublicGarden`). Ranch publishes `PlotChanged` on `Ranch.Plant`, `Ranch.Harvest` and the garden upgrade (rain growth does not; the owner reads `profile.Ranch.garden`).
+- **Client:** controller `Pens` (depends on World; handles Plots updates one deferred step after World paints theme colours) draws through `Visuals/PenDress`. It restyles each owned pen's `Floor` / `Rail*` / `Post*` in place and builds `Plot<i>.Pens.Pen<p>.Dress` (Model; attrs `FenceTier`, `Theme`, `Habitat`) and `Plot<i>.Garden`. All parts anchored, CanCollide / CanQuery / CanTouch / CastShadow off. Locked pens get their materials back and lose the Dress.
+- **Spots for monster behaviour (contract):** under `Pen<p>.Dress`, a prop's anchor part carries `PropId`, `PenSpot` = `"food"` (trough) | `"water"` (pond, tide pool) | `"shelter"` (hut, shade tree, grove, shrooms, shards) | `"bed"` (hay nest, lava rocks, storm pad, boulders, sun shrine), and on the habitat `Habitat = elementId`. Its Position is the spot centre on the floor; every spot stays inside the pen floor. Garden beds: `GardenBed`, `CropStage` 0..4, `Flavor`; ready beds have a `Ready` glow part.
+- `Pens.Stats() -> { builds, gardenBuilds, parts }` for tests.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 
@@ -439,9 +446,10 @@ session.Social = { friendBoost, friendsHere }
 
 global.Plots = { [1..6] = {                              -- always 6 entries; empty plot has userId = 0
   userId, name, level, likes,
-  pens = { { theme, decor = { decorId }, monsters = { { id, appearance } } } },
+  pens = { { theme, decor = { decorId }, monsters = { { id, appearance } }, capacity, jarTier } },   -- capacity, jarTier: glow-up R
   statues = { Appearance },
   incubators = { { type, endsAt } },
+  garden = { tier, plots = { { flavor = string|false, readyAt } } } | false,   -- glow-up R; false on an empty plot
 } }
 
 session.Trade = {
@@ -496,7 +504,7 @@ BattleReplay = {
 `Logic/Breeding.Roll(rng, a, b) -> MonsterGen spec` makes the actual roll.
 
 ### Extra public methods (added for the client-facing Plots view)
-- `Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id } } }`
+- `Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id }, capacity, jarTier } }` and (glow-up R) `Ranch:PublicGarden(player) -> { tier, plots = { { flavor, readyAt } } }?`
 - `Eggs:PublicSlots(player) -> { { type, endsAt } }` (only filled slots)
 - `Social:GetLikes(player) -> number`
 - `Monsters:CodexCount(player) -> number` and `HallOfFame:RetiredCount(player) -> number` (for Leaderboards)
