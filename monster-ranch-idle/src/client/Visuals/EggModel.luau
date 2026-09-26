@@ -35,6 +35,7 @@ local EggModel = {}
 
 local HEIGHT = 1.3 -- the shell's height per unit of width (the mesh is 1 x 1.3 x 1)
 local CRACK_SCALE = 1.03 -- the crack overlay sits just outside the shell (tools/blender/eggs.py CRACK_SCALE)
+local OVERLAY_TRANSPARENCY = 0.02 -- see overlay(): lets an overlay texture's transparent texels show through
 local PAINT_SCALE = 1.01
 local CRACK_COLOR = Color3.fromHex("#2B2320")
 local READY_COLOR = Color3.fromHex("#FFD98A")
@@ -189,6 +190,9 @@ local function overlay(root: BasePart, shape: string, name: string, textureId: s
 	part.Name = name
 	part.Size = root.Size * scale
 	part.TextureID = textureId
+	-- A fully opaque MeshPart shows its Color where the texture is transparent (checked in Studio,
+	-- 2026-09-26: a white shell over the egg); a hair of Transparency makes those texels see-through.
+	part.Transparency = OVERLAY_TRANSPARENCY
 	part.CastShadow = false
 	quiet(part)
 	part.CFrame = root.CFrame
