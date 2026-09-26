@@ -7,6 +7,10 @@
 		                                                   mutations, shiny / rainbow, epic+ ground glow;
 		                                                   returns how many emitters it made
 		Vfx.SetOwned(model, owned)                         false = on another player's plot (World)
+		Vfx.AttachEgg(model, eggType, ready?) -> number    the egg's own sparkle (Config.Vfx.Eggs) and,
+		                                                   while ready to hatch, Config.Vfx.EggReady;
+		                                                   sized by the egg's height (EggRefHeight).
+		                                                   EggModel calls it (Build, SetReady)
 		Vfx.AttachLandmark(instance, id) -> Folder?        a building Model with a Body (a hub building,
 		                                                   the Sky Gate; placed in its visible box) or a
 		                                                   BasePart; id is a Config.Vfx.Landmarks key
@@ -58,7 +62,7 @@ local Vfx = {}
 local POINT = Vector3.new(0.2, 0.2, 0.2)
 local HOVERING = { moth = true, sprite = true }
 local KIND_OFF_ON_OTHER_PLOTS = { aura = true, rarity = true }
-local KIND_HALVED = { mutation = true, variant = true, landmark = true }
+local KIND_HALVED = { mutation = true, variant = true, landmark = true, egg = true }
 
 type Rec = { emitter: ParticleEmitter, rate: number, kind: string, spec: any }
 type Entry = { recs: { Rec }, owned: boolean, made: { Instance }, connection: RBXScriptConnection? }
@@ -330,6 +334,76 @@ function Vfx.SetOwned(model: Instance, owned: boolean)
 		entry.owned = owned
 		apply(entry)
 	end
+end
+
+-- ─── Eggs ───────────────────────────────────────────────────────────────────────────
+
+-- Anchors as for monsters, measured on the egg: "feet" its bottom, "core" its centre, "head" its
+-- top, "body" an invisible part the size of the shell (sparkles on its surface).
+function Vfx.AttachEgg(model: Model, eggType: string, ready: boolean?): number
+	if typeof(model) ~= "Instance" or type(eggType) ~= "string" then
+		return 0
+	end
+	Vfx.Clear(model)
+	local root = model.PrimaryPart or model:FindFirstChild("Root")
+	if not (root and root:IsA("BasePart")) then
+		return 0
+	end
+	local height = root.Size.Y
+	local k = math.clamp(height / (Presets.EggRefHeight or 2.6), 0.4, 4)
+	local entry: Entry = { recs = {}, owned = true, made = {} }
+	local anchors: { [string]: Instance } = {}
+
+	local function anchorFor(spec): Instance
+		local at = spec.at or "core"
+		local found = anchors[at]
+		if found then
+			return found
+		end
+		local made: Instance
+		if at == "body" then
+			local volume = invisiblePart("VfxVolume", root.Size, root.CFrame, false)
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = root
+			weld.Part1 = volume
+			weld.Parent = volume
+			volume.Parent = model
+			made = volume
+		else
+			local attachment = Instance.new("Attachment")
+			attachment.Name = "VfxEgg" .. string.upper(string.sub(at, 1, 1)) .. string.sub(at, 2)
+			attachment.Position = Vector3.new(0, if at == "feet" then -height / 2 elseif at == "head" then height / 2 else 0, 0)
+			attachment.Parent = root
+			made = attachment
+		end
+		table.insert(entry.made, made)
+		anchors[at] = made
+		return made
+	end
+
+	local function add(specs)
+		for _, spec in specs or {} do
+			local emitter = build(spec, k)
+			if emitter then
+				emitter.Parent = anchorFor(spec)
+				table.insert(entry.recs, { emitter = emitter, rate = spec.rate or 0, kind = "egg", spec = spec })
+			end
+		end
+	end
+
+	add(Presets.Eggs and Presets.Eggs[eggType])
+	if ready then
+		add(Presets.EggReady)
+	end
+	if #entry.recs == 0 then
+		for _, inst in entry.made do
+			inst:Destroy()
+		end
+		return 0
+	end
+	registry[model] = entry
+	apply(entry)
+	return #entry.recs
 end
 
 -- ─── Landmarks ───────────────────────────────────────────────────────────────────────

@@ -27,3 +27,8 @@ art/vfx/patch.json
 
 # Python bytecode from the art tools.
 __pycache__/
+
+# Eggs (tools/blender/eggs.py): the upload-ready meshes and images, the renders and icons are re-made
+# by the tool; only the small contact sheet in art/eggs/preview is kept.
+art/eggs/*
+!art/eggs/preview/

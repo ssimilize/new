@@ -718,7 +718,7 @@ local function setReady(view, egg)
 	if not root then
 		return
 	end
-	New("PointLight", { Color = READY_COLOR, Brightness = 3, Range = 9, Parent = root })
+	EggModel.SetReady(egg.model, true) -- a warm glow and rising twinkles
 	if view.userId == player.UserId then
 		local gui = New("BillboardGui", {
 			Name = "Ready",
