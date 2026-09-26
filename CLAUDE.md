@@ -62,6 +62,5 @@ lune run tests
 ## Where things stand
 
 - Merged on `main`: launch through 3.0 (Year Two), 3.0.1 (go-live, Frostfall returns), 3.1 (Club Wars + Lunar Lanterns) and 3.2 (Frostbite Glacier + Level 70: Ranch Level 70, raid 3, controller support, Spanish and Portuguese), with the 3D monsters, buildings, scenery and particle effects built alongside it (pull request #14). 3.2 must be published before Season 8 starts (Sat 4 Mar 2028).
-- `update-3.2-frostbite-glacier` carries later commits that are not on `main` yet (the pet-genetics prototype); they need their own pull request.
 - Next on the roadmap: **3.3 · Spring Bloom + Design Weeks** (Sat 1 Apr 2028): themed Workshop weeks with community votes, player-designed pen themes, and Spring Bloom's return with a new egg-hunt layout.
 - Manual go-live steps (publishing both places, live checks, moderators): `monster-ranch-idle/docs/GO_LIVE.md`.
