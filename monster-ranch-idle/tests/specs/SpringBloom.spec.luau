@@ -64,6 +64,7 @@ return function(t)
 				expect(Config.Species.ById[spec.line].event).toBe("springbloom")
 			end
 			expect(lines.budling and lines.pollenpuff and lines.tulipup).toBe(true)
+			expect(lines.podling).toBe(true) -- update 3.4
 		end)
 
 		it("hatches only the celestial lines from the Celestial Egg", function()
@@ -75,12 +76,13 @@ return function(t)
 				lines[spec.line] = true
 				expect(spec.rarity >= 3).toBe(true)
 			end
-			expect(lines.cometkit and lines.moonmoth and lines.orbiton).toBe(true)
+			-- The three 1.4 lines and Twinklet from update 3.4.
+			expect(lines.cometkit and lines.moonmoth and lines.orbiton and lines.twinklet).toBe(true)
 			local n = 0
 			for _ in lines do
 				n += 1
 			end
-			expect(n).toBe(3)
+			expect(n).toBe(4)
 		end)
 
 		it("sells the Celestial Egg only to ranches with a Rebirth Star", function()

@@ -2253,6 +2253,251 @@
         "sky"
       ],
       "weight": 2.4
+    },
+    {
+      "added": "3.4",
+      "archetype": "sprite",
+      "elements": [
+        "ember",
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "pepperpip",
+          "name": "Pepperpip",
+          "stage": 1
+        },
+        {
+          "id": "chiliflit",
+          "name": "Chiliflit",
+          "stage": 2
+        },
+        {
+          "id": "scorchpepper",
+          "name": "Scorchpepper",
+          "stage": 3
+        }
+      ],
+      "id": "pepperpip",
+      "order": 72,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 0.6
+    },
+    {
+      "added": "3.4",
+      "archetype": "slug",
+      "elements": [
+        "tide",
+        "spark"
+      ],
+      "forms": [
+        {
+          "id": "sparkeel",
+          "name": "Sparkeel",
+          "stage": 1
+        },
+        {
+          "id": "ampereel",
+          "name": "Ampereel",
+          "stage": 2
+        },
+        {
+          "id": "thundereel",
+          "name": "Thundereel",
+          "stage": 3
+        }
+      ],
+      "id": "sparkeel",
+      "order": 73,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 3
+    },
+    {
+      "added": "3.4",
+      "archetype": "bunny",
+      "elements": [
+        "stone",
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "cobbun",
+          "name": "Cobbun",
+          "stage": 1
+        },
+        {
+          "id": "cairnhop",
+          "name": "Cairnhop",
+          "stage": 2
+        },
+        {
+          "id": "menhare",
+          "name": "Menhare",
+          "stage": 3
+        }
+      ],
+      "id": "cobbun",
+      "order": 74,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 5
+    },
+    {
+      "added": "3.4",
+      "archetype": "blob",
+      "elements": [
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "podling",
+          "name": "Podling",
+          "stage": 1
+        },
+        {
+          "id": "sprigpod",
+          "name": "Sprigpod",
+          "stage": 2
+        },
+        {
+          "id": "bloompod",
+          "name": "Bloompod",
+          "stage": 3
+        }
+      ],
+      "id": "podling",
+      "order": 75,
+      "pools": [
+        "springbloom"
+      ],
+      "weight": 3.5
+    },
+    {
+      "added": "3.4",
+      "archetype": "slug",
+      "elements": [
+        "stone",
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "castlet",
+          "name": "Castlet",
+          "stage": 1
+        },
+        {
+          "id": "turretsnail",
+          "name": "Turretsnail",
+          "stage": 2
+        },
+        {
+          "id": "citadelsnail",
+          "name": "Citadelsnail",
+          "stage": 3
+        }
+      ],
+      "id": "castlet",
+      "order": 76,
+      "pools": [
+        "summersplash"
+      ],
+      "weight": 6
+    },
+    {
+      "added": "3.4",
+      "archetype": "sprite",
+      "elements": [
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "boolet",
+          "name": "Boolet",
+          "stage": 1
+        },
+        {
+          "id": "hauntlet",
+          "name": "Hauntlet",
+          "stage": 2
+        },
+        {
+          "id": "moonhaunt",
+          "name": "Moonhaunt",
+          "stage": 3
+        }
+      ],
+      "id": "boolet",
+      "order": 77,
+      "pools": [
+        "harvestmoon"
+      ],
+      "weight": 0.3
+    },
+    {
+      "added": "3.4",
+      "archetype": "moth",
+      "elements": [
+        "light"
+      ],
+      "forms": [
+        {
+          "id": "silklet",
+          "name": "Silklet",
+          "stage": 1
+        },
+        {
+          "id": "silkwing",
+          "name": "Silkwing",
+          "stage": 2
+        },
+        {
+          "id": "jadelumen",
+          "name": "Jadelumen",
+          "stage": 3
+        }
+      ],
+      "id": "silklet",
+      "order": 78,
+      "pools": [
+        "lunarlanterns"
+      ],
+      "weight": 0.7
+    },
+    {
+      "added": "3.4",
+      "archetype": "bunny",
+      "elements": [
+        "light",
+        "spark"
+      ],
+      "forms": [
+        {
+          "id": "twinklet",
+          "name": "Twinklet",
+          "stage": 1
+        },
+        {
+          "id": "starlop",
+          "name": "Starlop",
+          "stage": 2
+        },
+        {
+          "id": "constellhare",
+          "name": "Constellhare",
+          "stage": 3
+        }
+      ],
+      "id": "twinklet",
+      "order": 79,
+      "pools": [
+        "celestial"
+      ],
+      "weight": 2.6
     }
   ]
 }

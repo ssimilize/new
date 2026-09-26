@@ -617,6 +617,64 @@ SUBJECTS = {
     "colour across its back.",
     "umbrahare": "Umbrahare: a majestic cosmic hare with tall star-tipped ears, a thick starry mane, deep "
     "indigo fur with swirling violet nebula patterns, a glowing crescent mark on the forehead.",
+    # ── Batch 10 (2026-09-26): lines 72-79, update 3.4. Pale designs (the ghost, the silk moth) carry colour so no
+    # part is near the backdrop's grey; the bunnies keep upright ears (the bunny rig finds ears standing up).
+    # 72 pepperpip (sprite, ember + sprout)
+    "pepperpip": "Pepperpip, a baby chili-pepper sprite: a round chubby bright red pepper-shaped body with a curly "
+    "green stem cap and two little leaves on top, tiny stubby arms, a small flame-shaped wisp for a tail.",
+    "chiliflit": "Chiliflit: a slightly longer glossy red-orange pepper body, a bigger curly green stem with more "
+    "leaves, small flickering flame markings on its cheeks, a longer flame-wisp tail.",
+    "scorchpepper": "Scorchpepper: a big fiery pepper spirit, a glossy deep-red pepper body with orange flame "
+    "patterns, a crown of curly green stems and leaves, a bright flame-wisp tail.",
+    # 73 sparkeel (slug, tide + spark)
+    "sparkeel": "Sparkeel, a baby electric eel: a smooth teal-blue body lying low with a big round head, glowing "
+    "yellow zigzag stripes along its back, a small fin ridge, two short feelers.",
+    "ampereel": "Ampereel: a longer eel body with brighter glowing lightning stripes, a taller fin ridge along its "
+    "back, frilled fins at its cheeks.",
+    "thundereel": "Thundereel: a big mighty electric eel, a long body lying low with a tall glowing fin crest, "
+    "bright yellow lightning patterns, glowing cheek fins.",
+    # 74 cobbun (bunny, sprout + stone)
+    "cobbun": "Cobbun, a baby pebble rabbit: warm sandstone-brown fur, smooth round mossy-green pebble plates on "
+    "its back, long upright ears with moss tips, a round mossy tail.",
+    "cairnhop": "Cairnhop: bigger stacked sandstone pebble plates on its back like a little cairn, a small sprout "
+    "growing between them, mossier ears.",
+    "menhare": "Menhare: a big sturdy rabbit with a standing-stone crest of warm sandstone on its back, a mossy "
+    "mane with tiny flowers, carved spiral marks on the stones.",
+    # 75 podling (blob, sprout): Spring Bloom egg.
+    "podling": "Podling, a baby seed-pod blob: a round green pea-pod-shaped body with a lighter green belly seam, a "
+    "tiny curled sprout on top, little leaf nubs on its sides.",
+    "sprigpod": "Sprigpod: a bigger seed-pod blob with a taller leafy sprig on top and a small pink flower bud, "
+    "vine markings around its body.",
+    "bloompod": "Bloompod: a big seed-pod blob with a crown of pink and yellow blooming flowers on top, leafy vine "
+    "patterns around its body, a cheerful face.",
+    # 76 castlet (slug, stone + tide): Summer Splash egg.
+    "castlet": "Castlet, a baby sandcastle snail: a soft sea-blue body lying low with two short eye-stalks, its "
+    "shell a small golden sandcastle with one round tower and a tiny flag.",
+    "turretsnail": "Turretsnail: a longer body, a bigger golden sandcastle shell with two towers, little seashells "
+    "pressed into its walls, a small wave pattern on its body.",
+    "citadelsnail": "Citadelsnail: a big snail carrying a grand golden sandcastle shell with three towers, "
+    "seashell and starfish decorations and little flags, sea-blue body with wave patterns.",
+    # 77 boolet (sprite, gloom): Harvest Moon egg.
+    "boolet": "Boolet, a baby ghost sprite: a round soft pale-lavender ghost body with a wavy wispy tail, tiny "
+    "stubby arms, rosy cheeks, a small glowing orange crescent-moon mark on its forehead.",
+    "hauntlet": "Hauntlet: a slightly bigger lavender ghost with a purple-tinted wispy tail, a tiny glowing jack-o'-"
+    "lantern-orange lantern held in one hand, crescent-moon mark.",
+    "moonhaunt": "Moonhaunt: a big friendly lavender ghost with a deep-purple wispy tail, a glowing orange "
+    "crescent-moon crown, a little lantern, swirling moonlight patterns.",
+    # 78 silklet (moth, light): Lunar Lanterns egg.
+    "silklet": "Silklet, a baby silk moth: a fluffy cream body with a jade-green collar, two feathery golden "
+    "antennae, four small rounded wings patterned like red and gold paper lanterns.",
+    "silkwing": "Silkwing: bigger lantern-patterned wings in red, gold and jade, fuller feathery antennae, a "
+    "thicker fluffy jade collar.",
+    "jadelumen": "Jadelumen: a majestic silk moth with large glowing wings patterned like red and gold paper "
+    "lanterns with jade trim, long feathery golden antennae, a thick fluffy cream mane.",
+    # 79 twinklet (bunny, light + spark): Celestial egg.
+    "twinklet": "Twinklet, a baby star rabbit: soft pale-gold fur with little glowing star-shaped spots, long "
+    "upright ears with star-shaped tips, a small lightning-bolt mark on its chest.",
+    "starlop": "Starlop: longer upright ears with glowing star tips, star spots joined by thin constellation "
+    "lines, a sparkling ruff around its neck.",
+    "constellhare": "Constellhare: a majestic star rabbit with tall upright ears crowned with bright stars, "
+    "glowing constellation patterns across its golden fur, a sparkling mane.",
 }
 
 
