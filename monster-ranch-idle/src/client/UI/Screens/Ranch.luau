@@ -25,6 +25,7 @@ local Appearance = require(Shared.Logic.Appearance)
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
+local Sheet = require(UI.Art.Sheet)
 local Button = require(UI.Components.Button)
 local Icon = require(UI.Components.Icon)
 local Panel = require(UI.Components.Panel)
@@ -219,12 +220,19 @@ function Ranch.Build(ctx)
 			if n > 0 then
 				any = true
 				local row = Tiles.card({ Size = UDim2.new(1, -12, 0, 60), LayoutOrder = i, Parent = list })
-				New("Frame", {
-					BackgroundColor3 = Color3.fromHex(def.color),
-					Position = UDim2.fromOffset(10, 10),
-					Size = UDim2.fromOffset(40, 40),
+				local art = Sheet.icon("decor_" .. def.id, {
+					Position = UDim2.fromOffset(6, 4),
+					Size = UDim2.fromOffset(52, 52),
 					Parent = row,
-				}, { Create.Corner(8), Create.Stroke(2) })
+				})
+				if not art then
+					New("Frame", {
+						BackgroundColor3 = Color3.fromHex(def.color),
+						Position = UDim2.fromOffset(10, 10),
+						Size = UDim2.fromOffset(40, 40),
+						Parent = row,
+					}, { Create.Corner(8), Create.Stroke(2) })
+				end
 				Tiles.label({
 					Text = string.format("%s ×%d · +%d mood", def.name, n, def.mood),
 					TextSize = Theme.TextSize.Body,
@@ -511,13 +519,21 @@ function Ranch.Build(ctx)
 				Color = if def then C.Card else C.PanelDeep,
 			})
 			if def then
-				New("Frame", {
-					BackgroundColor3 = Color3.fromHex(def.color),
+				local art = Sheet.icon("decor_" .. def.id, {
 					AnchorPoint = Vector2.new(0.5, 0),
-					Position = UDim2.new(0.5, 0, 0, 8),
-					Size = UDim2.fromOffset(40, 40),
+					Position = UDim2.new(0.5, 0, 0, 3),
+					Size = UDim2.fromOffset(48, 48),
 					Parent = tile,
-				}, { Create.Corner(8), Create.Stroke(2) })
+				})
+				if not art then
+					New("Frame", {
+						BackgroundColor3 = Color3.fromHex(def.color),
+						AnchorPoint = Vector2.new(0.5, 0),
+						Position = UDim2.new(0.5, 0, 0, 8),
+						Size = UDim2.fromOffset(40, 40),
+						Parent = tile,
+					}, { Create.Corner(8), Create.Stroke(2) })
+				end
 				Tiles.label({
 					Text = def.name .. "\nTap to take back",
 					TextSize = Theme.TextSize.Small - 1,

@@ -27,3 +27,12 @@ art/vfx/patch.json
 
 # Python bytecode from the art tools.
 __pycache__/
+
+# UI art (tools/ui): portrait renders, raw Codex icon generations, built icon cells and the
+# upload-ready sheets are rebuilt by the tools; the icon table, manifests, review contact sheets
+# and the generated Luau modules (src/client/UI/Art) are kept.
+art/portraits/
+art/ui/upload/
+art/ui/icons/raw/
+art/ui/icons/cells/
+art/ui/icons/contact.jpg

@@ -45,6 +45,7 @@ function Button.new(props: Props)
 	self._disabled = props.Disabled == true
 	self._onClick = props.OnClick
 
+	local stroke = Create.Stroke(Theme.Stroke.Button)
 	local root = New("TextButton", {
 		Name = props.Name or "Button",
 		Text = "",
@@ -57,11 +58,11 @@ function Button.new(props: Props)
 		ZIndex = props.ZIndex or 1,
 	}, {
 		if props.Round then Create.Round() else Create.Corner(Theme.Radius.Button),
-		Create.Stroke(Theme.Stroke.Button),
+		stroke,
 		Create.Shade(0.18),
 	})
 	-- Bottom lip gives the 3D look.
-	New("Frame", {
+	local lip = New("Frame", {
 		Name = "Lip",
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BackgroundTransparency = 0.8,
@@ -72,6 +73,24 @@ function Button.new(props: Props)
 		ZIndex = root.ZIndex,
 		Parent = root,
 	}, { if props.Round then Create.Round() else Create.Corner(Theme.Radius.Button) })
+	-- With the uploaded skin, one 9-slice image draws the outline, highlight, shade and lip over the
+	-- colour fill (pill buttons keep the shapes: the skin's corners are the 14 px button radius).
+	local skin = Theme.Images.ButtonTexture
+	if skin ~= "" and not props.Round then
+		stroke.Enabled = false
+		lip.Visible = false
+		New("ImageLabel", {
+			Name = "Skin",
+			BackgroundTransparency = 1,
+			Image = skin,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Theme.Slices.Button.Center,
+			SliceScale = Theme.Slices.Button.Scale,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = root.ZIndex,
+			Parent = root,
+		})
+	end
 
 	local content = New("Frame", {
 		Name = "Content",
