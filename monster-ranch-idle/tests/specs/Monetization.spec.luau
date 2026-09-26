@@ -351,7 +351,7 @@ return function(t)
 			local p = h:Join()
 			local Mon = h:System("Monetization")
 			local allow = false
-			Mon:RegisterProductCheck("Weather.Totem", function(player, product)
+			Mon:RegisterProductCheck("Weather.Totem", function(player, _product)
 				expect(player).toBe(p)
 				return allow, if allow then nil else "Not while it's raining"
 			end)
