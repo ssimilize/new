@@ -556,6 +556,183 @@ SUBJECTS = {
     "sparkly tail, star markings along its back.",
     "yuletail": "Yuletail: a majestic festive fox with a huge fluffy tail tipped with a solid golden star shape, a "
     "thick garland mane with small red berries, star patterns across its fur.",
+    # ── Batch 9 (2026-09-26): lines 64-71, update 3.3. Lessons of batch 8 written in: a bug lies lengthwise
+    # on six legs (Batterfly was drawn upright twice), nothing hangs to the ground (Sprucesprout's cape), and
+    # no part is the backdrop's mid grey (the yeti line's grey parts were cut out as background).
+    # 64 smoglet (slug, ember + gloom)
+    "smoglet": "Smoglet, a baby smoke slug: a soft dark plum body with a small sooty shell on its back, little "
+    "glowing orange ember spots peeking through cracks in the shell, two short eye-stalks with ember tips, a puff "
+    "of dark smoke-curl shape on top of the shell.",
+    "soothorn": "Soothorn: a longer body, a bigger sooty shell with a row of short blunt horns along its ridge and "
+    "brighter glowing ember cracks, longer eye-stalks.",
+    "pyreshade": "Pyreshade: a big shadowy fire slug, a tall spiralled dark shell crowned with a solid flame-shaped "
+    "crest, glowing orange ember veins across the shell, deep purple smoke-curl markings on its body.",
+    # 65 inklet (slug, tide + gloom)
+    "inklet": "Inklet, a baby sea slug: a soft glossy deep-blue body with lavender frilly edges along its sides, "
+    "two short curled tentacle-stalks on its head, a few pale glowing spots, a small ink-drop marking on its back.",
+    "murkling": "Murkling: a longer body with wavy frilled fins along both sides, four short curled tentacles "
+    "around its face, glowing spots in rows down its back.",
+    "inkraken": "Inkraken: a big friendly little-kraken slug, a large rounded head with a crest of frills, six "
+    "short thick curled tentacles around its face, bioluminescent teal rings down its back.",
+    # 66 gargit (bug, stone + gloom)
+    "gargit": "Gargit, a baby gargoyle beetle lying lengthwise on the ground on six stubby legs: a dark slate-purple "
+    "stone shell with carved swirl patterns, two tiny folded stone bat wings on its back, two small horn nubs.",
+    "gargarock": "Gargarock: a bigger gargoyle beetle, the same low lengthwise body on six legs, bigger folded "
+    "stone wings, two curled horns, glowing violet runes carved into the shell.",
+    "gargolith": "Gargolith: a big heavy gargoyle beetle, the same low lengthwise body on six thick legs, a "
+    "cathedral-like carved stone shell, large folded stone wings, curled ram horns, glowing violet runes.",
+    # 67 lodebug (bug, spark + stone)
+    "lodebug": "Lodebug, a baby magnet beetle lying lengthwise on the ground on six stubby legs: a glossy "
+    "gunmetal-blue shell with copper stripes, a horseshoe-magnet-shaped horn with red and silver tips, tiny "
+    "yellow spark marks on its back.",
+    "ferrobeetle": "Ferrobeetle: a bigger magnet beetle, the same low lengthwise body on six legs, a larger "
+    "horseshoe horn, shiny copper plates along the shell edge, glowing yellow lightning seams.",
+    "magnetitan": "Magnetitan: a massive armoured magnet beetle, the same low lengthwise body on six thick legs, "
+    "a huge horseshoe-magnet horn, heavy gunmetal and copper armour plates, glowing yellow lightning seams.",
+    # 68 pitling (bug, stone): the Dune Egg's fourth line.
+    "pitling": "Pitling, a baby antlion lying lengthwise on the ground on six stubby legs: a round sandy-tan body "
+    "with darker brown dune stripes, two small curved pincers at the front, fuzzy little tufts on its back.",
+    "sandlion": "Sandlion: a bigger antlion, the same low lengthwise body on six legs, bigger curved pincers, a "
+    "mane-like fuzzy ruff behind its head, a striped shell.",
+    "dunemaw": "Dunemaw: a big bold antlion, the same low lengthwise body on six sturdy legs, huge curved golden "
+    "pincers, a thick sandy mane ruff, a banded amber and brown shell.",
+    # 69 rimebug (bug, tide): the Glacier Egg's fourth line.
+    "rimebug": "Rimebug, a baby ice scarab lying lengthwise on the ground on six stubby legs: a round icy-blue "
+    "shell with white frost patterns, a tiny crystal horn, pale blue legs.",
+    "icicarab": "Icicarab: a bigger ice scarab, the same low lengthwise body on six legs, a shell with clear "
+    "crystal ridges, a forked crystal horn, snowflake patterns.",
+    "frostscarab": "Frostscarab: a big majestic ice scarab, the same low lengthwise body on six legs, a gleaming "
+    "crystal shell with a large snowflake emblem, a tall crystal horn, frosty white trim.",
+    # 70 lumisnail (slug, light): Sky Egg.
+    "lumisnail": "Lumisnail, a baby glowing snail: a soft cream-yellow body, a small round spiral shell of pale "
+    "prism colours on its back, two short eye-stalks with glowing tips.",
+    "prismsnail": "Prismsnail: a longer body, a bigger faceted crystal-prism spiral shell shining in soft rainbow "
+    "colours, glowing golden spots along its body.",
+    "haloshell": "Haloshell: a big radiant snail with a tall gleaming prism spiral shell, a solid golden halo ring "
+    "resting on top of the shell, soft golden light patterns along its body.",
+    # 71 nullbun (bunny, void): Sky Egg.
+    "nullbun": "Nullbun, a baby void rabbit: deep indigo fur with tiny twinkling star specks, long ears lined "
+    "with purple nebula swirls, a small crescent mark on the forehead.",
+    "riftrabbit": "Riftrabbit: longer ears with glowing violet tips, a fluffy starry ruff, a swirl of nebula "
+    "colour across its back.",
+    "umbrahare": "Umbrahare: a majestic cosmic hare with tall star-tipped ears, a thick starry mane, deep "
+    "indigo fur with swirling violet nebula patterns, a glowing crescent mark on the forehead.",
+    # ── Batch 10 (2026-09-26): lines 72-79, update 3.4. Pale designs (the ghost, the silk moth) carry colour so no
+    # part is near the backdrop's grey; the bunnies keep upright ears (the bunny rig finds ears standing up).
+    # 72 pepperpip (sprite, ember + sprout)
+    "pepperpip": "Pepperpip, a baby chili-pepper sprite: a round chubby bright red pepper-shaped body with a curly "
+    "green stem cap and two little leaves on top, tiny stubby arms, a small flame-shaped wisp for a tail.",
+    "chiliflit": "Chiliflit: a slightly longer glossy red-orange pepper body, a bigger curly green stem with more "
+    "leaves, small flickering flame markings on its cheeks, a longer flame-wisp tail.",
+    "scorchpepper": "Scorchpepper: a big fiery pepper spirit, a glossy deep-red pepper body with orange flame "
+    "patterns, a crown of curly green stems and leaves, a bright flame-wisp tail.",
+    # 73 sparkeel (slug, tide + spark)
+    "sparkeel": "Sparkeel, a baby electric eel: a smooth teal-blue body lying low with a big round head, glowing "
+    "yellow zigzag stripes along its back, a small fin ridge, two short feelers.",
+    "ampereel": "Ampereel: a longer eel body with brighter glowing lightning stripes, a taller fin ridge along its "
+    "back, frilled fins at its cheeks.",
+    "thundereel": "Thundereel: a big mighty electric eel, a long body lying low with a tall glowing fin crest, "
+    "bright yellow lightning patterns, glowing cheek fins.",
+    # 74 cobbun (bunny, sprout + stone)
+    "cobbun": "Cobbun, a baby pebble rabbit: warm sandstone-brown fur, smooth round mossy-green pebble plates on "
+    "its back, long upright ears with moss tips, a round mossy tail.",
+    "cairnhop": "Cairnhop: bigger stacked sandstone pebble plates on its back like a little cairn, a small sprout "
+    "growing between them, mossier ears.",
+    "menhare": "Menhare: a big sturdy rabbit with a standing-stone crest of warm sandstone on its back, a mossy "
+    "mane with tiny flowers, carved spiral marks on the stones.",
+    # 75 podling (blob, sprout): Spring Bloom egg.
+    "podling": "Podling, a baby seed-pod blob: a round green pea-pod-shaped body with a lighter green belly seam, a "
+    "tiny curled sprout on top, little leaf nubs on its sides.",
+    "sprigpod": "Sprigpod: a bigger seed-pod blob with a taller leafy sprig on top and a small pink flower bud, "
+    "vine markings around its body.",
+    "bloompod": "Bloompod: a big seed-pod blob with a crown of pink and yellow blooming flowers on top, leafy vine "
+    "patterns around its body, a cheerful face.",
+    # 76 castlet (slug, stone + tide): Summer Splash egg.
+    "castlet": "Castlet, a baby sandcastle snail: a soft sea-blue body lying low with two short eye-stalks, its "
+    "shell a small golden sandcastle with one round tower and a tiny flag.",
+    "turretsnail": "Turretsnail: a longer body, a bigger golden sandcastle shell with two towers, little seashells "
+    "pressed into its walls, a small wave pattern on its body.",
+    "citadelsnail": "Citadelsnail: a big snail carrying a grand golden sandcastle shell with three towers, "
+    "seashell and starfish decorations and little flags, sea-blue body with wave patterns.",
+    # 77 boolet (sprite, gloom): Harvest Moon egg.
+    "boolet": "Boolet, a baby ghost sprite: a round soft pale-lavender ghost body with a wavy wispy tail, tiny "
+    "stubby arms, rosy cheeks, a small glowing orange crescent-moon mark on its forehead.",
+    "hauntlet": "Hauntlet: a slightly bigger lavender ghost with a purple-tinted wispy tail, a tiny glowing jack-o'-"
+    "lantern-orange lantern held in one hand, crescent-moon mark.",
+    "moonhaunt": "Moonhaunt: a big friendly lavender ghost with a deep-purple wispy tail, a glowing orange "
+    "crescent-moon crown, a little lantern, swirling moonlight patterns.",
+    # 78 silklet (moth, light): Lunar Lanterns egg.
+    "silklet": "Silklet, a baby silk moth: a fluffy cream body with a jade-green collar, two feathery golden "
+    "antennae, four small rounded wings patterned like red and gold paper lanterns.",
+    "silkwing": "Silkwing: bigger lantern-patterned wings in red, gold and jade, fuller feathery antennae, a "
+    "thicker fluffy jade collar.",
+    "jadelumen": "Jadelumen: a majestic silk moth with large glowing wings patterned like red and gold paper "
+    "lanterns with jade trim, long feathery golden antennae, a thick fluffy cream mane.",
+    # 79 twinklet (bunny, light + spark): Celestial egg.
+    "twinklet": "Twinklet, a baby star rabbit: soft pale-gold fur with little glowing star-shaped spots, long "
+    "upright ears with star-shaped tips, a small lightning-bolt mark on its chest.",
+    "starlop": "Starlop: longer upright ears with glowing star tips, star spots joined by thin constellation "
+    "lines, a sparkling ruff around its neck.",
+    "constellhare": "Constellhare: a majestic star rabbit with tall upright ears crowned with bright stars, "
+    "glowing constellation patterns across its golden fur, a sparkling mane.",
+    # ── Batch 11 (2026-09-26): lines 80-87, update 3.5 (Light & Void hybrids + the Pearl Egg). Crystal and quartz are
+    # drawn in warm gold or violet, never grey; the bunny keeps upright ears; the bug lies lengthwise on six legs.
+    # 80 heliopup (fox, light + sprout)
+    "heliopup": "Heliopup, a baby sunflower fox: golden-yellow fur, a small ruff of sunflower petals around its "
+    "neck, a leafy green tail tip, a tiny sun-shaped mark on its forehead.",
+    "heliolynx": "Heliolynx: a bigger sunflower petal mane, ear tufts like small leaves, a longer leafy tail with a "
+    "golden glow at the tip.",
+    "solarvixen": "Solarvixen: a graceful adult sun fox with a full blazing sunflower-petal mane, a long leafy tail "
+    "tipped with a glowing sun, golden sunray markings along its back.",
+    # 81 prismite (golem, light + stone)
+    "prismite": "Prismite, a baby quartz golem: a chunky body of smooth warm golden-cream quartz blocks with soft "
+    "rainbow glints, a small glowing crystal on its head, stubby block arms.",
+    "crystallum": "Crystallum: bigger golden quartz blocks, a cluster of glowing crystals on its shoulders, a "
+    "brighter crystal on its head, rainbow facets on its arms.",
+    "radiolith": "Radiolith: a big radiant quartz golem, massive golden-cream crystal arms, a crown of tall glowing "
+    "crystals, a glowing sun-shaped gem in its chest.",
+    # 82 dusklet (moth, light + gloom)
+    "dusklet": "Dusklet, a baby twilight moth: a fluffy body fading from sunset orange to deep purple, four small "
+    "rounded wings fading from gold to violet with tiny star dots, short feathery antennae.",
+    "gloamwing": "Gloamwing: bigger wings fading from warm sunset gold to night purple with a crescent-moon spot, "
+    "longer feathery antennae, a fluffier collar.",
+    "twilightmoth": "Twilightmoth: large majestic wings half sunset gold and half starry night purple, a sun and a "
+    "moon mark on the wings, long golden antennae, a thick fluffy mane.",
+    # 83 voidrop (blob, void + tide)
+    "voidrop": "Voidrop, a baby deep-sea blob: a round squishy deep navy body with tiny glowing star speckles inside, "
+    "a small glowing teal angler light on a short stalk, a pale blue belly.",
+    "trenchdrop": "Trenchdrop: a bigger deep-sea blob, a longer glowing angler stalk, little fin nubs on its sides, "
+    "swirling nebula-like patterns inside its body.",
+    "abyssdrop": "Abyssdrop: a big deep-sea blob with a bright glowing angler light, a crest of soft fins, a galaxy "
+    "of glowing stars swirling inside its navy body.",
+    # 84 weevoid (bug, void + sprout)
+    "weevoid": "Weevoid, a baby weevil lying lengthwise on the ground on six stubby legs: a round deep indigo shell "
+    "with tiny star speckles, a short curved snout, two small dark-green leaf sprouts on its back.",
+    "shadeweevil": "Shadeweevil: a bigger weevil, the same low lengthwise body on six legs, dark green thorny vines "
+    "curling over its starry indigo shell, a longer snout.",
+    "voidthorn": "Voidthorn: a big weevil, the same low lengthwise body on six sturdy legs, a starry indigo shell "
+    "wrapped in thick thorny vines with glowing violet buds, a long curved snout.",
+    # 85 shardlet (sprite, void + stone)
+    "shardlet": "Shardlet, a baby crystal sprite: a small round body of deep violet crystal with a swirling dark "
+    "void core glowing inside, tiny stubby arms, a trailing wisp tail of violet sparkles.",
+    "riftshard": "Riftshard: a bigger violet crystal body with a few sharp crystal points on its head, a brighter "
+    "swirling void core, a longer sparkling wisp tail.",
+    "singulith": "Singulith: a majestic crystal sprite, a violet crystal body with a crown of floating-looking but "
+    "attached crystal points, a glowing spiral void core, a long sparkling tail.",
+    # 86 candlet (slug, ember + light)
+    "candlet": "Candlet, a baby candle snail: a soft warm-peach body with two short eye-stalks, carrying a small "
+    "cream wax candle on its back with a little orange flame, soft wax drips down its sides.",
+    "waxwick": "Waxwick: a longer body carrying two cream wax candles with bright flames, golden candle-holder "
+    "trim, glowing wax drips.",
+    "chandelisnail": "Chandelisnail: a big snail carrying an ornate golden candelabra with three glowing candles, "
+    "warm light patterns on its peach body, golden trim.",
+    # 87 seahop (bunny, tide): the Pearl Egg's fourth line.
+    "seahop": "Seahop, a baby sea-hare bunny: soft lilac and aqua fur, long upright frilly ears like sea-slug frills, "
+    "small white pearl spots along its back, a round fluffy tail.",
+    "pearlhare": "Pearlhare: longer frilly upright ears with aqua edges, a string of shiny pearls around its neck, "
+    "more pearl spots.",
+    "nacrehare": "Nacrehare: a majestic sea hare with tall iridescent frilly ears shimmering like mother-of-pearl, "
+    "a pearl crest on its head, a pearly shimmering mane.",
 }
 
 

@@ -11,8 +11,9 @@
 	    fee = number,                          -- coins
 	    rainbowChance = number,                -- 0..1
 	    goldenChance = number,                 -- 0..1
+	    genes = Genetics.Preview(a.genes, b.genes), -- the baby's gene points per stat before surges
 	  }
-	Breeding.Roll(rng, a, b) -> (MonsterGen spec, isHybrid)
+	Breeding.Roll(rng, a, b) -> (MonsterGen spec, isHybrid)   -- spec.surges = genes that surged
 
 	Rules (Config.Breeding):
 	  species   45% parent A · 45% parent B · 10% hybrid when Config.Breeding.HybridFor has a recipe
@@ -26,6 +27,8 @@
 	  variant   Rainbow 1/100 if both parents are Rainbow, Golden 1/20 if a parent is Golden,
 	            otherwise the normal hatch odds; Golden Heart multiplies the golden chance ×3
 	  weight    parents' average weight (relative to their species average) ±WeightJitter
+	  genes     per stat one gene of each parent's pair, each may surge (Logic/Genetics); rolled
+	            last, after every other roll
 	  time      Seconds[higher rarity] × (1 − Fertile breedSpeed of both parents, capped)
 	  fee       FeePct × the higher parent's value (Formulas.Value)
 ]]
@@ -33,6 +36,7 @@
 local Config = require(script.Parent.Parent.Config)
 local Formulas = require(script.Parent.Formulas)
 local MonsterGen = require(script.Parent.MonsterGen)
+local Genetics = require(script.Parent.Genetics)
 
 local Rules = Config.Breeding
 local Species = Config.Species
@@ -165,6 +169,7 @@ function Breeding.Outcomes(a, b)
 		fee = Breeding.Fee(a, b),
 		rainbowChance = rainbow,
 		goldenChance = golden,
+		genes = Genetics.Preview(a.genes, b.genes),
 	}
 end
 
@@ -267,6 +272,7 @@ function Breeding.Roll(rng, a, b)
 		muts = muts,
 		gen = math.max(a.gen or 0, b.gen or 0) + 1,
 	}
+	spec.genes, spec.surges = Genetics.Inherit(rng, a.genes, b.genes)
 	return spec, isHybridLine(line)
 end
 

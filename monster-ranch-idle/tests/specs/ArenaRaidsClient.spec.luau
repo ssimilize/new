@@ -87,7 +87,7 @@ return function(t)
 			pickMany(c, ids)
 			expect(c.kernel.UI.Top:FindFirstChild("BattleReplay") ~= nil).toBe(true)
 			expect(h:Section(p, "Arena").attempts.n).toBe(1)
-			c:Click(c:Button("Skip", c.kernel.UI.Top))
+			c:Click(c:Button("Skip ▸▸", c.kernel.UI.Top)) -- not a bare "Skip": a title like "vs Sky Skipper" matches it
 			c:Advance(1)
 			expect(c:HasText("Rating", c.kernel.UI.Top)).toBe(true)
 			expectClean(c)

@@ -3,6 +3,121 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.7 · Ranch Jobs + Luck
+
+Like 3.6, no launch date of its own: the Job Board and Luck work as soon as the update is published.
+
+**For players**
+- **The Job Board** (Ranch Level 6): Teens and Adults resting in the barn can take a job. Each
+  of the five stats has one:
+  - **Herder** (HP): while you're online, your pen monsters' Mood drops more slowly. A strong
+    herder stops the drop, so they keep their coin bonus of up to +10%.
+  - **Miner** (ATK): digs up coins, about 25–60% of what that monster would earn in a pen.
+    ATK-strong species and ATK genes earn more.
+  - **Guard** (DEF): every pen's coin jar holds longer, from about +7 minutes for a weak guard
+    to +55 for a great one (all guards together at most +90).
+  - **Forager** (SPD): gathers food in the flavour you pick, about 1 to 9 an hour.
+  - **Scout** (Luck): a chance each hour to find an egg (Meadow, Grove, Crystal or Royal, from
+    the ones you've unlocked), about one egg per 8 hours for a top scout.
+- **Slots:** 2 at Ranch Level 6, 3 at 20, 4 at 35 and 5 at 50.
+- **How it pays:** workers keep working online and offline, storing up to 8 hours of work.
+  - Collect all pays everything; recalling a worker pays what it has stored.
+  - The HUD's Jobs button shows how many workers are full, and Welcome Back mentions them.
+- **Picking a worker:** the Job Board lists your free barn monsters best at that job's stat
+  first. Rarity, level, stars, traits and genes all help.
+- **Luck counts:**
+  - In battles, Luck adds crit chance on top of the base 5%: about +0.8% at Luck 13 and +5.6%
+    for a maxed Mythic, at most +8%. The Arena gives every fighter the same Luck.
+  - On expeditions, the squad's Luck adds up to +15% loot.
+- **A fifth gene:** Luck has a gene pair now, so gene totals are out of 100.
+  - Monsters from 3.6 keep their four genes exactly as they were and gain a Luck pair.
+  - Monster Detail grades Luck, and the Breeding Barn shows all five stats.
+
+**In the code**
+- `Config.Jobs` (the jobs, slots, rates and caps) and `Logic/Jobs`:
+  - `Power` = stat ÷ `RefBase`; rates run on √power; the miner uses `CoinRate × MinerShare × ATK affinity`.
+  - `Collect` pays with a `carry` for fractions. Scout eggs are rolled per whole hour from
+    `Rng.seed("scout", slot.seed, hour)`, so they can't be rerolled.
+- `Systems/Jobs`:
+  - Save section `slots` (always 5) and session `slotCount`.
+  - Actions `Jobs.Assign`, `Jobs.Recall`, `Jobs.Collect` and `Jobs.SetFlavor`; busy tag `"job"`; bus topic `JobsCollected`.
+  - Guards through `Ranch:RegisterJarBonus("jobs")`; herders through the new
+    `Monsters:RegisterMoodDecayModifier("jobs")` (pen monsters only; Mood can now be fractional).
+  - Unlocks `jobs` (6) and `jobs_slot_3/4/5` (20, 35, 50).
+- Luck:
+  - `BattleSim.LuckCrit` (`LuckCritK`, `LuckCritScale`, `LuckCritMax`).
+  - `Loot.LuckBonus` (`LuckLootK`, `LuckLootScale`, `LuckLootMax`), added in `Expeditions:LootBonus`.
+- Genetics:
+  - `Config.Genetics.Stats` gains `luck` (appended, so seeded rolls keep their order).
+  - `Genetics.Fill(genes, rng)` keeps valid pairs and rolls missing ones. `MonsterGen.New` and
+    `Monsters:Insert` use it.
+  - The Monsters save is version 3: the migration fills the Luck pair from `Rng.seed(seed, "fill")`,
+    so it is not a copy of the HP pair.
+- UI:
+  - New `Screens/Jobs` and a HUD Jobs button (left stack, full-storage badge).
+  - Monsters pick mode takes a `sortBy`.
+  - Breeding shows parent grades 3 + 2 and the gene preview as a 3-column grid.
+  - A "Working" busy label.
+- Specs: `Jobs.spec` (rules, the board on the server, Luck, the v3 migration) and
+  `JobsClient.spec` (picker order, collect, flavour, recall, the HUD badge, locked slots, Spanish).
+  The genetics specs cover five genes.
+
+## 3.6 · Genetics
+
+No launch date of its own: genes switch on the moment the update is published, and every
+monster already on a ranch gets its genes the first time its owner joins.
+
+**For players**
+- **Stat genes.** Every monster carries two genes each for **HP, ATK, DEF and SPD**, one
+  from each parent. Each gene is worth 0–10 points and every point adds **+1%** to its stat,
+  so a perfect pair is +20%. Luck has no gene.
+- **Grades:** each stat's pair is graded **D** (0–4), **C** (5–9), **B** (10–13), **A**
+  (14–17) or **S** (18–20).
+- **Where genes come from:** hatched and reward monsters roll each gene at 0–5 (mostly C,
+  a lucky B). A and S only come from breeding.
+- **Breeding:** for each stat the baby gets one of parent A's two genes and one of parent
+  B's, at random, so a strong line has to be bred for. Every gene a baby inherits has an 8%
+  chance to **surge** +1 and a 1% chance to surge +2 (up to 10). Genes never drop.
+- **Your monsters keep their power:** monsters from before this update get genes too
+  (rolled once, the same every time), and genes only ever add to stats.
+- **Only stats:** genes never change how a monster looks, its size, its coin income, its
+  sell price or the breeding fee.
+- **Where you see them:**
+  - **Monster Detail:** a grade beside HP, ATK, DEF and SPD (tap it for the pair, e.g.
+    "ATK genes: 7 + 8 = +15%") and a "Genes 41/80 · Gen 6" line (tap it for how genes work).
+  - **Breeding Barn:** both parents' grades, the baby's bonus range for each stat before
+    surges ("ATK +6–11%"), and the number of genes that surged when you claim the baby.
+  - **Monsters:** a new **Genes** sort.
+  - **Market:** listings show the monster's gene total. Genes travel with traded and sold
+    monsters.
+
+**In the code**
+- `Config.Genetics`: the gene stats, `MaxGene`, `PctPerPoint`, `HatchRange`, `SurgeChance`,
+  `BigSurgeChance` and the grade table.
+- `Logic/Genetics`: `Roll`, `Seeded`, `Inherit` (one gene of each parent's pair, then
+  surges), `Valid`, `Copy`, `Pair`, `Points`, `Bonus`, `Total`, `Grade`, `Range`, `Preview`.
+  A record without genes (enemies, raid bosses) counts as all zero.
+- Monster records have `genes = { hp = { a, b }, atk = …, def = …, spd = … }`.
+  - `Formulas.Stats` multiplies HP, ATK, DEF and SPD by `1 + Genetics.Bonus`. `CoinRate`,
+    `Value`, `SellPrice` and `Appearance` don't read genes.
+  - `MonsterGen.New` rolls genes last, or copies `spec.genes`, so every earlier roll is
+    unchanged.
+  - `Breeding.Roll` inherits them last and sets `spec.surges`. `Breeding.Outcomes` has
+    `genes = Genetics.Preview(...)`, and `Breeding.Claim` returns `surges`.
+- The Monsters save is version 2. `Migrate` gives every pre-genetics record
+  `Genetics.Seeded(Rng.seed("genes", id, born))`, and `PlayerAdded` repeats that for a
+  save whose migration failed. `Monsters:Insert` keeps genes, and gives a record escrowed
+  before genetics a fresh roll.
+- `genes` is one of Trade's `VALUE_FIELDS`, and Market's `ItemView` carries `genes` (false
+  for an egg).
+- UI: `UI/Components/GeneGrades` (grade colours, a badge, a four-stat row). Changed:
+  MonsterDetail (stat rows 22 px to make room for the gene line), Breeding (parent cards,
+  preview row, claim dialog 480 × 420), the Monsters sort and the Market item line.
+- Specs:
+  - `Genetics.spec`: rules, inheritance and surge rates, stats and nothing else, earlier
+    rolls unchanged, server breeding, the v2 migration twice, Insert and the Market view.
+  - `GeneticsClient.spec`: Monster Detail with a column-fit check, Spanish, the Breeding
+    Barn with a forced surge, and the Genes sort.
 ## Glow-up · The premium pass
 
 Not a dated content drop: presentation, feel and new ways to play across the whole game, built

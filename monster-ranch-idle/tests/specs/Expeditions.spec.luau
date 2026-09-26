@@ -4,6 +4,17 @@ return function(t)
 	local TestKernel = t.TestKernel
 	local Config = t.Shared("Config")
 	local Regions = Config.Regions
+	local Formulas = t.Shared("Logic.Formulas")
+	local Loot = t.Shared("Logic.Loot")
+
+	-- Update 3.7: a squad's Luck adds to its loot bonus (Loot.LuckBonus); loot below expects it.
+	local function luckBonus(h, p, ids)
+		local lucks = {}
+		for _, id in ids do
+			table.insert(lucks, Formulas.Stats(h:System("Monsters"):Get(p, id)).luck)
+		end
+		return Loot.LuckBonus(lucks)
+	end
 
 	local SYSTEMS = { "Currency", "Progression", "Rewards", "Monsters", "Expeditions" }
 
@@ -236,11 +247,13 @@ return function(t)
 			expect(h:Reject(p, "Expeditions.Claim", { slot = 2 })).toContain("Nothing to claim")
 			h:Advance(900)
 			local coinsBefore = h:Section(p, "Currency").coins
+			local mult = 1 + luckBonus(h, p, ids)
+			expect(mult).toBeGreaterThan(1)
 			local claim = h:Call(p, "Expeditions.Claim", { slot = 1 })
 			local per = Regions.LootPerMinute(1)
-			expect(sumKind(claim.rewards, "coins")).toBe(math.floor(per.coins * 15))
-			expect(h:Section(p, "Currency").coins - coinsBefore).toBe(math.floor(per.coins * 15))
-			expect(sumKind(claim.rewards, "food")).toBe(math.floor(per.food * 15))
+			expect(sumKind(claim.rewards, "coins")).toBe(math.floor(per.coins * 15 * mult))
+			expect(h:Section(p, "Currency").coins - coinsBefore).toBe(math.floor(per.coins * 15 * mult))
+			expect(sumKind(claim.rewards, "food")).toBe(math.floor(per.food * 15 * mult))
 			expect(M:Get(p, ids[1]).busy).toBe(false)
 			expect(h:Section(p, "Expeditions").slots[1].state).toBe("idle")
 			expect(topics.ExpeditionClaimed[1].detail.slot).toBe(1)
@@ -284,7 +297,9 @@ return function(t)
 			expect(h:System("Monsters"):Get(p2, ids[1]).busy).toBe("expedition")
 			local claim = h:Call(p2, "Expeditions.Claim", { slot = 1 })
 			local per = Regions.LootPerMinute(1)
-			expect(sumKind(claim.rewards, "coins")).toBe(math.floor(per.coins * 240 * Regions.DurationBonus[14400]))
+			expect(sumKind(claim.rewards, "coins")).toBe(
+				math.floor(per.coins * 240 * (Regions.DurationBonus[14400] * (1 + luckBonus(h, p2, ids))))
+			)
 			expect(sumKind(claim.rewards, "food", "sweet")).toBeGreaterThan(0)
 			expect(sumKind(claim.rewards, "egg")).toBe(#eggs > 0 and eggs[1].amount or 0)
 			expect(h:System("Monsters"):Get(p2, ids[1]).busy).toBe(false)
@@ -310,7 +325,7 @@ return function(t)
 			h:Call(p, "Expeditions.Start", { slot = 1, region = "meadow", stage = 1, duration = "28800", squad = ids })
 			h:Advance(600)
 			local res = h:Call(p, "Expeditions.Recall", { slot = 1 })
-			expect(sumKind(res.rewards, "coins")).toBe(math.floor(Regions.LootPerMinute(1).coins * 10))
+			expect(sumKind(res.rewards, "coins")).toBe(math.floor(Regions.LootPerMinute(1).coins * 10 * (1 + luckBonus(h, p, ids))))
 			expect(h:System("Monsters"):Get(p, ids[1]).busy).toBe(false)
 			expect(h:Reject(p, "Expeditions.Recall", { slot = 1 })).toContain("isn't exploring")
 		end)
@@ -327,7 +342,10 @@ return function(t)
 			expect(h:Reject(p, "Expeditions.ClaimAll")).toContain("No expeditions")
 			h:Advance(901)
 			local res = h:Call(p, "Expeditions.ClaimAll")
-			expect(sumKind(res.rewards, "coins")).toBe(2 * math.floor(Regions.LootPerMinute(1).coins * 15))
+			local per15 = Regions.LootPerMinute(1).coins * 15
+			expect(sumKind(res.rewards, "coins")).toBe(
+				math.floor(per15 * (1 + luckBonus(h, p, { ids[1] }))) + math.floor(per15 * (1 + luckBonus(h, p, { ids[2] })))
+			)
 			expect(h:Section(p, "Expeditions").slots[3].state).toBe("running")
 			expect(#eggs).toBe(sumKind(res.rewards, "egg") > 0 and 1 or 0)
 		end)
@@ -337,18 +355,18 @@ return function(t)
 			local p = h:Join()
 			local E = h:System("Expeditions")
 			local paws = team(h, p, 4, { traits = { 8, 3 }, hidden = 5 })
-			expect(E:LootBonus(p, paws)).toBeNear(0.08 * 3)
+			expect(E:LootBonus(p, paws)).toBeNear(0.08 * 3 + luckBonus(h, p, paws))
 			local nose = team(h, p, 1, { line = "drizzlet", traits = { 3, 4 } })
-			expect(E:LootBonus(p, { paws[1], nose[1] })).toBeNear(0.08 + 0.1)
+			expect(E:LootBonus(p, { paws[1], nose[1] })).toBeNear(0.08 + 0.1 + luckBonus(h, p, { paws[1], nose[1] }))
 			E:RegisterLootModifier("test", function()
 				return 0.05
 			end)
-			expect(E:LootBonus(p, { nose[1] })).toBeNear(0.15)
+			expect(E:LootBonus(p, { nose[1] })).toBeNear(0.15 + luckBonus(h, p, { nose[1] }))
 			h:Call(p, "Expeditions.Start", { slot = 1, region = "meadow", stage = 1, duration = "900", squad = { paws[1], nose[1] } })
 			h:Advance(900)
 			local res = h:Call(p, "Expeditions.Claim", { slot = 1 })
 			local base = Regions.LootPerMinute(1).coins * 15
-			expect(sumKind(res.rewards, "coins")).toBe(math.floor(base * (1 + 0.08 + 0.1 + 0.05)))
+			expect(sumKind(res.rewards, "coins")).toBe(math.floor(base * (1 + E:LootBonus(p, { paws[1], nose[1] }))))
 		end)
 
 		it("counts slots from unlocks and the Explorer pass", function()
@@ -432,8 +450,10 @@ return function(t)
 			h:Advance(14400)
 			local res = h:Call(host, "Expeditions.Claim", { slot = 1 })
 			local g = Regions.GlobalIndex("meadow", 5)
-			local base = Regions.LootPerMinute(g).coins * 240 * Regions.DurationBonus[14400]
-			expect(sumKind(res.rewards, "coins")).toBe(math.floor(base * (1 + Regions.Caravan.lootBonus)))
+			local pct = h:System("Expeditions"):LootBonus(host, c[1].ids) + Regions.Caravan.lootBonus
+			expect(sumKind(res.rewards, "coins")).toBe(
+				math.floor(Regions.LootPerMinute(g).coins * 240 * (Regions.DurationBonus[14400] * (1 + pct)))
+			)
 			local chestEggs = 0
 			for _, e in eggs do
 				if e.userId == host.UserId and e.egg == "grove" then

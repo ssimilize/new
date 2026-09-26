@@ -82,6 +82,8 @@ return {
 		-- Glow-up LR · live races on the track, racing gear
 		"LiveRace",
 		"RaceGear",
+		-- 3.7 · Ranch Jobs
+		"Jobs",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

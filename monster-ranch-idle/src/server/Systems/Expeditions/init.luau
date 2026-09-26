@@ -30,7 +30,8 @@
 	  • Timed expeditions farm a cleared stage. Loot comes from Logic/Loot and is rolled
 	    from the slot's saved seed at claim time, so offline runs simply finish on their own.
 	    Loot bonus = Lucky Paw traits (≤ Regions.LuckyPawMax members) + Treasure Nose passives
-	    + registered modifiers (+ Caravan bonus). Squad members are busy ("expedition").
+	    + the squad's Luck (3.7, Loot.LuckBonus, ≤ +15%) + registered modifiers (+ Caravan bonus).
+	    Squad members are busy ("expedition").
 	  • Recall ends a run early: loot for the time spent, no duration bonus, no caravan bonus.
 ]]
 
@@ -285,10 +286,12 @@ end
 
 function Expeditions:LootBonus(player, ids: { string }): number
 	local paws = {}
+	local lucks = {}
 	local passives = 0
 	for _, id in ids do
 		local m = Monsters:Get(player, id)
 		if m then
+			table.insert(lucks, Formulas.Stats(m).luck)
 			local pct = Config.Traits.Sum(Formulas.ActiveTraits(m), "lootPct")
 			if pct > 0 then
 				table.insert(paws, pct)
@@ -303,7 +306,7 @@ function Expeditions:LootBonus(player, ids: { string }): number
 	table.sort(paws, function(a, b)
 		return a > b
 	end)
-	local total = passives
+	local total = passives + Loot.LuckBonus(lucks)
 	for i = 1, math.min(#paws, Regions.LuckyPawMax or 3) do
 		total += paws[i]
 	end
