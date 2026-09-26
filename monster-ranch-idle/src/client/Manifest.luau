@@ -36,6 +36,11 @@ return {
 		"Landmarks",
 		-- Audio (client/Audio): music, ambience beds, monster chatter; Sound Check in Studio
 		"Soundscape",
+		-- Ambience (Config/Ambience): sky and clouds, dusk lights, scenery that moves, ambient life
+		"Sky",
+		"Lamplight",
+		"SceneryMotion",
+		"Critters",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

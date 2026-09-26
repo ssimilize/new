@@ -254,7 +254,8 @@ local function buildHub(World, root: Instance)
 	local fp = v3(World.Fountain.position)
 	local r = World.Fountain.radius
 	local basin = disc("Basin", r * 2, 1.6, fp + Vector3.new(0, y + 0.8, 0), COLORS.stone, fountain)
-	disc("Water", r * 2 - 2.5, 0.2, fp + Vector3.new(0, y + 1.45, 0), COLORS.water, fountain, {
+	-- the water's top sits just above the basin's rim (1.6), or the stone hides it
+	disc("Water", r * 2 - 2.5, 0.2, fp + Vector3.new(0, y + 1.62, 0), COLORS.water, fountain, {
 		CanCollide = false,
 		Transparency = 0.15,
 		Material = Enum.Material.Glass,

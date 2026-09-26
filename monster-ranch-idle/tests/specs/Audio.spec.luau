@@ -117,21 +117,23 @@ return function(t)
 			for _, line in Config.Species.Lines do
 				table.insert(needed, Logic.VoiceKey(line.archetype))
 			end
-			for _, key in {
-				"CoinTick",
-				"Gem",
-				"StarUp",
-				"QuestComplete",
-				"KO",
-				"RainStart",
-				"Thunder",
-				"WindGust",
-				"JarCollect",
-				"Pet",
-				"Eat",
-				"FootstepSoft",
-				"AmbienceFountain",
-			} do
+			for _, key in
+				{
+					"CoinTick",
+					"Gem",
+					"StarUp",
+					"QuestComplete",
+					"KO",
+					"RainStart",
+					"Thunder",
+					"WindGust",
+					"JarCollect",
+					"Pet",
+					"Eat",
+					"FootstepSoft",
+					"AmbienceFountain",
+				}
+			do
 				table.insert(needed, key)
 			end
 			for _, key in needed do

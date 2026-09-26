@@ -44,6 +44,7 @@ local Config = {
 	World = require(script.World),
 	Sounds = require(script.Sounds),
 	Flags = require(script.Flags),
+	Ambience = require(script.Ambience),
 }
 
 return Config

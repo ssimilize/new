@@ -761,14 +761,16 @@ return {
 				if type(params) == "table" and table.find(TABS, params.tab) then
 					tabs:Select(params.tab)
 				end
-				for _, path in {
-					"profile.Currency",
-					"profile.Shop",
-					"session.Monetization",
-					"profile.Monetization",
-					"profile.Quests.pass",
-					"profile.Quests.passCredit",
-				} do
+				for _, path in
+					{
+						"profile.Currency",
+						"profile.Shop",
+						"session.Monetization",
+						"profile.Monetization",
+						"profile.Quests.pass",
+						"profile.Quests.passCredit",
+					}
+				do
 					bag.add(ctx.Store:Observe(path, refresh))
 				end
 				refresh()
