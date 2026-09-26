@@ -224,7 +224,9 @@ return {
 						ctx.Bus:Publish("Vfx.Burst", "rebirth") -- World: held until this screen closes
 						local kit = ctx:GetController("Celebrate")
 						if kit then
-							kit:Play("huge")
+							kit:Play("huge", { sound = "Rebirth" })
+						else
+							ctx:Sound("Rebirth")
 						end
 						ctx:Toast(
 							string.format("Rebirth Star %d! +%s Stardust", res.stars or nextStar, Format.commas(res.stardust or 0)),

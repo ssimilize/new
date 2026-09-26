@@ -15,9 +15,10 @@
 	      label? (false = no "+N", when the caller already shows one).
 	  Celebrate:Hold(kinds) -> handle          freeze HUD counters ("coins" | "gems" | "food")
 	      before a request so the new balance waits for the flight; handle:Release() on failure
-	  Celebrate:Play(size)                     the screen-wide part: coin shower and confetti
+	  Celebrate:Play(size, opts?)              the screen-wide part: coin shower and confetti
 	                                           (big+), a light camera shake and FOV kick (huge),
-	                                           gamepad rumble, the size's sound
+	                                           gamepad rumble, the size's sound (opts.sound: a
+	                                           moment's own sting instead, false = none)
 	  Celebrate:CountUp(label, from, to, size, format) -> stop()
 	  Celebrate:Shockwave(gui, color?)         a ring expanding from a GuiObject (level-ups)
 	  Celebrate:Slam(gui, color?)              a star slams onto a GuiObject (star-ups)
@@ -476,10 +477,16 @@ function Celebrate:Hold(kinds: { string })
 	return handle
 end
 
-function Celebrate:Play(size: string)
+-- opts.sound: a Config.Sounds key to play instead of the size's own (false: none), for a moment
+-- that has its own sting (Rebirth).
+function Celebrate:Play(size: string, opts: { sound: (string | false)? }?)
 	local plan = Celebration.Plan(size, not Anim.enabled)
-	if plan.sound then
-		ctx:Sound(plan.sound)
+	local sound = plan.sound
+	if opts and opts.sound ~= nil then
+		sound = opts.sound
+	end
+	if sound then
+		ctx:Sound(sound)
 	end
 	rumble(plan.rumble)
 	shower(plan.shower)

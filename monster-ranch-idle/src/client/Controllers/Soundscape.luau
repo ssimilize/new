@@ -3,14 +3,15 @@
 	(src/client/Audio). Everything stays silent while the ids in Config.Sounds are empty.
 
 	Twice a second it works out the listening context from what the client already knows:
-	  battle     a BattleReplay viewer is up (ctx.UI.Top), or the Arena / Raids / Racing screen
+	  raid       the Raids screen            racing   the Racing screen
+	  battle     a BattleReplay viewer is up (ctx.UI.Top), or the Arena screen
 	  stampede   the Boss screen is open
 	  sky        SkyIslands.IsOnIslands()
 	  hub        the character is inside Config.World.HubRadius of the plaza
 	  night      global.Weather.night        weather   global.Weather.id
 	  event      Config.Events.ActiveId(now)
 	and hands it to Logic/Audio: MusicChain (crossfaded by Audio.SetMusic) and Beds (birdsong by
-	day, crickets at night, wind on the Sky Islands, rain). The fountain loop sits at
+	day and crickets at night as scatter beds, wind on the Sky Islands, rain, the hub crowd). The fountain loop sits at
 	Config.World.Fountain as a positional bed. One-shots: RainStart when rain rolls in, Thunder
 	just after each lightning flash (client bus "Weather.Lightning" from the Weather controller),
 	WindGust now and then up on the islands. Monster chatter: the closest few pen monsters
@@ -40,7 +41,7 @@ local Soundscape = {
 }
 
 local TICK = 0.5
-local BATTLE_SCREENS = { Arena = true, Raids = true, Racing = true }
+local BATTLE_SCREENS = { Arena = true }
 local RAINY = { rain = true, thunderstorm = true }
 local CHATTER = { count = 3, range = 50 }
 local CHATTER_LOW = { count = 1, range = 28 }
@@ -80,6 +81,8 @@ local function computeState()
 		eventId = result
 	end
 	return {
+		raid = current == "Raids",
+		racing = current == "Racing",
 		battle = ctx.UI.Top:FindFirstChild("BattleReplay") ~= nil or (current ~= nil and BATTLE_SCREENS[current] == true),
 		stampede = current == "Boss",
 		sky = onSky(),

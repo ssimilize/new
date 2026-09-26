@@ -35,19 +35,47 @@ return function(t)
 		return h, p, c
 	end
 
-	-- Fills ids into the client's own Config.Sounds (the table the kit reads) and drops cached specs.
-	local function fill(c, keys: { string })
-		local sounds = c.kernel.Config.Sounds
+	-- Sets one test id (or "" to blank it) on every key given, replacing its variations.
+	local function setIds(sounds, keys: { string }, blank: boolean?)
 		for i, key in keys do
 			local entry = sounds[key]
-			local id = "rbxassetid://" .. tostring(1000 + i)
+			local id = if blank then "" else "rbxassetid://" .. tostring(1000 + i)
 			if type(entry) == "table" then
 				entry.id = id
+				entry.ids = nil
 			else
 				sounds[key] = id
 			end
 		end
+	end
+
+	-- Fills test ids into the client's own Config.Sounds (the table the kit reads).
+	local function fill(c, keys: { string })
+		setIds(c.kernel.Config.Sounds, keys)
 		c:require(c.clientFolder.Audio).Refresh()
+	end
+
+	local function blank(c, keys: { string })
+		setIds(c.kernel.Config.Sounds, keys, true)
+		c:require(c.clientFolder.Audio).Refresh()
+	end
+
+	-- A client whose Config.Sounds is all placeholders from before boot, so only the keys a test
+	-- fills make sound (the shipped ids would add event music, beds and chatter to every check).
+	local function bootSilent()
+		local h = TestKernel.new({ systems = allSystems() })
+		local p = h:Join()
+		local c = ClientHarness.new(h, p, { noBoot = true })
+		local shared = c.globals.game:GetService("ReplicatedStorage").Shared
+		local sounds = c:require(shared.Config).Sounds
+		local keys = {}
+		for key in sounds do
+			table.insert(keys, key)
+		end
+		setIds(sounds, keys, true)
+		c:Boot()
+		c:Advance(1)
+		return c
 	end
 
 	local function idOf(c, key: string): string
@@ -89,8 +117,20 @@ return function(t)
 				local spec = Logic.Resolve(key, entry)
 				expect(spec ~= nil).toBe(true)
 				expect(table.find(Logic.Groups, spec.group) ~= nil).toBe(true)
-				if not spec.empty then
-					expect(string.match(spec.id, "^rbxassetid://%d+$") ~= nil).toBe(true)
+				if type(entry) == "table" and entry.ids ~= nil then
+					if type(entry.ids) ~= "table" or #entry.ids == 0 then
+						error(key .. ".ids must be a non-empty list")
+					end
+					for _, id in entry.ids do
+						if type(id) ~= "string" or not string.match(id, "^rbxassetid://%d+$") then
+							error(key .. ".ids has a malformed id: " .. tostring(id))
+						end
+					end
+				end
+				for _, id in spec.ids do
+					if not string.match(id, "^rbxassetid://%d+$") then
+						error(key .. " has a malformed id: " .. id)
+					end
 				end
 				n += 1
 			end
@@ -176,6 +216,25 @@ return function(t)
 			expect(Logic.Resolve("Nope", nil)).toBeNil()
 		end)
 
+		it("reads variations and scatter beds", function()
+			local spec = Logic.Resolve("VoiceFox", { id = "rbxassetid://3", ids = { "rbxassetid://1", "rbxassetid://2", "" } })
+			expect(#spec.ids).toBe(3)
+			expect(spec.id).toBe("rbxassetid://1")
+			expect(Logic.Resolve("X", { ids = {} }).empty).toBe(true)
+			local last = nil
+			for i = 1, 60 do
+				local id = Logic.PickId(spec, last, ((i * 7919) % 101) / 101)
+				expect(id ~= last).toBe(true)
+				last = id
+			end
+			expect(Logic.PickId(Logic.Resolve("Y", "rbxassetid://9"), "rbxassetid://9", 0.5)).toBe("rbxassetid://9")
+			local bed = Logic.Resolve("AmbienceBirds", { ids = { "rbxassetid://1" }, scatter = { min = 3, max = 9 } })
+			expect(bed.looped).toBe(false)
+			expect(bed.scatter.min).toBe(3)
+			expect(Logic.ScatterDelay(bed, 0)).toBe(3)
+			expect(Logic.ScatterDelay(bed, 1)).toBe(9)
+		end)
+
 		it("maps the two toggles onto the five groups", function()
 			local on = Logic.GroupVolumes({ music = true, sfx = true })
 			for _, group in Logic.Groups do
@@ -227,6 +286,8 @@ return function(t)
 		it("picks music by context priority and falls back to the ranch theme", function()
 			expect(Logic.MusicChain({ battle = true, stampede = true, sky = true })[1]).toBe("MusicBattle")
 			expect(Logic.MusicChain({ stampede = true })[1]).toBe("MusicStampede")
+			expect(Logic.MusicChain({ raid = true, battle = true })[1]).toBe("MusicRaid")
+			expect(Logic.MusicChain({ racing = true })[2]).toBe("MusicBattle")
 			local sky = Logic.MusicChain({ sky = true, hub = true, event = "frostfall" })
 			expect(sky[1]).toBe("MusicSkyIslands")
 			expect(sky[2]).toBe("MusicFrostfall")
@@ -251,6 +312,9 @@ return function(t)
 			local sky = Logic.Beds({ weather = "rain", sky = true })
 			expect(sky.AmbienceWind).toBe(1)
 			expect(sky.AmbienceRain < 1).toBe(true)
+			expect(Logic.Beds({ hub = true }).AmbienceHubCrowd).toBe(1)
+			expect(Logic.Beds({ hub = true, sky = true }).AmbienceHubCrowd).toBe(0)
+			expect(Logic.Beds({}).AmbienceHubCrowd).toBe(0)
 			expect(Logic.Kind("HatchGolden")).toBe("Hatching")
 			expect(Logic.Kind("SomethingNew")).toBe("Other")
 		end)
@@ -258,7 +322,7 @@ return function(t)
 
 	describe("client kit", function()
 		it("is silent and creates nothing while every id is empty", function()
-			local _, _, c = boot()
+			local c = bootSilent()
 			local service = soundService(c)
 			for _, group in Logic.Groups do
 				local g = service:FindFirstChild(group)
@@ -281,7 +345,7 @@ return function(t)
 		end)
 
 		it("clicks buttons and pools one-shots with cooldown and max concurrency", function()
-			local _, _, c = boot()
+			local c = bootSilent()
 			fill(c, { "ButtonClick", "UIOpen", "Hit" })
 			local Audio = c:require(c.clientFolder.Audio)
 			local click = idOf(c, "ButtonClick")
@@ -312,7 +376,7 @@ return function(t)
 		end)
 
 		it("follows the Music and Sound effects toggles", function()
-			local _, _, c = boot()
+			local c = bootSilent()
 			fill(c, { "Hit", "MusicRanch" })
 			local Audio = c:require(c.clientFolder.Audio)
 			local service = soundService(c)
@@ -336,7 +400,7 @@ return function(t)
 		end)
 
 		it("climbs a coin streak, plays positional sounds and ducks music under a sting", function()
-			local _, _, c = boot()
+			local c = bootSilent()
 			fill(c, { "CoinTick", "Pet", "LevelUp", "MusicRanch" })
 			local Audio = c:require(c.clientFolder.Audio)
 			local speeds = {}
@@ -365,6 +429,8 @@ return function(t)
 			c:Advance(0.5)
 			expect(music.Volume < full * 0.6).toBe(true)
 			c:Advance(4)
+			expect(music.Volume < full * 0.6).toBe(true) -- LevelUp is a long sting: duckHold 6
+			c:Advance(4)
 			expect(math.abs(music.Volume - full) < 0.01).toBe(true)
 			expectClean(c)
 		end)
@@ -372,7 +438,7 @@ return function(t)
 
 	describe("Soundscape", function()
 		it("crossfades from the ranch theme to battle music and back", function()
-			local _, _, c = boot()
+			local c = bootSilent()
 			fill(c, { "MusicRanch", "MusicBattle", "AmbienceBirds", "AmbienceFountain" })
 			c:Advance(4)
 			local ranch = loopSound(c, "MusicRanch")
@@ -393,7 +459,7 @@ return function(t)
 		end)
 
 		it("previews contexts and follows lightning with thunder", function()
-			local _, _, c = boot()
+			local c = bootSilent()
 			fill(c, { "MusicRanch", "MusicFrostfall", "Thunder", "AmbienceRain" })
 			local scape = c.kernel:GetController("Soundscape")
 			scape.Preview({ weather = "thunderstorm", event = "frostfall" })
@@ -410,9 +476,61 @@ return function(t)
 		end)
 	end)
 
+	describe("filled kit", function()
+		it("scatters birds around the camera, varies ids and hums at portals", function()
+			local _, _, c = boot()
+			local Audio = c:require(c.clientFolder.Audio)
+			local scape = c.kernel:GetController("Soundscape")
+			scape.Preview({ weather = "clear" })
+			local birds = {}
+			for _, id in c.kernel.Config.Sounds.AmbienceBirds.ids do
+				birds[id] = true
+			end
+			local before = #c.world.log.sounds
+			c:Advance(30, 0.5)
+			local chirps = 0
+			for i = before + 1, #c.world.log.sounds do
+				if birds[c.world.log.sounds[i]] then
+					chirps += 1
+				end
+			end
+			expect(chirps >= 3).toBe(true)
+			for _, d in c.globals.workspace.AudioEmitters:GetDescendants() do
+				if d:IsA("Sound") and d.Name == "AmbienceBirds" then
+					expect(d.Looped).toBe(false)
+					local offset = d.Parent.Position - c.globals.workspace.CurrentCamera.CFrame.Position
+					expect(Vector3.new(offset.X, 0, offset.Z).Magnitude <= 38.01).toBe(true)
+				end
+			end
+
+			local previous = nil
+			for _ = 1, 8 do
+				local s = Audio.Play("VoiceFox")
+				expect(s.SoundId ~= previous).toBe(true)
+				previous = s.SoundId
+				c:Advance(0.2)
+			end
+
+			local Instance = c.world:InstanceLibrary()
+			local portal = Instance.new("Part")
+			portal.Anchored = true
+			portal.CFrame = t.Roblox.CFrame.new(60, 5, -20)
+			portal.Parent = c.globals.workspace
+			local hum = Audio.LoopAt("PortalHum", portal)
+			expect(hum.Looped and hum.Playing).toBe(true)
+			expect(hum.Parent.Position).toBe(Vector3.new(60, 5, -20))
+			expect(Audio.LoopAt("PortalHum", portal)).toBe(hum)
+			portal:Destroy()
+			c:Advance(3)
+			expect(hum.Parent).toBeNil()
+			scape.Preview(nil)
+			expectClean(c)
+		end)
+	end)
+
 	describe("voices", function()
 		it("cries by archetype and pitch, rate-limits happy, and chatters from the closest", function()
-			local _, _, c = boot()
+			local c = bootSilent()
 			fill(c, { "VoiceFox" })
 			local Voices = c:require(c.clientFolder.Audio.Voices)
 			local baby = Voices.Cry({ line = "cindlet", stage = 1 }, "hatch")
@@ -420,7 +538,8 @@ return function(t)
 			c:Advance(0.3)
 			local adult = Voices.Cry({ line = "cindlet", stage = 3 }, "hatch")
 			expect(baby.PlaybackSpeed > adult.PlaybackSpeed).toBe(true)
-			expect(Voices.Cry({ line = "mossbun", stage = 1 }, "hatch")).toBeNil() -- a bunny: no id yet
+			blank(c, { "VoiceBunny" })
+			expect(Voices.Cry({ line = "mossbun", stage = 1 }, "hatch")).toBeNil() -- a bunny with no id
 
 			local Instance = c.world:InstanceLibrary()
 			local function monster(x: number)
@@ -467,8 +586,9 @@ return function(t)
 
 	describe("Sound Check", function()
 		it("lists every key with its id state and auditions it", function()
-			local _, _, c = boot()
+			local c = bootSilent()
 			fill(c, { "Gem", "MusicHub" })
+			blank(c, { "Hit" })
 			c.kernel.Router:Register(c:require(c.clientFolder.UI.Screens.SoundCheck))
 			local root = c:Open("SoundCheck")
 			c:Advance(0.5)

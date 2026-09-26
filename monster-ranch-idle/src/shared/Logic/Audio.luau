@@ -4,8 +4,12 @@
 
 	  Audio.Resolve(key, entry) -> spec?        a Config.Sounds entry (string or table) with every
 	                                            default filled in; nil for an unknown key
-	      spec = { key, id, empty, volume, pitchMin, pitchMax, group, cooldown, maxConcurrent,
-	               duck, looped }   looped defaults to true for the Music and Ambience groups
+	      spec = { key, id, ids, empty, volume, pitchMin, pitchMax, group, cooldown, maxConcurrent,
+	               duck, duckHold, looped, scatter? = { min, max } }
+	      ids = every variation (`ids` list, then `id`), id = the first; looped defaults to true for
+	      the Music and Ambience groups unless the entry scatters
+	  Audio.PickId(spec, lastId?, r01) -> id    a random variation, never lastId twice in a row
+	  Audio.ScatterDelay(spec, r01) -> seconds  the gap before a scatter bed's next one-shot
 	  Audio.GroupOf(key) -> group               the default group of a key (see Config/Sounds)
 	  Audio.GroupVolumes(settings) -> { [group] = 0..1 }   Music and Ambience follow the Music
 	                                            toggle; Effects, UI and Voice follow Sound effects
@@ -16,8 +20,9 @@
 	  Audio.VoicePitch({ line, stage, height }) -> number   smaller and younger = higher; each
 	                                            line gets its own fixed offset from its id
 	  Audio.HatchChain(rarity, variant) -> { key }          first key with an id wins
-	  Audio.MusicChain(state) -> { key }        state = { battle, stampede, sky, hub, night, event }
-	  Audio.Beds(state) -> { [key] = 0..1 }     ambience targets; state = { night, weather, sky }
+	  Audio.MusicChain(state) -> { key }        state = { raid, racing, battle, stampede, sky, hub,
+	                                            night, event }
+	  Audio.Beds(state) -> { [key] = 0..1 }     ambience targets; state = { night, weather, sky, hub }
 	  Audio.Kind(key) -> string                 the Sound Check heading a key is listed under
 	  Audio.First(sounds, chain) -> key?        the first key in chain whose id is filled in
 ]]
@@ -74,9 +79,23 @@ function Audio.Resolve(key: string, entry: any)
 	elseif type(entry) ~= "table" then
 		return nil
 	end
-	local id = if type(entry.id) == "string" then entry.id else ""
+	local ids = {}
+	for _, v in if type(entry.ids) == "table" then entry.ids else {} do
+		if type(v) == "string" and v ~= "" and not table.find(ids, v) then
+			table.insert(ids, v)
+		end
+	end
+	if type(entry.id) == "string" and entry.id ~= "" and not table.find(ids, entry.id) then
+		table.insert(ids, entry.id)
+	end
+	local id = ids[1] or ""
+	local scatter = nil
+	if type(entry.scatter) == "table" then
+		local min = math.max(0.5, number(entry.scatter.min or entry.scatter[1], 4))
+		scatter = { min = min, max = math.max(min, number(entry.scatter.max or entry.scatter[2], min * 3)) }
+	end
 	local group = if table.find(Audio.Groups, entry.group) then entry.group else Audio.GroupOf(key)
-	local looped = if type(entry.looped) == "boolean" then entry.looped else group == "Music" or group == "Ambience"
+	local looped = if type(entry.looped) == "boolean" then entry.looped else scatter == nil and (group == "Music" or group == "Ambience")
 	local pitchMin, pitchMax = 1, 1
 	if type(entry.pitch) == "number" then
 		pitchMin, pitchMax = entry.pitch, entry.pitch
@@ -87,7 +106,9 @@ function Audio.Resolve(key: string, entry: any)
 	return {
 		key = key,
 		id = id,
+		ids = ids,
 		empty = id == "",
+		scatter = scatter,
 		volume = math.clamp(number(entry.volume, if looped then DEFAULTS.loopVolume else DEFAULTS.volume), 0, 10),
 		pitchMin = math.max(0.05, math.min(pitchMin, pitchMax)),
 		pitchMax = math.max(0.05, math.max(pitchMin, pitchMax)),
@@ -95,6 +116,7 @@ function Audio.Resolve(key: string, entry: any)
 		cooldown = math.max(0, number(entry.cooldown, DEFAULTS.cooldown)),
 		maxConcurrent = math.max(1, math.floor(number(entry.maxConcurrent, if looped then 1 else DEFAULTS.maxConcurrent))),
 		duck = math.clamp(number(entry.duck, 0), 0, 1),
+		duckHold = math.max(0, number(entry.duckHold, 1.4)),
 		looped = looped,
 	}
 end
@@ -111,6 +133,26 @@ end
 
 function Audio.PickPitch(spec, r01: number): number
 	return spec.pitchMin + (spec.pitchMax - spec.pitchMin) * math.clamp(r01, 0, 1)
+end
+
+function Audio.PickId(spec, lastId: string?, r01: number): string
+	local ids = spec.ids or {}
+	local n = #ids
+	if n <= 1 then
+		return ids[1] or spec.id or ""
+	end
+	local last = table.find(ids, lastId)
+	if not last then
+		return ids[math.clamp(math.floor(r01 * n) + 1, 1, n)]
+	end
+	-- Pick among the other n - 1, so the same variation never plays twice in a row.
+	local pick = math.clamp(math.floor(r01 * (n - 1)) + 1, 1, n - 1)
+	return ids[if pick >= last then pick + 1 else pick]
+end
+
+function Audio.ScatterDelay(spec, r01: number): number
+	local scatter = spec.scatter or { min = 4, max = 12 }
+	return scatter.min + (scatter.max - scatter.min) * math.clamp(r01, 0, 1)
 end
 
 function Audio.StreakPitch(count: number): number
@@ -166,6 +208,12 @@ end
 
 function Audio.MusicChain(state): { string }
 	state = if type(state) == "table" then state else {}
+	if state.raid then
+		return { "MusicRaid", "MusicBattle" }
+	end
+	if state.racing then
+		return { "MusicRacing", "MusicBattle" }
+	end
 	if state.battle then
 		return { "MusicBattle" }
 	end
@@ -205,6 +253,7 @@ function Audio.Beds(state): { [string]: number }
 		AmbienceWind = if state.sky then 1 else (WINDY[weather] or 0),
 		-- Above the clouds the rain is below you: keep a hint of it.
 		AmbienceRain = if state.sky then rain * 0.35 else rain,
+		AmbienceHubCrowd = if state.hub and not state.sky then 1 - rain * 0.5 else 0,
 	}
 end
 
@@ -212,9 +261,10 @@ local KINDS = {
 	{ "UI", { "ButtonClick", "UIOpen", "UIClose", "UITab", "Purchase", "Locked", "Error" } },
 	{ "Rewards", { "CoinCollect", "CoinTick", "Gem", "StarUp", "LevelUp", "QuestComplete", "TradeDone" } },
 	{ "Hatching", { "EggCrack", "Evolve" } },
-	{ "Fights", { "Hit", "Crit", "KO", "Victory", "Defeat", "BossHorn" } },
+	{ "Moments", { "Rebirth", "Mutation" } },
+	{ "Fights", { "Hit", "Crit", "KO", "Heal", "Victory", "Defeat", "BossHorn" } },
 	{ "Weather", { "WeatherStart", "RainStart", "Thunder", "WindGust" } },
-	{ "World", { "JarCollect", "Pet", "Eat", "FootstepSoft" } },
+	{ "World", { "JarCollect", "Pet", "Eat", "FootstepSoft", "Teleport", "PortalHum" } },
 }
 local KIND_OF = {}
 for _, kind in KINDS do
@@ -222,7 +272,7 @@ for _, kind in KINDS do
 		KIND_OF[key] = kind[1]
 	end
 end
-Audio.KindOrder = { "UI", "Rewards", "Hatching", "Fights", "Weather", "World", "Music", "Ambience", "Voices", "Other" }
+Audio.KindOrder = { "UI", "Rewards", "Hatching", "Moments", "Fights", "Weather", "World", "Music", "Ambience", "Voices", "Other" }
 
 function Audio.Kind(key: string): string
 	if KIND_OF[key] then
