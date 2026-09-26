@@ -49,6 +49,28 @@ once for happy and attack, so it starts and ends at rest). Shared code is in `ri
 | golem | `rig_golem.py` | hips, chest, head, 2-bone arms (root: where a hanging arm stands clear of the body in a slice), short legs | heavy side-to-side stomp, arms swing against the legs; hop throws both fists up |
 | bug | `rig_bug.py` | body (front, with the face) and abdomen, antennae and wings (what rises above the shell line), six legs, 2-bone stinger | tripod gait, wings buzz in every clip; hop is a buzzing jump |
 
+Each script also keys nine extra clips (`EXTRA_CLIPS`; lengths, rates and modes in `riglib.EXTRA`):
+`sleep`, `eat` and `sit` loop, `cheer`, `cheer2`, `attack`, `hurt` and `trick` play once (start and
+end at rest), `faint` holds its last frame. They are keyed at 10-15 fps and go in a second module
+per form, `Visuals/MeshMonsterClips/<form>.luau` (`clipdata.py`), since both would not fit under the
+Source cap. `riglib.animate_extra` measures the skinned mesh every frame, so no pose sinks below the
+ground, and a clip can lay its lowest point on the floor (lying down; moths and sprites landing).
+
+Forms already in the game get them without a re-rig or a re-publish (the skeleton and skin are
+untouched; the rig is opened read-only):
+
+```sh
+python tools/blender/clips.py                          # every form in MeshMonsterAssets (about 8 min, 8 jobs)
+python tools/blender/clips.py zappip,moonlitdragon     # some forms
+python tools/blender/clips.py --check                  # only prove the rigs match the modules
+python tools/blender/clips.py beamhound --previews [--only sleep,faint]   # + art/rigs-clips/<form>/
+```
+
+`add_clips.py` (one form, in Blender) first proves that the rig's bones and its idle, walk and hop,
+sampled again, are byte for byte what `MeshMonsters/<form>.luau` holds, keys the clips, proves it
+again and writes the clips module; a form whose rig differs stops with an error and gets none.
+`MonsterAnimator` falls back to the old behaviour for any clip a form lacks.
+
 Moths and sprites are modelled hovering above the ground, and long or wide models get a `scale`
 below 1 in their module (a slug is drawn with about a fox's bulk, not its height).
 

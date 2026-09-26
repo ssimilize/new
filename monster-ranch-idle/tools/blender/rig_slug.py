@@ -19,6 +19,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from riglib import X, Y, Z, armature, below_base, finish, footprint_scale, framed_views, log, pulse, rot, run, set_game_scale, surface_samples  # noqa: E402
+from riglib import about, box, ramp  # noqa: E402
 
 ARGS = sys.argv[sys.argv.index("--") + 1 :]
 SRC, OUT = Path(ARGS[0]).resolve(), Path(ARGS[1]).resolve()
@@ -137,6 +138,135 @@ def clip_hop(arm, f, n):
     return pose, Vector((0, 0, 0.04 * up))
 
 
+
+# ─── The extra clips (riglib.EXTRA: sleep, eat, cheer, cheer2, attack, hurt, faint, sit, trick) ──
+
+
+def env(t: float, rise: float = 0.12, fall: float = 0.85) -> float:
+    """1 through a one-shot clip, easing in from 0 at its start and back to 0 at its end."""
+    return ramp(t, 0.0, rise) * (1 - ramp(t, fall, 1.0))
+
+
+def centre(arm) -> Vector:
+    lo, hi = box(arm)
+    return (lo + hi) / 2
+
+
+def spine(pose, curl, spread=1.0):
+    """Curls the tail segments to the model's right (curl degrees each)."""
+    for i in (1, 2, 3):
+        pose[f"tail.{i}"] = rot(Z, curl * spread**i)
+
+
+def clip_sleep(arm, f, n):
+    """Curls up, head resting on the ground, eye stalks drooping; slow breaths."""
+    b = math.sin(2 * math.pi * f / n)
+    pose = {"hips": rot(X, 1.5 * b), "chest": rot(Z, -18) @ rot(X, 8), "head": rot(Z, -22) @ rot(X, 22 + 2 * b)}
+    spine(pose, 30)
+    stalks(pose, 70, 0, 0)
+    return pose, Vector(), 1.0
+
+
+def clip_eat(arm, f, n):
+    """Head down to the ground, chomping, tail swaying."""
+    t = f / n
+    chew = 0.5 - 0.5 * math.cos(2 * math.pi * 3 * t)
+    ph = 2 * math.pi * t
+    pose = {"chest": rot(X, 12), "head": rot(X, 22 + 8 * chew)}
+    for i in (1, 2, 3):
+        pose[f"tail.{i}"] = rot(Z, 5 * math.sin(ph - 0.8 * i))
+    stalks(pose, 15 + 6 * chew, 6, 2 * ph)
+    return pose, Vector()
+
+
+def clip_cheer(arm, f, n):
+    """Rears up tall and sways, stalks waving, tail wagging."""
+    t = f / n
+    r = ramp(t, 0.0, 0.3) * (1 - ramp(t, 0.7, 1.0))
+    sway = math.sin(4 * math.pi * t) * r
+    pose = {"hips": rot(X, -6 * r), "chest": rot(X, -30 * r), "head": rot(X, 26 * r) @ rot(Z, 12 * sway)}
+    for i in (1, 2, 3):
+        pose[f"tail.{i}"] = rot(Z, 14 * math.sin(6 * math.pi * t - 0.8 * i) * r)
+    stalks(pose, -20 * r, 25 * r, 6 * math.pi * t)
+    return pose, Vector((0, 0, 0.03 * r))
+
+
+def clip_cheer2(arm, f, n):
+    """A happy S-wiggle running down the body, bouncing."""
+    t = f / n
+    e = env(t)
+    pose = {}
+    for i, name in enumerate(SPINE):
+        pose[name] = rot(Z, 16 * math.sin(4 * math.pi * t - 1.1 * i) * e)
+    pose["head"] = rot(X, -8 * e) @ pose["head"]
+    stalks(pose, -10 * e, 30 * e, 8 * math.pi * t)
+    return pose, Vector((0, 0, 0.02 * abs(math.sin(4 * math.pi * t)) * e))
+
+
+def clip_attack(arm, f, n):
+    """Rears back, then strikes forward and down, and recovers."""
+    t = f / n
+    wind = ramp(t, 0.0, 0.35) * (1 - ramp(t, 0.35, 0.5))
+    hit = ramp(t, 0.35, 0.5) * (1 - ramp(t, 0.6, 1.0))
+    pose = {"hips": rot(X, -6 * wind), "chest": rot(X, -28 * wind + 16 * hit), "head": rot(X, 20 * wind + 14 * hit)}
+    stalks(pose, -30 * wind - 20 * hit, 0, 0)
+    return pose, Vector((0, 0.04 * wind - 0.18 * hit, 0))
+
+
+def clip_hurt(arm, f, n):
+    """Recoils with a shake, eye stalks pulled back."""
+    t = f / n
+    e = ramp(t, 0.0, 0.15) * (1 - ramp(t, 0.3, 1.0))
+    shake = math.sin(2 * math.pi * 5 * t) * e
+    pose = {"chest": rot(X, -14 * e), "head": rot(X, -10 * e) @ rot(Z, 14 * shake), "tail.2": rot(Z, 10 * shake)}
+    stalks(pose, -45 * e, 0, 0)
+    return pose, Vector((0, 0.06 * e, 0.01 * e))
+
+
+def clip_faint(arm, f, n):
+    """Flops over onto its side, stalks limp."""
+    t = f / n
+    fall = ramp(t, 0.25, 0.75)
+    q = rot(Y, 75 * fall)
+    pose = {"hips": q, "head": rot(X, 12 * fall)}
+    spine(pose, -10 * fall)
+    stalks(pose, 50 * fall, 0, 0)
+    return pose, about(arm, q, centre(arm), "hips"), fall
+
+
+def clip_sit(arm, f, n):
+    """Coils up with the front raised, looking around."""
+    t = f / n
+    pose = {"chest": rot(X, -12), "head": rot(X, 10) @ rot(Z, 8 * math.sin(2 * math.pi * t))}
+    spine(pose, 32)
+    stalks(pose, 4 * math.sin(4 * math.pi * t), 8, 2 * math.pi * t)
+    return pose, Vector()
+
+
+def clip_trick(arm, f, n):
+    """Spins a full turn on the spot, front reared, tail flung out."""
+    t = f / n
+    e = env(t)
+    q = rot(Z, 360 * ramp(t, 0.1, 0.9))
+    pose = {"hips": q, "chest": rot(X, -15 * e), "head": rot(X, 10 * e)}
+    spine(pose, 14 * e)
+    stalks(pose, -25 * e, 20 * e, 8 * math.pi * t)
+    return pose, about(arm, q, centre(arm), "hips")
+
+
+EXTRA_CLIPS = {
+    "sleep": clip_sleep,
+    "eat": clip_eat,
+    "cheer": clip_cheer,
+    "cheer2": clip_cheer2,
+    "attack": clip_attack,
+    "hurt": clip_hurt,
+    "faint": clip_faint,
+    "sit": clip_sit,
+    "trick": clip_trick,
+}
+
 CLIPS = {"idle": (clip_idle, 60), "walk": (clip_walk, 30), "hop": (clip_hop, 24)}
 
-run(SRC, OUT, ARGS, fit, build, CLIPS, give_back=(("stalk.", below_base),), views=framed_views)
+if __name__ == "__main__":  # add_clips.py imports the clip functions
+    run(SRC, OUT, ARGS, fit, build, CLIPS, give_back=(("stalk.", below_base),), views=framed_views, extra=EXTRA_CLIPS)

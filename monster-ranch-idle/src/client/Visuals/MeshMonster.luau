@@ -15,11 +15,18 @@
 		MeshMonster.Has(form) -> boolean
 		MeshMonster.Build(appearance, size, anchored, look?) -> Model   MonsterModel's contract; size in studs
 		MeshMonster.Pose(model, clip, t, loop)                sets every Bone.Transform for time t
+		MeshMonster.HasClip(model, clip) -> boolean           the form has that authored clip
+		MeshMonster.Length(model, clip) -> number?            its length in seconds
 		MeshMonster.BoneCFrame(model, bone) -> CFrame?        a bone's current pose, in Root space
 		MeshMonster.Slot(model, slot) -> Slot?                where an accessory slot sits on the rig
 		MeshMonster.Attach(model, weld, slot)                 from now on the weld's C0 follows the slot's bone
 		MeshMonster.Follow(model) -> boolean                  moves attached welds to the last pose
 		MeshMonster.SetMeshSource(fn?)                        tests: build meshes without the engine
+
+	The extra clips (sleep, eat, cheer, cheer2, attack, hurt, faint, sit, trick) are in a second
+	module per form, MeshMonsterClips/<form> (tools/blender/clips.py), added to the first one's
+	idle, walk and hop; a form without one has only those three. Switching clips eases over BLEND
+	seconds from the pose the last clip left, so lying down or getting up is not a jump.
 
 	The model is MonsterModel's shape: an invisible anchored "Root" at the ground point, a welded
 	MeshPart "Mesh" with the Bone instances under it, "Head" and "Feet" attachments, and the usual
@@ -68,10 +75,15 @@ type Rig = {
 	locals: { CFrame }, -- each bone's rest CFrame in its parent bone's space (a top bone's in Root space)
 	pose: { CFrame }, -- the Transform Pose last wrote, per bone
 	followers: { Follower }?,
+	clip: string?, -- the clip Pose last played
+	from: { CFrame }?, -- the pose a clip switch eases from (BLEND), nil once it has
+	since: number, -- os.clock() of that switch
 }
 export type Slot = { bone: string, frame: CFrame, s: number, body: Vector3 }
 
 local folder = script.Parent:FindFirstChild("MeshMonsters")
+local extraFolder = script.Parent:FindFirstChild("MeshMonsterClips")
+local BLEND = 0.25
 local cache: { [string]: Data } = {}
 local templates: { [string]: MeshPart } = {}
 local loading: { [string]: boolean } = {}
@@ -136,6 +148,16 @@ local function load(form: string): Data
 	local clips = {}
 	for name, clip in raw.clips do
 		clips[name] = { fps = clip.fps, frames = clip.frames, data = decode(clip.data) }
+	end
+	-- The extra clips, keyed on the same bones (a module for other bones would twist the mesh).
+	local extraModule = extraFolder and extraFolder:FindFirstChild(form)
+	if extraModule then
+		local extra = require(extraModule :: ModuleScript) :: any
+		if extra.bones == #raw.bones then
+			for name, clip in extra.clips do
+				clips[name] = { fps = clip.fps, frames = clip.frames, data = decode(clip.data) }
+			end
+		end
 	end
 	data = {
 		bones = raw.bones,
@@ -255,6 +277,7 @@ function MeshMonster.Build(appearance, size: number, anchored: boolean, look: st
 		locals = locals,
 		pose = table.create(#instances, CFrame.identity),
 		followers = nil,
+		since = 0,
 	}
 
 	-- The tap target: the skinned mesh is not queryable (and would be hit in its rest pose anyway).
@@ -305,6 +328,17 @@ end
 
 -- ─── Posing ──────────────────────────────────────────────────────────────────────────
 
+function MeshMonster.HasClip(model: Model, clipName: string): boolean
+	local rig = rigs[model]
+	return rig ~= nil and rig.data.clips[clipName] ~= nil
+end
+
+function MeshMonster.Length(model: Model, clipName: string): number?
+	local rig = rigs[model]
+	local clip = rig and rig.data.clips[clipName]
+	return if clip then (clip.frames - 1) / clip.fps else nil
+end
+
 -- Sets every bone to `clip` at time t (seconds). Looping clips wrap (their last frame repeats the
 -- first); others hold their last frame.
 function MeshMonster.Pose(model: Model, clipName: string, t: number, loop: boolean)
@@ -313,6 +347,23 @@ function MeshMonster.Pose(model: Model, clipName: string, t: number, loop: boole
 	if not rig or not clip then
 		return
 	end
+	local now = os.clock()
+	if rig.clip ~= clipName then
+		if rig.clip ~= nil then
+			local from = table.create(#rig.bones)
+			for i, bone in rig.bones do
+				from[i] = bone.Transform
+			end
+			rig.from, rig.since = from, now
+		end
+		rig.clip = clipName
+	end
+	local blendFrom = rig.from
+	local w = if blendFrom then math.min((now - rig.since) / BLEND, 1) else 1
+	if w >= 1 then
+		rig.from, blendFrom = nil, nil
+	end
+	w = w * w * (3 - 2 * w)
 	local span = clip.frames - 1
 	local f = t * clip.fps
 	f = if loop then f % span else math.clamp(f, 0, span)
@@ -343,6 +394,9 @@ function MeshMonster.Pose(model: Model, clipName: string, t: number, loop: boole
 			readf32(data, c + 12)
 		)
 		local transform = from:Lerp(to, alpha)
+		if blendFrom then
+			transform = blendFrom[i]:Lerp(transform, w)
+		end
 		pose[i] = transform
 		bone.Transform = transform
 	end

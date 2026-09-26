@@ -32,3 +32,6 @@ __pycache__/
 # by the tool; only the small contact sheet in art/eggs/preview is kept.
 art/eggs/*
 !art/eggs/preview/
+
+# Extra-clip previews (tools/blender/clips.py --previews), rendered from the rigs.
+art/rigs-clips/

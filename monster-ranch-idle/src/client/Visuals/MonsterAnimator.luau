@@ -5,12 +5,15 @@
 		local anim = MonsterAnimator.new(model)
 		anim:SetBase(CFrame.new(x, floorY, z))    -- ground point + facing (front is -Z)
 		anim:Play("idle")                          -- idle | walk | happy | eat | attack | hurt | sleep
+		anim:Play("sit")                           -- sit (loops) | trick (once) | faint (holds until the next Play)
 		anim:MoveTo(Vector3.new(x, floorY, z), function() end)   -- hop-walk, faces travel direction
 		anim:Destroy()                             -- stops animating (does not destroy the model)
 
 	Extra (non-contract) helpers:
 	  anim:Play("wobble") + anim:SetIntensity(0..1)   egg wobble (faster near 1)
 	  anim:IsMoving(), anim:GetPosition(), anim:Stop()  (Stop cancels a MoveTo)
+	  anim:GetState()                                  the state playing ("idle" after a one-shot ends)
+	  MonsterAnimator.SkinnedClip(...)                 which authored clip a 3D monster plays (below)
 	  MonsterAnimator.SetLowGraphics(bool)             fewer updates for every animator
 	  MonsterAnimator.Count()                          live animators (debug)
 
@@ -23,11 +26,14 @@
 	Near animators also squash and stretch the "Body" part: through its SpecialMesh Scale when
 	it has one (cheap, no physics update), otherwise through its Size (never welds).
 	Skinned models (attribute Skinned, built by MeshMonster) play their authored clips instead: walk
-	while moving, idle at rest (slowed for sleep), hop for happy and attack. Their hop-walk bounce is
-	dropped (the walk clip bobs) and "happy" keeps only its spin. A skinned model's "Body" (it has
-	none) is never squashed or hue-cycled: its Rainbow look is a static texture (MonsterLooks). When
-	it wears accessories, MeshMonster.Follow moves them onto the new pose right after each Pose, so
-	they get the same distance LOD as the clip.
+	while moving, idle at rest, and sleep, eat, attack, hurt, faint, sit and trick by name; happy is
+	cheer or cheer2 at random. A form whose modules lack a clip (rigged before the extra clips) falls
+	back to what it did before: sleep is idle slowed, eat, hurt, sit and faint keep the procedural
+	offset over idle, happy and trick spin through hop, attack lunges through hop. The hop-walk bounce
+	is dropped (the walk clip bobs). Authored attack, hurt, trick and cheer clips run their own length.
+	A skinned model's "Body" (it has none) is never squashed or hue-cycled: its Rainbow look is a
+	static texture (MonsterLooks). When it wears accessories, MeshMonster.Follow moves them onto the
+	new pose right after each Pose, so they get the same distance LOD as the clip.
 ]]
 
 local RunService = game:GetService("RunService")
@@ -44,8 +50,10 @@ local MID_INTERVAL = 1 / 20
 local LOW_INTERVAL = 1 / 15
 local HUE_STEPS = 72
 
-local ONE_SHOT = { happy = 0.9, eat = 1.6, attack = 0.55, hurt = 0.5 }
-local LOOPING = { idle = true, walk = true, sleep = true, wobble = true }
+local ONE_SHOT = { happy = 0.9, eat = 1.6, attack = 0.55, hurt = 0.5, trick = 1.1 }
+local LOOPING = { idle = true, walk = true, sleep = true, wobble = true, sit = true }
+local HOLD = { faint = true } -- stays until the next Play or MoveTo
+local CLIP_LENGTH = { happy = true, attack = true, hurt = true, trick = true } -- authored ones run their own length
 
 local TAU = math.pi * 2
 local sin, cos, abs, min, clamp = math.sin, math.cos, math.abs, math.min, math.clamp
@@ -109,6 +117,11 @@ function MonsterAnimator.new(model: Model)
 		_prismatic = model:GetAttribute("Prismatic") == true,
 		_skinned = skinned,
 		_wearing = skinned and MeshMonster.Follow(model), -- attached accessories to keep on the bones
+		_has = function(clip: string): boolean
+			return MeshMonster.HasClip(model, clip)
+		end,
+		_cheer = "cheer",
+		_length = 0,
 		_target = nil :: Vector3?,
 		_onArrive = nil :: (() -> ())?,
 		_speed = 5 + (if type(height) == "number" then height else 3) * 0.6,
@@ -147,6 +160,10 @@ function MonsterAnimator:IsMoving(): boolean
 	return self._target ~= nil
 end
 
+function MonsterAnimator:GetState(): string
+	return self._state
+end
+
 function MonsterAnimator:SetIntensity(x: number)
 	self._intensity = clamp(x, 0, 1)
 end
@@ -155,7 +172,7 @@ function MonsterAnimator:Play(state: string)
 	if self._dead then
 		return
 	end
-	if not (ONE_SHOT[state] or LOOPING[state]) then
+	if not (ONE_SHOT[state] or LOOPING[state] or HOLD[state]) then
 		state = "idle"
 	end
 	if state == "walk" and self._target == nil then
@@ -165,6 +182,14 @@ function MonsterAnimator:Play(state: string)
 		self._t = 0
 	end
 	self._state = state
+	if state == "happy" then
+		self._cheer = if math.random() < 0.5 then "cheer" else "cheer2"
+	end
+	self._length = ONE_SHOT[state] or 0
+	local clip = if state == "happy" then self._cheer else state
+	if self._skinned and CLIP_LENGTH[state] and MeshMonster.HasClip(self.model, clip) then
+		self._length = MeshMonster.Length(self.model, clip) or self._length
+	end
 	if state == "hurt" then
 		self:_flash()
 	end
@@ -298,7 +323,7 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 		self:_squash(0.035 * b, near)
 		offset = CFrame.new(0, -s * 0.06, 0) * CFrame.Angles(0.08, 0, 0.22)
 	elseif state == "happy" then
-		local p = min(t / ONE_SHOT.happy, 1)
+		local p = min(t / self._length, 1)
 		local e = smooth(p)
 		self:_squash(-0.1 * sin(p * math.pi), near)
 		offset = CFrame.new(0, sin(p * math.pi) * s * 0.7, 0) * CFrame.Angles(0, e * TAU, 0)
@@ -306,7 +331,7 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 			self:_endOneShot()
 		end
 	elseif state == "eat" then
-		local p = min(t / ONE_SHOT.eat, 1)
+		local p = min(t / self._length, 1)
 		local nod = abs(sin(t * 9)) * 0.35 * (1 - p * 0.3)
 		self:_squash(0.04 * sin(t * 18), near)
 		offset = CFrame.new(0, 0, -s * 0.05) * CFrame.Angles(-nod, 0, 0)
@@ -314,7 +339,7 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 			self:_endOneShot()
 		end
 	elseif state == "attack" then
-		local p = min(t / ONE_SHOT.attack, 1)
+		local p = min(t / self._length, 1)
 		local lunge = if p < 0.35 then -0.25 * (p / 0.35) else sin((p - 0.35) / 0.65 * math.pi) * 1.1
 		self:_squash(0.08 * sin(p * math.pi), near)
 		offset = CFrame.new(0, sin(p * math.pi) * s * 0.12, -lunge * s * 0.5) * CFrame.Angles(-0.25 * sin(p * math.pi), 0, 0)
@@ -322,13 +347,29 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 			self:_endOneShot()
 		end
 	elseif state == "hurt" then
-		local p = min(t / ONE_SHOT.hurt, 1)
+		local p = min(t / self._length, 1)
 		local shake = sin(t * 55) * s * 0.08 * (1 - p)
 		if self._highlight then
 			self._highlight.FillTransparency = 0.15 + 0.85 * p
 		end
 		self:_squash(0, near)
 		offset = CFrame.new(shake, 0, s * 0.06 * (1 - p)) * CFrame.Angles(0.15 * (1 - p), 0, 0)
+		if p >= 1 then
+			self:_endOneShot()
+		end
+	elseif state == "sit" then
+		local b = sin(t * 1.6 + phase)
+		self:_squash(0.12 + 0.02 * b, near)
+		offset = CFrame.new(0, -s * 0.04, 0) * CFrame.Angles(-0.15, 0, 0)
+	elseif state == "faint" then
+		local e = smooth(min(t / 0.7, 1))
+		self:_squash(0.08 * e, near)
+		offset = CFrame.new(0, s * 0.15 * e, 0) * CFrame.Angles(0, 0, 1.4 * e)
+	elseif state == "trick" then
+		local p = min(t / self._length, 1)
+		local h = self._halfHeight
+		self:_squash(-0.1 * sin(p * math.pi), near)
+		offset = CFrame.new(0, h + sin(p * math.pi) * s * 0.6, 0) * CFrame.Angles(-smooth(p) * TAU, 0, 0) * CFrame.new(0, -h, 0)
 		if p >= 1 then
 			self:_endOneShot()
 		end
@@ -345,18 +386,10 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 	end
 
 	if self._skinned then
-		local clip, time, loop = "idle", t + phase, true
-		if state == "walk" then
-			clip, time = "walk", t
-			offset = CFrame.identity
-		elseif state == "happy" or state == "attack" then
-			clip, time, loop = "hop", t, false
-			offset = if state == "happy" then CFrame.Angles(0, smooth(min(t / ONE_SHOT.happy, 1)) * TAU, 0) else offset
-		elseif state == "idle" then
-			offset = CFrame.identity
-		elseif state == "sleep" then
-			time = (t + phase) * 0.4
-			offset = CFrame.identity
+		local clip, time, loop, keep = MonsterAnimator.SkinnedClip(state, self._has, t, phase, self._cheer)
+		if not keep then
+			local spin = clip == "hop" and (state == "happy" or state == "trick")
+			offset = if spin then CFrame.Angles(0, smooth(min(t / self._length, 1)) * TAU, 0) else CFrame.identity
 		end
 		MeshMonster.Pose(self.model, clip, time, loop)
 		if self._wearing then
@@ -374,6 +407,44 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 	end
 
 	self.model:PivotTo(self._base * offset)
+end
+
+-- Which authored clip a skinned monster plays in `state`, at what time and whether it loops, and
+-- whether the procedural offset worked out for the state still applies (keep): the fallbacks for a
+-- form whose modules have only idle, walk and hop. has(clip) says whether the form has a clip;
+-- cheer is the happy variant picked on Play. Pure, so the spec can check any set of clips.
+function MonsterAnimator.SkinnedClip(
+	state: string,
+	has: (string) -> boolean,
+	t: number,
+	phase: number,
+	cheer: string?
+): (string, number, boolean, boolean)
+	if state == "walk" then
+		return "walk", t, true, false
+	elseif state == "happy" or state == "attack" or state == "trick" then
+		local clip = if state == "happy" then cheer or "cheer" else state
+		if has(clip) then
+			return clip, t, false, false
+		end
+		return "hop", t, false, state == "attack" -- attack keeps its lunge; happy and trick spin
+	elseif state == "sleep" then
+		if has("sleep") then
+			return "sleep", t, true, false
+		end
+		return "idle", (t + phase) * 0.4, true, false
+	elseif state == "eat" or state == "sit" then
+		if has(state) then
+			return state, t, true, false
+		end
+		return "idle", t + phase, true, true
+	elseif state == "hurt" or state == "faint" then
+		if has(state) then
+			return state, t, false, false
+		end
+		return "idle", if state == "faint" then 0 else t + phase, true, true
+	end
+	return "idle", t + phase, true, false
 end
 
 function step(dt: number)

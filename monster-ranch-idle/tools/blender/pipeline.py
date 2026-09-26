@@ -73,7 +73,8 @@ def run(form: str, kind: str, previews: bool, source: str = "meshy", name: str |
     # same size kept only 57-66% of its texels (2026-09-25), so its own texture goes out as it is.
     bake = "[bake] kept Roblox's own 1024 px atlas" if source == "rbxgen" else blender(str(rig_dir / "rig.blend"), "--python", str(HERE / "bake_texture.py"))
     export = blender(str(rig_dir / "rig.blend"), "--python", str(HERE / "export_roblox.py"), "--", form, str(MODULES), str(ROOT / "art" / "export"))
-    subprocess.run([str(STYLUA), str(MODULES / f"{form}.luau")], check=True)
+    extra = MODULES.parent / "MeshMonsterClips" / f"{form}.luau"  # the rig's extra clips (export_roblox.py)
+    subprocess.run([str(STYLUA), str(MODULES / f"{form}.luau"), *([str(extra)] if extra.exists() else [])], check=True)
     summary = [line for line in (rig + "\n" + bake + "\n" + export).splitlines() if line.startswith(("[rig] landmarks", "[rig] skeleton", "[rig] game scale", "[rig] skin: WARNING", "[bake]", "[export]"))]
     print(f"== {form} ({kind})\n" + "\n".join(summary), flush=True)
 
