@@ -125,6 +125,10 @@ return {
 	AmbienceRain = { id = "rbxassetid://9118034034", volume = 0.45 },
 	AmbienceFountain = { id = "rbxassetid://9116611237", volume = 0.5 }, -- positional, at the plaza fountain
 	AmbienceHubCrowd = { id = "rbxassetid://9114012848", volume = 0.18 }, -- the plaza, kept low
+	-- Glow-up DR · Deep Reef (ids to fill: nothing in the kit fits yet, so these stay silent)
+	AmbienceReef = { id = "", volume = 0.45 }, -- the underwater bed: a low hum, far whale song, bubbles
+	MusicReef = "", -- falls back to the ranch music until filled
+	ReefDive = { id = "", volume = 0.5, pitch = { 0.95, 1.05 } }, -- the splash as you dive or surface
 
 	-- Monster voices: one family per Species archetype, three variations each ---------
 	VoiceBlob = { -- squeaky

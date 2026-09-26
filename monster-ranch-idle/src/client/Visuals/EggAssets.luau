@@ -41,6 +41,7 @@ return {
 		glacier = "rbxassetid://120914925398637",
 		leviathan = "rbxassetid://104125614974582",
 		titan = "",
+		reef = "", -- glow-up DR: the Reef Egg's texture is still to be painted
 	},
 	ornaments = {
 		royal = { mesh = "rbxassetid://96045268961641", texture = "rbxassetid://107952246798424", offset = { 0.0225, 0.5944, -0.0393 } },

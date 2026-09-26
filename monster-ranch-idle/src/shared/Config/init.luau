@@ -66,6 +66,8 @@ local Config = {
 	Editions = require(script.Editions),
 	-- Glow-up Y: likes that pay, the crown, ranch visits and snapshots, Ranch of the Week
 	Visits = require(script.Visits),
+	-- Glow-up DR: the Deep Reef you dive into, swimming and swimming mounts
+	DeepReef = require(script.DeepReef),
 }
 
 return Config

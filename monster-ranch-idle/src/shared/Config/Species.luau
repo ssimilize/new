@@ -1081,6 +1081,60 @@ Species.Lines = {
 		passive = "lucky",
 		pools = { "frostfall" },
 	}),
+	-- ── Glow-up DR · Deep Reef (roadmap 4.0 · Tides of the Deep): three Tide lines that swim ──
+	-- `swims` lets Controllers/DeepReef and Mounts ride them under water. Hatched from the Reef Egg.
+	line({
+		id = "finnip",
+		elements = { "tide" },
+		archetype = "fox",
+		swims = true,
+		added = "4.0",
+		forms = {
+			{ id = "finnip", name = "Finnip" },
+			{ id = "ripplefin", name = "Ripplefin" },
+			{ { id = "reefrunner", name = "Reefrunner", diet = "sour" }, { id = "deepcurrent", name = "Deepcurrent", diet = "sweet" } },
+		},
+		base = { hp = 150, atk = 42, def = 24, spd = 22, luck = 9 },
+		weight = 4.2,
+		special = "strike",
+		passive = "haste",
+		pools = { "reef" },
+	}),
+	line({
+		id = "glowray",
+		elements = { "tide", "light" },
+		archetype = "moth",
+		swims = true,
+		added = "4.0",
+		forms = {
+			{ id = "glowray", name = "Glowray" },
+			{ id = "lumimanta", name = "Lumimanta" },
+			{ { id = "auroramanta", name = "Aurora Manta" } },
+		},
+		base = { hp = 140, atk = 40, def = 22, spd = 24, luck = 11 },
+		weight = 7.5,
+		special = "blast",
+		passive = "rally",
+		pools = { "reef" },
+	}),
+	line({
+		id = "shellkin",
+		elements = { "tide", "stone" },
+		archetype = "golem",
+		swims = true,
+		added = "4.0",
+		forms = {
+			{ id = "shellkin", name = "Shellkin" },
+			{ id = "reefback", name = "Reefback" },
+			{ { id = "atolltitan", name = "Atoll Titan" } },
+		},
+		base = { hp = 205, atk = 36, def = 36, spd = 10, luck = 7 },
+		weight = 22.0,
+		special = "taunt",
+		passive = "guard",
+		pools = { "reef" },
+	}),
+	-- ── end of glow-up DR block ──
 }
 
 -- Lookups ---------------------------------------------------------------

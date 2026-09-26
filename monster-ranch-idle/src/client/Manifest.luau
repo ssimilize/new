@@ -37,6 +37,8 @@ return {
 		"Mounts",
 		-- Glow-up LR: live races on the track (lobby, countdown, riding, podium), racing gear on mounts
 		"LiveRace",
+		-- Glow-up DR · the Deep Reef you dive into, swimming and swimming mounts
+		"DeepReef",
 		-- 3.2 · Frostbite Glacier
 		"Gamepad",
 		-- Particle effects (Visuals/Vfx): landmark ambience
