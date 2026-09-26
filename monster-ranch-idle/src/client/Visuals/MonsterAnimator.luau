@@ -24,7 +24,10 @@
 	it has one (cheap, no physics update), otherwise through its Size (never welds).
 	Skinned models (attribute Skinned, built by MeshMonster) play their authored clips instead: walk
 	while moving, idle at rest (slowed for sleep), hop for happy and attack. Their hop-walk bounce is
-	dropped (the walk clip bobs) and "happy" keeps only its spin.
+	dropped (the walk clip bobs) and "happy" keeps only its spin. A skinned model's "Body" (it has
+	none) is never squashed or hue-cycled: its Rainbow look is a static texture (MonsterLooks). When
+	it wears accessories, MeshMonster.Follow moves them onto the new pose right after each Pose, so
+	they get the same distance LOD as the clip.
 ]]
 
 local RunService = game:GetService("RunService")
@@ -84,7 +87,8 @@ end
 
 function MonsterAnimator.new(model: Model)
 	local root = model.PrimaryPart
-	local body = model:FindFirstChild("Body")
+	local skinned = model:GetAttribute("Skinned") == true
+	local body = if skinned then nil else model:FindFirstChild("Body")
 	local height = model:GetAttribute("Height")
 	local self = setmetatable({
 		model = model,
@@ -103,7 +107,8 @@ function MonsterAnimator.new(model: Model)
 		_hueOffset = math.random(1, HUE_STEPS),
 		_rainbow = model:GetAttribute("Rainbow") == true,
 		_prismatic = model:GetAttribute("Prismatic") == true,
-		_skinned = model:GetAttribute("Skinned") == true,
+		_skinned = skinned,
+		_wearing = skinned and MeshMonster.Follow(model), -- attached accessories to keep on the bones
 		_target = nil :: Vector3?,
 		_onArrive = nil :: (() -> ())?,
 		_speed = 5 + (if type(height) == "number" then height else 3) * 0.6,
@@ -354,6 +359,9 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 			offset = CFrame.identity
 		end
 		MeshMonster.Pose(self.model, clip, time, loop)
+		if self._wearing then
+			MeshMonster.Follow(self.model)
+		end
 	end
 
 	local body = self._body

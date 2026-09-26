@@ -13,15 +13,35 @@
 	memory budget ran out at about eight monsters on screen, 2026-09-25.)
 
 		MeshMonster.Has(form) -> boolean
-		MeshMonster.Build(appearance, size, anchored) -> Model   MonsterModel's contract; size in studs
-		MeshMonster.Pose(model, clip, t, loop)                    sets every Bone.Transform for time t
+		MeshMonster.Build(appearance, size, anchored, look?) -> Model   MonsterModel's contract; size in studs
+		MeshMonster.Pose(model, clip, t, loop)                sets every Bone.Transform for time t
+		MeshMonster.BoneCFrame(model, bone) -> CFrame?        a bone's current pose, in Root space
+		MeshMonster.Slot(model, slot) -> Slot?                where an accessory slot sits on the rig
+		MeshMonster.Attach(model, weld, slot)                 from now on the weld's C0 follows the slot's bone
+		MeshMonster.Follow(model) -> boolean                  moves attached welds to the last pose
+		MeshMonster.SetMeshSource(fn?)                        tests: build meshes without the engine
 
 	The model is MonsterModel's shape: an invisible anchored "Root" at the ground point, a welded
 	MeshPart "Mesh" with the Bone instances under it, "Head" and "Feet" attachments, and the usual
 	attributes plus Skinned = true (MonsterAnimator plays clips instead of squashing a "Body" part).
+	The Mesh is not queryable (and a skinned mesh is raycast in its rest pose anyway), so an
+	invisible "Hit" box over the mesh's bounds is the tap target; World turns its CanQuery on.
+
+	Looks: Golden, Rainbow and Shadow monsters get a recoloured texture from MonsterLooks, swapped in
+	when it is drawn (the normal texture until then, or for good where the API is missing). The
+	Rainbow attribute is true for Rainbow monsters, but their look is a static texture: MonsterAnimator
+	hue-cycles only a placeholder's "Body".
+
+	Accessories (MonsterModel) hang off the rig. Slot picks a bone per slot (head: head, else top;
+	face: in front of the head; neck: neck, else chest; back: along the hips-to-chest spine) and
+	measures the head and body from the bones and bounds, as the placeholder's body measurements.
+	Bone.WorldCFrame is the rest pose, so the animated pose is worked out here from the rest chain
+	and the Transforms Pose last wrote (deterministic, and testable in Lune); MonsterAnimator calls
+	Follow after each Pose for models that wear something.
 ]]
 
 local Assets = require(script.Parent.MeshMonsterAssets)
+local MonsterLooks = require(script.Parent.MonsterLooks)
 
 local MeshMonster = {}
 
@@ -40,15 +60,30 @@ type Data = {
 	texture: string,
 }
 
+type Follower = { weld: Weld, bone: number, offset: CFrame }
+type Rig = {
+	bones: { Bone },
+	data: Data,
+	scale: number,
+	locals: { CFrame }, -- each bone's rest CFrame in its parent bone's space (a top bone's in Root space)
+	pose: { CFrame }, -- the Transform Pose last wrote, per bone
+	followers: { Follower }?,
+}
+export type Slot = { bone: string, frame: CFrame, s: number, body: Vector3 }
+
 local folder = script.Parent:FindFirstChild("MeshMonsters")
 local cache: { [string]: Data } = {}
 local templates: { [string]: MeshPart } = {}
 local loading: { [string]: boolean } = {}
-local rigs: { [Model]: { bones: { Bone }, data: Data, scale: number } } = setmetatable({}, { __mode = "k" }) :: any
+local rigs: { [Model]: Rig } = setmetatable({}, { __mode = "k" }) :: any
 local available: boolean? = nil
+local meshSource: ((form: string) -> MeshPart)? = nil
 
 -- Looked up lazily: the Lune test mock has no AssetService, and there the placeholder is used.
 local function isAvailable(): boolean
+	if meshSource then
+		return true
+	end
 	if available == nil then
 		available = pcall(function()
 			assert(Content and Content.fromUri, "no Content")
@@ -141,6 +176,9 @@ local function template(form: string, data: Data): MeshPart
 	end
 	loading[form] = true
 	local ok, made = pcall(function()
+		if meshSource then
+			return meshSource(form)
+		end
 		return game:GetService("AssetService"):CreateMeshPartAsync(Content.fromUri(data.mesh))
 	end)
 	loading[form] = nil
@@ -156,7 +194,15 @@ local function template(form: string, data: Data): MeshPart
 	return made
 end
 
-function MeshMonster.Build(appearance, size: number, anchored: boolean): Model
+local function weldTo(root: BasePart, part: BasePart)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = root
+	weld.Part1 = part
+	weld.Parent = part
+end
+
+-- `look` overrides the appearance's own (Hall of Fame statues are Golden).
+function MeshMonster.Build(appearance, size: number, anchored: boolean, look: string?): Model
 	local data = load(appearance.form)
 	local b = data.bounds
 	local k = size * HEIGHT_PER_SIZE * data.scale / (b[5] - b[2])
@@ -181,14 +227,12 @@ function MeshMonster.Build(appearance, size: number, anchored: boolean): Model
 	mesh.Name = "Mesh"
 	mesh.Size *= k
 	mesh.CFrame = root.CFrame * CFrame.new(centre)
-	local weld = Instance.new("WeldConstraint")
-	weld.Part0 = root
-	weld.Part1 = mesh
-	weld.Parent = mesh
+	weldTo(root, mesh)
 	mesh.Parent = model
 
 	-- Bones: the mesh's skin names them; their rest CFrames scale with the part.
 	local instances = table.create(#data.bones)
+	local locals = table.create(#data.bones)
 	for i, bone in data.bones do
 		local cf = boneCFrame(bone, k)
 		local node = Instance.new("Bone")
@@ -196,13 +240,36 @@ function MeshMonster.Build(appearance, size: number, anchored: boolean): Model
 		if bone.parent > 0 then
 			node.CFrame = boneCFrame(data.bones[bone.parent], k):Inverse() * cf
 			node.Parent = instances[bone.parent]
+			locals[i] = node.CFrame
 		else
 			node.CFrame = CFrame.new(-centre) * cf
 			node.Parent = mesh
+			locals[i] = cf -- the mesh sits at +centre from Root, so this is the bone in Root space
 		end
 		instances[i] = node
 	end
-	rigs[model] = { bones = instances, data = data, scale = k }
+	rigs[model] = {
+		bones = instances,
+		data = data,
+		scale = k,
+		locals = locals,
+		pose = table.create(#instances, CFrame.identity),
+		followers = nil,
+	}
+
+	-- The tap target: the skinned mesh is not queryable (and would be hit in its rest pose anyway).
+	local hit = Instance.new("Part")
+	hit.Name = "Hit"
+	hit.Size = Vector3.new(b[4] - b[1], b[5] - b[2], b[6] - b[3]) * k
+	hit.Transparency = 1
+	hit.CanCollide = false
+	hit.CanQuery = false
+	hit.CanTouch = false
+	hit.CastShadow = false
+	hit.Anchored = false
+	hit.CFrame = root.CFrame * CFrame.new(centre)
+	weldTo(root, hit)
+	hit.Parent = model
 
 	local height = b[5] * k
 	local head = Instance.new("Attachment")
@@ -218,10 +285,22 @@ function MeshMonster.Build(appearance, size: number, anchored: boolean): Model
 	model:SetAttribute("Stage", appearance.stage)
 	model:SetAttribute("Rarity", appearance.rarity)
 	model:SetAttribute("Variant", appearance.variant or 0)
-	model:SetAttribute("Rainbow", false)
+	model:SetAttribute("Rainbow", appearance.variant == 2) -- a static holographic texture (MonsterLooks)
 	model:SetAttribute("Height", height)
 	model:SetAttribute("Skinned", true)
+
+	local wears = look or MonsterLooks.For(appearance)
+	if wears then
+		model:SetAttribute("Look", wears)
+		MonsterLooks.Apply(mesh, appearance.form, wears :: any, data.texture)
+	end
 	return model
+end
+
+-- Tests only: builds each form's mesh with `source` instead of CreateMeshPartAsync (nil restores it).
+function MeshMonster.SetMeshSource(source: ((form: string) -> MeshPart)?)
+	meshSource = source
+	table.clear(templates)
 end
 
 -- ─── Posing ──────────────────────────────────────────────────────────────────────────
@@ -240,7 +319,7 @@ function MeshMonster.Pose(model: Model, clipName: string, t: number, loop: boole
 	local f0 = math.floor(f)
 	local f1 = math.min(f0 + 1, span)
 	local alpha = f - f0
-	local k, data, count = rig.scale, clip.data, #rig.bones
+	local k, data, count, pose = rig.scale, clip.data, #rig.bones, rig.pose
 	local readf32 = buffer.readf32
 	for i, bone in rig.bones do
 		local a = ((f0 * count) + (i - 1)) * 28
@@ -263,8 +342,158 @@ function MeshMonster.Pose(model: Model, clipName: string, t: number, loop: boole
 			readf32(data, c + 8),
 			readf32(data, c + 12)
 		)
-		bone.Transform = from:Lerp(to, alpha)
+		local transform = from:Lerp(to, alpha)
+		pose[i] = transform
+		bone.Transform = transform
 	end
+end
+
+-- ─── Following the pose ──────────────────────────────────────────────────────────────
+
+local function indexOf(data: Data, names: { string }): number?
+	for _, name in names do
+		for i, bone in data.bones do
+			if bone.name == name then
+				return i
+			end
+		end
+	end
+	return nil
+end
+
+-- Bone i's current CFrame in Root space: the rest chain with Pose's last Transforms, composed the
+-- way the engine bends the skin (parent * CFrame * Transform at every level).
+local function current(rig: Rig, i: number): CFrame
+	local bones, locals, pose = rig.data.bones, rig.locals, rig.pose
+	local cf = locals[i] * pose[i]
+	local p = bones[i].parent
+	while p > 0 do
+		cf = locals[p] * pose[p] * cf
+		p = bones[p].parent
+	end
+	return cf
+end
+
+function MeshMonster.BoneCFrame(model: Model, name: string): CFrame?
+	local rig = rigs[model]
+	local i = if rig then indexOf(rig.data, { name }) else nil
+	return if rig and i then current(rig, i) else nil
+end
+
+-- The bone each accessory slot hangs from, best first. Every rig has a root.
+local SLOT_BONES = {
+	head = { "head", "top", "body", "root" },
+	face = { "head", "top", "body", "root" },
+	neck = { "neck", "chest", "body", "hips", "root" },
+	back = { "chest", "body", "hips", "root" },
+}
+-- Bones that stick out of the top of a head: where they start is the crown of the skull.
+local CROWN = { ear = true, antenna = true, horn = true }
+-- A head's width over its height; a head's accessories are measured against it the way the
+-- placeholder's are against its whole body.
+local HEAD_WIDTH = 1.15
+
+-- Where an accessory slot sits at rest, in Root space. `frame` is the placeholder's slot point (head:
+-- the top of the head; face: in front of the eyes; neck: the centre of a collar; back: on the back,
+-- +Z out of it and +Y along the spine); `s` and `body` stand in for the placeholder's size and body
+-- so its shapes fit. Heads come from the head bone up to the crown; rigs without one (blobs, bugs)
+-- are measured whole, like the placeholder's round body.
+function MeshMonster.Slot(model: Model, slot: string): Slot?
+	local rig = rigs[model]
+	local names = SLOT_BONES[slot]
+	if not rig or not names then
+		return nil
+	end
+	local data, k = rig.data, rig.scale
+	local b = data.bounds
+	local floor, top = b[2] * k, b[5] * k
+	local height = top - floor
+	local function at(name: string): Vector3?
+		local i = indexOf(data, { name })
+		return if i then boneCFrame(data.bones[i], k).Position else nil
+	end
+	local head = at("head")
+	local frame, s, body
+	if head then
+		local crown = top
+		for _, other in data.bones do
+			if CROWN[string.match(other.name, "^%a+") or ""] then
+				local y = boneCFrame(other, k).Position.Y
+				if y > head.Y and y < crown then
+					crown = y
+				end
+			end
+		end
+		crown = math.max(crown, head.Y + height * 0.15)
+		local hh = crown - head.Y
+		s = hh * HEAD_WIDTH
+		body = Vector3.new(s, s * 0.9, s)
+		if slot == "head" then
+			frame = CFrame.new(0, crown, head.Z)
+		elseif slot == "face" then
+			frame = CFrame.new(0, head.Y + hh * 0.45, head.Z - s * 0.5)
+		elseif slot == "neck" then
+			body = Vector3.new(s * 0.8, s * 0.9, s * 0.8)
+			frame = CFrame.new(0, head.Y, head.Z)
+		else
+			local hips, chest = at("hips"), at("chest")
+			if hips and chest then
+				-- The back plane tilts with the spine: upright on a biped, flat along a quadruped.
+				local spine = chest - hips
+				local pitch = math.atan2(-spine.Z, spine.Y)
+				frame = CFrame.new((hips + chest) / 2) * CFrame.Angles(-pitch, 0, 0) * CFrame.new(0, 0, s * 0.45)
+				body = Vector3.new(s * 0.9, math.max(spine.Magnitude * 1.4, s * 0.7), s)
+			else
+				local core = at("body") or Vector3.new(0, floor + height * 0.4, head.Z)
+				frame = CFrame.new(0, core.Y, core.Z + s * 0.45)
+			end
+		end
+	else
+		local width, depth = (b[4] - b[1]) * k, (b[6] - b[3]) * k
+		local z = (b[3] + b[6]) / 2 * k
+		s = math.min(width, height)
+		body = Vector3.new(width, height, math.min(depth, width)) * 0.9
+		if slot == "head" then
+			frame = CFrame.new(0, top, z)
+		elseif slot == "face" then
+			frame = CFrame.new(0, floor + height * 0.62, b[3] * k * 0.9)
+		elseif slot == "neck" then
+			frame = CFrame.new(0, floor + height * 0.32, z)
+		elseif depth > height * 1.2 then
+			frame = CFrame.new(0, floor + height * 0.8, z) * CFrame.Angles(-math.pi / 2, 0, 0) -- a long bug's back is its top
+		else
+			frame = CFrame.new(0, floor + height * 0.5, z + body.Z * 0.5)
+		end
+	end
+	local bone = indexOf(data, names) or 1
+	return { bone = data.bones[bone].name, frame = frame, s = s, body = body }
+end
+
+-- From now on `weld.C0` (Part0 = Root, C0 = the slot's rest frame) follows the slot's bone.
+function MeshMonster.Attach(model: Model, weld: Weld, slot: string)
+	local rig = rigs[model]
+	local info = MeshMonster.Slot(model, slot)
+	local i = if rig and info then indexOf(rig.data, { info.bone }) else nil
+	if not rig or not i then
+		return
+	end
+	local followers = rig.followers or {}
+	rig.followers = followers
+	local rest = boneCFrame(rig.data.bones[i], rig.scale)
+	table.insert(followers, { weld = weld, bone = i, offset = rest:Inverse() * weld.C0 })
+end
+
+-- Moves every attached weld to the pose Pose last set. False (and nothing to do) when none.
+function MeshMonster.Follow(model: Model): boolean
+	local rig = rigs[model]
+	local followers = if rig then rig.followers else nil
+	if not rig or not followers then
+		return false
+	end
+	for _, f in followers do
+		f.weld.C0 = current(rig, f.bone) * f.offset
+	end
+	return true
 end
 
 return MeshMonster
