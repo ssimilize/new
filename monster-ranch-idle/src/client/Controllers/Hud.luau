@@ -96,6 +96,12 @@ end
 
 -- Builders --------------------------------------------------------------------------
 
+-- The left stack holds 7 buttons since 3.7 (Daily + Jobs). At the side buttons' usual 52 px + 10 px
+-- it ran to design y 496 and the Tutorial card (bottom-left, top at ~446 on a phone) hid Jobs;
+-- 46 px + 6 px ends it at 430, the clearance the 6-button stack had.
+local LEFT_BUTTON_HEIGHT = 46
+local LEFT_GAP = 6
+
 local function sideButton(
 	parent: Instance,
 	name: string,
@@ -111,7 +117,7 @@ local function sideButton(
 		Name = name,
 		Text = text,
 		Color = color,
-		Size = UDim2.fromOffset(140, 52),
+		Size = UDim2.fromOffset(140, if parent.Name == "LeftStack" then LEFT_BUTTON_HEIGHT else 52),
 		TextSize = Theme.TextSize.Body + 1,
 		Icon = icon,
 		LayoutOrder = order,
@@ -629,9 +635,9 @@ local function build()
 	local left = Tiles.col({
 		Name = "LeftStack",
 		Position = UDim2.fromOffset(16, 72),
-		Size = UDim2.fromOffset(150, 370),
+		Size = UDim2.fromOffset(150, 7 * LEFT_BUTTON_HEIGHT + 6 * LEFT_GAP),
 		Parent = root,
-	}, 10)
+	}, LEFT_GAP)
 	sideButton(left, "Shop", "Shop", C.Orange, Icon.new("coin", 28), 1, function()
 		openScreen("EggShop")
 	end)
