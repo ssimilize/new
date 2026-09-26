@@ -17,6 +17,14 @@ src, dst, resolution, padding = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(
 mesh = np.load(src)
 positions, faces = mesh["positions"].astype(np.float32), mesh["faces"].astype(np.uint32)
 
+# A mesh that keeps Meshy's UV seams split (export_static.py's buildings: welding would round their
+# corners' shading) is welded here, for the charts only: a split seam is a mesh border, which ends a
+# chart, so the atlas came out in Meshy's ~1,200 small islands. The UVs stay one per face corner.
+# (Monsters are welded on import already.)
+unique, inverse = np.unique(np.round(positions, 5), axis=0, return_inverse=True)
+if len(unique) < len(positions):
+    positions, faces = unique.astype(np.float32), inverse.reshape(-1)[faces].astype(np.uint32)
+
 atlas = xatlas.Atlas()
 atlas.add_mesh(positions, faces)
 charts = xatlas.ChartOptions()
@@ -25,6 +33,7 @@ pack.resolution = resolution
 pack.padding = padding
 pack.bilinear = True
 pack.rotate_charts = True
+pack.bruteForce = True  # tighter packing: 44% -> 50% of the Egg Shop's texture, ~2 s more
 atlas.generate(charts, pack)
 _vmapping, indices, uvs = atlas[0]
 if len(indices) != len(faces):

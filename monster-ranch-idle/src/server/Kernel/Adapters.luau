@@ -912,13 +912,25 @@ function Adapters.Roblox()
 
 	adapters.Workspace = workspace
 	-- A MeshPart from a published Mesh asset, for World/Dress. Yields; nil if it fails to load.
+	-- A server dressing the world asks for ~90 meshes in a row, and a load in that burst can fail
+	-- where the same mesh loads fine a minute later (seven buildings came up bare in one Play test,
+	-- 2026-09-25), so a failed load is tried again before its building keeps the placeholder.
 	adapters.CreateMeshPart = function(uri: string): MeshPart?
-		local ok, part = pcall(function()
-			return game:GetService("AssetService"):CreateMeshPartAsync(Content.fromUri(uri), {
-				CollisionFidelity = Enum.CollisionFidelity.Hull,
-			})
-		end)
-		return if ok then part else nil
+		for attempt = 1, 3 do
+			local ok, part = pcall(function()
+				return game:GetService("AssetService"):CreateMeshPartAsync(Content.fromUri(uri), {
+					CollisionFidelity = Enum.CollisionFidelity.Hull,
+				})
+			end)
+			if ok then
+				return part
+			end
+			warn(string.format("[Adapters] mesh %s, attempt %d: %s", uri, attempt, tostring(part)))
+			if attempt < 3 then
+				task.wait(2 * attempt)
+			end
+		end
+		return nil
 	end
 	return adapters
 end

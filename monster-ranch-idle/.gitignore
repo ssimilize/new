@@ -13,6 +13,7 @@ art/rigs/
 art/blender/
 art/compare/
 art/export/
+art/tripo/
 
 # Python bytecode from the art tools.
 __pycache__/
