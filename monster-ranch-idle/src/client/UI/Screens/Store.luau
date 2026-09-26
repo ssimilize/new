@@ -408,7 +408,9 @@ return {
 					Parent = cell,
 				})
 				Util.text({
-					Text = string.format("Mood +%d · Owned %d", d.mood or 0, decorOwned[d.id] or 0),
+					Text = if (d.mood or 0) > 0
+						then string.format("Mood +%d · Owned %d", d.mood, decorOwned[d.id] or 0)
+						else string.format("Owned %d", decorOwned[d.id] or 0), -- glow-up Z: new decor is cosmetic
 					TextColor3 = C.TextMuted,
 					TextXAlignment = Enum.TextXAlignment.Center,
 					Position = UDim2.fromOffset(4, 104),

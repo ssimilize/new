@@ -36,6 +36,9 @@
 	  Ranch:ResetForRebirth(player, theme?)                   -- one fresh pen, tiers 1, decor back to storage
 	  Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id }, capacity, jarTier } }
 	  Ranch:PublicGarden(player) -> { tier, plots = { { flavor, readyAt } } }?   -- glow-up R
+	  Ranch:TakePenDecor(player) -> { [pen] = { decorId } }  -- glow-up Z: empties the old pen slots
+	                                                          (Decor moves them onto the plot layout)
+	Mood aura: a pen's slot decor plus the mood pieces standing in it on the Decor layout (glow-up Z).
 	  Ranch:Refresh(player)                                   -- recompute after an input changed
 	  Ranch:HoldAutoCollect(player, hold)                     -- WelcomeBack keeps jars for its claim
 
@@ -53,7 +56,7 @@ local TableUtil = require(Shared.Logic.TableUtil)
 local Ranch = {
 	Name = "Ranch",
 	Dependencies = { "Currency", "Progression", "Monsters" },
-	OptionalDependencies = { "Eggs", "Shop", "Monetization", "Weather" },
+	OptionalDependencies = { "Eggs", "Shop", "Monetization", "Weather", "Decor" },
 }
 
 local ctx
@@ -488,6 +491,22 @@ function Ranch:CollectAll(player, multiplier: number?): number
 	return collect(player, allPens(s), multiplier or 1, { xp = true })
 end
 
+function Ranch:TakePenDecor(player)
+	local s = section(player)
+	local out = {}
+	if not s then
+		return out
+	end
+	for i, pen in s.pens do
+		if #pen.decor > 0 then
+			out[i] = pen.decor
+			pen.decor = {}
+			penChanged(player, i)
+		end
+	end
+	return out
+end
+
 function Ranch:PublicPens(player)
 	local out = {}
 	local s = section(player)
@@ -914,11 +933,15 @@ function Ranch.Init(context)
 		for _, player in ctx:Players() do
 			local s = section(player)
 			quiet[player] = true
-			for _, pen in s.pens do
+			for i, pen in s.pens do
 				local aura = 0
 				for _, decorId in pen.decor do
 					local def = Config.Decor.ById[decorId]
-					aura += if def then def.mood else 0
+					aura += if def then def.mood or 0 else 0
+				end
+				local placed = ctx:GetSystem("Decor")
+				for _, decorId in if placed then placed:PenDecor(player, i) else {} do
+					aura += Config.Decor.ById[decorId].mood or 0
 				end
 				if aura > 0 then
 					for _, id in table.clone(pen.monsters) do

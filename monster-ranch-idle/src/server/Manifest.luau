@@ -70,6 +70,8 @@ return {
 		"Codex",
 		-- Glow-up Q · bond hearts and care gestures
 		"Bond",
+		-- Glow-up Z · build your ranch (free decor placement)
+		"Decor",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

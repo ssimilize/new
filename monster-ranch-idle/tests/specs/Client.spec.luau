@@ -500,5 +500,55 @@ return function(t)
 			expectClean(a)
 			expectClean(b)
 		end)
+
+		it("builds your ranch: places, rotates, moves, undoes and saves decor", function()
+			local Social = t.Shared("Config").Social
+			local h = TestKernel.new({ systems = allSystems() })
+			local player = h:Join()
+			veteran(h, player)
+			local c = ClientHarness.new(h, player)
+			c:Advance(Social.PlotRefreshSeconds + 1)
+			local plotIndex = h:System("Plots"):GetPlot(player)
+
+			local screen = c:Open("Decorate")
+			c:Advance(0.5)
+			expectClean(c)
+			expect(c:HasText("Decor 0 /", screen)).toBe(true)
+
+			-- Place the starter Wooden Crate, then rotate and move it.
+			c:Click(screen:FindFirstChild("Piece_wood_crate", true))
+			c:Advance(0.2)
+			local decor = c.kernel:GetController("Decor")
+			expect(#decor.Draft()).toBe(1)
+			local placedX, placedZ = decor.Draft()[1].x, decor.Draft()[1].z
+			c:Click(screen:FindFirstChild("Rotate", true))
+			c:Advance(0.2)
+			expect(decor.Draft()[1].rot).toBe(1)
+			decor.MoveTo(-30, -25)
+			c:Advance(0.2)
+			expect(decor.Draft()[1].x).toBe(-30)
+			expect(decor.Draft()[1].z).toBe(-25)
+			expect(decor.Problems()[1]).toBeNil()
+
+			-- Undo restores the move (rotation kept); another undo restores the original spot.
+			c:Click(screen:FindFirstChild("Undo", true))
+			c:Advance(0.2)
+			expect(decor.Draft()[1].x).toBe(placedX)
+			expect(decor.Draft()[1].z).toBe(placedZ)
+			expect(decor.Draft()[1].rot).toBe(1)
+			c:Click(screen:FindFirstChild("Undo", true))
+			c:Advance(0.2)
+			expect(decor.Draft()[1].rot).toBe(0)
+
+			-- Save sends the whole layout and the world draws it.
+			c:Click(screen:FindFirstChild("Save", true))
+			c:Advance(0.5)
+			expect(h:System("Decor"):Layout(player)).toEqual(decor.Draft())
+			c:Close("Decorate")
+			c:Advance(0.5)
+			expect(decor.Active()).toBe(false)
+			expect(decor.Count(plotIndex)).toBe(1)
+			expectClean(c)
+		end)
 	end)
 end

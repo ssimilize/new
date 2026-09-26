@@ -62,6 +62,8 @@ return {
 		-- Glow-up O: the walk-in Codex Museum and the Hall of Fame plaza
 		"CodexMuseum",
 		"FamePlaza",
+		-- Glow-up Z: every plot's placed decor, night lights, placement mode's world side
+		"Decor",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -109,5 +111,7 @@ return {
 		"Friends",
 		-- Glow-up Q · care gestures and bond hearts (non-modal)
 		"Care",
+		-- Glow-up Z · build your ranch: placement mode's toolbar and tray (non-modal)
+		"Decorate",
 	},
 }

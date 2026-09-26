@@ -523,6 +523,25 @@ Api.Actions = {
 		returns = "{ ids: { monsterId } }",
 	},
 
+	-- Decor placement (glow-up Z) · Config/Decor, Logic/DecorLayout, Systems/Decor -----------------
+	-- The whole plot layout from placement mode; the server re-checks ownership, bounds, overlaps, cap.
+	["Decor.Save"] = {
+		schema = T.struct({
+			layout = T.array(
+				T.struct({
+					id = T.key(Config.Decor.ById),
+					x = T.integer(-64, 64),
+					z = T.integer(-64, 64),
+					rot = T.integer(0, 7),
+				}),
+				Config.Decor.Layout.capMax,
+				0
+			),
+		}),
+		rate = 0.5,
+		returns = "{ count: number }",
+	},
+
 	-- Codex milestones (glow-up O) · Config/Codex, Logic/Codex, Systems/Codex -----------------------
 	-- Each milestone once per account; gems via Rewards.Granted, titles and the aura via Mastery.
 	["Codex.Claim"] = {
@@ -610,6 +629,7 @@ Api.State = {
 		Companions = "{ ids = { monsterId } }  -- glow-up T: who walks with the player",
 		Codex = "{ claimed = { [milestoneId]: unix }, owed = { itemId } }  -- glow-up O (badges private)",
 		Bond = "{ list = { [monsterId]: { pts, pet: unix?, brush: unix?, play: unix? } }, cares }  -- see Systems/Bond",
+		Decor = "{ layout = { { id, x, z, rot } }, migrated, starter }  -- glow-up Z: plot-local grid units, rot × 45°",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
