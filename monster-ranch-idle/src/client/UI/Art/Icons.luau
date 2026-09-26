@@ -12,13 +12,13 @@ local Icons = {}
 Icons.Cell = 256
 
 Icons.Sheets = {
-	"", -- icons_1.png
-	"", -- icons_2.png
-	"", -- icons_3.png
-	"", -- icons_4.png
-	"", -- icons_5.png
-	"", -- icons_6.png
-	"", -- icons_7.png
+	"rbxassetid://122451907247612", -- icons_1.png
+	"rbxassetid://103001746729402", -- icons_2.png
+	"rbxassetid://122309245411622", -- icons_3.png
+	"rbxassetid://131360313374531", -- icons_4.png
+	"rbxassetid://82575830011689", -- icons_5.png
+	"rbxassetid://119802169485756", -- icons_6.png
+	"rbxassetid://81375673113812", -- icons_7.png
 }
 
 Icons.Cells = {

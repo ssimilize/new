@@ -83,8 +83,8 @@ Theme.Images = {
 	Ribbon = "",
 	Friendship = "",
 	Token = "",
-	PanelTexture = "",
-	ButtonTexture = "",
+	PanelTexture = "rbxassetid://118806226536175",
+	ButtonTexture = "rbxassetid://70470138886253",
 }
 
 -- 9-slice skins for Theme.Images.PanelTexture / ButtonTexture (tools/ui/nine_slice.py draws them at

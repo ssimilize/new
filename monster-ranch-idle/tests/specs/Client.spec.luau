@@ -429,9 +429,13 @@ return function(t)
 			local shop = c:Open("EggShop")
 			c:Advance(0.5)
 			expect(c:HasText("Lantern", shop)).toBe(true)
+			local Sheet = c:require(c.clientFolder.UI.Art.Sheet)
+			local artId, artOffset = Sheet.find(Sheet.Icons, "token_lunarlanterns")
 			local glyphs = {}
 			for _, d in shop:GetDescendants() do
-				if d:IsA("TextLabel") and d.Text == "✺" then
+				-- The event's own token: its sheet icon, or the ✺ glyph while the sheet has no id.
+				local art = artId ~= nil and d:IsA("ImageLabel") and d.Image == artId and d.ImageRectOffset == artOffset
+				if art or (d:IsA("TextLabel") and d.Text == "✺") then
 					table.insert(glyphs, d)
 				end
 			end

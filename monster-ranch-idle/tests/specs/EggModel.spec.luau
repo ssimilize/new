@@ -179,7 +179,10 @@ return function(t)
 		end)
 
 		it("stays the placeholder while ids are empty, even where meshes can load", function()
-			local c, EggModel = boot()
+			local c, EggModel, Assets = boot()
+			-- As before tools/blender/eggs.py's first upload: the mesh ids are empty.
+			local meshes = Assets.meshes
+			Assets.meshes = { shell = "", gem = "" }
 			local called = 0
 			EggModel.SetMeshLoader(function()
 				called += 1
@@ -187,6 +190,7 @@ return function(t)
 			end)
 			local model = EggModel.Build("meadow")
 			EggModel.SetMeshLoader(nil)
+			Assets.meshes = meshes
 			expectContract(c, model, "meadow", 2, true)
 			expect(count(model, "MeshPart")).toBe(0)
 			expect(called).toBe(0)

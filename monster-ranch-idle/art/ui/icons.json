@@ -5,7 +5,7 @@
   {
    "file": "icons_1.png",
    "hash": "faafbdc5fdfaf90e",
-   "id": "",
+   "id": "rbxassetid://122451907247612",
    "cells": [
     "acc_backpack",
     "acc_bat_wings",
@@ -28,7 +28,7 @@
   {
    "file": "icons_2.png",
    "hash": "947b8b1f997fabc1",
-   "id": "",
+   "id": "rbxassetid://103001746729402",
    "cells": [
     "acc_jetpack",
     "acc_jingle_bell",
@@ -51,7 +51,7 @@
   {
    "file": "icons_3.png",
    "hash": "c9ad592d2f2bcfff",
-   "id": "",
+   "id": "rbxassetid://122309245411622",
    "cells": [
     "acc_starlight_crown",
     "acc_sun_hat",
@@ -74,7 +74,7 @@
   {
    "file": "icons_4.png",
    "hash": "862882debe121f18",
-   "id": "",
+   "id": "rbxassetid://131360313374531",
    "cells": [
     "cur_xp",
     "decor_beach_ball",
@@ -97,7 +97,7 @@
   {
    "file": "icons_5.png",
    "hash": "df9a90958f6857df",
-   "id": "",
+   "id": "rbxassetid://82575830011689",
    "cells": [
     "decor_rainbow_arch",
     "decor_sandcastle",
@@ -120,7 +120,7 @@
   {
    "file": "icons_6.png",
    "hash": "f5c2dd14d04fd22b",
-   "id": "",
+   "id": "rbxassetid://119802169485756",
    "cells": [
     "item_totem_rain",
     "item_totem_starfall",
@@ -143,7 +143,7 @@
   {
    "file": "icons_7.png",
    "hash": "783037aa5c1596f7",
-   "id": "",
+   "id": "rbxassetid://81375673113812",
    "cells": [
     "theme_tropical_lagoon",
     "theme_wood",

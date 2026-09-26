@@ -185,6 +185,9 @@ return function(t)
 			local Theme = c:require(c.clientFolder.UI.Theme)
 			local Button = c:require(c.clientFolder.UI.Components.Button)
 			local Panel = c:require(c.clientFolder.UI.Components.Panel)
+			local shippedButton, shippedPanel = Theme.Images.ButtonTexture, Theme.Images.PanelTexture
+			Theme.Images.ButtonTexture = ""
+			Theme.Images.PanelTexture = ""
 			local plain = Button.new({ Text = "Plain" })
 			expect(plain.Root:FindFirstChild("Skin")).toBeNil()
 			expect(plain.Root:FindFirstChildOfClass("UIStroke").Enabled).toBe(true)
@@ -202,8 +205,8 @@ return function(t)
 			local pskin = p.Root:FindFirstChild("Skin") :: ImageLabel
 			expect(pskin ~= nil).toBe(true)
 			expect(pskin.SliceCenter == Theme.Slices.Panel.Center).toBe(true)
-			Theme.Images.ButtonTexture = ""
-			Theme.Images.PanelTexture = ""
+			Theme.Images.ButtonTexture = shippedButton
+			Theme.Images.PanelTexture = shippedPanel
 			expectClean(c)
 		end)
 

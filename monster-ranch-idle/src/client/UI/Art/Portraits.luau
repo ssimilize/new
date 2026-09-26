@@ -12,19 +12,19 @@ local Portraits = {}
 Portraits.Cell = 256
 
 Portraits.Sheets = {
-	"", -- portraits_1.png
-	"", -- portraits_2.png
-	"", -- portraits_3.png
-	"", -- portraits_4.png
-	"", -- portraits_5.png
-	"", -- portraits_6.png
-	"", -- portraits_7.png
-	"", -- portraits_8.png
-	"", -- portraits_9.png
-	"", -- portraits_10.png
-	"", -- portraits_11.png
-	"", -- portraits_12.png
-	"", -- portraits_13.png
+	"rbxassetid://107828401453018", -- portraits_1.png
+	"rbxassetid://115269780842286", -- portraits_2.png
+	"rbxassetid://113470900611139", -- portraits_3.png
+	"rbxassetid://115466022004260", -- portraits_4.png
+	"rbxassetid://75530755780919", -- portraits_5.png
+	"rbxassetid://139840930001600", -- portraits_6.png
+	"rbxassetid://112097717861150", -- portraits_7.png
+	"rbxassetid://108511936931327", -- portraits_8.png
+	"rbxassetid://123161832178528", -- portraits_9.png
+	"rbxassetid://118935389324338", -- portraits_10.png
+	"rbxassetid://131347953182245", -- portraits_11.png
+	"rbxassetid://108759012223969", -- portraits_12.png
+	"rbxassetid://94009837676557", -- portraits_13.png
 }
 
 Portraits.Cells = {
