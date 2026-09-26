@@ -28,6 +28,32 @@ local function isBody(name: string): boolean
 	return string.lower((string.gsub(name, "[^%a]", ""))) == "bodygeom" or string.lower(name) == "body"
 end
 
+-- Turns a model about its centre so its face (the side its `eyes` part is on: the generator faces
+-- monsters any way it likes) looks toward -Z.
+local function faceByEyes(model: Model)
+	local body, eyes
+	for _, p in model:GetDescendants() do
+		if p:IsA("BasePart") then
+			if isBody(p.Name) then
+				body = p
+			elseif string.find(string.lower(p.Name), "eye", 1, true) then
+				eyes = p
+			end
+		end
+	end
+	if not (body and eyes) then
+		return
+	end
+	local d = eyes.Position - body.Position
+	if Vector2.new(d.X, d.Z).Magnitude <= 0.05 then
+		return
+	end
+	-- Turn so that d points at -Z.
+	local yaw = math.atan2(d.X, d.Z) - math.pi
+	local centre = model:GetBoundingBox().Position
+	model:PivotTo(CFrame.new(centre) * CFrame.Angles(0, -yaw, 0) * CFrame.new(-centre) * model:GetPivot())
+end
+
 function MonsterLab.capture(): string
 	local library = {}
 	for _, model in workspace.MonsterGen:GetChildren() do
@@ -132,6 +158,9 @@ function MonsterLab.show(options: any?): () -> ()
 		local col, row = (i - 1) % perRow, (i - 1) // perRow
 		local at = origin + Vector3.new(col * spacing, 0, row * spacing)
 		local model = MonsterLab.build(form, entry, at)
+		faceByEyes(model)
+		local box, extent = model:GetBoundingBox()
+		model:PivotTo(model:GetPivot() + (Vector3.new(at.X, at.Y + extent.Y / 2, at.Z) - box.Position))
 		model.Parent = folder
 		local walker = not entry.hover and i % (options.walkers or 3) == 0
 		local path
@@ -172,31 +201,10 @@ function MonsterLab.arrangeLive(options: any?): () -> ()
 		return (a:GetAttribute("Line") or 0) < (b:GetAttribute("Line") or 0)
 	end)
 	for i, model in models do
-		local body, eyes
-		for _, p in model:GetDescendants() do
-			if p:IsA("MeshPart") then
-				local n = string.lower(p.Name)
-				if isBody(p.Name) then
-					body = p
-				elseif string.find(n, "eye", 1, true) then
-					eyes = p
-				end
-			end
-		end
-		if body then
-			local yaw = 0
-			if eyes then
-				local d = eyes.Position - body.Position
-				if Vector2.new(d.X, d.Z).Magnitude > 0.05 then
-					-- Turn so that d points at -Z.
-					yaw = math.atan2(d.X, d.Z) - math.pi
-				end
-			end
+		if model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart", true) then
+			faceByEyes(model)
 			local col, row = (i - 1) % perRow, (i - 1) // perRow
 			local at = origin + Vector3.new(col * spacing, 0, row * spacing)
-			local centre = model:GetBoundingBox().Position
-			local turned = CFrame.new(centre) * CFrame.Angles(0, -yaw, 0) * CFrame.new(-centre)
-			model:PivotTo(turned * model:GetPivot())
 			local box, extent = model:GetBoundingBox()
 			model:PivotTo(model:GetPivot() + (Vector3.new(at.X, extent.Y / 2, at.Z) - box.Position))
 		end
