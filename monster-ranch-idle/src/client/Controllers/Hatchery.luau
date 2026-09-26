@@ -20,7 +20,10 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
+local AudioRules = require(Shared.Logic.Audio)
 
+local Audio = require(script.Parent.Parent.Audio)
+local Voices = require(script.Parent.Parent.Audio.Voices)
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
@@ -322,13 +325,15 @@ local function reveal(entry)
 	ui.vm:SetAppearance(ap)
 	ui.rays.Visible = true
 	local rarity = tonumber(m.rarity) or 1
-	if rarity >= 5 then
-		ctx:Sound("HatchLegendary")
-	elseif rarity >= 3 then
-		ctx:Sound("HatchRare")
-	else
-		ctx:Sound("HatchCommon")
+	-- The rarity's sting (falling back to the nearest lower one with an id), a Golden or Rainbow
+	-- sting over it, then the monster's own first cry.
+	Audio.Chain(AudioRules.HatchChain(rarity, 0))
+	if m.variant == 2 then
+		Audio.Chain({ "HatchRainbow", "HatchGolden" })
+	elseif m.variant == 1 then
+		Audio.Play("HatchGolden")
 	end
+	task.delay(0.45, Voices.Cry, m, "hatch")
 	local burstSize = 300 + rarity * 30
 	if not skipped then
 		skipped = animate(0.8, function(a)

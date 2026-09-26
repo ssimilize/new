@@ -1,7 +1,8 @@
 --[[
 	Settings screen (C3): the language (3.2) and toggles for music, sound effects, low
 	graphics and hiding broadcasts → Settings.SetLanguage { language } and
-	Settings.Set { key, value }. Reads profile.Settings (tolerated nil).
+	Settings.Set { key, value }. Reads profile.Settings (tolerated nil). Music also mutes the
+	ambience beds; Sound effects also mutes monster voices (Logic/Audio.GroupFollows).
 
 	Language comes first so a player who can't read the current one still finds it. Its
 	button cycles Auto → English → Español → Português; language names are never
@@ -24,7 +25,7 @@ local C = Theme.Colors
 local ROW_HEIGHT = 60
 
 local ROWS = {
-	{ key = "music", name = "Music", desc = "Background music", default = true },
+	{ key = "music", name = "Music", desc = "Music and nature sounds", default = true },
 	{ key = "sfx", name = "Sound effects", desc = "Buttons, hatches and battles", default = true },
 	{ key = "lowGraphics", name = "Low graphics", desc = "Fewer effects and less motion. Helps older phones.", default = false },
 	{ key = "hideBroadcasts", name = "Hide broadcasts", desc = "Hide server-wide announcements", default = false },

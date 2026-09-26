@@ -735,6 +735,7 @@ return {
 	["More plots, more food."] = "Más parcelas, más comida.",
 	["Mud Puddle"] = "Charco de lodo",
 	["Music"] = "Música",
+	["Music and nature sounds"] = "Música y sonidos de la naturaleza",
 	["Mustache"] = "Bigote",
 	["Mutated"] = "Mutado",
 	["Mutation: none to inherit"] = "Mutación: ninguna para heredar",

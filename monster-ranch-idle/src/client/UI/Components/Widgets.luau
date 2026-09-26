@@ -22,6 +22,7 @@ local Create = require(script.Parent.Parent.Create)
 local Anim = require(script.Parent.Parent.Anim)
 local Icon = require(script.Parent.Icon)
 local Button = require(script.Parent.Button)
+local Audio = require(script.Parent.Parent.Parent.Audio)
 
 local New = Create.New
 local C = Theme.Colors
@@ -226,6 +227,7 @@ function Widgets.Tabs(props)
 			LayoutOrder = i,
 			Color = C.Gray,
 			Parent = root,
+			Sound = "UITab",
 			OnClick = function()
 				api:Select(tab.id)
 			end,
@@ -252,6 +254,7 @@ function Widgets.Tabs(props)
 		end
 		local at = table.find(shown, api.Selected) or 1
 		local id = shown[(at - 1 + delta) % #shown + 1]
+		Audio.Play("UITab")
 		api:Select(id)
 		return buttons[id].Root
 	end

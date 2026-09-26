@@ -10,7 +10,8 @@
 	              so weather changes fade in and out over a few seconds.
 	  particles   one invisible anchored part follows the camera with rain, snow and star
 	              streak emitters (rates only, never re-created). lowGraphics scales rates down.
-	  extras      thunderstorm lightning flashes (Lighting.Brightness + ColorCorrection pulses),
+	  extras      thunderstorm lightning flashes (Lighting.Brightness + ColorCorrection pulses; each one
+	              publishes client bus "Weather.Lightning" (strength 0..1) so Soundscape times thunder),
 	              aurora animated tint over ColorCorrection and the Atmosphere sky colour.
 
 	One RenderStepped connection; properties are written only when their value changes.
@@ -456,6 +457,7 @@ local function step(dt: number)
 		if clock >= nextFlashAt then
 			flashAt = clock
 			nextFlashAt = clock + 4 + math.random() * 9
+			ctx.Bus:Publish("Weather.Lightning", current.lightning)
 		end
 		local t = clock - flashAt
 		if t < 0.08 then

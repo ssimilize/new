@@ -18,6 +18,10 @@
 	monster, MonsterDetail) and "rebirth" (character + Star Altar, the Rebirth screen). Coin and
 	heart bursts use the coin / heart sprites, or the plain emitters while those are not uploaded.
 
+	Sounds (client/Audio): pen monsters are tracked for Soundscape's chatter, cry when they play
+	"happy" (rate-limited in Audio/Voices), when petted and on a level-up burst; a jar collect is
+	a positional JarCollect plus a CoinTick streak.
+
 	Taps on monsters are raycast against their Body parts: own monster -> MonsterDetail,
 	someone else's -> Social.Pet with hearts. Taps on own eggs open Incubators.
 	The local character is moved to its plot once global.Plots lists the local UserId, and
@@ -43,6 +47,8 @@ local MonsterModel = require(Client.Visuals.MonsterModel)
 local EggModel = require(Client.Visuals.EggModel)
 local MonsterAnimator = require(Client.Visuals.MonsterAnimator)
 local Vfx = require(Client.Visuals.Vfx)
+local Audio = require(Client.Audio)
+local Voices = require(Client.Audio.Voices)
 local VfxConfig = require(Shared.Config.Vfx)
 local Theme = require(Client.UI.Theme)
 local Create = require(Client.UI.Create)
@@ -339,6 +345,10 @@ end
 local function onBurstTopic(name: any, info: any)
 	if name == "monsterLevelUp" and type(info) == "table" then
 		momentAt(info.id, "monsterLevelUp")
+		local entry = ownEntry(info.id)
+		if entry then
+			Voices.Cry(entry.model, "levelUp")
+		end
 	elseif name == "rebirth" then
 		local feet = characterFeet()
 		if feet then
@@ -441,6 +451,7 @@ local function removeEntry(view, entry)
 		bodyToEntry[entry.body] = nil
 	end
 	entry.animator:Destroy()
+	Voices.Untrack(entry.model)
 	releaseModel(entry.model, entry.key)
 	view.entries[entry.id] = nil
 end
@@ -483,6 +494,7 @@ local function spawnEntry(view, id: string, appearance, key: string, pen: number
 	view.entries[id] = entry
 	local own = view.userId == player.UserId
 	Vfx.SetOwned(model, own) -- pooled models move between plots
+	Voices.Track(model)
 	local pending = if own then pendingBursts[id] else nil
 	if pending then
 		pendingBursts[id] = nil
@@ -948,7 +960,8 @@ local function collect(pen: number)
 		if floor and coins > 0 then
 			floatText(floor, "+" .. Format.short(coins), Theme.Colors.Gold)
 		end
-		ctx:Sound("CoinCollect")
+		Audio.Chain({ "JarCollect", "CoinCollect" }, { at = if area then area.Position else nil })
+		Audio.Streak("CoinTick")
 	else
 		ctx:Toast(tostring(result), "error")
 	end
@@ -1108,6 +1121,7 @@ local function decide(entry, clockNow: number)
 		end)
 	elseif roll < 0.74 then
 		animator:Play("happy")
+		Voices.Cry(entry.model, "happy")
 		entry.nextAt = clockNow + 2 + math.random() * 2
 	elseif roll < 0.86 then
 		animator:Play("eat")
@@ -1134,6 +1148,7 @@ end
 local function onMonsterTapped(entry)
 	if entry.owner == player.UserId then
 		entry.animator:Play("happy")
+		Voices.Cry(entry.model, "pet")
 		ctx.Router:Open("MonsterDetail", { id = entry.id })
 		return
 	end
@@ -1157,6 +1172,8 @@ local function onMonsterTapped(entry)
 				local position = if head and head:IsA("Attachment") then head.WorldPosition else (root :: BasePart).Position
 				burst("hearts", fx.hearts, position, 10)
 				floatText(at, "♥", Theme.Colors.Pink)
+				Audio.Play("Pet", { at = position })
+				Voices.Cry(entry.model, "pet")
 			end
 		end
 		local left = type(result) == "table" and tonumber(result.left)

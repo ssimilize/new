@@ -18,6 +18,7 @@ local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
 
+local Voices = require(script.Parent.Parent.Audio.Voices)
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
@@ -176,7 +177,20 @@ local function onRewards(payload)
 			})
 		end
 	end
-	ctx:Sound("CoinCollect")
+	local hasGems = false
+	for _, item in payload.items do
+		if type(item) == "table" and item.kind == "gems" then
+			hasGems = true
+		end
+	end
+	local source = payload.source
+	if source == "daily" or source == "achievement" or source == "pass" then
+		ctx:Sound("QuestComplete")
+	elseif hasGems then
+		ctx:Sound("Gem")
+	else
+		ctx:Sound("CoinCollect")
+	end
 	pushFeed(card, 3.5)
 end
 
@@ -427,6 +441,9 @@ local function showNextEvolve()
 		OnClick = close,
 	})
 	ctx:Sound("Evolve")
+	if m then
+		task.delay(0.6, Voices.Cry, m, "evolve")
+	end
 	Focus.push(dim, close) -- a gamepad cursor stays on the popup; B closes it like "Yay!"
 	Anim.popIn(card, 0.3)
 end

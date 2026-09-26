@@ -8,13 +8,17 @@
 			Icon = Icon.new("coin", 26),     -- optional GuiObject shown left of the text
 			OnClick = function() ... end,
 			Parent = frame,
+			Sound = "UITab",                 -- optional Config.Sounds key (default "ButtonClick"; false = silent)
 		})
 		b:SetText("Collect +48K")  b:SetDisabled(true)  b:SetColor(Theme.Colors.Orange)
+
+	A press clicks (client/Audio); a press on a disabled button plays "Locked" with its shake.
 ]]
 
 local Theme = require(script.Parent.Parent.Theme)
 local Create = require(script.Parent.Parent.Create)
 local Anim = require(script.Parent.Parent.Anim)
+local Audio = require(script.Parent.Parent.Parent.Audio)
 
 local New = Create.New
 
@@ -37,6 +41,7 @@ export type Props = {
 	Parent: Instance?,
 	Round: boolean?,
 	ZIndex: number?,
+	Sound: (string | false)?,
 }
 
 function Button.new(props: Props)
@@ -44,6 +49,7 @@ function Button.new(props: Props)
 	self._color = props.Color or Theme.Colors.Green
 	self._disabled = props.Disabled == true
 	self._onClick = props.OnClick
+	self._sound = if props.Sound == nil then "ButtonClick" else props.Sound
 
 	local root = New("TextButton", {
 		Name = props.Name or "Button",
@@ -115,7 +121,11 @@ function Button.new(props: Props)
 	root.Activated:Connect(function()
 		if self._disabled then
 			Anim.shake(root)
+			Audio.Play("Locked")
 			return
+		end
+		if self._sound then
+			Audio.Play(self._sound)
 		end
 		if self._onClick then
 			task.spawn(self._onClick)

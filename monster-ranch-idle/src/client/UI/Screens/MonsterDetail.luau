@@ -382,7 +382,7 @@ function MonsterDetail.Build(ctx)
 					OnClick = function()
 						local ok = StoreKit.request(ctx, "Monsters.Feed", { id = currentId, flavor = flavor.id, amount = 1 })
 						if ok then
-							ctx:Sound("ButtonClick")
+							ctx:Sound("Eat")
 							render()
 						end
 					end,
@@ -521,6 +521,7 @@ function MonsterDetail.Build(ctx)
 						function()
 							local ok, res = StoreKit.request(ctx, "Monsters.StarUp", { id = id, fodder = ids[1] })
 							if ok then
+								ctx:Sound("StarUp")
 								ctx:Toast(
 									string.format("%s is now ★%d!", name, type(res) == "table" and tonumber(res.stars) or 0),
 									"success"

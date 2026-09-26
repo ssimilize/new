@@ -90,7 +90,9 @@ function Router:Open(name: string, params: any?)
 	end
 	local modal = screen.Modal ~= false
 	if modal and self._current and self._current ~= name then
+		self._switching = true -- one open sound for a swap, not a close and an open
 		self:Close(self._current)
+		self._switching = false
 	end
 	if modal then
 		self._current = name
@@ -106,7 +108,7 @@ function Router:Open(name: string, params: any?)
 	if screen.Open then
 		task.spawn(screen.Open, params)
 	end
-	self._kernel:Sound("ButtonClick")
+	self._kernel:Sound("UIOpen")
 	self.Opened:Fire(name, params)
 end
 
@@ -126,6 +128,9 @@ function Router:Close(name: string?)
 	if self._current == target then
 		self._current = nil
 		self._dim.Visible = false
+	end
+	if not self._switching then
+		self._kernel:Sound("UIClose")
 	end
 	self.Closed:Fire(target)
 end

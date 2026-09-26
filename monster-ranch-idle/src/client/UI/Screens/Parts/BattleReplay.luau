@@ -14,6 +14,7 @@
 	Events play in order: the actor lunges, the target shakes, floating numbers show damage,
 	crits, heals, shields and stuns; element multipliers and specials get a callout.
 	Skip fast-forwards the state and shows the result card.
+	Soundscape plays battle music while a "BattleReplay" root is in ctx.UI.Top.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -384,6 +385,7 @@ function BattleReplay.play(ctx, opts)
 			floater(ev.actor, "Stunned…", C.Gold)
 		elseif kind == "faint" then
 			floater(target, "KO", C.Red, true)
+			ctx:Sound("KO")
 		end
 		if kind == "hit" or kind == "crit" then
 			ctx:Sound(if kind == "crit" then "Crit" else "Hit")

@@ -33,6 +33,8 @@ return {
 		"Gamepad",
 		-- Particle effects (Visuals/Vfx): landmark ambience
 		"Landmarks",
+		-- Audio (client/Audio): music, ambience beds, monster chatter; Sound Check in Studio
+		"Soundscape",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
