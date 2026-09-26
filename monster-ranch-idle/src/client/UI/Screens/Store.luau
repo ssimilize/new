@@ -613,6 +613,9 @@ return {
 			local credit = ctx.Store:Get("profile.Quests.passCredit")
 			local now = ctx:Now()
 			for i, product in M.Products do
+				if product.gift then
+					continue -- bought for a friend from the Friends screen
+				end
 				local cell = Util.card({ LayoutOrder = i, Parent = grid })
 				local icon = productIcon(product)
 				icon.Position = UDim2.fromOffset(10, 10)

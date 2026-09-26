@@ -74,6 +74,9 @@ Monetization.Products = {
 		args = { weather = "starfall" },
 	},
 	{ key = "ranchPass", name = "Ranch Pass (season)", price = 399, productId = 0, handler = "Quests.RanchPass" },
+	-- Glow-up L: a Ranch Pass bought for a friend (Systems/Gifts, Config.Community.PassGift). `gift`
+	-- products are sold from the Friends screen only, never in the Store grid.
+	{ key = "ranchPassGift", name = "Ranch Pass gift", price = 399, productId = 0, handler = "Gifts.RanchPass", gift = true },
 }
 
 Monetization.PassByKey = {}

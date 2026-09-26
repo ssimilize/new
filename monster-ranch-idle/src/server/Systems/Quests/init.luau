@@ -33,6 +33,7 @@
 	  Quests:TutorialStep(player) -> stepIndex, stepId?      -- stepId nil when the tutorial is done
 	  Quests:TutorialDone(player) -> boolean
 	  Quests:PassPremium(player) -> boolean
+	  Quests:GrantPass(player) -> boolean                    -- a gifted pass: premium now, or banked
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -394,6 +395,12 @@ end
 function Quests:TutorialDone(player): boolean
 	local s = ctx:Section(player)
 	return s ~= nil and currentStep(s) == nil
+end
+
+-- A Ranch Pass from somewhere other than the player's own purchase (glow-up L: a friend's gift).
+-- Same rules as buying one: premium now if the season is open without it, otherwise banked.
+function Quests:GrantPass(player): boolean
+	return onRanchPassPurchased(player, nil, nil)
 end
 
 function Quests:PassPremium(player): boolean

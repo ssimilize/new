@@ -47,6 +47,8 @@ local Config = {
 	LoginStreak = require(script.LoginStreak),
 	Reminders = require(script.Reminders),
 	Mastery = require(script.Mastery), -- 3.3 endgame
+	-- Glow-up L: emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
+	Community = require(script.Community),
 }
 
 return Config

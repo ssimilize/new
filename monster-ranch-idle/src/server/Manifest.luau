@@ -61,6 +61,9 @@ return {
 		"Reminders",
 		-- 3.3 · Endgame (Ranch Mastery, Line Mastery, Star Shard shop, Mythic Ladder)
 		"Mastery",
+		-- Glow-up L · emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
+		"Community",
+		"Gifts",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

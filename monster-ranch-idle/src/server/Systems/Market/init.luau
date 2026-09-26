@@ -39,6 +39,12 @@
 	Actions: Market.List, Cancel, Buy, Browse, Mine, Collect. Event: Market.MailCollected.
 	Bus: publishes MarketListed, MarketBought (buyer) and MarketSold (nil, buyer's server).
 	Public API: Market:Sync(player) -> summary? (tests / shutdown), Market:Flush().
+
+	Other systems' mail (glow-up L: gifts, invite rewards) rides the same mailbox:
+	  Market:RegisterMail(kind, fn(player, entry) -> boolean)   -- in Start(); true = done (acked)
+	  Market:Send(owner, userId, entry) -> boolean                -- saved outbox task first, then MailAdd
+	An entry of a registered kind is handed to its handler on collection; false leaves it in the
+	mailbox for the next sync (e.g. no room). Entry ids must be deterministic, like the market's.
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -85,6 +91,7 @@ local flushing = false
 local cache = {} -- [query] = { at, list } browse results
 local tokens = 0
 local MAIL_SEEN_MAX = 200
+local mailHandlers = {} -- [entry.kind] = fn(player, entry) -> boolean (other systems' mail)
 
 -- Helpers -----------------------------------------------------------------------------------
 
@@ -553,6 +560,12 @@ local function syncNow(player)
 					forget(player, entry.listing)
 				end
 				applied = true
+			elseif type(entry.kind) == "string" and mailHandlers[entry.kind] then
+				local ran, done = pcall(mailHandlers[entry.kind], player, entry)
+				if not ran then
+					warn("[Market] mail handler " .. entry.kind .. " errored: " .. tostring(done))
+				end
+				applied = ran and done == true and section(player) ~= nil
 			elseif entry.kind == "item" and type(entry.item) == "table" and roomFor(player, entry.itemKind) then
 				local newId = give(player, entry.itemKind, entry.item)
 				if newId then
@@ -593,6 +606,32 @@ function Market:Sync(player)
 		return nil
 	end
 	return result
+end
+
+function Market:RegisterMail(kind: string, fn)
+	assert(type(kind) == "string" and type(fn) == "function", "[Market] RegisterMail(kind, fn)")
+	assert(kind ~= "coins" and kind ~= "item", "[Market] coins and item mail are the market's own")
+	mailHandlers[kind] = fn
+end
+
+-- Sends mail on behalf of another system with the market's failure safety: the task is saved in
+-- `owner`'s outbox before the write, so a crash can only repeat it (the id dedups), never lose it.
+-- Returns true when it was delivered now; false means it waits in the outbox for the next sync.
+function Market:Send(owner, userId: number, entry): boolean
+	assert(type(entry) == "table" and entry.id ~= nil, "[Market] Send needs an entry with an id")
+	if not owner or not section(owner) then
+		return call("MailAdd", userId, entry) == true
+	end
+	local task = { kind = "mail", userId = userId, entry = entry }
+	addTask(owner, task)
+	if not ctx:SaveNow(owner) then
+		return false -- saved with the next save and retried by the next sync
+	end
+	if call("MailAdd", userId, entry) ~= true then
+		return false
+	end
+	removeTask(owner, task)
+	return true
 end
 
 function Market:Flush()
@@ -920,6 +959,7 @@ function Market.Init(context)
 	table.clear(syncing)
 	table.clear(buying)
 	table.clear(cache)
+	table.clear(mailHandlers)
 	flushing = false
 
 	ctx.Net:Handle("Market.List", list)

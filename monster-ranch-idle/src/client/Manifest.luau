@@ -43,6 +43,8 @@ return {
 		"PhotoMode",
 		-- Glow-up · daily streak auto-open + reminder opt-in
 		"DailyLogin",
+		-- Glow-up L: emote wheel, Friends button, VIP balcony pads
+		"Community",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -85,5 +87,8 @@ return {
 		"LoginStreak",
 		-- 3.3 · Endgame
 		"Mastery",
+		-- Glow-up L · emotes and tricks, gifts, invites, community rewards
+		"EmoteWheel",
+		"Friends",
 	},
 }
