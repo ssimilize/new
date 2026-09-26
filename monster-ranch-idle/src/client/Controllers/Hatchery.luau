@@ -41,6 +41,7 @@ local Widgets = require(UI.Components.Widgets)
 local StoreKit = require(UI.Components.StoreKit)
 local Tiles = require(UI.Components.Tiles)
 local ViewportMonster = require(UI.Components.ViewportMonster)
+local ShowpieceChips = require(UI.Screens.Parts.ShowpieceChips)
 
 local New = Create.New
 local C = Theme.Colors
@@ -270,9 +271,10 @@ local function fillInfo(m, isNew: boolean?)
 	for i, mut in StoreKit.asTable(m.muts) do
 		Widgets.MutationChip(mut, ui.chips).LayoutOrder = 5 + i
 	end
-	if Formulas.IsHuge(m) then
+	if Formulas.IsHuge(m) and m.titanic ~= true then
 		Widgets.Chip({ Text = "HUGE", Color = C.Orange, LayoutOrder = 9, Parent = ui.chips })
 	end
+	ShowpieceChips.add(m, ui.chips, 10) -- glow-up W: TITANIC, #37/500
 	Tiles.clear(ui.traits)
 	for i, id in StoreKit.asTable(m.traits) do
 		local t = Config.Traits.ById[id]
@@ -347,7 +349,8 @@ local function reveal(entry)
 		end
 		task.delay(0.45, Voices.Cry, m, "hatch")
 	end
-	local burstSize = 300 + rarity * 30
+	local titanic = m.titanic == true -- glow-up W: a bigger burst and a celebration on top
+	local burstSize = (300 + rarity * 30) * (if titanic then 1.5 else 1)
 	if not skipped then
 		skipped = animate(0.8, function(a)
 			local e = 1 - (1 - a) ^ 3
@@ -364,6 +367,12 @@ local function reveal(entry)
 	ui.burst.Size = UDim2.fromOffset(burstSize, burstSize)
 	ui.hint.Visible = false
 	fillInfo(m, entry.isNew)
+	if titanic then
+		local ok, kit = pcall(ctx.GetController, ctx, "Celebrate")
+		if ok and kit and kit.Play then
+			kit:Play(Config.Titanic.Celebration)
+		end
+	end
 	ui.info.Visible = true
 	Anim.popIn(ui.info, 0.25)
 	skipRequested = false

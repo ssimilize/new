@@ -57,6 +57,8 @@ return {
 		"Community",
 		-- Glow-up Q: care menu on own-monster taps, bond nameplates, best friends at the ranch gate
 		"Care",
+		-- Glow-up W: "#37/500" tags on numbered limited-edition monsters in pens
+		"EditionPlates",
 		-- Ambience (Config/Ambience): sky and clouds, dusk lights, scenery that moves, ambient life
 		"Sky",
 		"Lamplight",

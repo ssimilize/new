@@ -453,6 +453,7 @@ local function appearanceKey(a): string
 		tostring(a.archetype),
 		accessoryKey(a.acc), -- worn accessories are built into the model
 		tostring(a.aura or ""), -- 3.3 mastery aura (Vfx)
+		if a.titanic == true then "T" else "", -- glow-up W: Titanic size and aura
 	}, "|")
 end
 
@@ -471,7 +472,7 @@ local function acquireModel(appearance, key: string): Model?
 		poolCount -= 1
 		return table.remove(list)
 	end
-	local ok, model = pcall(MonsterModel.Build, appearance)
+	local ok, model = pcall(MonsterModel.Build, appearance, { inPen = true }) -- a Titanic stays inside the fence
 	if not ok then
 		warn("[World] MonsterModel.Build failed: " .. tostring(model))
 		return nil

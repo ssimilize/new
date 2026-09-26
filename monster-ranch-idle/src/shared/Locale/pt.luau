@@ -2173,4 +2173,12 @@ return {
 	["{1} had a big adventure!"] = "{1} viveu uma grande aventura!",
 	["{1} misses the ranch. And you!"] = "{1} sente falta do rancho. E de você!",
 	["{1} found a snack and saved you half."] = "{1} achou um lanche e guardou metade para você.",
+	-- Glow-up W: Titanic monsters and limited editions
+	["TITANIC"] = "TITÂNICO",
+	["Titanic"] = "Titânico",
+	["LIMITED"] = "LIMITADO",
+	["#{1}/{2}"] = "#{1}/{2}",
+	["Limited edition #{1} of {2}"] = "Edição limitada #{1} de {2}",
+	["Huge {1} · Titanic {2}"] = "Enorme {1} · Titânico {2}",
+	["Limited editions: each line is numbered, {1} per line"] = "Edições limitadas: cada linhagem é numerada, {1} por linhagem",
 }

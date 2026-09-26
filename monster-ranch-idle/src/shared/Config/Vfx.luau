@@ -83,7 +83,7 @@ Vfx.Sprites = {
 	glow = { tint = true },
 }
 
-Vfx.Budget = { aura = 8, withMutations = 12, landmark = 60, mastery = 3 }
+Vfx.Budget = { aura = 8, withMutations = 12, landmark = 60, mastery = 3, titanic = 4 }
 
 local FADE = { { 0, 1 }, { 0.15, 0 }, { 0.75, 0.2 }, { 1, 1 } }
 local SOFT = { { 0, 1 }, { 0.2, 0.4 }, { 1, 1 } }
@@ -790,6 +790,43 @@ Vfx.Rarity = {
 	epic = groundGlow("#A259E0"),
 	legendary = groundGlow("#E99A10"),
 	mythic = groundGlow("#E8436F"),
+}
+
+-- Glow-up W · the Titanic aura (appearance.titanic): a slow ground ring and rising embers on top
+-- of the other layers, within Budget.titanic live particles. Sizes grow with the model's Height,
+-- so a Titanic's ring is already three times wider than a normal monster's.
+Vfx.Titanic = {
+	{
+		sprite = "ring",
+		grey = true,
+		color = "#E8436F",
+		at = "feet",
+		offset = { 0, 0.1, 0 },
+		rate = 0.6,
+		lifetime = { 2.2, 2.6 },
+		size = { { 0, 1.2 }, { 1, 3.4 } },
+		transparency = SOFT,
+		speed = 0.01,
+		orientation = "VelocityPerpendicular",
+		lockedToPart = true,
+		lightEmission = 0.3,
+		lightInfluence = 0,
+	},
+	{
+		sprite = "star5",
+		grey = true,
+		color = { { 0, "#FFD447" }, { 1, "#E8436F" } },
+		at = "body",
+		rate = 1.5,
+		lifetime = { 1, 1.4 },
+		size = TWINKLE,
+		transparency = SPARK,
+		speed = { 0.2, 0.5 },
+		spread = 180,
+		accel = { 0, 0.8, 0 },
+		lightEmission = 0.3,
+		lightInfluence = 0,
+	},
 }
 
 -- Update 3.3 · Mastery auras (appearance.aura, set by the Mastery system): a light sprinkle on top

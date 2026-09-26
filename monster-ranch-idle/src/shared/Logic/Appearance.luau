@@ -26,6 +26,9 @@ export type Appearance = {
 	stars: number,
 	acc: { [string]: string }?, -- worn accessories { [slot] = accessoryId } (1.5)
 	aura: string?, -- 3.3: mastery aura (Config.Vfx.Mastery key), added by Monsters:Appearance only
+	titanic: boolean?, -- glow-up W: the Titanic size tier (Logic/Titanic)
+	ltdNo: number?, -- glow-up W: limited edition number ("#ltdNo/ltdOf"), once minted
+	ltdOf: number?, -- glow-up W: that edition's size
 }
 
 function Appearance.Of(m): Appearance
@@ -44,6 +47,9 @@ function Appearance.Of(m): Appearance
 		lv = m.lv or 1,
 		stars = m.stars or 1,
 		acc = if type(m.acc) == "table" and next(m.acc) then table.clone(m.acc) else nil,
+		titanic = if m.titanic == true then true else nil,
+		ltdNo = if type(m.ltdNo) == "number" then m.ltdNo else nil,
+		ltdOf = if type(m.ltdNo) == "number" and type(m.ltdOf) == "number" then m.ltdOf else nil,
 	}
 end
 

@@ -949,6 +949,31 @@ function Adapters.Roblox()
 		end,
 	}
 
+	-- Limited editions (glow-up W): one counter per edition in its own DataStore. UpdateAsync
+	-- makes a claim atomic across servers: Claim -> (true, n) the next number, (true, nil) the
+	-- edition is full, (false, nil) the store failed (the monster stays pending and is tried
+	-- again). nil when the store can't be opened: the system then counts in the profile store.
+	local editionStore = storeOf("MonsterRanch_Editions_v1")
+	adapters.Editions = if editionStore
+		then {
+			Claim = function(editionId: string, size: number): (boolean, number?)
+				local minted = nil
+				local ok = pcall(function()
+					editionStore:UpdateAsync(editionId, function(current)
+						local count = math.max(0, math.floor(tonumber(current) or 0))
+						if count >= size then
+							minted = nil
+							return nil -- full: write nothing
+						end
+						minted = count + 1
+						return minted
+					end)
+				end)
+				return ok, if ok then minted else nil
+			end,
+		}
+		else nil
+
 	return adapters
 end
 

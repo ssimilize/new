@@ -72,6 +72,8 @@ return {
 		"Bond",
 		-- Glow-up X · postcards from expeditions (the Market mailbox sends them to friends)
 		"Postcards",
+		-- Glow-up W · numbered limited editions of event monsters
+		"Editions",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},
