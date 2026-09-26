@@ -35,9 +35,10 @@ Findings:
 
 Where it ended (2026-09-26):
 
-- **Published** (every part a mesh + texture asset, rebuilt from those assets and animated in Studio):
-  anglit, bubblin, coralbun, emberslug, hollowisp, mossbun, staticat, thornbolt, scorchling,
-  cindlet; acornling, moonmoth, petalpaw and lumipup were uploading at 15 s a piece.
+- **Published** (every part a mesh + texture asset; 14 monsters, 102 parts, ids in
+  `MonsterLibrary.luau`): anglit, bubblin, coralbun, emberslug, hollowisp, mossbun, staticat,
+  thornbolt, scorchling, cindlet, acornling, moonmoth, petalpaw, lumipup. `MonsterLab.show()`
+  rebuilds all 14 from those assets, turns each to face -Z by its eyes, and animates them.
 - **Kept local only**, no upload (GLB + textures in `art/rbxgen/pm_<form>/`, git-ignored; review sheet
   `art/rbxgen/review_proto_monsters_local.png`): 25 more, generated through `tools/rbxgen/generate.luau`
   from `tools/rbxgen/batches/proto_monsters_local.json`. Missing: jellow (moderation refused it three
