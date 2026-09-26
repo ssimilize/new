@@ -458,6 +458,25 @@ Api.Actions = {
 	["Monetization.CanBuy"] = { schema = T.struct({ product = T.key(Config.Monetization.ProductByKey) }), rate = 2, returns = "nil" },
 	-- VIP Rancher: one crate per UTC day (Config.Monetization.VipCrate); also fires Rewards.Granted.
 	["Monetization.ClaimVipCrate"] = { schema = T.none, rate = 1, returns = "{ rewards: { Reward }, day: number }" },
+
+	-- Mastery (3.3 endgame, Config/Mastery) --------------------------------------------------
+	-- Rerolls one visible trait slot for Star Shards (a seeded roll; odds in Logic/Mastery).
+	["Mastery.Reroll"] = {
+		schema = T.struct({ id = id, slot = T.integer(1, Config.Traits.VisibleSlots + 1) }),
+		rate = 2,
+		returns = "{ trait: number, cost: number, rerolls: number }",
+	},
+	["Mastery.Buy"] = {
+		schema = T.struct({ item = T.key(Config.Mastery.ShopById) }),
+		rate = 2,
+		returns = "{ item: string, level: number }",
+	},
+	-- item "" takes the kind off.
+	["Mastery.Equip"] = {
+		schema = T.struct({ kind = T.enum(Config.Mastery.EquipKinds), item = T.string(40, 0) }),
+		rate = 3,
+		returns = "nil",
+	},
 }
 
 --[[
@@ -519,6 +538,7 @@ Api.State = {
 		Raids = "{ day, rewarded, wins, runs }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n }, war = { day, n, claimed } }",
+		Mastery = "{ level, xp, total, lines = { [lineId]: points }, rerolls = { [monsterId]: n }, owned = { [itemId]: true }, perks = { [perkId]: level }, equipped = { aura, flourish, plinth, title }, ladder = { season, xp, line, tier }, week = { id, xp, line } }",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -554,6 +574,7 @@ Api.State = {
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open, banner } }, ladder = { week, at, rows = { { rank, clubId, name, tag, color, emblem, points } } } }",
 		Monetization = "{ vip = { ['u'..userId]: true } }  -- VIP Rancher owners in this server (chat tags)",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
+		Mastery = "{ here = { ['u'..userId]: { flourish: string|false, title: string|false, plinth: string|false } } }  -- equipped prestige cosmetics of players in this server",
 	},
 }
 
@@ -569,7 +590,7 @@ Api.Topics = {
 	RanchXP = "(player, { amount: number, reason: string })",
 	LevelUp = "(player, { level: number })",
 	MonsterCreated = "(player, { id: string, source: 'hatch'|'breed'|'trade'|'reward'|'starter' })",
-	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth', acc: { [slot]: accessoryId }? })",
+	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth', acc: { [slot]: accessoryId }?, line: string?, rarity: number? })",
 	MonsterChanged = "(player, { id: string, fields: { string }? })",
 	MonsterFed = "(player, { id: string, flavor: string })",
 	MonsterLeveled = "(player, { id: string, lv: number })",
@@ -579,7 +600,7 @@ Api.Topics = {
 	EggHatched = "(player, { id: string, egg: string, rarity: number, variant: number })",
 	JarCollected = "(player, { coins: number })",
 	PenChanged = "(player, { pen: number })",
-	StageCleared = "(player, { region: string, stage: number, first: boolean })",
+	StageCleared = "(player, { region: string, stage: number, first: boolean, squad: { id }? })",
 	ExpeditionStarted = "(player, { slot: number, duration: number })",
 	ExpeditionClaimed = "(player, { slot: number, duration: number })",
 	BossJoined = "(player, {})",
@@ -600,8 +621,8 @@ Api.Topics = {
 	HubAdPosted = "(player, {})",
 	DesignPublished = "(player, { design: string })",
 	DesignBought = "(player, { design: string, creator: number })",
-	ArenaBattle = "(player, { won: boolean, rating: number })",
-	RaidFinished = "(player, { raid: string, win: boolean })",
+	ArenaBattle = "(player, { won: boolean, rating: number, squad: { id }? })",
+	RaidFinished = "(player, { raid: string, win: boolean, squad: { id }? })",
 	ContestEntered = "(player, { show: number, theme: string })",
 	ContestVoted = "(player, {})",
 	ContestPlaced = "(player, { rank: number, entries: number, theme: string, score: number })",
@@ -619,6 +640,8 @@ Api.Topics = {
 	MarketListed = "(player, { listing: string, key: string, price: number, club: boolean })",
 	MarketBought = "(player, { listing: string, key: string, kind: string, price: number, club: boolean })",
 	MarketSold = "(nil, { listing, key, kind, price, proceeds, buyer, seller, club })  -- on the buyer's server",
+	RanchXPOverflow = "(player, { amount: number, reason: string })  -- Ranch XP earned at the level cap (Mastery banks it)",
+	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------

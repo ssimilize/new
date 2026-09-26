@@ -1,7 +1,8 @@
 --[[
 	Nameplates controller: a small BillboardGui above each player's character with
 	  · their club tag and name (global.Clubs.here, update 1.2), in the club's colour (with its banner flag since 3.1), and
-	  · their champion titles (global.Leaderboards.champions), e.g. "🏆 Master Collector".
+	  · their champion titles (global.Leaderboards.champions), e.g. "🏆 Master Collector", and
+	  · (3.3) their Mythic Ladder title and nameplate flourish (global.Mastery.here).
 	Players with neither get no nameplate. Rebuilt when either state changes and when a
 	character spawns.
 ]]
@@ -43,6 +44,19 @@ local function titlesFor(userId: number): { string }
 	return list
 end
 
+-- 3.3: the Mythic Ladder title and nameplate flourish the player equipped (global.Mastery.here).
+local function masteryFor(userId: number)
+	local here = ctx.Store:Get("global.Mastery.here")
+	local info = type(here) == "table" and here["u" .. tostring(userId)]
+	if type(info) ~= "table" then
+		return nil, nil
+	end
+	local items = Config.Mastery.ItemById
+	local title = type(info.title) == "string" and items[info.title]
+	local flourish = type(info.flourish) == "string" and items[info.flourish]
+	return if title and title.kind == "title" then title else nil, if flourish and flourish.kind == "flourish" then flourish else nil
+end
+
 local function clubFor(userId: number)
 	local here = ctx.Store:Get("global.Clubs.here")
 	local info = type(here) == "table" and here["u" .. tostring(userId)]
@@ -51,11 +65,15 @@ end
 
 local function update(player: Player)
 	local titles = titlesFor(player.UserId)
+	local masteryTitle, flourish = masteryFor(player.UserId)
+	if masteryTitle then
+		table.insert(titles, masteryTitle.name)
+	end
 	local club = clubFor(player.UserId)
 	local character = player.Character
 	local anchor = character and (character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart"))
 	local plate = plates[player]
-	if (#titles == 0 and not club) or not anchor then
+	if (#titles == 0 and not club and not flourish) or not anchor then
 		if plate then
 			plate:Destroy()
 			plates[player] = nil
@@ -122,8 +140,10 @@ local function update(player: Player)
 	elseif flag then
 		flag:Destroy()
 	end
-	titleLabel.Visible = #titles > 0
-	titleLabel.Text = if #titles > 0 then "🏆 " .. table.concat(titles, " · ") else ""
+	local glyph = if flourish then flourish.glyph else "🏆"
+	titleLabel.Visible = #titles > 0 or flourish ~= nil
+	titleLabel.Text = if #titles > 0 then glyph .. " " .. table.concat(titles, " · ") else glyph
+	titleLabel.TextColor3 = if flourish then Color3.fromHex(flourish.color) else C.Gold
 end
 
 local function updateAll()
@@ -146,6 +166,7 @@ end
 function Nameplates.Start()
 	ctx.Store:Observe("global.Leaderboards.champions", updateAll)
 	ctx.Store:Observe("global.Clubs.here", updateAll)
+	ctx.Store:Observe("global.Mastery.here", updateAll)
 	for _, player in Players:GetPlayers() do
 		watch(player)
 	end

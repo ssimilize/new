@@ -27,6 +27,7 @@ local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
 local Vip = require(Shared.Logic.Vip)
+local MasteryLogic = require(Shared.Logic.Mastery)
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -164,7 +165,7 @@ end
 -- Refreshers ------------------------------------------------------------------------
 
 local pills = {}
-local level = { label = nil, pct = nil, bar = nil }
+local level = { label = nil, pct = nil, bar = nil, entry = nil }
 local weather = { frame = nil, text = nil, time = nil }
 local stampede = { title = nil, time = nil, iconHolder = nil, bossId = nil }
 local collect = { button = nil, last = -1 }
@@ -178,6 +179,8 @@ end
 
 local shownCap = 0 -- Config.Unlocks.MaxLevelAt when the level bar was last drawn
 
+local refreshLocks -- lock icons on the side buttons (defined below refreshLevel)
+
 local function refreshLevel()
 	local lv = StoreKit.level(ctx.Store)
 	local xp = StoreKit.num(ctx.Store, "profile.Progression.xp")
@@ -185,9 +188,37 @@ local function refreshLevel()
 	-- The cap is date-gated (60, then 70 from 3.2's launch); read it at the synced time.
 	local atCap = lv >= Config.Unlocks.MaxLevelAt(ctx:Now())
 	local frac = if atCap or need <= 0 then 1 else math.clamp(xp / need, 0, 1)
+	-- 3.3: at the cap the level bar becomes Ranch Mastery and opens the Mastery screen. The entry
+	-- also appears for a player with any Ranch Mastery or a Silver line (Config.Mastery.HudTier).
+	local mastery = StoreKit.tbl(ctx.Store, "profile.Mastery")
+	local mLevel = tonumber(mastery.level) or 0
+	local showEntry = atCap or mLevel > 0
+	if not showEntry and type(mastery.lines) == "table" then
+		for _, points in mastery.lines do
+			if MasteryLogic.TierIndex(tonumber(points) or 0) >= Config.Mastery.HudTier then
+				showEntry = true
+				break
+			end
+		end
+	end
+	if level.entry then
+		level.entry.Visible = showEntry and ctx.Router:Has("Mastery")
+	end
+	if atCap and showEntry then
+		local mXp = tonumber(mastery.xp) or 0
+		local mFrac = math.clamp(mXp / MasteryLogic.RanchCost(mLevel), 0, 1)
+		level.label.Text = string.format("Lv %d · Mastery %d", lv, mLevel)
+		level.pct.Text = string.format("%d%%", math.floor(mFrac * 100))
+		level.bar:SetValue(mFrac, true)
+		return refreshLocks()
+	end
 	level.label.Text = string.format("Ranch Lv %d", lv)
 	level.pct.Text = if atCap then "MAX" else string.format("%d%%", math.floor(frac * 100))
 	level.bar:SetValue(frac, true)
+	return refreshLocks()
+end
+
+refreshLocks = function()
 	for _, entry in buttons do
 		if entry.lockKey then
 			local locked = isLocked(entry)
@@ -396,6 +427,19 @@ local function build()
 		Parent = lvFrame,
 	})
 	level.bar = Widgets.Bar({ Color = C.Blue, Position = UDim2.fromOffset(0, 28), Size = UDim2.new(1, 0, 0, 16), Parent = lvFrame })
+	-- 3.3: the Mastery entry, a tap target over the level bar (shown from the level cap on).
+	level.entry = New("TextButton", {
+		Name = "MasteryEntry",
+		Text = "",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 5,
+		Visible = false,
+		Parent = lvFrame,
+	})
+	level.entry.Activated:Connect(function()
+		openScreen("Mastery")
+	end)
 	targets.level = lvFrame
 
 	-- Settings: a small gear left of the level bar (its old left-stack slot is the Market's).
@@ -709,6 +753,7 @@ function Hud.Init(context)
 	build()
 	ctx.Store:Observe("profile.Currency", refreshCurrency)
 	ctx.Store:Observe("profile.Progression", refreshLevel)
+	ctx.Store:Observe("profile.Mastery", refreshLevel)
 	ctx.Store:Observe("global.Weather", refreshWeather)
 	ctx.Store:Observe("profile.Monsters.list", refreshMonsters)
 	ctx.Store:Observe("profile.Quests", refreshBadges)

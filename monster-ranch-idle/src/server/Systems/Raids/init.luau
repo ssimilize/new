@@ -243,6 +243,7 @@ local function launch(player)
 	local raid = Config.ById[lobby.raid]
 	-- Everyone's monsters, in join order; members who can't field theirs sit out.
 	local allies, fighters = {}, {}
+	local squads = {} -- [player] = { monsterId } (RaidFinished; Mastery counts the win per line)
 	for _, member in table.clone(lobby.members) do
 		local p = playerOf(member.userId)
 		local ok = p ~= nil
@@ -259,6 +260,7 @@ local function launch(player)
 		end
 		if ok and #records > 0 then
 			table.insert(fighters, p)
+			squads[p] = table.clone(teams[id][member.userId] or {})
 			for _, m in records do
 				table.insert(allies, m)
 			end
@@ -280,7 +282,7 @@ local function launch(player)
 	for _, p in fighters do
 		local rewards = payout(p, raid, win)
 		ctx.Net:Fire(p, "Raids.Result", { raid = raid.id, replay = replay, win = win, rewards = rewards })
-		ctx.Bus:Publish("RaidFinished", p, { raid = raid.id, win = win })
+		ctx.Bus:Publish("RaidFinished", p, { raid = raid.id, win = win, squad = squads[p] or {} })
 	end
 	return { win = win }
 end

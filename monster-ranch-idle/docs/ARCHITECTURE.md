@@ -243,6 +243,12 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
   ```
   English is the source language in code. Nothing but the client's `Localize` controller calls `Translate`.
 
+### 3.3: Mastery (endgame)
+- **Mastery** (design and numbers in `Config/Mastery`'s header, rules in `Logic/Mastery`): actions `Mastery.Reroll { id, slot }`, `Mastery.Buy { item }`, `Mastery.Equip { kind, item }` (`item = ""` takes it off). Public: `AddXP`, `AddLinePoints`, `RanchLevel`, `LineTier`, `WeekPoints` (the `mastery` leaderboard), `PerkEffect`.
+- Progression publishes `RanchXPOverflow` for Ranch XP earned at the cap (it used to be dropped). `MonsterRemoved` carries `line` and `rarity`; `StageCleared`, `ArenaBattle` and `RaidFinished` carry the fighting `squad`.
+- HallOfFame gains `SpendStarShards(player, amount, reason) -> boolean` and `AddStarShards(player, amount, reason)`. Monsters gains `RegisterAppearanceDecorator(key, fn(player, record, appearance))`; Mastery sets `appearance.aura` (a `Config/Vfx` `Mastery` key) and `Visuals/Vfx` draws it (kind `mastery`, off on other plots in low graphics, <= `Budget.mastery` live particles).
+- `global.Mastery.here["u" .. userId] = { flourish, title, plinth }`: Nameplates show the title and flourish, World styles the statue pedestals.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 

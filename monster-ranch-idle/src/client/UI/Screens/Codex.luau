@@ -23,6 +23,7 @@ local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local StoreKit = require(UI.Components.StoreKit)
 local Tiles = require(UI.Components.Tiles)
+local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 
 local New = Create.New
 local C = Theme.Colors
@@ -168,6 +169,9 @@ function Codex.Build(ctx)
 		end
 		if def.event then
 			Widgets.Chip({ Text = "EVENT", Color = C.Blue, LayoutOrder = 6, Parent = chips })
+		end
+		if found then
+			MasteryBadge.chip(ctx, def.id, chips, 7) -- 3.3: Line Mastery tier
 		end
 
 		-- Stages and branches

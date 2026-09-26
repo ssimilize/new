@@ -508,7 +508,7 @@ function Expeditions.Init(context)
 				rewards = Rewards:Grant(player, items, "stage_clear", { silent = true })
 				ctx.Bus:Publish("RanchXP", player, { amount = Config.Unlocks.XP.stageClearBase + stage, reason = "stage_clear" })
 			end
-			ctx.Bus:Publish("StageCleared", player, { region = payload.region, stage = stage, first = first })
+			ctx.Bus:Publish("StageCleared", player, { region = payload.region, stage = stage, first = first, squad = table.clone(ids) })
 			ctx.Analytics.Custom(player, "stage_clear", stage, { region = region.id, first = tostring(first) })
 		else
 			lastLoss[player] = key

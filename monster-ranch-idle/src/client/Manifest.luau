@@ -72,5 +72,7 @@ return {
 		-- 2.1 · Arena & Raids
 		"Arena",
 		"Raids",
+		-- 3.3 · Endgame
+		"Mastery",
 	},
 }

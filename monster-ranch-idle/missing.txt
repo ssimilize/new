@@ -1,0 +1,4 @@
+## UI walk
+ui	Monsters button 12 confirm	9,995,631 pts
+ui	WelcomeBack button 2	9,995,632 pts
+

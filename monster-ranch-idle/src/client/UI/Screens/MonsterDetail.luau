@@ -36,6 +36,7 @@ local Tiles = require(UI.Components.Tiles)
 local StatBar = require(UI.Components.StatBar)
 local InsetPopup = require(UI.Components.InsetPopup)
 local ViewportMonster = require(UI.Components.ViewportMonster)
+local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 
 local New = Create.New
 local C = Theme.Colors
@@ -625,6 +626,7 @@ function MonsterDetail.Build(ctx)
 		if vchip then
 			vchip.LayoutOrder = 2
 		end
+		MasteryBadge.chip(ctx, m.line, headerChips, 3) -- 3.3: the line's mastery tier
 		lockButton:SetText(if m.locked then "Locked" else "Lock")
 		local ridingId = StoreKit.tbl(store, "session.Riding").mount
 		rideButton:SetText(if ridingId == currentId then "Get off" else "Ride")

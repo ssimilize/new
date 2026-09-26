@@ -56,6 +56,8 @@ return {
 		"Racing",
 		"TradingHub",
 		"Workshop",
+		-- 3.3 · Endgame (Ranch Mastery, Line Mastery, Star Shard shop, Mythic Ladder)
+		"Mastery",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

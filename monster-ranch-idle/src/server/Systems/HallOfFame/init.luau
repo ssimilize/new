@@ -26,6 +26,8 @@
 	  HallOfFame:Statues(player) -> { Appearance }                       -- newest Config.MaxStatues
 	  HallOfFame:RetiredCount(player) -> number
 	  HallOfFame:StarShards(player) -> number
+	  HallOfFame:SpendStarShards(player, amount, reason) -> boolean      -- 3.3: the Mastery shop
+	  HallOfFame:AddStarShards(player, amount, reason)                   -- 3.3: Mastery rewards
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -106,6 +108,27 @@ end
 function HallOfFame:StarShards(player): number
 	local s = ctx:Section(player)
 	return s and s.starShards or 0
+end
+
+function HallOfFame:SpendStarShards(player, amount: number, reason: string): boolean
+	local s = ctx:Section(player)
+	if not s or type(amount) ~= "number" or amount ~= amount or amount < 0 or (s.starShards or 0) < amount then
+		return false
+	end
+	s.starShards -= amount
+	ctx:Dirty(player, "starShards")
+	ctx.Analytics.Custom(player, "StarShardsSpent", amount, { reason = reason })
+	return true
+end
+
+function HallOfFame:AddStarShards(player, amount: number, reason: string)
+	local s = ctx:Section(player)
+	if not s or type(amount) ~= "number" or amount ~= amount or amount <= 0 then
+		return
+	end
+	s.starShards = (s.starShards or 0) + math.floor(amount)
+	ctx:Dirty(player, "starShards")
+	ctx.Analytics.Custom(player, "StarShardsEarned", amount, { reason = reason })
 end
 
 -- Retire -------------------------------------------------------------------------------

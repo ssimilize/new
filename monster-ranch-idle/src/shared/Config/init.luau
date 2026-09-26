@@ -44,6 +44,7 @@ local Config = {
 	World = require(script.World),
 	Sounds = require(script.Sounds),
 	Flags = require(script.Flags),
+	Mastery = require(script.Mastery), -- 3.3 endgame
 }
 
 return Config
