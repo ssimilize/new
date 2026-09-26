@@ -1,0 +1,11 @@
+{
+  "model_type": "smart-topology",
+  "ai_model": "meshy-t2",
+  "should_texture": true,
+  "texture_resolution": "4k",
+  "enable_pbr": true,
+  "target_polycount": 10000,
+  "target_formats": [
+    "glb"
+  ]
+}

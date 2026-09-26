@@ -86,6 +86,15 @@ Compared on one concept, rendered in Blender and in Studio:
 Per monster: 9 (concept) + 30 (model) = 39 credits, plus re-rolls (about 1 concept in 5 needed one in
 the first batch).
 
+**From batch 8 (2026-09-26): Smart Topology by default, 6 + 15 = 21 credits.** The owner's call, for the
+price. `batch.py run` now takes `model-t2.json` (`model_type: smart-topology`, `meshy-t2`), and `--model 71`
+still takes `model.json` for a form t2 cannot build. What changed from the A/B above:
+- `target_polycount: 10000` (t2's range is 100-15,000, same price) instead of 6,000, against the facets.
+  Aurowl came out at 10,402 triangles, and rigged, baked and exported without a change to the rig scripts.
+- `image_enhancement` must be left out: t2 answers 400 "not supported for model_type: smart-topology"
+  (no charge). `should_remesh` and `topology` do not apply to it.
+- Each task was charged 15 (`consumed_credits` in status.json).
+
 ## Costs (Meshy's pricing page, Sep 2026)
 
 | Task | Credits |

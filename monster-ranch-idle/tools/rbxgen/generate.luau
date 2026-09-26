@@ -18,7 +18,9 @@
 	up to 8 groups, each its own MeshPart with its own 1024 px texture (the triangles are shared).
 	publish = true also publishes every part's mesh and texture as assets, as generated (a prop for
 	World/SceneryMeshes.luau needs nothing more); a model whose texture colormatch.py will change
-	needs only its mesh published here, and the corrected PNG uploaded with upload_image.
+	needs only its mesh published here, and the corrected PNG uploaded with upload_image. To publish
+	only the keepers after looking at the review sheet, leave publish off and call
+	_G.RbxGenPublish(post, { key, ... }) later in the same Studio session.
 	The same inputs give (nearly) the same model: a re-run of the jelly blob matched exactly, one of
 	the fox differed by 1% of its triangles and looked the same. To get another take, change the
 	prompt or the image. A prompt can fail "Moderation failed" for nothing (an oak tree "with a
@@ -154,6 +156,26 @@ local function publish(key: string, p: MeshPart): { mesh: string, texture: strin
 	return ids
 end
 
+-- Publishes every part of a model, one publish at a time across all jobs (11 publishes at once
+-- failed "Too Many Requests" for a peer session, 2026-09-25; waves of 3 all passed), and posts
+-- the ids so assemble.py records them.
+local function publishModel(url: string, key: string, model: Model, state)
+	state.published = state.published or {}
+	for _, p in model:GetDescendants() do
+		if p:IsA("MeshPart") then
+			while _G.RbxGen.publishing do
+				task.wait(0.2)
+			end
+			_G.RbxGen.publishing = true
+			local ok, ids = pcall(publish, key, p)
+			_G.RbxGen.publishing = false
+			assert(ok, ids)
+			state.published[p.Name] = ids
+			post(url, key, p.Name, "ids", HttpService:JSONEncode(ids))
+		end
+	end
+end
+
 local function run(url: string, job, folder: Folder, slot: number)
 	local state = _G.RbxGen.jobs[job.key]
 	local ok, err = pcall(function()
@@ -184,21 +206,10 @@ local function run(url: string, job, folder: Folder, slot: number)
 		for _, p in model:GetDescendants() do
 			if p:IsA("MeshPart") then
 				table.insert(state.parts, send(url, job.key, model, p))
-				if job.publish then
-					-- One publish at a time across all jobs: 11 publishes at once failed "Too Many
-					-- Requests" for a peer session (2026-09-25); waves of 3 all passed.
-					while _G.RbxGen.publishing do
-						task.wait(0.2)
-					end
-					_G.RbxGen.publishing = true
-					local okPublish, ids = pcall(publish, job.key, p)
-					_G.RbxGen.publishing = false
-					assert(okPublish, ids)
-					state.published = state.published or {}
-					state.published[p.Name] = ids
-					post(url, job.key, p.Name, "ids", HttpService:JSONEncode(ids))
-				end
 			end
+		end
+		if job.publish then
+			publishModel(url, job.key, model, state)
 		end
 	end)
 	state.state = if ok then "done" else "failed"
@@ -239,4 +250,54 @@ _G.RbxGenRun = function(args): string
 	return _G.RbxGenStatus()
 end
 
-return _G.RbxGenRun(_G.RbxGenArgs)
+-- Publishes models already generated this session (still in Workspace.RbxGen), for picking the
+-- keepers from a review sheet first: `return _G.RbxGenPublish("http://127.0.0.1:38519/", { "a", "b" })`.
+-- A publish took ~15 s a model on 2026-09-26, so the work runs in its own thread and a call waits at
+-- most 50 s; call it again with the same keys to wait on: a model already published (or on its way)
+-- is not published twice.
+_G.RbxGenPublish = function(url: string, keys: { string }): string
+	local folder = workspace:FindFirstChild("RbxGen")
+	_G.RbxGen = _G.RbxGen or { jobs = {} }
+	for _, key in keys do
+		local state = _G.RbxGen.jobs[key] or {}
+		_G.RbxGen.jobs[key] = state
+		if not state.publishing and not state.publishedAll then
+			state.publishing = true
+			task.spawn(function()
+				local model = folder and folder:FindFirstChild(key)
+				local ok, err = pcall(function()
+					assert(model, "not in Workspace.RbxGen")
+					publishModel(url, key, model, state)
+				end)
+				state.publishedAll = ok
+				state.publishError = if ok then nil else tostring(err)
+				state.publishing = false
+			end)
+		end
+	end
+	local deadline = os.clock() + 50
+	local result
+	repeat
+		task.wait(0.5)
+		local busy = false
+		result = {}
+		for _, key in keys do
+			local state = _G.RbxGen.jobs[key]
+			busy = busy or state.publishing
+			result[key] = if state.publishError
+				then "error: " .. state.publishError
+				elseif state.publishedAll then state.published
+				else "publishing"
+		end
+	until not busy or os.clock() > deadline
+	return HttpService:JSONEncode(result)
+end
+
+-- The arguments are used up, so sending this file again without new ones only (re)loads the
+-- functions instead of running the last batch a second time.
+local args = _G.RbxGenArgs
+_G.RbxGenArgs = nil
+if args == nil then
+	return "loaded: _G.RbxGenRun(args), _G.RbxGenStatus(), _G.RbxGenPublish(url, keys)"
+end
+return _G.RbxGenRun(args)

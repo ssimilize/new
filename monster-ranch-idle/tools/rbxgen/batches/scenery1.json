@@ -1,0 +1,165 @@
+{
+ "note": "2026-09-26 scenery props for Config.World.Scenery (text only, reviewed before publishing)",
+ "jobs": [
+  {
+   "key": "s_hayStack",
+   "prompt": "a stack of three rectangular golden hay bales tied with twine, cute stylized cartoon toon style",
+   "size": [
+    5,
+    3.5,
+    3.5
+   ],
+   "maxTriangles": 3000
+  },
+  {
+   "key": "s_pumpkins",
+   "prompt": "a small patch of three round orange pumpkins with curly green vines and leaves, flat on the ground, cute stylized cartoon toon style",
+   "size": [
+    4,
+    1.6,
+    3
+   ],
+   "maxTriangles": 3000
+  },
+  {
+   "key": "s_scarecrow",
+   "prompt": "a friendly scarecrow on a wooden post with a straw hat, a patched shirt and straw hands, cute stylized cartoon toon style",
+   "size": [
+    4,
+    7,
+    1.5
+   ],
+   "maxTriangles": 4000
+  },
+  {
+   "key": "s_well",
+   "prompt": "an old round stone water well with a small wooden roof and a bucket hanging on a rope, cute stylized cartoon toon style",
+   "size": [
+    5,
+    7,
+    5
+   ],
+   "maxTriangles": 5000
+  },
+  {
+   "key": "s_windmill",
+   "prompt": "a small wooden farm windmill with four white sails on a round stone base, cute stylized cartoon toon style",
+   "size": [
+    8,
+    18,
+    8
+   ],
+   "maxTriangles": 8000
+  },
+  {
+   "key": "s_campfire",
+   "prompt": "a campfire ring of grey stones with crossed logs and small orange flames, cute stylized cartoon toon style",
+   "size": [
+    4,
+    2,
+    4
+   ],
+   "maxTriangles": 3000
+  },
+  {
+   "key": "s_stump",
+   "prompt": "a cut tree stump with visible rings on top and a few small roots, a little moss, cute stylized cartoon toon style",
+   "size": [
+    3,
+    2,
+    3
+   ],
+   "maxTriangles": 2000
+  },
+  {
+   "key": "s_firewood",
+   "prompt": "a neat stack of chopped firewood logs, cute stylized cartoon toon style",
+   "size": [
+    4,
+    2.5,
+    2
+   ],
+   "maxTriangles": 3000
+  },
+  {
+   "key": "s_sunflowers",
+   "prompt": "a cluster of three tall sunflowers with big yellow petals, brown centres and green leaves, cute stylized cartoon toon style",
+   "size": [
+    3,
+    5,
+    3
+   ],
+   "maxTriangles": 4000
+  },
+  {
+   "key": "s_beehive",
+   "prompt": "a round straw skep beehive sitting on a small wooden stool, cute stylized cartoon toon style",
+   "size": [
+    2.5,
+    3,
+    2.5
+   ],
+   "maxTriangles": 3000
+  },
+  {
+   "key": "s_bench",
+   "prompt": "a wooden park bench with a backrest, cute stylized cartoon toon style",
+   "size": [
+    5,
+    2.5,
+    2
+   ],
+   "maxTriangles": 2500
+  },
+  {
+   "key": "s_wagon",
+   "prompt": "a wooden farm wagon with four wooden wheels loaded with hay, cute stylized cartoon toon style",
+   "size": [
+    9,
+    5,
+    5
+   ],
+   "maxTriangles": 6000
+  },
+  {
+   "key": "s_pond",
+   "prompt": "a small round pond with blue water, green lily pads and pink water lilies, ringed by small stones, flat and low on the ground, cute stylized cartoon toon style",
+   "size": [
+    12,
+    1,
+    10
+   ],
+   "maxTriangles": 5000
+  },
+  {
+   "key": "s_toadstool",
+   "prompt": "a giant red toadstool mushroom with white spots and a thick white stem, cute stylized cartoon toon style",
+   "size": [
+    5,
+    7,
+    5
+   ],
+   "maxTriangles": 4000
+  },
+  {
+   "key": "s_crystals",
+   "prompt": "a cluster of glowing purple and light blue crystals growing out of a small grey rock, cute stylized cartoon toon style",
+   "size": [
+    3,
+    3.5,
+    3
+   ],
+   "maxTriangles": 3000
+  },
+  {
+   "key": "s_birdhouse",
+   "prompt": "a small wooden birdhouse with a red roof on top of a tall wooden pole, cute stylized cartoon toon style",
+   "size": [
+    1.5,
+    6,
+    1.5
+   ],
+   "maxTriangles": 2500
+  }
+ ]
+}

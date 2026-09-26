@@ -393,6 +393,167 @@ SUBJECTS = {
     "glowing cyan band around its middle like a belt.",
     "eventhorizon": "Event Horizon: a huge round toad like a hungry black hole, a swirling dark galaxy pattern "
     "on its back, a thick solid glowing cyan disc band around its middle like a belt, a wide grinning mouth.",
+    # ── Batch 8 (2026-09-26): lines 43-63, concepts drawn in Tripo Studio (Nano Banana Pro) and modelled
+    # with Roblox's own generator (tools/rbxgen). Stage 3 texts avoid "guardian"/"warden"/"reaper" words
+    # (batch 7: "guardian" drew claws and loose strands).
+    # 43 eclipsa (moth, light + void)
+    "eclipsa": "Eclipsa, a baby eclipse moth: a round fluffy body, four small rounded wings, the top pair golden "
+    "and the bottom pair deep indigo, a small solid crescent-shaped marking on its forehead, two short feathery "
+    "antennae.",
+    "penumbra": "Penumbra: bigger wings with golden edges fading into dark indigo, a round sun-and-moon spot on each "
+    "upper wing, a fluffy two-tone collar, longer feathery antennae.",
+    "totaleclipse": "Total Eclipse: a majestic moth with large dark indigo wings rimmed with a painted golden corona "
+    "pattern, a round black sun spot edged in gold on each upper wing, a thick fluffy golden mane, long elegant "
+    "antennae.",
+    # 44 surfotter (bunny, tide): an otter on the bunny body plan, so it keeps the long ears.
+    "surfotter": "Surfotter, a baby surf otter bunny: a round chubby otter-like bunny with sleek blue fur, two long "
+    "upright rounded ears, a cream belly, a small wave-shaped tuft on its head, a short flat paddle tail.",
+    "wavebreaker": "Wavebreaker: taller ears with wave-curl tips, bold white wave stripes on its back, a longer flat "
+    "paddle tail, a confident grin.",
+    "tidalchampion": "Tidal Champion: a proud athletic otter-hare with ears curling like breaking waves, a solid "
+    "white foam-shaped mane around its neck, a golden wave emblem on its chest, a big paddle tail.",
+    # 45 coconutty (golem, sprout)
+    "coconutty": "Coconutty, a baby coconut golem: a round brown hairy coconut body with a cream coconut belly, "
+    "stubby wooden arms and legs, two small green palm leaves sprouting from the top of its head.",
+    "palmguard": "Palmguard: a sturdier palm-trunk golem with ring-banded bark arms, a bushy crown of palm leaves on "
+    "its head, a coconut-shell chest plate.",
+    "islandking": "Island King: a huge palm golem with a massive coconut-shell chest, thick bark arms ending in big "
+    "fists, a tall crown of palm leaves, a flower garland around its neck.",
+    # 46 sunnyray (moth, tide + light): a manta ray on the moth body plan (fin-wings, feelers).
+    "sunnyray": "Sunnyray, a baby sun ray: a small round body like a baby manta ray, four wide rounded fin-wings, "
+    "the top pair golden and the bottom pair sea-blue, two short curled feelers, a small sun-shaped spot on its "
+    "back.",
+    "glareray": "Glareray: bigger wide fin-wings with golden sunburst patterns, a short thin tail, feelers with "
+    "bright golden tips.",
+    "solarmanta": "Solar Manta: a majestic manta with huge fin-wings painted with a golden sun pattern fading into "
+    "ocean blue, a regal crest on its head, long elegant feelers.",
+    # 47 titanling (golem, stone + spark)
+    "titanling": "Titanling, a baby storm-stone golem: a round grey-brown rock body with yellow lightning-bolt "
+    "cracks, stubby rock arms and legs, a small lightning-bolt-shaped rock horn on its head.",
+    "thundercrag": "Thundercrag: a sturdier craggy golem with jagged rock shoulders, bright yellow lightning veins "
+    "across its body, bigger rock fists.",
+    "stormcolossus": "Storm Colossus: a huge towering rock titan with massive fists, solid rock storm-cloud shapes on "
+    "its shoulders, yellow lightning veins, a jagged crown of rock spikes.",
+    # 48 wyrmlet (fox, ember + void): a dragon on four legs; wings stay small and folded (fox rig).
+    "wyrmlet": "Wyrmlet, a baby shadow-fire dragon: a small round dragon standing on four legs, two tiny wing nubs "
+    "on its back, two short horns, a long tail with a small flame-shaped tip, orange belly plates.",
+    "ashwyrm": "Ashwyrm: a longer, leaner four-legged dragon with small folded wings on its back, glowing orange "
+    "cracks along its back, curved horns, a flame-tipped tail.",
+    "umbralwyrm": "Umbral Wyrm: a majestic four-legged dragon with big wings folded on its back, glowing orange-red "
+    "veins, long curved horns, a spiked tail with a dark flame-shaped tip.",
+    # 49 tempestray (moth, tide + spark): a storm manta on the moth body plan.
+    "tempestray": "Tempestray, a baby storm ray: a small round body like a baby manta ray, four wide fin-wings with "
+    "yellow zigzag lightning stripes, two short curly feelers, a tiny cloud-shaped puff on its back.",
+    "squallwing": "Squallwing: bigger fin-wings with lightning-bolt patterns on the edges, a short thin tail with a "
+    "bolt-shaped tip, longer feelers.",
+    "maelstromray": "Maelstrom Ray: a majestic storm manta with huge fin-wings painted with swirling storm patterns "
+    "and bright yellow lightning streaks, a crest shaped like a lightning bolt, long feelers.",
+    # 50 floelet (slug, tide + light)
+    "floelet": "Floelet, a baby ice slug: a soft glossy body, two short eye stalks with little snowflake tips, small "
+    "round white frost spots on its back.",
+    "rimecoil": "Rimecoil: a longer body with a row of short, rounded ice-crystal spikes along its back, frosty "
+    "white stripes, eye stalks tipped with tiny crystals.",
+    "frostleviathan": "Frost Leviathan, a long, proud ice sea serpent: rows of ice-crystal plates along its back, a "
+    "crest of ice spikes on its head, two short curled horns, shimmering frost patterns.",
+    # 51 sandskip (bunny, stone): two adults, both drawn from dunehopper.
+    "sandskip": "Sandskip, a baby sand bunny: a small bunny with two long upright ears with brown tips, big feet, a "
+    "few darker sand-dune stripes on its back.",
+    "dunehopper": "Dunehopper: taller ears, stronger hind feet, a fluffy ruff of fur around its neck like a desert "
+    "scarf, dune-wave stripes along its back.",
+    "siroccohare": "Sirocco Hare: an elegant desert hare with very long swept-back ears, a swirling wind pattern in "
+    "its fur, a fluffy sand-coloured mane, a confident look.",
+    "oasishare": "Oasis Hare: a calm desert hare with long ears tipped with small green palm fronds, a turquoise "
+    "water-drop marking on its forehead, soft green and turquoise patterns in its fur.",
+    # 52 cactling (golem, sprout + stone)
+    "cactling": "Cactling, a baby cactus golem: a round green cactus body with soft rounded spines, a small pink "
+    "flower on its head, stubby sandstone legs and little cactus arms.",
+    "pricklord": "Pricklord: a sturdier cactus golem with thick cactus-pad arms covered in soft rounded spines, "
+    "sandstone feet like boots, two pink flowers on its head.",
+    "saguardian": "A huge towering saguaro cactus titan: massive cactus arms raised like a strongman, sandstone rock "
+    "shoulders, a crown of blooming pink and white flowers.",
+    # 53 scarabit (bug, ember)
+    "scarabit": "Scarabit, a baby fire scarab: a round glossy shell with golden edges, a small sun-disc marking on "
+    "its back, two short antennae with ember tips.",
+    "sunscarab": "Sunscarab: a bigger scarab with a shiny golden sun disc on its back, flame-shaped patterns along "
+    "the shell edge, a small horn on its head.",
+    "pharaohbeetle": "Pharaoh Beetle: a majestic royal beetle with a gleaming gold and orange shell, a striped "
+    "pharaoh-style headdress shape on its head, a big golden sun disc on its back, an ornate horn.",
+    # 54 pengling (blob, tide)
+    "pengling": "Pengling, a baby penguin blob: a round squishy body with a white belly, a small orange beak, two "
+    "tiny flipper nubs on its sides, a little tuft of feathers on top of its head.",
+    "floeglider": "Floeglider: a rounder, bigger penguin blob with a flat ice-floe-shaped patch on its head, bigger "
+    "flippers, wave-shaped markings on its back.",
+    "emperorfloe": "Emperor Floe: a big stately round penguin blob with a golden-yellow collar patch, a solid "
+    "crown-shaped crest of ice on its head, a proud puffed-out white chest.",
+    # 55 yetikit (golem, stone + tide)
+    "yetikit": "Yetikit, a baby yeti: a round fluffy furry body, stubby arms and legs, a grey stone face with two "
+    "small horns, a round tummy.",
+    "snowbrute": "Snowbrute: a sturdier shaggy yeti with big furry arms and stone-grey fists, icicle-shaped fur on "
+    "its shoulders, two curved horns.",
+    "avalancheyeti": "Avalanche Yeti: a huge towering yeti with massive furry arms, rocky stone shoulder plates "
+    "capped with snow, long curved horns, a thick shaggy white mane.",
+    # 56 aurowl (sprite, light)
+    "aurowl": "Aurowl, a baby dawn owl: a round fluffy owl body, big round owl eyes, two small feather tufts on its "
+    "head, tiny wing-arms, a short wispy feathered tail.",
+    "glimmerowl": "Glimmerowl: longer feather tufts, soft golden star markings on its chest, wing-arms with bright "
+    "feather tips, a longer wispy tail.",
+    "aurorasage": "Aurora Sage: a wise majestic owl sprite with a flowing mane of pale gold feathers, soft pastel "
+    "aurora bands painted across its wings, long feather tufts like a sage's brows, a small golden star on its "
+    "forehead.",
+    # 57 pumpkit (blob, ember + sprout)
+    "pumpkit": "Pumpkit, a baby pumpkin blob: a round squishy pumpkin body with soft ridges, a short curly green "
+    "stem and a small leaf on top of its head.",
+    "gourdling": "Gourdling: a bigger pumpkin blob with deeper ridges, a curly vine wrapped around its body with "
+    "small leaves, a slightly mischievous grin.",
+    "jackolord": "Jack-o-Lord: a big proud pumpkin blob with a jack-o'-lantern face whose mouth glows warm orange "
+    "inside, a crown of curly vines and leaves, a thick green stem.",
+    # 58 scarecrowl (moth, sprout + gloom): a straw-and-patchwork moth.
+    "scarecrowl": "Scarecrowl, a baby straw moth: a round fluffy body of golden straw, a tiny patched hat on its "
+    "head, four small rounded wings of patched cloth, two short straw antennae.",
+    "strawhoot": "Strawhoot: bigger patched-cloth wings with stitched seams, a fuller straw collar, a wider hat, "
+    "longer straw antennae.",
+    "harvestwarden": "A majestic harvest moth: large patched-cloth wings with stitched moon patterns, a tall "
+    "pointed straw hat, a thick straw mane, long straw antennae with small wheat tips.",
+    # 59 batterfly (bug, gloom)
+    # The bat ears made NB2 draw an upright bat twice (2026-09-26): the beetle shape is spelled out.
+    "batterfly": "Batterfly, a baby bat bug shaped like a round beetle: a low body lying lengthwise along the ground "
+    "on six stubby legs, a round shell back with two small folded bat-like wings, big pointed bat ears on its head, "
+    "two short antennae.",
+    "duskflutter": "Duskflutter: a bigger bug with larger folded bat wings on its back, moon-shaped markings on its "
+    "shell, taller bat ears.",
+    "nightreaper": "A majestic night beetle: large folded bat wings on its back, a shell painted with a starry night "
+    "pattern, tall bat ears, a curved horn like a crescent moon.",
+    # 60 snowmitt (bunny, tide)
+    "snowmitt": "Snowmitt, a baby snow bunny: a small fluffy bunny with pale ear tips, big fluffy mitten-like feet, "
+    "a round fluffy tail, a ring of thicker fur around its neck like a tiny scarf.",
+    "frostpaw": "Frostpaw: taller ears with icy tips, frosty patterns on its fur, bigger fluffy paws, a small "
+    "icicle-shaped tuft on its head.",
+    "glacierfang": "Glacierfang: a strong majestic snow hare with long swept-back ears, two small ice-crystal fangs, "
+    "a thick frosty mane, ice-crystal shapes on its shoulders.",
+    # 61 pinepip (golem, sprout)
+    "pinepip": "Pinepip, a baby pine golem: a round body shaped like a small pine cone with green needle tufts, "
+    "stubby wooden arms and legs, a tiny pine sapling growing on its head.",
+    # "Like a cape" drew a spruce skirt down to the ground that hid the arms and rigged as a third
+    # foot (2026-09-26): the branches are kept short and high.
+    "sprucesprout": "Sprucesprout: a sturdier wooden golem with a short mantle of spruce branches on its shoulders "
+    "and upper back that ends well above the ground, bark-textured arms held clear of the body, a small spruce "
+    "tree on its head.",
+    "evergrand": "Evergrand: a huge ancient evergreen titan with a body of dark bark and moss, massive wooden fists, "
+    "a tall layered pine-tree crown on its head, small pinecones on its shoulders.",
+    # 62 frostfly (moth, spark)
+    "frostfly": "Frostfly, a baby frost moth: a round fluffy body, four small rounded wings shaped like snowflakes "
+    "with spark dots, two short antennae tipped with tiny ice crystals.",
+    "icewing": "Icewing: bigger crystal-patterned wings with zigzag spark edges, a fluffy frosty collar, longer "
+    "antennae with crystal tips.",
+    "aurorawing": "Aurorawing: a majestic moth with large wings painted with shimmering bands of aurora colours, a "
+    "thick fluffy mane, long elegant antennae with star-shaped tips.",
+    # 63 tinselkit (fox, spark + light)
+    "tinselkit": "Tinselkit, a baby festive fox: a small fluffy fox with a sparkly tinsel-like tail tip, a tiny bell "
+    "on a red ribbon collar, small star-shaped markings on its cheeks.",
+    "garlandfox": "Garlandfox: a green garland of leaves and small red baubles wrapped around its neck, a longer "
+    "sparkly tail, star markings along its back.",
+    "yuletail": "Yuletail: a majestic festive fox with a huge fluffy tail tipped with a solid golden star shape, a "
+    "thick garland mane with small red berries, star patterns across its fur.",
 }
 
 

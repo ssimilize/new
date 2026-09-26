@@ -1,9 +1,11 @@
 """Makes the roster's 3D models with Meshy: concept image -> hole check -> image-to-3d.
 
   python tools/meshy/roster/batch.py plan  FORM[,FORM...]    what would be made, and its cost
-  python tools/meshy/roster/batch.py run   FORM[,FORM...] [--concepts] [--reserve N]   make them (waits;
-                                                         safe to re-run; --concepts stops before the
-                                                         models; --reserve: credits to keep, default 60)
+  python tools/meshy/roster/batch.py run   FORM[,FORM...] [--concepts] [--reserve N] [--model t2|71]
+                                                         make them (waits; safe to re-run; --concepts
+                                                         stops before the models; --reserve: credits
+                                                         to keep, default 60; --model: Smart Topology
+                                                         (15, default) or meshy-7.1 (30))
   python tools/meshy/roster/batch.py reroll FORM [--from LATER]   a new concept for a form that failed;
                                                          --from redraws a baby from its teen's concept
   python tools/meshy/roster/batch.py sheet FORM[,FORM...]    contact sheet of the concepts
@@ -15,14 +17,16 @@ Every Meshy call goes through tools/meshy/meshy.py, which refuses to create a ta
 Per form, in art/meshy/:
   <form>-concept[-N]  stage 1: text-to-image; stages 2-3: image-to-image from the previous stage's
                       concept (subjects.py). The highest N is the form's concept.
-  <form>-model        image-to-3d from the concept (model.json: meshy-7.1, 4k texture, PBR maps).
+  <form>-model        image-to-3d from the concept (model-t2.json: Smart Topology, 10,000 faces;
+                      --model 71 takes model.json: meshy-7.1 remeshed to 6,000; both 4k + PBR).
 The concept is checked before its model is paid for (check.json next to it): Meshy's background
 removal can cut a pale body part out as background (Petalpaw's white chest, 2026-09-25), and
 image-to-3d then fills the hole with an invented dark patch. A failed check stops that form and
 every later stage built on it; `reroll` makes the next concept.
 
 Model settings, from the 2026-09-25 A/B (tools/meshy/README.md has the reasoning): meshy-7.1 (meshy-6
-came out washed out, meshy-t2 at half the price was faceted and left parts floating), 4k texture
+came out washed out, meshy-t2 at half the price was faceted and left parts floating; batch 8 uses t2
+anyway, at 10,000 faces, for the price, and sends what it cannot build to --model 71), 4k texture
 (same price as 2k; the game bakes it to 1024), PBR maps (free: normal and roughness go to a
 SurfaceAppearance), image_enhancement off (the concept already has the style).
 """
@@ -42,8 +46,15 @@ MESHY = [sys.executable, str(ROOT / "tools" / "meshy" / "meshy.py")]
 sys.path.insert(0, str(HERE))
 import subjects  # noqa: E402
 
-CONCEPT_MODEL = "nano-banana-pro"  # the only one that drew the pilot's smooth toy style (A/B)
-COST = {"concept": 9, "model": 30}
+# nano-banana-pro (9 cr) was the only one that drew the pilot's smooth toy style in the first A/B;
+# nano-banana-2 (6 cr, newer) draws better references (the owner's call, 2026-09-26, from batch 8 on).
+CONCEPT_MODEL = "nano-banana-2"
+# Model settings by name (--model): Smart Topology (meshy-t2) at half the price is the default from
+# batch 8 on (the owner's call, 2026-09-26), at 10,000 faces (its cap is 15,000) against the facets
+# the 6,000-face A/B showed; meshy-7.1 stays for the forms t2 cannot build.
+MODELS = {"t2": ("model-t2.json", 15), "71": ("model.json", 30)}
+MODEL = "t2"
+COST = {"concept": 6, "model": MODELS[MODEL][1]}
 HOVERING = {"sprite", "moth"}  # body plans drawn in the air, over a shadow of their own (matte)
 RESERVE = 60  # credits left untouched, for re-rolls
 PENDING = 10  # Meshy refuses an 11th pending task on this plan (429 NoMorePendingTasks)
@@ -363,7 +374,7 @@ def run(forms: list[str], concepts_only: bool = False, reserve: int = RESERVE) -
                 settle_model(in_flight.pop(0))
             image = cutout(concept_name(form))
             while True:
-                reply = meshy("create", "image-to-3d", name, "--image", f"image_url={image}", "--settings", "@" + str(HERE / "model.json"))
+                reply = meshy("create", "image-to-3d", name, "--image", f"image_url={image}", "--settings", "@" + str(HERE / MODELS[MODEL][0]))
                 # Tasks made outside this run (a concept re-roll) hold queue slots too: on a 429,
                 # wait for one of ours to finish and try again.
                 if reply.get("http_error") == 429 and in_flight:
@@ -407,6 +418,12 @@ def main() -> None:
     if len(sys.argv) < 3:
         raise SystemExit(__doc__)
     command, forms = sys.argv[1], [f for f in sys.argv[2].split(",") if f]
+    global MODEL
+    if "--model" in sys.argv:
+        MODEL = sys.argv[sys.argv.index("--model") + 1]
+        if MODEL not in MODELS:
+            raise SystemExit(f"--model {MODEL}: one of {', '.join(MODELS)}")
+        COST["model"] = MODELS[MODEL][1]
     if command == "plan":
         _, table, steps, cost = plan(forms)
         for kind, form, name in steps:

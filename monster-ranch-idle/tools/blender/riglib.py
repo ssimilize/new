@@ -20,7 +20,7 @@ from pathlib import Path
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Quaternion, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 FPS = 30
 HEIGHT = 1.0  # the model is scaled to 1 m tall; the game scales it to its stage size
@@ -243,6 +243,65 @@ def inboard(v, bone) -> bool:
     return abs(v.co.x) < abs(bone.head_local.x)
 
 
+def weighted_share(mesh) -> float:
+    return sum(1 for v in mesh.data.vertices if sum(g.weight for g in v.groups) > 1e-6) / max(1, len(mesh.data.vertices))
+
+
+def heat_at_scale(mesh, arm, factor: float) -> float:
+    """Bone heat again with the mesh and the armature scaled by `factor`, then both put back."""
+    saved = {o: (o.matrix_basis.copy(), o.matrix_parent_inverse.copy()) for o in (mesh, arm)}
+    mesh.modifiers.clear()
+    mesh.vertex_groups.clear()
+    mesh.parent = None
+    for o in (mesh, arm):
+        o.matrix_basis = Matrix.Scale(factor, 4) @ saved[o][0]
+    bpy.context.view_layer.update()
+    bpy.ops.object.select_all(action="DESELECT")
+    mesh.select_set(True)
+    arm.select_set(True)
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.parent_set(type="ARMATURE_AUTO")
+    for o in (mesh, arm):
+        o.matrix_basis, o.matrix_parent_inverse = saved[o]
+    bpy.context.view_layer.update()
+    return weighted_share(mesh)
+
+
+def distance_weights(mesh, arm) -> float:
+    """The last resort: each vertex shared by its two nearest deform bones (1 / distance^4)."""
+    to_mesh = mesh.matrix_world.inverted() @ arm.matrix_world
+    bones = [b for b in arm.data.bones if b.use_deform]
+    V = np.array([v.co[:] for v in mesh.data.vertices])
+    dist = np.empty((len(V), len(bones)))
+    for j, b in enumerate(bones):
+        a, t = np.array((to_mesh @ b.head_local)[:]), np.array((to_mesh @ b.tail_local)[:])
+        seg = t - a
+        u = np.clip(((V - a) @ seg) / max(float(seg @ seg), 1e-12), 0.0, 1.0)
+        dist[:, j] = np.linalg.norm(V - (a + u[:, None] * seg), axis=1)
+    nearest = np.argsort(dist, axis=1)[:, :2]
+    for j, b in enumerate(bones):
+        group = mesh.vertex_groups.get(b.name) or mesh.vertex_groups.new(name=b.name)
+        for i in np.nonzero((nearest == j).any(axis=1))[0]:
+            w = 1.0 / (dist[i, nearest[i]] + 1e-4) ** 4
+            group.add([int(i)], float(w[list(nearest[i]).index(j)] / w.sum()), "REPLACE")
+    return weighted_share(mesh)
+
+
+def rescue_weights(mesh, arm, share: float) -> None:
+    """Bone heat solves the whole mesh as one system, and on some Smart Topology models (Pinepip,
+    Snowmitt, Glareray, Sprucesprout, Strawhoot; 2026-09-26) it finds no solution at all and
+    weights nothing. Whether it does is erratic in the model's size (Sprucesprout: 0% at 1x, 65% at
+    3x, 0% at 10x, 65% at 30x; a watertight voxel copy failed at 1x too), so a few scales are tried,
+    then plain distance to the bones."""
+    for factor in (10.0, 3.0, 30.0):
+        now = heat_at_scale(mesh, arm, factor)
+        if now >= 0.5:
+            log(f"skin: WARNING bone heat weighted only {share:.0%} of the vertices at 1 m; at {factor:g}x scale {now:.0%}")
+            return
+    now = distance_weights(mesh, arm)
+    log(f"skin: WARNING bone heat failed at 1, 10, 3 and 30x scale; distance weights on {now:.0%} of the vertices")
+
+
 def skin(mesh, arm, give_back=(("ear.", below_base),)):
     """Bone-heat skinning with the fixes every body type needs, then at most four bones a vertex.
     give_back: (bone name prefix, test(vertex, bone)): weight a matching bone holds on a vertex the
@@ -252,6 +311,9 @@ def skin(mesh, arm, give_back=(("ear.", below_base),)):
     arm.select_set(True)
     bpy.context.view_layer.objects.active = arm
     bpy.ops.object.parent_set(type="ARMATURE_AUTO")
+    share = weighted_share(mesh)
+    if share < 0.5:
+        rescue_weights(mesh, arm, share)
 
     # Bone heat leaves separate pieces it cannot reach (eyes, nose, mouth stuck onto a face)
     # unweighted. Each such vertex copies the weights of the nearest weighted vertex, so a nose
