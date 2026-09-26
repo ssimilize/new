@@ -22,6 +22,8 @@
 
 	DeepReef.IsInside() -> boolean   the local character is in the Area (Soundscape, Mounts' own
 	                                 riders read Logic/Swim.Inside directly, no call here needed).
+	DeepReef.Dive() / DeepReef.Surface()   what the Dive and Swim up prompts do (the level check
+	                                 included); for QA (Kernel/QABridge) and future UI entry points.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -348,6 +350,15 @@ local function build()
 end
 
 -- Public ----------------------------------------------------------------------------------------
+
+function DeepReef.Dive()
+	build()
+	dive()
+end
+
+function DeepReef.Surface()
+	surface()
+end
 
 function DeepReef.IsInside(): boolean
 	if not swimming then
