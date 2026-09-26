@@ -7,7 +7,8 @@
 
 	Also owns two other always-on server-event presentations for C3 features:
 	  · Boss.Result → the Stampede result popup (rank, share, rewards, egg), shown even when
-	    the Boss screen is closed.
+	    the Boss screen is closed. At the arena (StampedeArena:Fountain) the popup waits for the
+	    loot fountain out of the fallen giant, which already flew the rewards.
 	  · profile.Settings.lowGraphics → UI/Anim.enabled (reduced motion).
 ]]
 
@@ -158,10 +159,8 @@ local function show(payload)
 	end)
 end
 
-local function showBossResult(payload)
-	if type(payload) ~= "table" then
-		return
-	end
+-- reward = false: the rewards already flew (the arena's loot fountain).
+local function showResultPopup(payload, reward: boolean)
 	Dialog.show(ctx.UI.Top, {
 		Title = "Stampede over!",
 		Color = Color3.fromHex("#C0573E"),
@@ -218,10 +217,24 @@ local function showBossResult(payload)
 	ctx:Sound("Victory")
 	-- The chest's coins and gems fly into the HUD; a top-3 finish is a big moment.
 	local kit = ctx:GetController("Celebrate")
-	if kit and type(payload.rewards) == "table" then
+	if reward and kit and type(payload.rewards) == "table" then
 		local rank = tonumber(payload.rank) or 0
 		kit:Reward(payload.rewards, { minSize = if rank >= 1 and rank <= 3 then "big" else nil })
 	end
+end
+
+local function showBossResult(payload)
+	if type(payload) ~= "table" then
+		return
+	end
+	-- Glow-up U: at the arena the loot fountains out of the giant first; the popup follows.
+	local arena = ctx:GetController("StampedeArena")
+	if arena and arena:Fountain(payload, function(rewarded: boolean)
+		showResultPopup(payload, not rewarded)
+	end) then
+		return
+	end
+	showResultPopup(payload, true)
 end
 
 function Broadcasts.Init(context)

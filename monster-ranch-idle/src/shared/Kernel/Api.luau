@@ -634,7 +634,7 @@ Api.State = {
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
 		Weather = "{ id, endsAt, nextRollAt, night: boolean, phaseEndsAt, summonedBy: string? }",
-		Boss = "{ state: 'idle'|'lobby'|'active', bossId, startsAt, endsAt, hp, maxHp, board = { { userId, name, damage } } }",
+		Boss = "{ state: 'idle'|'lobby'|'active', bossId, startsAt, endsAt, hp, maxHp, board = { { userId, name, damage } }, squads = { { userId, looks = { { line, form, stage, rarity, variant } } } } }",
 		Plots = "{ ['1'..'6' as numbers]: PublicPlot }  -- array of 6",
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
 		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",

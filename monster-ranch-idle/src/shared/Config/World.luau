@@ -203,4 +203,9 @@ World.Sky = {
 	bridges = { { "landing", "sunrise" }, { "landing", "dusk" }, { "landing", "halo" }, { "landing", "rift" } },
 }
 
+-- Glow-up U: the Stampede arena, east of the Expedition Gate between the paths to plots 3 and 4.
+-- The giant and every joined squad appear here when the fight goes live; scenery keeps off it.
+World.StampedeArena = { center = { 150, 0 }, radius = 40 }
+table.insert(World.Scenery.keepOut, World.StampedeArena)
+
 return World

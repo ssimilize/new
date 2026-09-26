@@ -2103,4 +2103,6 @@ return {
 	["{1} loved that! +1 bond"] = "¡A {1} le encantó! +1 de vínculo",
 	["Your monster"] = "Tu monstruo",
 	["Best friends"] = "Mejores amigos",
+	["Cheer!"] = "¡Ánimo!",
+	["To the arena"] = "A la arena",
 }
