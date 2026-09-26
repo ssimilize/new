@@ -121,24 +121,32 @@ local function build()
 		clouds = c
 	end
 
-	local rays = Instance.new("SunRaysEffect")
-	rays.Name = "AmbienceSunRays"
+	-- The place's own SunRays / DepthOfField, when it has them, are driven here rather than doubled
+	-- by a second effect (two SunRaysEffects add up; checked in Studio 2026-09-26).
+	local rays = Lighting:FindFirstChildOfClass("SunRaysEffect")
+	if not rays then
+		rays = Instance.new("SunRaysEffect")
+		rays.Name = "AmbienceSunRays"
+		rays.Parent = Lighting
+		table.insert(made, rays)
+	end
 	rays.Spread = Cfg.SunRays.spread
 	rays.Intensity = 0
-	rays.Parent = Lighting
-	table.insert(made, rays)
 	sunRays = rays
 
 	local D = Cfg.DepthOfField
-	local d = Instance.new("DepthOfFieldEffect")
-	d.Name = "AmbienceDepthOfField"
+	local d = Lighting:FindFirstChildOfClass("DepthOfFieldEffect")
+	if not d then
+		d = Instance.new("DepthOfFieldEffect")
+		d.Name = "AmbienceDepthOfField"
+		d.Parent = Lighting
+		table.insert(made, d)
+	end
 	d.FarIntensity = D.farIntensity
 	d.FocusDistance = D.focusDistance
 	d.InFocusRadius = D.inFocusRadius
 	d.NearIntensity = D.nearIntensity
 	d.Enabled = false
-	d.Parent = Lighting
-	table.insert(made, d)
 	dof = d
 
 	local g = Instance.new("ColorCorrectionEffect")

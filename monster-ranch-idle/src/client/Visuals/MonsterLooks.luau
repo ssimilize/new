@@ -259,6 +259,20 @@ local function draw(key: string, entry: Entry, look: Look, api: Backend)
 	end
 end
 
+-- An entry holds its meshes strongly until they are destroyed: a weak key could lose a mesh whose Lua
+-- wrapper was collected while the part lives on, and that mesh would never get its drawn look.
+local function hold(entry: Entry, mesh: any)
+	if entry.users[mesh] then
+		return
+	end
+	entry.users[mesh] = true
+	pcall(function()
+		mesh.Destroying:Once(function()
+			entry.users[mesh] = nil
+		end)
+	end)
+end
+
 -- Gives `mesh` the look: at once when the form's look is drawn, else when it finishes. Never yields.
 function MonsterLooks.Apply(mesh: any, form: string, look: Look?, textureId: string)
 	if look == nil or (LUT[look] == nil and look ~= "rainbow") then
@@ -277,13 +291,14 @@ function MonsterLooks.Apply(mesh: any, form: string, look: Look?, textureId: str
 	local entry = entries[key]
 	if entry then
 		entry.used = clock
-		entry.users[mesh] = true
+		hold(entry, mesh)
 		if entry.image then
 			pcall(api.bind, mesh, entry.image)
 		end
 		return
 	end
-	entry = { image = nil, used = clock, users = setmetatable({ [mesh] = true }, { __mode = "k" }) :: any, texture = textureId }
+	entry = { image = nil, used = clock, users = {}, texture = textureId }
+	hold(entry, mesh)
 	entries[key] = entry
 	count += 1
 	evict(key, api)

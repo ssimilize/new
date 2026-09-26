@@ -109,9 +109,19 @@ local function toggleWheel()
 	end
 end
 
+-- The tutorial card sits in the same corner, so the row waits until the tutorial is done.
+local function tutorialRunning(): boolean
+	local step = tonumber(ctx.Store:Get("profile.Quests.tutorial.step"))
+	return step ~= nil and step <= #Config.Quests.Tutorial
+end
+
 local function buildHud()
 	local row = Instance.new("Frame")
 	row.Name = "CommunityButtons"
+	row.Visible = not tutorialRunning()
+	ctx.Store:Observe("profile.Quests.tutorial.step", function()
+		row.Visible = not tutorialRunning()
+	end)
 	row.BackgroundTransparency = 1
 	row.AnchorPoint = Vector2.new(0, 1)
 	row.Position = UDim2.new(0, 16, 1, -64)
