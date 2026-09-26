@@ -175,13 +175,17 @@ local function refreshCurrency()
 	pills.food.set(StoreKit.foodTotal(ctx.Store))
 end
 
+local shownCap = 0 -- Config.Unlocks.MaxLevelAt when the level bar was last drawn
+
 local function refreshLevel()
 	local lv = StoreKit.level(ctx.Store)
 	local xp = StoreKit.num(ctx.Store, "profile.Progression.xp")
 	local need = Config.Unlocks.XPToNext(lv)
-	local frac = if lv >= Config.Unlocks.MaxLevel or need <= 0 then 1 else math.clamp(xp / need, 0, 1)
+	-- The cap is date-gated (60, then 70 from 3.2's launch); read it at the synced time.
+	local atCap = lv >= Config.Unlocks.MaxLevelAt(ctx:Now())
+	local frac = if atCap or need <= 0 then 1 else math.clamp(xp / need, 0, 1)
 	level.label.Text = string.format("Ranch Lv %d", lv)
-	level.pct.Text = if lv >= Config.Unlocks.MaxLevel then "MAX" else string.format("%d%%", math.floor(frac * 100))
+	level.pct.Text = if atCap then "MAX" else string.format("%d%%", math.floor(frac * 100))
 	level.bar:SetValue(frac, true)
 	for _, entry in buttons do
 		if entry.lockKey then
@@ -720,6 +724,12 @@ function Hud.Init(context)
 		local now = ctx:Now()
 		refreshCollect(now)
 		refreshStampede(now)
+		-- The level cap rises on a date: turn "MAX" back into a percentage at that instant.
+		local cap = Config.Unlocks.MaxLevelAt(now)
+		if cap ~= shownCap then
+			shownCap = cap
+			refreshLevel()
+		end
 		refreshBadges()
 		if weather.frame.Visible ~= (weatherDef() ~= nil and ctx.Router:Current() == nil) then
 			refreshWeather()

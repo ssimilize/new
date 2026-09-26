@@ -136,7 +136,7 @@ local function finish(player, raceId: number, inputs)
 	races[player] = nil
 	local ok, why = Logic.Valid(inputs)
 	if not ok then
-		ctx:Fail("That race didn't add up (" .. tostring(why) .. ")")
+		ctx:Fail(string.format("That race didn't add up (%s)", tostring(why)))
 	end
 	local result = Logic.Simulate(race.track, race.speed, inputs)
 	local elapsed = ctx.Clock.Precise() - race.startedAt

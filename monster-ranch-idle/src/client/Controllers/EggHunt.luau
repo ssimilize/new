@@ -90,6 +90,7 @@ local function buildEgg(spot: number)
 	prompt.MaxActivationDistance = math.max(6, Cfg.Reach - 4)
 	prompt.RequiresLineOfSight = false
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX -- the pad hint; Racing and Surf never use X
 	prompt.Parent = root
 	prompt.Triggered:Connect(function()
 		pickUp(spot)

@@ -2,7 +2,9 @@
 	Raids screen (update 2.1): 4-player raid bosses on this server.
 
 	Left: the raids (Config.Raids), each with its boss and an "Open lobby" button (pick up to
-	Config.Raids.PerPlayer Adults → Raids.Open). Right: lobbies on this server
+	Config.Raids.PerPlayer Adults → Raids.Open). A raid that hasn't opened shows its date and
+	one above the player's level its unlock level instead (3.2: Config.Raids.IsOpen / UnlockFor);
+	a lobby for a raid the player can't join shows the unlock level instead of Join. Right: lobbies on this server
 	(global.Raids.lobbies): members and their power; Join (pick Adults → Raids.Join),
 	Leave, and Start for the host (Raids.Launch). Every member sees the battle through
 	the Raids.Result event in Parts/BattleReplay. Opened from the Raid Portal.
@@ -96,11 +98,26 @@ return {
 				replay = data.replay,
 				win = data.win,
 				rewards = data.rewards,
-				title = "Raid · " .. (if raid then raid.name else "Boss"),
+				title = if raid then string.format("Raid · %s", raid.name) else "Raid",
 				winText = "The raid boss falls!",
 				loseText = "The raid boss held on. Try again!",
 			})
 		end)
+
+		-- Three raid cards fit the list without scrolling (update 3.2). A raid that hasn't
+		-- opened shows its date, one above the player's level shows its unlock level, in
+		-- place of the Open lobby button.
+		local CARD_H = 110
+		local function gateText(raid): string?
+			if not Cfg.IsOpen(raid, ctx:Now()) then
+				return string.format("Opens on %s", Format.date(raid.opensAt))
+			end
+			local key = Cfg.UnlockFor(raid)
+			if key ~= Cfg.Unlock and not Util.unlocked(ctx, key) then
+				return Util.unlockText(key)
+			end
+			return nil
+		end
 
 		local function drawRaids()
 			Util.clear(raidList)
@@ -109,53 +126,80 @@ return {
 				local card = New("Frame", {
 					Name = "Raid_" .. raid.id,
 					BackgroundColor3 = C.PanelDeep,
-					Size = UDim2.new(1, -6, 0, 150),
+					Size = UDim2.new(1, -6, 0, CARD_H),
 					LayoutOrder = i,
 					Parent = raidList,
 				}, { Create.Corner(12) })
 				local ok, ap = pcall(Appearance.Preview, raid.boss.line, 3, raid.boss.form, raid.boss.rarity)
 				if ok then
-					local icon = MonsterIcon.new(ap, 90)
-					icon.Position = UDim2.fromOffset(10, 10)
+					local icon = MonsterIcon.new(ap, 56)
+					icon.Position = UDim2.fromOffset(8, 6)
 					icon.Parent = card
 				end
 				Util.text({
 					Text = raid.name,
 					Font = Theme.Fonts.Display,
 					TextSize = Theme.TextSize.Body,
-					Position = UDim2.fromOffset(110, 8),
-					Size = UDim2.new(1, -120, 0, 26),
+					Position = UDim2.fromOffset(72, 4),
+					Size = UDim2.new(1, -80, 0, 24),
 					Parent = card,
 				})
 				Util.text({
-					Text = string.format("%s\nBoss Lv %d · win: %s", raid.desc, raid.boss.level, Util.rewardText(raid.reward[1])),
+					Name = "Desc",
+					Text = raid.desc,
 					TextColor3 = C.TextMuted,
 					TextWrapped = true,
+					TextTruncate = Enum.TextTruncate.AtEnd,
 					TextYAlignment = Enum.TextYAlignment.Top,
-					Position = UDim2.fromOffset(110, 36),
-					Size = UDim2.new(1, -120, 0, 56),
+					Position = UDim2.fromOffset(72, 28),
+					Size = UDim2.new(1, -80, 0, 36),
 					Parent = card,
 				})
-				Button.new({
-					Name = "OpenLobby",
-					Text = "Open lobby",
-					Color = if inLobby then C.Gray else C.Purple,
-					Disabled = inLobby,
-					TextSize = Theme.TextSize.Small,
-					Size = UDim2.fromOffset(170, 44),
-					AnchorPoint = Vector2.new(1, 1),
-					Position = UDim2.new(1, -10, 1, -8),
+				Util.text({
+					Name = "Info",
+					Text = string.format("Boss Lv %d · win: %s", raid.boss.level, Util.rewardText(raid.reward[1])),
+					TextColor3 = C.TextMuted,
+					TextWrapped = true,
+					Position = UDim2.fromOffset(10, 66),
+					Size = UDim2.new(1, -196, 0, 38),
 					Parent = card,
-					OnClick = function()
-						if not Util.unlocked(ctx, Cfg.Unlock) then
-							ctx:Toast(Util.unlockText(Cfg.Unlock), "error")
-							return
-						end
-						pickTeam(string.format("Bring up to %d Adults", Cfg.PerPlayer), function(ids)
-							Util.requestOnce(ctx, "Raids.Open", { raid = raid.id, ids = ids })
-						end)
-					end,
 				})
+				local gate = gateText(raid)
+				if gate then
+					Util.text({
+						Name = "Gate",
+						Text = gate,
+						Font = Theme.Fonts.Display,
+						TextColor3 = C.Red,
+						TextWrapped = true,
+						TextXAlignment = Enum.TextXAlignment.Center,
+						AnchorPoint = Vector2.new(1, 1),
+						Position = UDim2.new(1, -10, 1, -6),
+						Size = UDim2.fromOffset(170, 44),
+						Parent = card,
+					})
+				else
+					Button.new({
+						Name = "OpenLobby",
+						Text = "Open lobby",
+						Color = if inLobby then C.Gray else C.Purple,
+						Disabled = inLobby,
+						TextSize = Theme.TextSize.Small,
+						Size = UDim2.fromOffset(170, 44),
+						AnchorPoint = Vector2.new(1, 1),
+						Position = UDim2.new(1, -10, 1, -6),
+						Parent = card,
+						OnClick = function()
+							if not Util.unlocked(ctx, Cfg.Unlock) then
+								ctx:Toast(Util.unlockText(Cfg.Unlock), "error")
+								return
+							end
+							pickTeam(string.format("Bring up to %d Adults", Cfg.PerPlayer), function(ids)
+								Util.requestOnce(ctx, "Raids.Open", { raid = raid.id, ids = ids })
+							end)
+						end,
+					})
+				end
 			end
 		end
 
@@ -242,6 +286,16 @@ return {
 						OnClick = function()
 							Util.requestOnce(ctx, "Raids.Leave")
 						end,
+					})
+				elseif not mine and #members < Cfg.MaxPlayers and raid and not Util.unlocked(ctx, Cfg.UnlockFor(raid)) then
+					Util.text({
+						Name = "JoinLocked",
+						Text = Util.unlockText(Cfg.UnlockFor(raid)),
+						TextColor3 = C.Gold,
+						TextWrapped = true,
+						TextXAlignment = Enum.TextXAlignment.Right,
+						Size = UDim2.fromOffset(180, 44),
+						Parent = buttons,
 					})
 				elseif not mine and #members < Cfg.MaxPlayers then
 					Button.new({

@@ -270,6 +270,20 @@ table.insert(Eggs.List, {
 	pattern = "snowflake",
 })
 
+-- Update 3.2 · Raid 3: won only from the Frost Leviathan raid; hatches the Floelet line.
+table.insert(Eggs.List, {
+	id = "leviathan",
+	name = "Leviathan Egg",
+	order = 18,
+	price = nil,
+	hatchSeconds = 3600,
+	unlock = "raid_leviathan",
+	odds = { 0, 0, 35, 40, 20, 5 },
+	pool = "leviathan",
+	colors = { shell = "#1F4E79", spots = "#BFEFFF" },
+	pattern = "cracks",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e

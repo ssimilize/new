@@ -25,6 +25,7 @@ local Create = require(UI.Create)
 local Anim = require(UI.Anim)
 local Panel = require(UI.Components.Panel)
 local Button = require(UI.Components.Button)
+local Focus = require(UI.Focus)
 
 local New = Create.New
 local C = Theme.Colors
@@ -45,6 +46,7 @@ function Dialog.show(layer: Instance, props)
 		BorderSizePixel = 0,
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = props.ZIndex or 50,
+		Selectable = false, -- a tap blocker, never a gamepad target
 		Parent = layer,
 	})
 
@@ -54,6 +56,7 @@ function Dialog.show(layer: Instance, props)
 			return
 		end
 		closed = true
+		Focus.remove(dim)
 		dim:Destroy()
 		if props.OnClose then
 			task.spawn(props.OnClose)
@@ -136,6 +139,10 @@ function Dialog.show(layer: Instance, props)
 	api.Root = dim
 	api.Panel = panel
 	api.Content = content
+	if not closed then
+		-- A gamepad cursor stays inside the dialog; B closes it only when ✕ could.
+		Focus.push(dim, if props.Closable ~= false then close else nil)
+	end
 	Anim.popIn(panel.Root)
 	return api
 end

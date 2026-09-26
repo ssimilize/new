@@ -115,7 +115,7 @@ Rules:
 | `mood` | 0..100 | |
 | `meals` | {[flavor]: n} | meals eaten in the current stage (reset on growth) |
 | `growEndsAt` | number | 0 = not growing |
-| `loc`, `pen` | `"barn"`/`"pen"`, 0..5 | set only by Ranch |
+| `loc`, `pen` | `"barn"`/`"pen"`, 0..6 | set only by Ranch (pen 6 since 3.2) |
 | `busy` | false or `"expedition"`/`"breeding"`/`"trade"` | busy monsters can't be sold, fused, placed or traded |
 | `name` | string | "" = use the form name |
 | `locked` | boolean | player lock (can't sell or fuse) |
@@ -226,6 +226,20 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
   ```
   `global.Clubs.ladder = { week, at, rows }`. `Clubs.ClaimWar` pays last week's league (or Champion, top 3 of `TopWar`) once per member who scored. `Clubs.SetBanner { design }` needs `Workshop:Copy`.
 
+### 3.2: Level 70, Raid 3, languages, controllers
+- **Level cap:** `Config.Unlocks.LevelCaps = { { level, from } }` are dated steps (60, then 70 from Sat 11 Mar 2028). `Unlocks.MaxLevelAt(now)` is the cap in force, read by Progression and the HUD. `Unlocks.MaxLevel` (70) is the all-time ceiling.
+- **Level 70 unlocks:** `incubator_4` (62), `pen_6` (66), `squad_5` (70). `Economy.Incubators.maxSlots = 5` (4 earned + the pass) and `Economy.Pens.max = 6`.
+- **Squad size:** `Regions.SquadSize = { base = 3, steps = { { unlock, size } } }`. `Expeditions:SquadSize` is `base` raised by each unlocked step. `BattleSim.MaxAllies = 5`; Raids pass `maxAllies = 8`.
+- **Raids** may carry `opensAt` (closed to everyone until then, `Config.Raids.IsOpen`) and `unlock` (the raid's own Ranch Level key, `Config.Raids.UnlockFor`, default `Raids.Unlock`). Open checks both for the host; Join checks the unlock for each joiner.
+- **Settings:** `profile.Settings.language` is `"auto" | "en" | "es" | "pt"`, set with `Settings.SetLanguage { language }`.
+- **Locale** (`src/shared/Locale`, `docs/LOCALIZATION.md`):
+  ```lua
+  Locale.Translate(lang, text) -> text          -- exact or {n} template; pieces translated too
+  Locale.Explain(lang, text) -> (text?, missing) -- what stays English (coverage specs)
+  Locale.Pick(setting, localeId) -> "en" | "es" | "pt"
+  ```
+  English is the source language in code. Nothing but the client's `Localize` controller calls `Translate`.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 
@@ -277,17 +291,29 @@ Canonical names (the HUD, world prompts and other screens open these):
 | `Store` | C3 | `{ tab? = "food"|"decor"|"passes"|"gems"|"codes" }` |
 | `Settings` | C3 | — |
 
-Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1).
+Controllers: `Hud`, `Notifications`, `Hatchery` (C2) · `Tutorial`, `Broadcasts`, `TradeRequests` (C3) · `World`, `Weather`, `Interaction` (C1) · `Localize`, `Gamepad` (3.2).
 
-Client bus topics (free-form, client only): `"Tutorial.Arrow"` `(target: string?)` where the HUD exposes targets `incubator`, `jar`, `shop`, `monster`, `expeditions`, `weather`; `"World.FocusPlot"` `(plotIndex)`; `"Hud.Flash"` `(buttonName)`.
+- **Localize (3.2):** watches every TextLabel / TextButton (and TextBox placeholder) under the PlayerGui and the Workspace. It keeps the English a text object was given (`Localize:Source(obj)`) and shows `Locale.Translate` of it. A longer translation is shrunk to no more than the English's room (not below 75 %). Opt out with the attribute `Localize = false`. It is first in the client Manifest.
+- **Gamepad (3.2):** dormant until the last input comes from a pad.
+  - **Scope:** the topmost `UI/Focus` modal, else the open Router screen. It gets `SelectionGroup` with `Stop` edges. The cursor goes to the last or first control, level-triggered every frame.
+  - **Buttons:** B runs the scope's own close; LB/RB call `Widgets.Tabs` `:Step(±1)` (found with `Widgets.FindTabs(root)`); Y opens Monsters. A is never bound.
+  - **Minigames:** a screen root with a string attribute `GamepadLegend` hides the cursor, and the screen reads the pad itself (Racing, Surf).
+  - **Modal cards** (Dialog, InsetPopup, hatch reveal, evolution popup) call `Focus.push(root, close?)` while open.
+
+Client bus topics (free-form, client only): `"Tutorial.Arrow"` `(target: string?)` where the HUD exposes targets `incubator`, `jar`, `shop`, `monster`, `expeditions`, `weather`; `"World.FocusPlot"` `(plotIndex)`; `"Hud.Flash"` `(buttonName)`; `"Vfx.Burst"` `(name, { id }?)` where World takes `monsterLevelUp` (MonsterDetail) and `rebirth` (Rebirth).
 
 ### UI kit
-`UI/Theme`, `UI/Create` (`New`, `Corner`, `Stroke`, `TextStroke`, `Padding`, `List`, `Grid`, `Shade`, `Text`), `UI/Anim` (`popIn`, `pulse`, `shake`, `countUp`, `bob`, `tween`), `UI/Layers`. Components: `Button`, `Panel`, `Icon`, `Widgets` (`Pill`, `Bar`, `Chip`, `RarityChip`, `ElementChip`, `MutationChip`, `VariantChip`, `Scroll`, `List`, `Tabs`, `Countdown`, `Amount`), `Toasts`, `MonsterIcon` (`new`, `egg`, `silhouette`, `card`). Design size is 1100 × 560 (landscape phone); every tap target is at least 44 px.
+`UI/Theme`, `UI/Create` (`New`, `Corner`, `Stroke`, `TextStroke`, `Padding`, `List`, `Grid`, `Shade`, `Text`), `UI/Anim` (`popIn`, `pulse`, `shake`, `countUp`, `bob`, `tween`), `UI/Layers`, `UI/Focus` (3.2: `push`, `remove`, `top`, `isShown`, `Changed`). `Router:Root(name)` returns a built screen's root. Components: `Button`, `Panel`, `Icon`, `Widgets` (`Pill`, `Bar`, `Chip`, `RarityChip`, `ElementChip`, `MutationChip`, `VariantChip`, `Scroll`, `List`, `Tabs`, `Countdown`, `Amount`), `Toasts`, `MonsterIcon` (`new`, `egg`, `silhouette`, `card`). Design size is 1100 × 560 (landscape phone); every tap target is at least 44 px.
 
 ### Visuals (art swap point)
 - `Visuals/MonsterModel.Build(appearance, opts) -> Model` (contract in the file header).
 - `Visuals/EggModel.Build(eggType, opts) -> Model`.
 - `Visuals/MonsterAnimator.new(model) -> animator` with `:Play(state)` (`idle|walk|happy|eat|attack|hurt|sleep`), `:SetBase(cframe)`, `:Destroy()`. One shared RenderStepped loop drives every animator. Owned by C1.
+
+### Particle effects (Vfx)
+- Data: `Config/Vfx` holds every effect as emitter specs (keys and engine rules in its header): `Auras[element]`, `Mutations[id]`, `Variants.shiny/.rainbow`, `Rarity[rarityId]` (epic and up: a faint ground glow), `Landmarks[hubId | "skyGate"]`, `Bursts[name]` (`hatch`, `evolve`, `monsterLevelUp`, `ranchLevelUp`, `rebirth`, `coins`, `hearts`). Sprite ids are the GENERATED `Config/VfxSprites` (`[name] = { color, grey? }`, names from `art/vfx/SPRITES.md`, made with `tools/vfx`); a sprite not uploaded yet just skips its emitters.
+- Runtime: `Visuals/Vfx` - `AttachMonster(model, appearance)`, `SetOwned(model, owned)`, `AttachLandmark(instance, id)`, `Burst(name, cframeOrPosition, { color?, scale?, elements? }?)` (pooled, `:Emit`), `SetQuality(low)`, `Clear(target)`, `Count(target)`. `MonsterModel.Build` attaches effects on the mesh and placeholder paths alike (`opts.vfx == false` skips: ViewportMonster, statues). The `Landmarks` controller attaches the hub buildings (on their Body, which World/Dress keeps) and the Sky Gate portal; World marks pen monsters own / other plot, routes `lowGraphics` to `SetQuality` and fires the moment bursts.
+- Rules (`Vfx.spec` enforces them): daylight LightEmission 0.15 - 0.3 (portal cores may glow more), Size and Transparency are NumberSequences that fade in fast and out slow, live particles (rate x max lifetime) <= 8 per aura, <= 12 with two mutations, <= 60 per landmark. Low graphics: other plots' auras and glows off, mutation / variant / landmark rates and bursts halved.
 
 ## 6. State shapes (binding)
 
@@ -295,22 +321,22 @@ These are the exact replicated shapes. Server systems must produce them; client 
 
 ```lua
 profile.Currency   = { coins, gems, stardust, friendship, treats, tokens = { [eventId] = n }, food = { sweet, spicy, savory, sour } }
-profile.Progression = { level, xp }                     -- xp toward next level: Config.Unlocks.XPToNext(level)
-profile.Settings   = { music, sfx, lowGraphics, hideBroadcasts }
+profile.Progression = { level, xp }                     -- xp toward next level: Config.Unlocks.XPToNext(level); cap Unlocks.MaxLevelAt(now)
+profile.Settings   = { music, sfx, lowGraphics, hideBroadcasts, language }   -- language (3.2): "auto" | "en" | "es" | "pt"
 profile.Monsters   = { list = { [id] = Monster }, codex = { [lineId] = { forms = { [formId] = true }, variants = { normal|golden|rainbow = true }, count } }, nextId, grown }
 
 profile.Eggs = {
   list = { [eggId] = { type = eggType, source = string, t = unix } },   -- eggId = "e<n>"
-  slots = { [1..4] = { egg = eggId|false, type = eggType|"starter"|false, startedAt, endsAt } }, -- always 4 entries
+  slots = { [1..5] = { egg = eggId|false, type = eggType|"starter"|false, startedAt, endsAt } }, -- always 5 entries (4 before 3.2)
   nextId, pity = { starlit, royal }, hatched,
 }
-session.Eggs = { slotCount, speed }                     -- usable slots (1..4); total speed-up fraction
+session.Eggs = { slotCount, speed }                     -- usable slots (1..5); total speed-up fraction
 
 profile.Shop  = { window, bought = { [eggType] = n }, decor = { [decorId] = n }, themes = { [themeId] = true }, freeEggDay }
 global.Shop   = { window, endsAt, stock = { [eggType] = n } } -- n = -1 means unlimited; only eggs purchasable now
 
 profile.Ranch = {
-  pens = { [1..owned] = { capacity, jarTier, jar, jarAt, monsters = { id }, decor = { decorId }, theme } },
+  pens = { [1..owned] = { capacity, jarTier, jar, jarAt, monsters = { id }, decor = { decorId }, theme } },   -- owned ≤ 6
   incubatorTier, barnTier,
   garden = { tier, plots = { [1..n] = { flavor = string|false, readyAt } } },
 }
@@ -324,7 +350,7 @@ profile.Expeditions = {
   slots = { [1..4] = { state = "idle"|"running", region = string|false, stage, squad = { id }, startedAt, endsAt, duration, seed, caravan = string|false } },
   squad = { id },                                      -- the default squad (also used by the Stampede)
 }
-session.Expeditions = { slotCount, squadSize, caravan = CaravanLobby|false }
+session.Expeditions = { slotCount, squadSize, caravan = CaravanLobby|false }   -- squadSize 3..5
 global.Expeditions  = { caravans = { [caravanId] = { id, host, hostName, region, stage, duration, members = { { userId, name, slot, power } }, expiresAt } } }
 
 global.Boss  = { state = "idle"|"lobby"|"active", bossId, startsAt, endsAt, hp, maxHp, participants, board = { { userId, name, damage } } }  -- board: top 10
@@ -374,7 +400,7 @@ profile.HallOfFame = { entries = { { appearance, retiredAt, rarity, element } },
 BattleReplay = {
   win = boolean, turns = number, seed = number,
   units = { {                                   -- allies first, then enemies
-    key = "a1".."a4" | "e1".."e5", side = "ally"|"enemy", slot = number,
+    key = "a1".."a5" | "e1".."e5", side = "ally"|"enemy", slot = number,   -- up to "a8" in raids (maxAllies)
     name = string, appearance = Appearance, maxHp = number, boss = boolean,
   } },
   events = { {                                  -- in order; at most 400

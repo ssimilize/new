@@ -30,16 +30,15 @@ Open a new terminal afterwards so `rokit` is on your PATH.
 ## 2. Get the code
 
 ```sh
-git clone https://github.com/ssimilize/new.git monster-ranch
-cd monster-ranch
-git checkout claude/roblox-game-concepts-research-0oitwr   # the branch with the latest work (3.1)
-cd monster-ranch-idle
+git clone --branch main https://github.com/ssimilize/new.git monster-ranch
+cd monster-ranch/monster-ranch-idle
 rokit install        # answer yes when it asks to trust the tools
 ```
 
-`main` has everything merged so far; the branch above also has update 3.1 (Club Wars) while
-its pull request is open. Line endings are pinned to LF by `.gitattributes`, so the formatter
-check passes on Windows too.
+`main` has every merged update. Clone it by name: the repository's default branch is an older
+one without `.gitattributes`, and starting there leaves Windows files with CRLF line endings
+that `stylua --check` rejects. Line endings are pinned to LF by `.gitattributes`, so a clone of
+`main` passes the formatter check on Windows too.
 
 ## 3. Check that it works
 

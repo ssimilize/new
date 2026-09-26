@@ -59,7 +59,7 @@ return function(t)
 		it("places the starter egg in incubator 1 on first join", function()
 			local h, p = boot()
 			local s = h:Section(p, "Eggs")
-			expect(#s.slots).toBe(4)
+			expect(#s.slots).toBe(5) -- 3.2: incubator 4 + the pass
 			expect(s.slots[1].type).toBe("starter")
 			expect(s.slots[1].egg).toBe(false)
 			expect(s.slots[1].endsAt).toBe(now(h) + Config.Eggs.Starter.hatchSeconds)

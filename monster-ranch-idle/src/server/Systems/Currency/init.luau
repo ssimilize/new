@@ -163,11 +163,11 @@ function Currency:MissingText(key: string): string
 	local head, tail = split(key)
 	if head == "food" then
 		local food = ctx.Config.Food.ById[tail]
-		return "Not enough " .. (if food then food.name else "food")
+		return string.format("Not enough %s", if food then food.name else "food")
 	elseif head == "token" then
 		return "Not enough event tokens"
 	end
-	return "Not enough " .. (DISPLAY[head] or head)
+	return string.format("Not enough %s", DISPLAY[head] or head)
 end
 
 -- Spends or fails the current request with a player-facing message.

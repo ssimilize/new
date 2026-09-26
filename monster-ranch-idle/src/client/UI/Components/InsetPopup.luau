@@ -11,6 +11,7 @@ local Theme = require(script.Parent.Parent.Theme)
 local Create = require(script.Parent.Parent.Create)
 local Anim = require(script.Parent.Parent.Anim)
 local Button = require(script.Parent.Button)
+local Focus = require(script.Parent.Parent.Focus)
 
 local New = Create.New
 
@@ -29,6 +30,7 @@ function InsetPopup.new(props: { Parent: Instance, Title: string?, Size: UDim2?,
 		Size = UDim2.fromScale(1, 1),
 		Visible = false,
 		ZIndex = 40,
+		Selectable = false, -- tap blockers, never gamepad targets
 		Parent = props.Parent,
 		Activated = function()
 			self:Hide()
@@ -43,6 +45,7 @@ function InsetPopup.new(props: { Parent: Instance, Title: string?, Size: UDim2?,
 		Position = UDim2.fromScale(0.5, 0.5),
 		Size = props.Size or UDim2.fromOffset(420, 300),
 		ZIndex = 41,
+		Selectable = false,
 		Parent = dim,
 	}, { Create.Corner(Theme.Radius.Panel), Create.Stroke(Theme.Stroke.Panel) })
 	local header = New("Frame", {
@@ -61,7 +64,7 @@ function InsetPopup.new(props: { Parent: Instance, Title: string?, Size: UDim2?,
 		ZIndex = 43,
 		Parent = header,
 	})
-	Button.new({
+	local close = Button.new({
 		Text = "✕",
 		Color = Theme.Colors.Red,
 		Size = UDim2.fromOffset(44, 44),
@@ -74,6 +77,7 @@ function InsetPopup.new(props: { Parent: Instance, Title: string?, Size: UDim2?,
 			self:Hide()
 		end,
 	})
+	close.Root.SelectionOrder = 2 -- a gamepad cursor lands on the content first
 	self.Body = New("Frame", {
 		Name = "Body",
 		BackgroundTransparency = 1,
@@ -98,6 +102,9 @@ end
 function InsetPopup:Show()
 	self.Root.Visible = true
 	Anim.popIn(self.Box, 0.18)
+	Focus.push(self.Root, function()
+		self:Hide()
+	end)
 end
 
 function InsetPopup:Hide()
@@ -105,6 +112,7 @@ function InsetPopup:Hide()
 		return
 	end
 	self.Root.Visible = false
+	Focus.remove(self.Root)
 	if self._onHide then
 		task.spawn(self._onHide)
 	end

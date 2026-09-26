@@ -1,7 +1,7 @@
 --[[
 	Incubators (C2): incubator slots and the egg inventory.
 
-	  slots 1..4   locked beyond session.Eggs.slotCount (next unlock level or the Extra
+	  slots 1..5   locked beyond session.Eggs.slotCount (next unlock level or the Extra
 	               Incubator pass); empty → "Place egg" (arms that slot); filled → egg,
 	               progress bar and timer, READY → Eggs.Hatch (the starter egg first
 	               opens a picker for its line); Hatch Rush rewarded ad
@@ -36,7 +36,7 @@ local C = Theme.Colors
 
 local Incubators = { Name = "Incubators" }
 
-local SLOT_W, SLOT_H = 224, 196
+local SLOT_W, SLOT_H = 176, 196 -- five slots (Economy.Incubators.maxSlots) across the panel
 
 local function eggName(eggType: string?): string
 	if eggType == "starter" then
@@ -126,7 +126,7 @@ function Incubators.Build(ctx)
 	local hatchAll =
 		Button.new({ Text = "Hatch all", Color = C.Green, Size = UDim2.fromOffset(150, 44), LayoutOrder = 2, Parent = panel.HeaderRight })
 
-	local slotsRow = Tiles.row({ Size = UDim2.new(1, 0, 0, SLOT_H), Parent = panel.Body }, 16, Enum.HorizontalAlignment.Center)
+	local slotsRow = Tiles.row({ Size = UDim2.new(1, 0, 0, SLOT_H), Parent = panel.Body }, 12, Enum.HorizontalAlignment.Center)
 	local infoLabel = Tiles.label({
 		Text = "",
 		TextSize = Theme.TextSize.Body,
@@ -198,7 +198,7 @@ function Incubators.Build(ctx)
 		local now = ctx:Now()
 		local card = Tiles.card({ Name = "Slot" .. i, Size = UDim2.fromOffset(SLOT_W, SLOT_H), LayoutOrder = i, Parent = slotsRow })
 		Tiles.label({
-			Text = "Incubator " .. i,
+			Text = string.format("Incubator %d", i),
 			TextSize = Theme.TextSize.Small,
 			TextColor3 = C.TextMuted,
 			TextXAlignment = Enum.TextXAlignment.Center,
@@ -232,7 +232,7 @@ function Incubators.Build(ctx)
 			Button.new({
 				Text = if armed then "Cancel" else "Place egg",
 				Color = if armed then C.Gray else C.Pink,
-				Size = UDim2.fromOffset(170, 48),
+				Size = UDim2.fromOffset(160, 48),
 				AnchorPoint = Vector2.new(0.5, 1),
 				Position = UDim2.new(0.5, 0, 1, -10),
 				Parent = card,
@@ -272,7 +272,7 @@ function Incubators.Build(ctx)
 			Button.new({
 				Text = if isStarter then "Choose!" else "Hatch!",
 				Color = C.Green,
-				Size = UDim2.fromOffset(170, 48),
+				Size = UDim2.fromOffset(160, 48),
 				AnchorPoint = Vector2.new(0.5, 1),
 				Position = UDim2.new(0.5, 0, 1, -8),
 				Parent = card,
@@ -291,7 +291,7 @@ function Incubators.Build(ctx)
 				Text = string.format("▶ −%s (%d)", Format.duration(def and def.seconds or 900), left),
 				Color = C.Orange,
 				TextSize = Theme.TextSize.Small + 2,
-				Size = UDim2.fromOffset(170, 44),
+				Size = UDim2.fromOffset(160, 44),
 				AnchorPoint = Vector2.new(0.5, 1),
 				Position = UDim2.new(0.5, 0, 1, -8),
 				Parent = card,
@@ -421,8 +421,11 @@ function Incubators.Build(ctx)
 		end
 		local speed = StoreKit.num(store, "session.Eggs.speed")
 		infoLabel.Text = string.format("Your eggs: %d / %d", total, Config.Economy.MaxEggs)
-		hintLabel.Text = (if armedSlot then string.format("Placing into incubator %d · ", armedSlot) else "Tap an egg to incubate it · ")
-			.. (if speed > 0 then string.format("Hatch speed +%s", Format.percent(speed)) else "Upgrade incubators on the Ranch")
+		hintLabel.Text = string.format(
+			"%s · %s",
+			if armedSlot then string.format("Placing into incubator %d", armedSlot) else "Tap an egg to incubate it",
+			if speed > 0 then string.format("Hatch speed +%s", Format.percent(speed)) else "Upgrade incubators on the Ranch"
+		)
 		hatchAll:SetDisabled(not anyReady)
 		fill:SetDisabled(not (anyEmpty and total > 0))
 	end

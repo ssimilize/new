@@ -294,13 +294,16 @@ function EggShop.Build(ctx)
 
 	local function renderOdds(egg)
 		Tiles.clear(oddsList)
-		Tiles.label({
-			Text = egg.name .. " odds",
+		-- Scaled (never above its design size) so longer languages fit the column.
+		local oddsTitle = Tiles.label({
+			Text = string.format("%s odds", egg.name),
 			TextSize = Theme.TextSize.Header - 2,
+			TextScaled = true,
 			Size = UDim2.new(1, 0, 0, 28),
 			LayoutOrder = 1,
 			Parent = oddsList,
 		})
+		New("UITextSizeConstraint", { MaxTextSize = Theme.TextSize.Header - 2, Parent = oddsTitle })
 		for i, pct in egg.odds do
 			if pct > 0 then
 				StatBar.new({
@@ -400,7 +403,7 @@ function EggShop.Build(ctx)
 			elseif left <= 0 then
 				ctx:Toast("Sold out. Check back after the restock!", "info")
 			elseif not StoreKit.canAfford(store, egg.price, egg.event) then
-				ctx:Toast("Not enough " .. (if key == "token" then "event tokens" else key or "coins"), "error")
+				ctx:Toast(string.format("Not enough %s", if key == "token" then "event tokens" else key or "coins"), "error")
 			elseif eggCount() >= Config.Economy.MaxEggs then
 				ctx:Toast("Your egg storage is full", "error")
 			else

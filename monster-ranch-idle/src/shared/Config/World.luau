@@ -8,7 +8,8 @@
 local World = {}
 
 World.GroundY = 0
-World.GroundSize = { 900, 900 }
+-- The grass runs past the wall (Boundary) so the forest band beyond it stands on ground.
+World.GroundSize = { 2000, 2000 }
 World.PlotSize = { 150, 110 } -- width (x), depth (z)
 World.HubRadius = 95
 
@@ -22,6 +23,7 @@ World.Plots = {
 }
 
 -- Pens inside a plot, relative to the plot centre (plot faces the hub along +x local).
+-- A 3 × 2 grid either side of the middle aisle (plot-local z = 0) that leads in from the gate.
 World.PenSize = { 34, 28 }
 World.PenOffsets = {
 	{ -38, 0, -24 },
@@ -29,11 +31,21 @@ World.PenOffsets = {
 	{ -38, 0, 18 },
 	{ 2, 0, 18 },
 	{ 42, 0, -24 },
+	{ 42, 0, 18 }, -- update 3.2: pen 6 completes the grid
 }
-World.IncubatorOffset = { 48, 0, 22 }
-World.BarnOffset = { 55, 0, 40 }
+-- Update 3.2: pen 6 took the incubator pad's old corner. The pad now closes the far end of
+-- the middle aisle, facing the gate; the barn moved back so its door clears pen 6's fence.
+World.IncubatorOffset = { -65, 0, -3 }
+World.BarnOffset = { 58, 0, 45 }
 World.StatueRowOffset = { -60, 0, 44 }
 World.GardenOffset = { 42, 0, 44 }
+
+-- Footprints on the plot floor ({ x, z } studs), used to build the pieces and by
+-- LevelSeventy.spec to prove that no two pieces overlap and all stay inside PlotSize.
+World.IncubatorPadSize = 15 -- diameter of the pad's rim
+World.BarnSize = { 14, 10, 12 } -- x, height, z (the door faces plot-local -z)
+World.GardenSize = { 10, 8 } -- reserved: the garden has no world model yet
+World.StatueRow = { count = 8, spacing = 7, pedestal = 4.4 } -- runs +x from StatueRowOffset
 
 -- Hub buildings (Market Square), relative to the origin.
 World.Hub = {
@@ -113,6 +125,58 @@ table.insert(World.Hub, {
 	color = "#FF7AC8",
 	screen = "Workshop",
 })
+
+-- The perimeter: a stone wall on a square of 2 x `half` studs round the origin, and an invisible
+-- barrier `barrier` studs tall on the same line so nobody jumps or climbs over. The play area
+-- inside (1600 x 1600) leaves room around the plots for future features. `segment` is the
+-- length of one wall mesh; a pillar stands every `pillarEvery` segments and on the corners.
+World.Boundary = { half = 800, height = 9, thickness = 4, barrier = 80, segment = 24, pillarEvery = 4 }
+
+-- Scenery (Logic/Scenery, World/Scenery): meshes scattered over the open ground, never on the
+-- plaza, a plot, a path, a building or an egg-hunt spot. Per kind: `size` = the mesh's largest
+-- dimension in studs, `count` items, placed in groups of `group` within `spread` studs.
+-- `solid` items collide and keep other items off their `footprint` (x size). Add a zone to
+-- `keepOut` ({ center = { x, z }, radius = r } or { center, size = { w, d } }) to keep ground
+-- clear for a future feature; the kinds' mesh ids live in World/SceneryMeshes.
+World.Scenery = {
+	seed = 3203,
+	margin = 6, -- extra studs between an item and a keep-out zone
+	wallClearance = 8, -- studs kept clear inside the wall
+	keepOut = {},
+	kinds = {
+		-- Big things first so the small ones fill in around them.
+		-- Trees collide only through an invisible trunk post `trunk` x size wide.
+		{ id = "oak", size = { 16, 22 }, count = 70, group = { 2, 5 }, spread = 26, solid = true, footprint = 0.42, trunk = 0.12 },
+		{ id = "oakLight", size = { 16, 22 }, count = 55, group = { 2, 4 }, spread = 24, solid = true, footprint = 0.42, trunk = 0.12 },
+		{ id = "pine", size = { 18, 26 }, count = 60, group = { 3, 6 }, spread = 28, solid = true, footprint = 0.3, trunk = 0.1 },
+		{ id = "blossom", size = { 15, 20 }, count = 30, group = { 1, 3 }, spread = 16, solid = true, footprint = 0.42, trunk = 0.12 },
+		{ id = "boulder", size = { 5, 10 }, count = 45, group = { 1, 3 }, spread = 14, solid = true, footprint = 0.5 },
+		{ id = "bush", size = { 4, 7 }, count = 90, group = { 2, 4 }, spread = 12, solid = true, footprint = 0.45 },
+		{ id = "log", size = { 7, 11 }, count = 25, solid = true, footprint = 0.35 },
+		-- Ranch life: little scenes to come across between the trees.
+		{ id = "windmill", size = { 22, 28 }, count = 5, solid = true, footprint = 0.3 },
+		{ id = "wagon", size = { 8, 10 }, count = 8, solid = true, footprint = 0.45 },
+		{ id = "well", size = { 7, 9 }, count = 8, solid = true, footprint = 0.45 },
+		{ id = "scarecrow", size = { 7, 9 }, count = 14, solid = true, footprint = 0.2 },
+		{ id = "toadstool", size = { 6, 10 }, count = 20, group = { 1, 3 }, spread = 12, solid = true, footprint = 0.35 },
+		{ id = "hayStack", size = { 5, 7 }, count = 30, group = { 1, 3 }, spread = 10, solid = true, footprint = 0.4 },
+		{ id = "bench", size = { 5, 6 }, count = 14, solid = true, footprint = 0.4 },
+		{ id = "birdhouse", size = { 5, 7 }, count = 14, solid = true, footprint = 0.15 },
+		{ id = "firewood", size = { 4, 6 }, count = 18, solid = true, footprint = 0.45 },
+		{ id = "campfire", size = { 4, 5.5 }, count = 14, solid = true, footprint = 0.45 },
+		{ id = "crystals", size = { 3, 5 }, count = 30, group = { 1, 3 }, spread = 10, solid = true, footprint = 0.45 },
+		{ id = "honeypot", size = { 2.5, 3.5 }, count = 16, group = { 1, 2 }, spread = 6, solid = true, footprint = 0.45 },
+		{ id = "stump", size = { 2.5, 4 }, count = 50, group = { 1, 3 }, spread = 16, solid = true, footprint = 0.4 },
+		{ id = "stones", size = { 2, 4 }, count = 90, group = { 1, 3 }, spread = 10, footprint = 0.5 },
+		{ id = "mushrooms", size = { 2, 3.5 }, count = 70, group = { 2, 4 }, spread = 8, footprint = 0.5 },
+		{ id = "flowers", size = { 2.5, 4 }, count = 260, group = { 3, 7 }, spread = 12, footprint = 0.5 },
+		{ id = "sunflowers", size = { 4, 6 }, count = 60, group = { 2, 5 }, spread = 10, footprint = 0.4 },
+		{ id = "pumpkins", size = { 4, 6 }, count = 45, group = { 2, 4 }, spread = 10, footprint = 0.5 },
+		{ id = "grass", size = { 2, 3.5 }, count = 700, group = { 4, 9 }, spread = 14, footprint = 0.5 },
+	},
+	-- The woods beyond the wall: one tree every `step` studs along each side, `depth` studs out.
+	outside = { kinds = { "oak", "oakLight", "pine" }, size = { 22, 32 }, step = 26, depth = { 16, 150 } },
+}
 
 -- Update 2.0 · Sky Islands: floating islands high above the map, joined by cloud bridges.
 -- The launch pad in the Market Square flies players to the landing island's return pad;

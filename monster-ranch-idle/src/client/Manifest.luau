@@ -6,6 +6,8 @@
 
 return {
 	Controllers = {
+		-- 3.2 · first, so every text any other controller builds is shown translated
+		"Localize",
 		-- C2 · HUD & core
 		"Hud",
 		"Notifications",
@@ -27,6 +29,10 @@ return {
 		-- 2.0 · Light & Void
 		"SkyIslands",
 		"Riding",
+		-- 3.2 · Frostbite Glacier
+		"Gamepad",
+		-- Particle effects (Visuals/Vfx): landmark ambience
+		"Landmarks",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

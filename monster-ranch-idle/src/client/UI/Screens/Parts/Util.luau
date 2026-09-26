@@ -30,6 +30,7 @@ local Create = require(UI.Create)
 local Icon = require(UI.Components.Icon)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local Widgets = require(UI.Components.Widgets)
+local StoreKit = require(UI.Components.StoreKit)
 
 local New = Create.New
 local C = Theme.Colors
@@ -80,17 +81,11 @@ end
 
 -- Requests -------------------------------------------------------------------------
 
-local FRIENDLY = {
-	NotAvailable = "Not available yet",
-	UnknownAction = "Not available yet",
-}
-
 local function toastError(ctx, err)
 	if err == "Busy" then
 		return
 	end
-	local text = FRIENDLY[err] or tostring(err or "Something went wrong")
-	ctx:Toast(text, "error")
+	ctx:Toast(StoreKit.errorText(err), "error")
 end
 
 function Util.request(ctx, action: string, payload: any?): (boolean, any)

@@ -1,11 +1,32 @@
 --[[
 	Ranch Level: the player's main progress bar. `Features` maps an unlock key to the
 	Ranch Level that unlocks it. Systems check keys with Progression:IsUnlocked(player, key).
+
+	The level cap is date-gated like regions: `LevelCaps` lists { level, from } steps (unix
+	seconds, Saturdays 15:00 UTC) and `MaxLevelAt(now)` is the cap in force at `now`.
+	`MaxLevel` is the all-time ceiling (the last step).
 ]]
 
 local Unlocks = {}
 
-Unlocks.MaxLevel = 60
+Unlocks.MaxLevel = 70
+
+-- Update 3.2 raises the cap from 60 to 70 when Frostbite Glacier opens (Sat 11 Mar 2028).
+Unlocks.LevelCaps = {
+	{ level = 60, from = 0 },
+	{ level = 70, from = 1836399600 },
+}
+
+-- The Ranch Level cap in force at unix time `now`.
+function Unlocks.MaxLevelAt(now: number): number
+	local cap = Unlocks.LevelCaps[1].level
+	for _, step in Unlocks.LevelCaps do
+		if now >= step.from then
+			cap = math.max(cap, step.level)
+		end
+	end
+	return math.min(cap, Unlocks.MaxLevel)
+end
 
 -- XP needed to go from `level` to `level + 1`.
 function Unlocks.XPToNext(level: number): number
@@ -55,6 +76,11 @@ Unlocks.Features = {
 	racing = 16,
 	workshop = 12,
 	region_glacier = 55,
+	-- Update 3.2 · Frostbite Glacier + Level 70
+	raid_leviathan = 60,
+	incubator_4 = 62,
+	pen_6 = 66,
+	squad_5 = 70,
 }
 
 -- Player-facing names for the level-up popup.
@@ -96,6 +122,10 @@ Unlocks.Names = {
 	racing = "Monster Racing",
 	workshop = "Accessory Workshop",
 	region_glacier = "Frostbite Glacier",
+	raid_leviathan = "Frost Leviathan raid",
+	incubator_4 = "Incubator 4",
+	pen_6 = "Pen 6",
+	squad_5 = "Squad size 5",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

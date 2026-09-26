@@ -274,7 +274,13 @@ end
 
 function Expeditions:SquadSize(player): number
 	local cfg = Regions.SquadSize
-	return if Progression:IsUnlocked(player, cfg.unlock) then cfg.withUnlock else cfg.base
+	local size = cfg.base
+	for _, step in cfg.steps do
+		if Progression:IsUnlocked(player, step.unlock) then
+			size = math.max(size, step.size)
+		end
+	end
+	return size
 end
 
 function Expeditions:LootBonus(player, ids: { string }): number
@@ -545,7 +551,7 @@ function Expeditions.Init(context)
 		end
 		local left = slot.endsAt - ctx:Now()
 		if left > 0 then
-			ctx:Fail("Still exploring: back in " .. remaining(left))
+			ctx:Fail(string.format("Still exploring: back in %s", remaining(left)))
 		end
 		return { rewards = claimSlots(player, { payload.slot }) }
 	end)

@@ -133,7 +133,7 @@ return {
 					ctx:Toast("Trade request sent to " .. tostring(ad.name), "success")
 				end
 			else
-				ctx:Toast("Heading to " .. tostring(ad.name) .. "'s server…", "info")
+				ctx:Toast(string.format("Heading to %s's server…", tostring(ad.name)), "info")
 			end
 		end
 

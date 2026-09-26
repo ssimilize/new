@@ -71,7 +71,8 @@ function Ranch.Build(ctx)
 		LayoutOrder = 1,
 		Parent = panel.HeaderRight,
 	})
-	local nav = Widgets.List({ Size = UDim2.fromOffset(176, 400), Padding = 8, Parent = panel.Body })
+	-- Up to 8 buttons (6 pens + Buildings + Garden) fit its 400 px without scrolling.
+	local nav = Widgets.List({ Size = UDim2.fromOffset(176, 400), Padding = 4, Parent = panel.Body })
 	local content =
 		Widgets.List({ Position = UDim2.fromOffset(186, 0), Size = UDim2.new(1, -186, 1, 0), Padding = 10, Parent = panel.Body })
 	local watch
@@ -566,7 +567,7 @@ function Ranch.Build(ctx)
 			2,
 			if unlocked then string.format("Build Pen %d", n) else StoreKit.lockText(key),
 			string.format("Room for %d more monsters earning coins.", Economy.Pens.startCapacity),
-			if unlocked then Format.short(price) .. " coins" else string.format("Lv %d", StoreKit.unlockLevel(key)),
+			if unlocked then string.format("%s coins", Format.short(price)) else string.format("Lv %d", StoreKit.unlockLevel(key)),
 			C.Green,
 			unlocked and StoreKit.canAfford(store, { coins = price }),
 			function()
@@ -651,7 +652,7 @@ function Ranch.Build(ctx)
 		if not StoreKit.isUnlocked(store, Economy.Garden.unlock) then
 			sectionTitle("Feed Garden", 1)
 			Tiles.label({
-				Text = StoreKit.lockText(Economy.Garden.unlock) .. ". Grow food for your monsters while you're away.",
+				Text = string.format("%s. Grow food for your monsters while you're away.", StoreKit.lockText(Economy.Garden.unlock)),
 				TextSize = Theme.TextSize.Body,
 				TextColor3 = C.TextMuted,
 				Size = UDim2.new(1, -12, 0, 60),
@@ -797,7 +798,7 @@ function Ranch.Build(ctx)
 			Text = text,
 			Color = if selected == id then C.Orange elseif locked then C.Gray else color,
 			TextSize = 18,
-			Size = UDim2.fromOffset(160, 48),
+			Size = UDim2.fromOffset(160, 44),
 			LayoutOrder = order,
 			Parent = nav,
 			OnClick = function()
@@ -825,11 +826,11 @@ function Ranch.Build(ctx)
 
 		Tiles.clear(nav)
 		for i = 1, count do
-			navButton("pen" .. i, "Pen " .. i, C.Green, i)
+			navButton("pen" .. i, string.format("Pen %d", i), C.Green, i)
 		end
 		if count < Economy.Pens.max then
 			local key = Economy.Pens.unlocks[count + 1]
-			navButton("buy", "+ Pen " .. (count + 1), C.Blue, 10, not StoreKit.isUnlocked(store, key))
+			navButton("buy", string.format("+ Pen %d", count + 1), C.Blue, 10, not StoreKit.isUnlocked(store, key))
 		end
 		navButton("buildings", "Buildings", C.Purple, 11)
 		navButton("garden", "Feed Garden", C.Green, 12, not StoreKit.isUnlocked(store, Economy.Garden.unlock))

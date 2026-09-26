@@ -1,0 +1,121 @@
+{
+ "method": "gpt (GPT Image via Codex CLI built-in image tool; API route blocked by 429)",
+ "wall_minutes": 23.0,
+ "generation_seconds": 696.5,
+ "cost": {
+  "usd": 0.0,
+  "subscription": "codex runs use the ChatGPT subscription, 0 USD marginal",
+  "usd_by_tokens": 0,
+  "pricing": {
+   "per_1M_tokens": {
+    "text_in": 5.0,
+    "image_in": 8.0,
+    "image_out": 30.0
+   },
+   "calculator_per_image": {
+    "low 1024x1024": 0.006,
+    "low 1536x1024": 0.005,
+    "medium 1024x1024": 0.053,
+    "medium 1536x1024": 0.041,
+    "high 1024x1024": 0.211,
+    "high 1536x1024": 0.165
+   }
+  }
+ },
+ "attempts": 7,
+ "codex_runs": [
+  {
+   "name": "sheet_r1_luna",
+   "approach": "sheet",
+   "seconds": 20,
+   "images": 0,
+   "model": "gpt-6-luna",
+   "result": "400: model not supported with a ChatGPT account"
+  },
+  {
+   "name": "single_r1_luna",
+   "approach": "single",
+   "seconds": 18,
+   "images": 0,
+   "model": "gpt-6-luna",
+   "result": "400: model not supported with a ChatGPT account"
+  },
+  {
+   "name": "sheet_r1",
+   "approach": "sheet",
+   "seconds": 109,
+   "images": 1,
+   "model": "config default gpt-6-astra, effort high",
+   "codex_tokens": 44552,
+   "result": "ok; stray debris sparks, dark rims on droplet/leaf"
+  },
+  {
+   "name": "single_r1",
+   "approach": "single",
+   "seconds": 460,
+   "images": 6,
+   "model": "config default gpt-6-astra, effort high",
+   "codex_tokens": 65461,
+   "result": "ok; real transparent PNGs 1254x1254, DELIVERED"
+  },
+  {
+   "name": "sheet_r2",
+   "approach": "sheet",
+   "seconds": 87,
+   "images": 1,
+   "model": "config default gpt-6-astra, effort high",
+   "codex_tokens": 27350,
+   "result": "ok; no debris, still a dark outline on droplet/leaf"
+  }
+ ],
+ "by_approach": {
+  "sheet": {
+   "calls": 3,
+   "usd": 0.0,
+   "seconds": 216.0
+  },
+  "single": {
+   "calls": 2,
+   "usd": 0.0,
+   "seconds": 478.0
+  }
+ },
+ "picked_from": {
+  "flame": "single",
+  "droplet": "single",
+  "leaf": "single",
+  "bolt": "single",
+  "star": "single",
+  "wisp": "single"
+ },
+ "scripts": [
+  "tools/vfx/gpt_sprites.py"
+ ],
+ "calls": [
+  {
+   "name": "sheet_r1",
+   "quality": "medium",
+   "size": "1536x1024",
+   "background": "opaque",
+   "seconds": 1.04,
+   "status": 429,
+   "usage": null,
+   "usd_tokens": null,
+   "usd_calculator": null,
+   "usd_budgeted": 0.0
+  },
+  {
+   "name": "single_r1_flame",
+   "quality": "medium",
+   "size": "1024x1024",
+   "background": "transparent",
+   "seconds": 1.44,
+   "status": 429,
+   "usage": null,
+   "usd_tokens": null,
+   "usd_calculator": null,
+   "usd_budgeted": 0.0
+  }
+ ],
+ "notes": "ROUTE: the OpenAI API account had no credits (2 calls, HTTP 429 credit_balance_exhausted, $0). Switched to the Codex CLI (0.154) and its built-in image_gen tool on the ChatGPT subscription, so there is no marginal USD cost. The model the user named, gpt-6-luna, is refused for ChatGPT-account Codex (HTTP 400), so the runs used the config.toml default (gpt-6-astra, reasoning high). The image tool is the same either way. Each run's prompt tells Codex to cp the PNG into gpt/raw/; it did every time, so the generated_images fallback was never needed.\nDELIVERED = approach 2 (single): one Codex session made six images, 460 s total (about 75 s per image). Codex's image_gen handed back genuinely transparent 1254x1254 RGBA with clean soft alpha, so no keying was needed: just trim, centre to 80%, and make a luminance-grey copy. It is the best-looking set: glossy, polished, mobile-game style, and clean on both the dark and the light strip.\nApproach 1 (sheet, one image, 87-109 s): the art is equally nice but smaller per sprite (512 px cells). The tool also attached a crude blocky alpha matte, which is ignored: the cut flattens onto black and keys from brightness. Round 1 had stray sparks and debris around flame, leaf and star; round 2's prompt (\"no extra particles, no dark outline\") fixed the debris. The dark drawn outline on droplet and leaf still leaves a thin rim after black keying. The best cut is droplet keyed as a glow and leaf keyed solid at threshold 0.45 (flags --solid leaf --solid-thr 0.45); that result is in gpt/sheet/ for comparison.\nPer sprite (single): flame good, clean tip, warm core. Droplet excellent, glossy highlight, reads at small size. Leaf excellent, midrib and stem. Bolt good, thin jagged zigzag with glow; as grey it is faint on the light strip, which is expected for a white tintable sprite. Star excellent, long 4-point with halo. Wisp good, soft violet swirl, slightly busy inner curl detail.\nRepeatability: a NEW sprite is one more Codex run (~75 s, a one-line description plus the shared style) followed by `cut-single`. Style stays consistent across sprites because the style text is shared. Codex runs are not seeded, so a re-run gives a different drawing.\n"
+}

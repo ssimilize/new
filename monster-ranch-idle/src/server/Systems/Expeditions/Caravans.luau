@@ -333,7 +333,7 @@ function Caravans.Launch(player, payload)
 		else
 			removeMember(id, m.userId)
 			if member then
-				ctx:Notify(member, "You were dropped from the caravan: " .. tostring(why), "error")
+				ctx:Notify(member, string.format("You were dropped from the caravan: %s", tostring(why)), "error")
 			end
 		end
 	end

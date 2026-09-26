@@ -8,7 +8,15 @@
 	  profile.Ranch + session.Ranch    live coin jars over the local player's own pens
 	                 (BillboardGuis in PlayerGui; tap = Ranch.Collect + coin burst)
 	  global.Weather night flag (monsters nap at night)
-	  profile.Settings.lowGraphics     fewer animation updates, fewer monsters on other plots
+	  profile.Settings.lowGraphics     fewer animation updates, fewer monsters on other plots, and
+	                 Vfx.SetQuality (other plots' auras off, effect rates and bursts halved)
+
+	Particle effects (Visuals/Vfx): every pen monster is marked as own / other plot (Vfx.SetOwned).
+	Moment bursts: Eggs.Hatched and Monsters.Evolved burst at the monster once it appears in the
+	pen (or at the character if it does not within HATCH_WAIT), Progression.LevelUp round the
+	character; the client bus topic "Vfx.Burst" (name, { id }?) takes "monsterLevelUp" (at that pen
+	monster, MonsterDetail) and "rebirth" (character + Star Altar, the Rebirth screen). Coin and
+	heart bursts use the coin / heart sprites, or the plain emitters while those are not uploaded.
 
 	Taps on monsters are raycast against their Body parts: own monster -> MonsterDetail,
 	someone else's -> Social.Pet with hearts. Taps on own eggs open Incubators.
@@ -34,6 +42,8 @@ local Client = script.Parent.Parent
 local MonsterModel = require(Client.Visuals.MonsterModel)
 local EggModel = require(Client.Visuals.EggModel)
 local MonsterAnimator = require(Client.Visuals.MonsterAnimator)
+local Vfx = require(Client.Visuals.Vfx)
+local VfxConfig = require(Shared.Config.Vfx)
 local Theme = require(Client.UI.Theme)
 local Create = require(Client.UI.Create)
 local Anim = require(Client.UI.Anim)
@@ -48,17 +58,18 @@ local World = {
 }
 
 local PLOT_COUNT = #WorldConfig.Plots
-local MAX_PENS = math.min(5, #WorldConfig.PenOffsets)
+local MAX_PENS = math.min(Config.Economy.Pens.max, #WorldConfig.PenOffsets)
 local MAX_PER_PEN = 10
 local MAX_PER_PEN_LOW = 5 -- other players' pens in low graphics
-local MAX_STATUES = 8
-local STATUE_SPACING = 7
+local MAX_STATUES = WorldConfig.StatueRow.count
+local STATUE_SPACING = WorldConfig.StatueRow.spacing
 local POOL_MAX = 40
 local TICK = 0.2
 local PEN_FLOOR_TOP = 0.4 -- fallback when Workspace.World is missing (see Build.luau)
 local TAP_SLOP = 14
 local TAP_TIME = 0.4
 local READY_SOON = 60 -- seconds before endsAt when eggs start wobbling hard
+local HATCH_WAIT = 2 -- seconds a hatched / evolved monster has to show up in a pen for its burst
 
 local GOLD_DARK = Color3.fromHex("#9A6B12")
 local GOLD_LIGHT = Color3.fromHex("#FFE38A")
@@ -91,6 +102,7 @@ local jarPlot: number? = nil
 local petBusy = false
 local focusToken = 0
 local movedCharacter: Model? = nil
+local pendingBursts = {} -- [monsterId] = { name, opts } waiting for the monster to appear
 
 -- Geometry ---------------------------------------------------------------------------
 
@@ -189,7 +201,12 @@ local function buildFx(parent: Instance)
 	fx.hearts = hearts
 end
 
-local function burst(emitter: ParticleEmitter?, position: Vector3, count: number)
+-- A coin or heart burst: the sprite preset (Config.Vfx.Bursts[name]) when its sprite is uploaded,
+-- else the plain emitter.
+local function burst(name: string, emitter: ParticleEmitter?, position: Vector3, count: number)
+	if Vfx.Burst(name, position) > 0 then
+		return
+	end
 	if not emitter or not fx.anchor then
 		return
 	end
@@ -224,6 +241,116 @@ local function floatText(adornee: Instance, text: string, color: Color3)
 	Debris:AddItem(gui, 1.2)
 end
 
+-- Moment bursts ---------------------------------------------------------------------------
+
+local function characterFeet(): CFrame?
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") then
+		return root.CFrame * CFrame.new(0, -3, 0)
+	end
+	return nil
+end
+
+local function hubBody(id: string): BasePart?
+	local hub = world and world:FindFirstChild("Hub")
+	local buildings = hub and hub:FindFirstChild("Buildings")
+	local building = buildings and buildings:FindFirstChild(id)
+	local body = building and building:FindFirstChild("Body")
+	return if body and body:IsA("BasePart") then body else nil
+end
+
+local function ownEntry(id: any)
+	local view = if ownIndex then views[ownIndex] else nil
+	local entry = view and view.entries[id]
+	return if entry and entry.alive then entry else nil
+end
+
+-- A burst at a pen monster's feet, sized to the monster.
+local function monsterBurst(entry, name: string, opts)
+	local root = entry.model.PrimaryPart
+	if not root then
+		return
+	end
+	local height = entry.model:GetAttribute("Height")
+	local options = table.clone(opts or {})
+	options.scale = if type(height) == "number" then height / VfxConfig.RefHeight else 1
+	Vfx.Burst(name, root.CFrame, options)
+end
+
+-- At the monster if it is in one of the local player's pens, else round the character.
+local function momentAt(id: any, name: string, opts)
+	local entry = ownEntry(id)
+	if entry then
+		monsterBurst(entry, name, opts)
+		return
+	end
+	local feet = characterFeet()
+	if feet then
+		Vfx.Burst(name, feet, opts)
+	end
+end
+
+-- A monster that just hatched or evolved is (re)built when global.Plots catches up: burst when it
+-- appears (spawnEntry), or after HATCH_WAIT wherever momentAt finds it.
+local function expectMonster(id: any, name: string, opts, ready: (Model) -> boolean)
+	local entry = ownEntry(id)
+	if entry and ready(entry.model) then
+		monsterBurst(entry, name, opts)
+		return
+	end
+	local pending = { name = name, opts = opts }
+	pendingBursts[id] = pending
+	task.delay(HATCH_WAIT, function()
+		if pendingBursts[id] == pending then
+			pendingBursts[id] = nil
+			momentAt(id, name, opts)
+		end
+	end)
+end
+
+local function onHatched(payload)
+	local monster = type(payload) == "table" and payload.monster
+	if type(monster) ~= "table" then
+		return
+	end
+	local rarity = type(monster.rarity) == "number" and Config.Rarities.Get(monster.rarity)
+	local opts = { color = if rarity then Color3.fromHex(rarity.color) else nil }
+	expectMonster(monster.id, "hatch", opts, function()
+		return true
+	end)
+end
+
+local function onEvolved(payload)
+	if type(payload) ~= "table" then
+		return
+	end
+	local line = nil
+	local entry = ownEntry(payload.id)
+	if entry then
+		line = entry.model:GetAttribute("Line")
+	end
+	local def = type(line) == "string" and Config.Species.ById[line]
+	expectMonster(payload.id, "evolve", { elements = if def then def.elements else nil }, function(model)
+		return model:GetAttribute("Form") == payload.toForm
+	end)
+end
+
+local function onBurstTopic(name: any, info: any)
+	if name == "monsterLevelUp" and type(info) == "table" then
+		momentAt(info.id, "monsterLevelUp")
+	elseif name == "rebirth" then
+		local feet = characterFeet()
+		if feet then
+			Vfx.Burst("rebirth", feet)
+		end
+		local altar = hubBody("starAltar")
+		if altar then
+			Vfx.Burst("rebirth", altar.CFrame * CFrame.new(0, -altar.Size.Y / 2 + 0.2, -altar.Size.Z * 0.85))
+		end
+	end
+end
+
 -- Model pool ------------------------------------------------------------------------------
 
 local function appearanceKey(a): string
@@ -232,6 +359,7 @@ local function appearanceKey(a): string
 		tostring(a.form),
 		tostring(a.stage or 1),
 		tostring(a.variant or 0),
+		tostring(a.rarity or 0), -- the ground glow (Vfx) differs by rarity
 		table.concat(a.muts or {}, "+"),
 		tostring(math.floor((a.weight or 0) * 10 + 0.5)),
 		tostring(a.archetype),
@@ -353,6 +481,13 @@ local function spawnEntry(view, id: string, appearance, key: string, pen: number
 		bodyToEntry[entry.body] = entry
 	end
 	view.entries[id] = entry
+	local own = view.userId == player.UserId
+	Vfx.SetOwned(model, own) -- pooled models move between plots
+	local pending = if own then pendingBursts[id] else nil
+	if pending then
+		pendingBursts[id] = nil
+		task.defer(monsterBurst, entry, pending.name, pending.opts)
+	end
 	return entry
 end
 
@@ -447,7 +582,7 @@ local function syncStatues(view, data)
 				CanCollide = true,
 				CanQuery = false,
 				CanTouch = false,
-				Size = Vector3.new(4.4, 1.6, 4.4),
+				Size = Vector3.new(WorldConfig.StatueRow.pedestal, 1.6, WorldConfig.StatueRow.pedestal),
 				CFrame = cf * CFrame.new(0, 0.8, 0),
 				Color = PEDESTAL,
 				Material = Enum.Material.SmoothPlastic,
@@ -455,7 +590,7 @@ local function syncStatues(view, data)
 				Parent = view.folder,
 			})
 			table.insert(view.statues, pedestal)
-			local ok, model = pcall(MonsterModel.Build, appearance)
+			local ok, model = pcall(MonsterModel.Build, appearance, { vfx = false }) -- statues: no particles
 			if ok then
 				goldTint(model)
 				model.Name = "Statue"
@@ -495,7 +630,8 @@ local function padTop(index: number): CFrame
 	return frame * CFrame.new(o[1], 0.8, o[3])
 end
 
-local EGG_SPOTS = { { -2.6, -2.6 }, { 2.6, -2.6 }, { -2.6, 2.6 }, { 2.6, 2.6 } }
+-- One spot per incubator slot (Config.Economy.Incubators.maxSlots): four corners and the middle.
+local EGG_SPOTS = { { -3, -3 }, { 3, -3 }, { -3, 3 }, { 3, 3 }, { 0, 0 } }
 
 local function syncEggs(view, data)
 	local list = data.incubators or {}
@@ -806,7 +942,7 @@ local function collect(pen: number)
 		local floor = ownIndex and penFloor(ownIndex, pen)
 		local area = if ownIndex then penArea(ownIndex, pen) else nil
 		if area then
-			burst(fx.coins, area.Position + Vector3.new(0, 4, 0), 24)
+			burst("coins", fx.coins, area.Position + Vector3.new(0, 4, 0), 24)
 		end
 		local coins = type(result) == "table" and tonumber(result.coins) or 0
 		if floor and coins > 0 then
@@ -1018,15 +1154,14 @@ local function onMonsterTapped(entry)
 			local head = root and root:FindFirstChild("Head")
 			local at = if head and head:IsA("Attachment") then head else root
 			if at then
-				burst(fx.hearts, if head and head:IsA("Attachment") then head.WorldPosition else (root :: BasePart).Position, 10)
+				local position = if head and head:IsA("Attachment") then head.WorldPosition else (root :: BasePart).Position
+				burst("hearts", fx.hearts, position, 10)
 				floatText(at, "♥", Theme.Colors.Pink)
 			end
 		end
 		local left = type(result) == "table" and tonumber(result.left)
-		local text = string.format("You petted %s!", tostring(entry.name or "a monster"))
-		if left then
-			text ..= string.format(" %d pets left today", left)
-		end
+		local name = tostring(entry.name or "a monster")
+		local text = if left then string.format("You petted %s! %d pets left today", name, left) else string.format("You petted %s!", name)
 		ctx:Toast(text, "success")
 	end)
 end
@@ -1160,6 +1295,18 @@ function World.Init(context)
 			focusPlot(index)
 		end)
 	)
+	table.insert(connections, ctx.Bus:Subscribe("Vfx.Burst", onBurstTopic))
+	table.insert(connections, ctx.Net:On("Eggs.Hatched", onHatched))
+	table.insert(connections, ctx.Net:On("Monsters.Evolved", onEvolved))
+	table.insert(
+		connections,
+		ctx.Net:On("Progression.LevelUp", function()
+			local feet = characterFeet()
+			if feet then
+				Vfx.Burst("ranchLevelUp", feet)
+			end
+		end)
+	)
 end
 
 function World.Start()
@@ -1185,6 +1332,7 @@ function World.Start()
 		connections,
 		ctx.Store:Observe("profile.Settings", function(settings)
 			local low = type(settings) == "table" and settings.lowGraphics == true
+			Vfx.SetQuality(low)
 			if low ~= lowGraphics then
 				lowGraphics = low
 				MonsterAnimator.SetLowGraphics(low)

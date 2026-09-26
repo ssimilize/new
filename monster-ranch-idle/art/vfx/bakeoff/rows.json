@@ -1,0 +1,146 @@
+[
+ {
+  "name": "Roblox built-in",
+  "tint": true,
+  "textures": {
+   "flame": "rbxasset://textures/particles/fire_main.dds",
+   "droplet": "rbxasset://textures/particles/sparkles_main.dds",
+   "leaf": "rbxasset://textures/particles/sparkles_main.dds",
+   "bolt": "rbxasset://textures/particles/sparkles_main.dds",
+   "star": "rbxasset://textures/particles/sparkles_main.dds",
+   "wisp": "rbxasset://textures/particles/smoke_main.dds"
+  }
+ },
+ {
+  "name": "Creator Store",
+  "tint": true,
+  "textures": {
+   "flame": "rbxassetid://242911609",
+   "droplet": "rbxassetid://113689065664958",
+   "leaf": "rbxassetid://915916073",
+   "bolt": "rbxassetid://243098098",
+   "star": "rbxassetid://6490035152",
+   "wisp": "rbxassetid://528256032"
+  }
+ },
+ {
+  "name": "Meshy (tinted grey)",
+  "tint": true,
+  "textures": {
+   "flame": "rbxassetid://135671532556518",
+   "droplet": "rbxassetid://123561379824846",
+   "leaf": "rbxassetid://115496536731446",
+   "bolt": "rbxassetid://103682048245537",
+   "star": "rbxassetid://107292035223187",
+   "wisp": "rbxassetid://90246722192838"
+  }
+ },
+ {
+  "name": "Meshy (own colour)",
+  "tint": false,
+  "textures": {
+   "flame": "rbxassetid://105253766577052",
+   "droplet": "rbxassetid://108046329295927",
+   "leaf": "rbxassetid://71921521069641",
+   "bolt": "rbxassetid://104292022743049",
+   "star": "rbxassetid://117974343515299",
+   "wisp": "rbxassetid://124742171426949"
+  }
+ },
+ {
+  "name": "Procedural (tinted grey)",
+  "tint": true,
+  "textures": {
+   "flame": "rbxassetid://92246187654188",
+   "droplet": "rbxassetid://137102652959832",
+   "leaf": "rbxassetid://134209596222979",
+   "bolt": "rbxassetid://73057851718131",
+   "star": "rbxassetid://82214856029825",
+   "wisp": "rbxassetid://97911689149964"
+  }
+ },
+ {
+  "name": "Procedural (own colour)",
+  "tint": false,
+  "textures": {
+   "flame": "rbxassetid://113889433046884",
+   "droplet": "rbxassetid://113315272644864",
+   "leaf": "rbxassetid://108100757020810",
+   "bolt": "rbxassetid://127330671352933",
+   "star": "rbxassetid://111980814182064",
+   "wisp": "rbxassetid://121869548680583"
+  }
+ },
+ {
+  "name": "GPT via Codex (tinted grey)",
+  "tint": true,
+  "textures": {
+   "flame": "rbxassetid://118778868626122",
+   "droplet": "rbxassetid://109829239870717",
+   "leaf": "rbxassetid://94130820347320",
+   "bolt": "rbxassetid://83789039613373",
+   "star": "rbxassetid://118313297713028",
+   "wisp": "rbxassetid://108462694712485"
+  }
+ },
+ {
+  "name": "GPT via Codex (own colour)",
+  "tint": false,
+  "textures": {
+   "flame": "rbxassetid://122627750821619",
+   "droplet": "rbxassetid://112700989823358",
+   "leaf": "rbxassetid://103398987660025",
+   "bolt": "rbxassetid://97655811505385",
+   "star": "rbxassetid://106320817181703",
+   "wisp": "rbxassetid://120161920174886"
+  }
+ },
+ {
+  "name": "Blender (tinted grey)",
+  "tint": true,
+  "textures": {
+   "flame": "rbxassetid://84284532807743",
+   "droplet": "rbxassetid://98093948384171",
+   "leaf": "rbxassetid://77717240924442",
+   "bolt": "rbxassetid://132062681957212",
+   "star": "rbxassetid://97938024654113",
+   "wisp": "rbxassetid://116634155988508"
+  }
+ },
+ {
+  "name": "Blender (own colour)",
+  "tint": false,
+  "textures": {
+   "flame": "rbxassetid://81817712407458",
+   "droplet": "rbxassetid://127916338050452",
+   "leaf": "rbxassetid://117064479821055",
+   "bolt": "rbxassetid://136832150624426",
+   "star": "rbxassetid://115158364856955",
+   "wisp": "rbxassetid://135692243186488"
+  }
+ },
+ {
+  "name": "Codex cartoon (tinted grey)",
+  "tint": true,
+  "textures": {
+   "flame": "rbxassetid://133700719598587",
+   "droplet": "rbxassetid://82627815866475",
+   "leaf": "rbxassetid://140216378977142",
+   "bolt": "rbxassetid://108714939088268",
+   "star": "rbxassetid://92893789248192",
+   "wisp": "rbxassetid://87624842102539"
+  }
+ },
+ {
+  "name": "Codex cartoon (own colour)",
+  "tint": false,
+  "textures": {
+   "flame": "rbxassetid://107692587402219",
+   "droplet": "rbxassetid://73677735848345",
+   "leaf": "rbxassetid://140636343652703",
+   "bolt": "rbxassetid://87865711460500",
+   "star": "rbxassetid://98416133973738",
+   "wisp": "rbxassetid://99181613521488"
+  }
+ }
+]

@@ -56,7 +56,7 @@ local function finish(player, runId: number, inputs)
 	runs[player] = nil
 	local ok, why = Logic.Valid(inputs)
 	if not ok then
-		ctx:Fail("That run didn't add up (" .. tostring(why) .. ")")
+		ctx:Fail(string.format("That run didn't add up (%s)", tostring(why)))
 	end
 	local result = Logic.Simulate(run.seed, inputs)
 	local elapsed = ctx.Clock.Precise() - run.startedAt

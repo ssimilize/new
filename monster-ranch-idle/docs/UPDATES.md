@@ -3,6 +3,105 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.2 · Frostbite Glacier + Level 70
+
+Launch Sat 11 Mar 2028. Everything is dated in config: Frostbite Glacier and the Frost
+Leviathan open, and the Ranch Level cap rises, on 11 Mar; Season 8 starts on 4 Mar. So this
+update can be published any time before 4 Mar.
+
+**For players**
+- **Frostbite Glacier** (region 7, Ranch Level 55) opens on 11 Mar 2028. It was built in 3.0
+  and was waiting for its date.
+- **Ranch Level 70** (from 11 Mar 2028): the cap rises from 60 to 70. Ranches already at 60
+  start earning toward 61 right away.
+  - **Incubator 4** at Ranch Level 62. With the Extra Incubator pass you can have 5 incubators.
+  - **Pen 6** at Ranch Level 66 (10B coins) completes a 3 × 2 grid of pens. The incubator pad
+    moved to the back of the ranch and the barn moved back a little.
+  - **Squad size 5** at Ranch Level 70, for stage fights, expeditions, caravans and the
+    Stampede. The Expeditions screen shows locked squad slots with the level that opens them.
+- **Raid 3: the Frost Leviathan** (from 11 Mar 2028, Ranch Level 60), a 4-player raid under the
+  glacier.
+  - **The fight:** it regrows its HP every turn and its Aurowl heals it, so the team that beats
+    the Umbral Wyrm runs out of time. Bring Void and Sprout monsters.
+  - **The reward:** wins pay the **Leviathan Egg**, the only way to hatch
+    **Floelet → Rimecoil → Frost Leviathan** (Tide/Light).
+  - **Before it opens:** raid cards show the opening date or the level needed, and a lobby
+    shows the level a player needs to join.
+- **Controller support:** play with a gamepad.
+  - The D-pad or stick moves a gold cursor, A presses, B goes back, LB/RB switch tabs and Y
+    opens your monsters.
+  - Racing jumps with A (or D-pad ↑) and boosts with RT; Surf steers with the D-pad or the stick.
+  - A small key guide shows in the corner while a controller is in use. Touch or the mouse
+    puts everything back.
+- **Español and Português (Brasil):** the whole game in Spanish and Brazilian Portuguese,
+  including menus, messages, and the names of eggs, items, places and quests.
+  - It follows your Roblox language, or pick one under **Settings → Language**.
+  - Monster names stay the same in every language.
+- **Ranch Pass Season 8, "Frostbite"** (4 Mar – 15 Apr 2028): Glacier Eggs through the tiers,
+  Leviathan Eggs on the premium track, and a Legendary Pengling at the top.
+- **Code:** `FROSTBITE` gives a Glacier Egg and 50 gems. It expires on 1 Apr 2028.
+- **New achievements:** beat the Frost Leviathan, and clear the Frostbite Glacier.
+- Error toasts that used to show a code ("TooFast", "BadRequest") now say what happened.
+
+**In the code**
+- **Level 70:**
+  - `Config.Unlocks.LevelCaps` (dated `{ level, from }` steps) and `MaxLevelAt(now)`.
+    Progression and the HUD's "MAX" read the cap in force; `MaxLevel` (70) is the all-time
+    ceiling.
+  - New unlocks `incubator_4` (62), `pen_6` (66) and `squad_5` (70).
+  - `Economy.Pens.max = 6` and `Economy.Incubators.maxSlots = 5`. The Eggs save is version 2
+    with always 5 slots; `Migrate` adds an empty 5th slot to old saves.
+  - `Regions.SquadSize = { base, steps = { { unlock, size } } }`. `BattleSim.MaxAllies = 5`,
+    so replays have ally keys `a1..a5`. Raids still pass `maxAllies = 8`, and Arena teams
+    stay at 3.
+  - `Api.luau` takes the squad and pen limits from config.
+  - `Config.World`: pen 6, the moved pad and barn, and size keys that Build and the World
+    controller share. `LevelSeventy.spec` checks that no plot footprints overlap.
+- **Raids:**
+  - Raids take an optional `opensAt` and a per-raid `unlock` (`Config.Raids.IsOpen`,
+    `UnlockFor`). `Raids.Open` checks the date and the host's level, and `Raids.Join` checks
+    the joiner's.
+  - New unlock `raid_leviathan` (60). The `floelet` line uses the `slug` body, `drain` and
+    `regen`, with `raid = true` and its own `leviathan` pool. The Leviathan Egg has odds
+    `{ 0, 0, 35, 40, 20, 5 }`.
+  - Tuned with BattleSim over 40 seeds: eight maxed Mythics that beat the Wyrm lose 40/40;
+    eight maxed Void/Sprout Mythics win 40/40.
+- **Localization** (`docs/LOCALIZATION.md`):
+  - `Shared/Locale` holds the Spanish and Portuguese catalogues. They are keyed by the English
+    text, with `{n}` templates, and pieces are translated inside templates and lists.
+  - The `Localize` controller translates every text object in the PlayerGui and the
+    Workspace. It shrinks longer translations to fit, and it turns off Roblox's own
+    AutoLocalize.
+  - `profile.Settings.language` is `"auto" | "en" | "es" | "pt"`, set with the new
+    `Settings.SetLanguage`. The Settings screen has a Language row first.
+  - `StoreKit.errorText` maps kernel error codes to words.
+- **Controller:**
+  - The `Gamepad` controller keeps the cursor inside the open screen or dialog. It is
+    level-triggered, so a screen already open when the pad is picked up is scoped too.
+  - Dialogs, InsetPopup, the hatch reveal and the evolution popup register with `UI/Focus`, so
+    B runs their own close.
+  - `Widgets.Tabs` gained `Step`, plus `Widgets.FindTabs`. A screen root with a
+    `GamepadLegend` attribute (Racing, Surf) hides the cursor during a run. The world prompts
+    set `GamepadKeyCode`.
+  - `Router:Root(name)` is new.
+- **Test harness:**
+  - RobloxMock emulates pad input, ContextActionService and `Player.LocaleId`.
+  - ClientHarness takes `localeId` and has `UseGamepad`, `Press`, `Stick` and `Selected`.
+  - `t.LocaleHarvest` finds the text the game can show. With `LOCALE_REPORT=<file>`, the
+    Locale specs write what is still missing.
+- **Tests:**
+  - `LevelSeventy.spec` (12) and `LevelSeventyClient.spec` (4).
+  - `FrostLeviathan.spec` (10) and `FrostLeviathanClient.spec` (2).
+  - `Locale.spec` (16): matching rules, catalogue integrity, and every Config text and server
+    message translated.
+  - `LocaleClient.spec` (7): switching language in place; a walk as a new and a veteran player
+    that finds every shown text translated; fit on a 568×320 phone in both languages.
+  - `GamepadClient.spec` (10).
+  - RobloxMock's unset enum properties now default to the item with the lowest value. They
+    used to take whichever item came first, which changed from run to run.
+- **Snapshots:** `docs/snapshots/3.2-raids.png` and `3.2-spanish.png`. The snapshot tool gains
+  `SNAPSHOT_LOCALE`.
+
 ## 3.1 · Club Wars + Lunar Lanterns
 
 Launch Sat 5 Feb 2028. Everything is dated in config (Club Wars start, the event rerun and

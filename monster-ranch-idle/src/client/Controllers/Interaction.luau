@@ -13,6 +13,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local Config = require(game:GetService("ReplicatedStorage").Shared.Config)
 
 local Interaction = {
 	Name = "Interaction",
@@ -63,6 +64,7 @@ local function addPrompt(
 	prompt.MaxActivationDistance = distance
 	prompt.RequiresLineOfSight = false
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX -- the pad hint; Racing and Surf never use X
 	prompt.Parent = attachment
 	prompt.Triggered:Connect(function()
 		onTrigger()
@@ -139,7 +141,7 @@ local function buildRanchPrompts(index: number?, penCount: number)
 		return
 	end
 	local pens = plot:FindFirstChild("Pens")
-	for n = 1, math.min(5, penCount + 1) do
+	for n = 1, math.min(Config.Economy.Pens.max, penCount + 1) do
 		local pen = pens and pens:FindFirstChild("Pen" .. n)
 		local floor = pen and pen:FindFirstChild("Floor")
 		if floor and floor:IsA("BasePart") then
@@ -148,7 +150,7 @@ local function buildRanchPrompts(index: number?, penCount: number)
 			local side = if localCenter.Z < 0 then 1 else -1
 			local edge = floor.CFrame * CFrame.new(0, 2.5, side * (floor.Size.Z / 2 + 0.8))
 			if n <= penCount then
-				addPrompt(ranchPrompts, floor, edge.Position, "Manage", "Pen " .. n, PEN_PROMPT_DISTANCE, function()
+				addPrompt(ranchPrompts, floor, edge.Position, "Manage", string.format("Pen %d", n), PEN_PROMPT_DISTANCE, function()
 					open("Ranch", { pen = n })
 				end)
 			else

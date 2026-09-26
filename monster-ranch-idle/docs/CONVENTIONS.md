@@ -20,6 +20,7 @@ rojo build -o build.rbxl      # build a place file
 - Modules return a table. Public methods use `:` (`Currency:Add(...)`). Private helpers are `local function`.
 - Names: systems, controllers and screens are `PascalCase` and match their folder or file name. Config keys are `camelCase`; content ids are `snake_case` or lower-case words (`"cindlet"`, `"hay_bale"`).
 - Player-facing text is plain, short and specific: "Not enough coins", "Unlocks at Ranch Level 12". No jargon, no apologies.
+- Since 3.2 every player-facing string is also shown in Spanish and Portuguese. Build each one as a single literal or a single `string.format` (never glue sentence fragments together), and add it to both catalogues in `src/shared/Locale` (`docs/LOCALIZATION.md`). `Locale.spec` and `LocaleClient.spec` fail on anything left untranslated.
 - Comments explain *why*, not *what*.
 
 ## Boundaries (what makes parallel work safe)

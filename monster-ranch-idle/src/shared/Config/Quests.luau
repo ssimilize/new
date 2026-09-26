@@ -262,6 +262,23 @@ Quests.Achievements = {
 		target = 1,
 		reward = { { kind = "egg", id = "raid", amount = 1 }, { kind = "accessory", id = "hero_cape", amount = 1 } },
 	},
+	-- Update 3.2 · Frostbite Glacier + Level 70
+	{
+		id = "raid_leviathan",
+		text = "Defeat the Frost Leviathan",
+		topic = "RaidFinished",
+		filter = { raid = "leviathan", win = true },
+		target = 1,
+		reward = { { kind = "egg", id = "leviathan", amount = 1 }, { kind = "gems", amount = 100 } },
+	},
+	{
+		id = "clear_glacier",
+		text = "Clear the Frostbite Glacier",
+		topic = "StageCleared",
+		filter = { region = "glacier", stage = 20 },
+		target = 1,
+		reward = { { kind = "gems", amount = 250 }, { kind = "egg", id = "glacier", amount = 2 } },
+	},
 	-- Update 2.0 · Light & Void
 	{
 		id = "sky_first",
@@ -568,6 +585,33 @@ Quests.Seasons = {
 			tier({ { kind = "ribbons", amount = 60 } }, { { kind = "monster", id = "tinselkit", rarity = 5, amount = 1 } }),
 		},
 	},
+	-- Update 3.2 · Season 8 "Frostbite": Glacier Eggs, Leviathan Eggs on the premium track, a Legendary Pengling.
+	{
+		season = 8,
+		name = "Frostbite",
+		startsAt = 1835794800, -- Sat 4 Mar 2028, 15:00 UTC (right after Season 7)
+		endsAt = 1839423600, -- Sat 15 Apr 2028, 15:00 UTC
+		xpPerTier = 300,
+		xpPerDaily = 100,
+		xpPerAchievement = 200,
+		tiers = {
+			tier({ { kind = "coins", amount = 35000 } }, { { kind = "gems", amount = 30 } }),
+			tier({ { kind = "treats", amount = 25 } }, { { kind = "egg", id = "glacier", amount = 1 } }),
+			tier({ { kind = "ribbons", amount = 25 } }, { { kind = "egg", id = "crystal", amount = 1 } }),
+			tier({ { kind = "gems", amount = 20 } }, { { kind = "stardust", amount = 120 } }),
+			tier({ { kind = "egg", id = "glacier", amount = 1 } }, { { kind = "ribbons", amount = 40 } }),
+			tier({ { kind = "ribbons", amount = 30 } }, { { kind = "gems", amount = 60 } }),
+			tier({ { kind = "food", id = "random", amount = 30 } }, { { kind = "egg", id = "leviathan", amount = 1 } }),
+			tier({ { kind = "coins", amount = 450000 } }, { { kind = "egg", id = "glacier", amount = 1 } }),
+			tier({ { kind = "gems", amount = 25 } }, { { kind = "egg", id = "royal", amount = 1 } }),
+			tier({ { kind = "coins", amount = 1000000 } }, { { kind = "stardust", amount = 200 } }),
+			tier({ { kind = "egg", id = "glacier", amount = 1 } }, { { kind = "gems", amount = 80 } }),
+			tier({ { kind = "stardust", amount = 80 } }, { { kind = "egg", id = "glacier", amount = 2 } }),
+			tier({ { kind = "gems", amount = 30 } }, { { kind = "egg", id = "celestial", amount = 1 } }),
+			tier({ { kind = "egg", id = "royal", amount = 1 } }, { { kind = "egg", id = "leviathan", amount = 1 } }),
+			tier({ { kind = "ribbons", amount = 60 } }, { { kind = "monster", id = "pengling", rarity = 5, amount = 1 } }),
+		},
+	},
 }
 Quests.Pass = Quests.Seasons[1] -- kept for older call sites; prefer Quests.PassAt(now)
 
@@ -586,6 +630,8 @@ Quests.Codes = {
 	RANCH = { reward = { { kind = "gems", amount = 50 } } },
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
 	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
+	-- Update 3.2 launch code (expires 1 Apr 2028, the 3.3 launch).
+	FROSTBITE = { reward = { { kind = "egg", id = "glacier", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1838214000 },
 	-- Update 3.1 launch code: Lantern Coins for the Lunar Lanterns rerun (expires 26 Feb 2028).
 	CLUBWARS = {
 		reward = { { kind = "token", id = "lunarlanterns", amount = 150 }, { kind = "gems", amount = 50 } },

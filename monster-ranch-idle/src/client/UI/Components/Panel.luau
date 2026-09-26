@@ -107,6 +107,7 @@ function Panel.new(props: {
 			OnClick = props.OnClose,
 			Parent = right,
 		})
+		close.Root.SelectionOrder = 2 -- a gamepad cursor lands on the content first
 		self.CloseButton = close
 	end
 

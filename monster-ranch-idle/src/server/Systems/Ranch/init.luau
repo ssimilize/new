@@ -25,7 +25,7 @@
 
 	Public API (other systems):
 	  Ranch:IncomePerSecond(player) -> coins/s
-	  Ranch:PenOf(player, monsterId) -> 0..5                  -- 0 = barn
+	  Ranch:PenOf(player, monsterId) -> 0..6                  -- 0 = barn
 	  Ranch:MonstersInPens(player) -> { { id, pen } }
 	  Ranch:CollectAll(player, multiplier?) -> coins          -- pays every jar (× multiplier)
 	  Ranch:JarTotal(player) -> coins                         -- what CollectAll would pay (×1)

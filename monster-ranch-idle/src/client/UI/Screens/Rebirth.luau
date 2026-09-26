@@ -221,6 +221,7 @@ return {
 				OnConfirm = function()
 					local ok, res = Util.requestOnce(ctx, "Rebirth.Rebirth", { keep = ids })
 					if ok and type(res) == "table" then
+						ctx.Bus:Publish("Vfx.Burst", "rebirth") -- World: round the character and at the Star Altar
 						ctx:Toast(
 							string.format("Rebirth Star %d! +%s Stardust", res.stars or nextStar, Format.commas(res.stardust or 0)),
 							"reward"

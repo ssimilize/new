@@ -292,11 +292,16 @@ function StoreKit.watch(store, paths: { string }, fn: () -> ())
 	}
 end
 
+-- Kernel error codes as player-facing text (anything else is already a message).
+local ERROR_TEXT = {
+	NotAvailable = "Not available yet",
+	UnknownAction = "Not available yet",
+	TooFast = "Slow down a little and try again",
+	BadRequest = "Something went wrong. Try again",
+}
+
 function StoreKit.errorText(err: any): string
-	if err == "NotAvailable" then
-		return "Not available yet"
-	end
-	return tostring(err or "Something went wrong")
+	return ERROR_TEXT[err] or tostring(err or "Something went wrong")
 end
 
 function StoreKit.request(ctx, action: string, payload: any?): (boolean, any)

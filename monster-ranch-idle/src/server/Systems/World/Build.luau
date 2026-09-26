@@ -17,14 +17,18 @@
 	    Barn                         Model (attr PlotId) with Body, Roof*, Door
 	    Gate                         Model with PostL, PostR, Sign (client adds the owner name)
 	  SpawnLocation
+	  Boundary/Wall<1-4>             low stone wall on the perimeter (Config.World.Boundary)
+	  Boundary/Barrier<1-4>          invisible, tall, collides: keeps players on the map
+	  Scenery                        added later by World/Scenery (trees, rocks, flowers, grass)
 	  Sky/Islands/<id>               Model: Top (walkable grass disc), Rock* underside, Tree*
 	  Sky/Bridges/Bridge<i>          cloud bridges between island edges
 	  Sky/LaunchPad, Sky/ReturnPad   pads (attr SkyPad = "launch"|"return"); the client adds prompts
-	  Sky/Gate                       arch (attr Screen = "Expeditions", Region = "sky")
+	  Sky/Gate                       arch (attr Screen = "Expeditions", Region = "sky") with an invisible
+	                               Body (World/Dress fits its 3D model there) and the Portal prompt part
 
 	On the Trading Hub place (Build.world(Config, "hub"), update 3.0): Ground, Hub/Plaza and
 	Hub/Buildings/<id> from Config.TradingHub.World (booths are booth1..n, screen "Trade"),
-	empty Plots and Paths folders, and the SpawnLocation. No plots and no Sky.
+	empty Plots and Paths folders, the SpawnLocation and the Boundary. No plots and no Sky.
 
 	Plot frame: plot-local +X points at the hub (Config.World.Plots[i].facing is the compass
 	heading of that direction, 0 = +Z, 90 = +X). Pen, incubator, barn and statue offsets are
@@ -357,15 +361,16 @@ local function buildPlot(World, plot, parent: Instance)
 	local pens = Instance.new("Folder")
 	pens.Name = "Pens"
 	pens.Parent = model
-	for penIndex = 1, math.min(5, #World.PenOffsets) do
+	for penIndex = 1, #World.PenOffsets do
 		buildPen(plot.id, penIndex, plotCf, World, pens)
 	end
 
 	-- Incubator pad
 	local io = World.IncubatorOffset
 	local padCenter = (plotCf * CFrame.new(io[1], 0.4, io[3])).Position
-	disc("IncubatorRim", 15, 0.6, padCenter - Vector3.new(0, 0.1, 0), COLORS.padRim, model, { CastShadow = false })
-	local pad = disc("IncubatorPad", 13, 0.8, padCenter, COLORS.pad, model, { CastShadow = false })
+	local padSize = World.IncubatorPadSize
+	disc("IncubatorRim", padSize, 0.6, padCenter - Vector3.new(0, 0.1, 0), COLORS.padRim, model, { CastShadow = false })
+	local pad = disc("IncubatorPad", padSize - 2, 0.8, padCenter, COLORS.pad, model, { CastShadow = false })
 	pad:SetAttribute("PlotId", plot.id)
 	pad:SetAttribute("Incubator", true)
 
@@ -373,7 +378,7 @@ local function buildPlot(World, plot, parent: Instance)
 	local bo = World.BarnOffset
 	local barn = Instance.new("Model")
 	barn.Name = "Barn"
-	local barnSize = Vector3.new(14, 10, 12)
+	local barnSize = Vector3.new(World.BarnSize[1], World.BarnSize[2], World.BarnSize[3])
 	local barnCf = plotCf * CFrame.new(bo[1], 0.3 + barnSize.Y / 2, bo[3])
 	local barnBody = block("Body", barnSize, barnCf, COLORS.barn, barn)
 	gableRoof(barn, barnCf * CFrame.Angles(0, math.rad(90), 0), Vector3.new(barnSize.Z, barnSize.Y, barnSize.X), COLORS.barnRoof, 0.45)
@@ -420,6 +425,40 @@ local function buildPath(World, plotCf: CFrame, index: number, parent: Instance)
 	)
 end
 
+-- The perimeter (Config.World.Boundary): a low stone wall along each side, which World/Scenery
+-- dresses with wall meshes, and a tall invisible barrier on the same line so nobody leaves the map.
+local function buildBoundary(World, root: Instance)
+	local B = World.Boundary
+	if not B then
+		return
+	end
+	local boundary = Instance.new("Folder")
+	boundary.Name = "Boundary"
+	boundary.Parent = root
+	local y = World.GroundY
+	local span = B.half * 2 + B.thickness
+	for i, side in { { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 } } do
+		local along = if side[1] == 0 then Vector3.new(span, 0, B.thickness) else Vector3.new(B.thickness, 0, span)
+		local at = Vector3.new(side[1] * B.half, 0, side[2] * B.half)
+		block(
+			"Wall" .. i,
+			along + Vector3.new(0, B.height, 0),
+			CFrame.new(at + Vector3.new(0, y + B.height / 2, 0)),
+			COLORS.stone,
+			boundary,
+			{ Material = Enum.Material.Cobblestone }
+		)
+		block(
+			"Barrier" .. i,
+			along + Vector3.new(0, B.barrier, 0),
+			CFrame.new(at + Vector3.new(0, y + B.barrier / 2, 0)),
+			COLORS.stone,
+			boundary,
+			{ Transparency = 1, CastShadow = false }
+		)
+	end
+end
+
 local function buildSpawn(World, root: Instance)
 	local s = World.Spawn
 	-- Config.World.Spawn's Y is where characters appear; the pad itself sits on the plaza.
@@ -451,6 +490,8 @@ local SKY = {
 	trunk = hex("#9C6130"),
 	leaves = hex("#7FD18B"),
 }
+-- The Sky Gate's footprint for its 3D model (see buildSky; tools/blender/export_static.py reads it).
+local SKY_GATE_BODY = Vector3.new(14, 20, 14)
 
 local function buildSky(World, root: Instance)
 	local Sky = World.Sky
@@ -522,6 +563,11 @@ local function buildSky(World, root: Instance)
 	gate:SetAttribute("Region", "sky")
 	gate.Parent = sky
 	local g = v3(Sky.gate)
+	-- World/Dress fits the Sky Gate's 3D model (BuildingMeshes.skyGate) to this invisible box, its
+	-- front (-Z) turned towards the return pad players arrive at; the boxes below stay as the
+	-- placeholder, and the Portal part keeps the Enter prompt either way.
+	local facing = CFrame.new(g + Vector3.new(0, SKY_GATE_BODY.Y / 2, 0)) * CFrame.Angles(0, math.pi, 0)
+	block("Body", SKY_GATE_BODY, facing, SKY.gate, gate, { Transparency = 1, CanCollide = false, CanQuery = false })
 	block("PostL", Vector3.new(2, 14, 2), CFrame.new(g + Vector3.new(-7, 7, 0)), SKY.gate, gate)
 	block("PostR", Vector3.new(2, 14, 2), CFrame.new(g + Vector3.new(7, 7, 0)), SKY.gate, gate)
 	block("Lintel", Vector3.new(18, 2, 2.4), CFrame.new(g + Vector3.new(0, 15, 0)), SKY.gate, gate)
@@ -571,6 +617,7 @@ local function buildTradingHub(Config, root: Instance)
 		folder.Parent = root
 	end
 	buildSpawn({ GroundY = y, Spawn = Hub.spawn }, root)
+	buildBoundary(World, root)
 end
 
 function Build.world(Config, mode: string?): (Folder, number)
@@ -600,6 +647,7 @@ function Build.world(Config, mode: string?): (Folder, number)
 	end
 
 	buildSpawn(World, root)
+	buildBoundary(World, root)
 	buildSky(World, root)
 	root:SetAttribute("PartCount", count)
 	return root, count

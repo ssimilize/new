@@ -1,0 +1,8 @@
+{
+  "note": "2026-09-25 props lane trial: text-only props, published from Studio as generated.",
+  "jobs": [
+    { "key": "p_haybale", "prompt": "a rectangular hay bale tied with two ropes, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours", "size": [4, 2.5, 2.5], "maxTriangles": 3000, "publish": true },
+    { "key": "p_milkcan", "prompt": "an old metal milk churn can with a lid and two handles, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours", "size": [1.5, 3, 1.5], "maxTriangles": 3000, "publish": true },
+    { "key": "p_wheelbarrow", "prompt": "a wooden wheelbarrow full of pumpkins, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours", "size": [5, 3, 2.5], "maxTriangles": 5000, "publish": true }
+  ]
+}

@@ -27,6 +27,7 @@ globals:
   TweenInfo: { any: true }
   BrickColor: { any: true }
   Font: { any: true }
+  Content: { any: true }
   PhysicalProperties: { any: true }
   DateTime: { any: true }
   Random: { any: true }

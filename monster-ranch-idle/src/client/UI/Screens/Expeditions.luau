@@ -27,6 +27,7 @@ local Button = require(UI.Components.Button)
 local Panel = require(UI.Components.Panel)
 local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
+local Icon = require(UI.Components.Icon)
 local Util = require(script.Parent.Parts.Util)
 local Dialog = require(script.Parent.Parts.Dialog)
 local BattleReplay = require(script.Parent.Parts.BattleReplay)
@@ -135,6 +136,22 @@ return {
 		end
 		local function squadSize(): number
 			return sess().squadSize or Regions.SquadSize.base
+		end
+		-- The largest squad any level reaches, and the unlock that opens squad slot `i`.
+		local function maxSquadSize(): number
+			local size = Regions.SquadSize.base
+			for _, step in Regions.SquadSize.steps do
+				size = math.max(size, step.size)
+			end
+			return size
+		end
+		local function squadUnlockFor(i: number): string?
+			for _, step in Regions.SquadSize.steps do
+				if step.size >= i then
+					return step.unlock
+				end
+			end
+			return nil
 		end
 		local function slotCount(): number
 			return sess().slotCount or 1
@@ -666,9 +683,41 @@ return {
 			local list = Util.monsters(ctx)
 			local ids = squadIds()
 			local size = squadSize()
+			local slots = math.max(size, maxSquadSize())
 			squadTitle.Text = string.format("Squad  %d / %d", #ids, size)
-			local width = math.min(100, math.floor(430 / size) - 10)
-			for i = 1, size do
+			local width = math.min(100, math.floor(430 / slots) - 10)
+			for i = 1, slots do
+				if i > size then
+					-- Locked squad slot: the level that opens it; tap for the full hint.
+					local key = squadUnlockFor(i)
+					local locked = New("TextButton", {
+						Name = "Slot" .. i,
+						Text = "",
+						AutoButtonColor = false,
+						BackgroundColor3 = C.PanelDeep,
+						BackgroundTransparency = 0.4,
+						Size = UDim2.fromOffset(width, 118),
+						LayoutOrder = i,
+						Parent = squadRow,
+					}, { Create.Corner(Theme.Radius.Card), Create.Stroke(2.5, C.Line) })
+					local lockIcon = Icon.new("lock", 30)
+					lockIcon.AnchorPoint = Vector2.new(0.5, 0)
+					lockIcon.Position = UDim2.new(0.5, 0, 0, 26)
+					lockIcon.Parent = locked
+					Util.text({
+						Text = if key then string.format("Lv %d", Util.unlockLevel(key)) else "Locked",
+						TextSize = Theme.TextSize.Small,
+						TextColor3 = C.TextMuted,
+						TextXAlignment = Enum.TextXAlignment.Center,
+						Position = UDim2.fromOffset(0, 66),
+						Size = UDim2.new(1, 0, 0, 20),
+						Parent = locked,
+					})
+					locked.Activated:Connect(function()
+						ctx:Toast(if key then Util.unlockText(key) else "Locked", "info")
+					end)
+					continue
+				end
 				local id = ids[i]
 				local m = id and list[id]
 				local slot = New("TextButton", {
@@ -1377,7 +1426,7 @@ return {
 
 			local cur = currentStage()
 			local allCleared = cleared(region) >= maxStage(region)
-			fightButton:SetText(if allCleared and s == cur then "Replay stage " .. s else "Fight stage " .. s)
+			fightButton:SetText(if allCleared and s == cur then string.format("Replay stage %d", s) else string.format("Fight stage %d", s))
 			fightButton:SetDisabled(not unlocked or #ids == 0)
 			startButton:SetText(string.format("Start %s expedition", durationText(duration)))
 			startButton:SetDisabled(not unlocked or farmStage() < 1 or #ids == 0 or freeSlot() == nil)

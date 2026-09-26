@@ -36,14 +36,17 @@ lune run tests
 - `src/client`: client kernel, UI kit (`UI/Theme`, `UI/Create`, `UI/Components`), screens (`UI/Screens`, listed in `src/client/Manifest.luau`), controllers, placeholder visuals.
 - `tests/specs/*.spec.luau`: `TestKernel` boots real systems on mocks; `ClientHarness` runs the real client in a reflection-checked Roblox mock. `Client.spec` clicks every button on every screen and checks a 568×320 phone fit.
 - `tools/snapshot`: renders a picture of the game without Studio (see its README).
+- `monster-ranch-idle/tools/meshy` + `tools/blender`: the 3D monsters. Meshy concept → model per form, a Blender rig per body type (all eight), then each mesh is published as a Roblox asset and drawn by `Visuals/MeshMonster` (ids in `MeshMonsterAssets.luau`; forms without both ids keep the placeholder). Workflow in each folder's README.
+- Particle effects: presets as data in `Config/Vfx.luau`, built by `Visuals/Vfx.luau` (monsters via `MonsterModel.Build`, landmarks via the `Landmarks` controller, bursts via World). The sprites are listed in `monster-ranch-idle/art/vfx/SPRITES.md`, made with `monster-ranch-idle/tools/vfx`, and their uploaded ids go in the generated `Config/VfxSprites.luau`.
 
 ## Building an update (the pattern every update so far followed)
 
 1. Config (content, numbers, dates) → Logic (pure rules) → System (server) → `Api.luau` → both Manifests → Screen / controller.
 2. Specs: a server spec (`tests/specs/<Update>.spec.luau`) for rules, failures and exploits, and a client spec that plays the feature through the UI.
-3. Docs: `monster-ranch-idle/docs/UPDATES.md` (players + code), `ARCHITECTURE.md` (new adapters / contracts), `SYSTEMS.md` rows, and the roadmap card tag in the design doc (`built` when merged, `shipped` when live).
-4. A snapshot of the new screen in `monster-ranch-idle/docs/snapshots/`.
-5. One branch and one pull request per update; merge once CI is green.
+3. Text: every new player-facing string is one literal or one `string.format`, added in English, Spanish and Portuguese to `src/shared/Locale/es.luau` and `pt.luau` (`monster-ranch-idle/docs/LOCALIZATION.md`). `LOCALE_REPORT=missing.txt lune run tests Locale` lists anything still untranslated; `Locale.spec` and `LocaleClient.spec` fail on it.
+4. Docs: `monster-ranch-idle/docs/UPDATES.md` (players + code), `ARCHITECTURE.md` (new adapters / contracts), `SYSTEMS.md` rows, and the roadmap card tag in the design doc (`built` when merged, `shipped` when live).
+5. A snapshot of the new screen in `monster-ranch-idle/docs/snapshots/`.
+6. One branch and one pull request per update; merge once CI is green.
 
 ## Test-harness gotchas
 
@@ -53,10 +56,12 @@ lune run tests
 - `expect` has no `.never`; write `expect(a ~= b).toBe(true)`.
 - Cross-server features share stores through `MockAdapters.network()` passed to several `TestKernel.new({ network = net })`.
 - Hub-place tests use `TestKernel.new({ placeMode = "hub" })`.
+- A client in another language: `ClientHarness.new(h, p, { localeId = "es-mx" })` (or `"pt-br"`). Text you look up with `c:Button` / `c:HasText` is then the translation.
+- Gamepad: `c:UseGamepad(true)`, `c:Press(Enum.KeyCode.ButtonB)`, `c:Stick(x, y)`, `c:Selected()`.
 
 ## Where things stand
 
-- Shipped in code: launch through 3.0 (Year Two), 3.0.1 (go-live, Frostfall returns).
-- 3.1 (Club Wars + Lunar Lanterns) is in pull request #13 on branch `claude/roblox-game-concepts-research-0oitwr`.
-- Next on the roadmap: **3.2 · Frostbite Glacier + Level 70** (Sat 11 Mar 2028). Glacier is already built and date-gated; the work is the Ranch Level cap 60 → 70 (pen 6, incubator 4, squad size 5), raid 3 (the Frost Leviathan with a raid-only line), controller support, and Spanish / Portuguese (BR) text.
+- Merged on `main`: launch through 3.0 (Year Two), 3.0.1 (go-live, Frostfall returns) and 3.1 (Club Wars + Lunar Lanterns).
+- 3.2 (Frostbite Glacier + Level 70: Ranch Level 70, raid 3, controller support, Spanish and Portuguese) is on branch `update-3.2-frostbite-glacier` for its pull request. It must be published before Season 8 starts (Sat 4 Mar 2028).
+- Next on the roadmap: **3.3 · Spring Bloom + Design Weeks** (Sat 1 Apr 2028): themed Workshop weeks with community votes, player-designed pen themes, and Spring Bloom's return with a new egg-hunt layout.
 - Manual go-live steps (publishing both places, live checks, moderators): `monster-ranch-idle/docs/GO_LIVE.md`.

@@ -1,0 +1,11 @@
+{
+  "note": "2026-09-25 end-to-end trial: three body types from their Meshy concepts, rigged as rbx_<form> beside the live forms.",
+  "jobs": [
+    { "key": "kindlefox", "concept": "art/meshy/kindlefox-concept/image_0.png",
+      "prompt": "a cute cartoon fox standing on four long slender legs, big glossy black eyes, flame-tipped ears and tail" },
+    { "key": "emberslug", "concept": "art/meshy/emberslug-concept/cutout.png",
+      "prompt": "a cute baby lava slug creature with two short eye stalks" },
+    { "key": "buzzbee", "concept": "art/meshy/buzzbee-concept/cutout.png",
+      "prompt": "a cute baby bumblebee creature with a round fuzzy striped body, six short legs and small wings" }
+  ]
+}

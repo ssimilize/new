@@ -1,0 +1,16 @@
+{
+  "method": "blender",
+  "wall_minutes": 22,
+  "generation_seconds": 172,
+  "generation_breakdown": {
+    "final_run_wall_s": 172,
+    "render_s_per_sprite_both_variants": {"flame": 12.9, "droplet": 8.5, "leaf": 9.6, "bolt": 9.0, "star": 10.8, "wisp": 114.0},
+    "post_s": 3.8,
+    "device": "Cycles OptiX, RTX 5070 Laptop, 1024 px, 16-128 spp + OIDN denoise",
+    "all_iteration_renders_s": 560
+  },
+  "cost": 0,
+  "attempts": 5,
+  "scripts": ["tools/vfx/blender_sprites.py"],
+  "notes": "One script, fully procedural, no assets, no network: `python tools/vfx/blender_sprites.py art/vfx/bakeoff/blender` launches headless Blender 5.1 (Cycles, ortho front camera, Film Transparent, view transform Standard), renders each sprite at 1024 px twice (tint = white/grey materials, color = natural palette), then PIL premultiplies, trims to the alpha bbox, fits the long side to 80% of 256, LANCZOS-resizes, un-premultiplies and bleeds colour into transparent pixels (no dark halo under bilinear/mip filtering). Deterministic: same command, same pixels. Surfaces use emission-only 'fake lit' shaders (N.L ramps, facing rim, toon N.H specular) - no lights to balance, crisp stylized look, alpha is exact geometric coverage. Flame = emission+absorption volume whose density is a node-built teardrop SDF (ball + tapered tongue + side lick, swayed, noise-eroded), core emission boosted so it clips white/yellow. Wisp = 34 overlapping Principled Volume puffs along a spiral, lit by a soft sun + white-world fill (the only slow one, ~57 s/variant). Droplet = revolved teardrop mesh; leaf = two folded half-blades (crisp two-tone) with UV-driven midrib/veins/outline + stem tube; bolt = tapered POLY curve tubes + a 3x fatter glow tube whose alpha = (1-facing)^4; star = superellipse 4-point fan + radial-alpha halo disc. What worked: droplet, leaf, star read cleanly at 24 px straight away; volumes give genuinely soft edges for free. What failed/needed iteration: additive noise erosion filled the flame's cube with haze (fixed by multiplicative erosion); crisp flame density hid the hot core (balanced absorption vs core-boosted emission); first wisp was separate cauliflower blobs (fixed: 34 dense puffs + world-space noise so neighbours agree); bolt too thin at 24 px (fattened, wider zigzag); a 45-degree twin star read as burrs (removed). Weak spots: bolt is the least readable at 24 px on light backgrounds (white-on-light, inherent to the tint version); tint flame is mostly white so after ParticleEmitter tint it becomes a flat orange silhouette (the _color version has the hot core). Adding a new sprite: write one build_<name>(variant) function (~20-40 lines of geometry + node-builder calls) and register it; expect 2-4 look/tweak/re-render rounds of ~10 s each (volumes ~1-2 min). Requires Blender + node-API knowledge; no artistic hand work."
+}

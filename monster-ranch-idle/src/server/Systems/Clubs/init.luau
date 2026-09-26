@@ -594,7 +594,7 @@ local function cleanName(player, text: string, min: number, max: number, what: s
 		ctx:Fail("Couldn't check that name. Try again")
 	end
 	if filtered ~= trimmed then
-		ctx:Fail("That " .. string.lower(what) .. " isn't allowed")
+		ctx:Fail(if what == "Tag" then "That tag isn't allowed" else "That name isn't allowed")
 	end
 	return trimmed
 end
@@ -699,7 +699,7 @@ local function registerActions()
 		requireNoClub(player)
 		local code = string.upper(payload.code)
 		if #code ~= Cfg.CodeLength or not string.match(code, "^[%w]+$") then
-			ctx:Fail("Club codes are " .. Cfg.CodeLength .. " letters and numbers")
+			ctx:Fail(string.format("Club codes are %d letters and numbers", Cfg.CodeLength))
 		end
 		return join(player, code, false)
 	end)
