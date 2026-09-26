@@ -28,6 +28,7 @@ local Vip = require(Shared.Logic.Vip)
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
+local Sheet = require(UI.Art.Sheet)
 local Button = require(UI.Components.Button)
 local Panel = require(UI.Components.Panel)
 local Widgets = require(UI.Components.Widgets)
@@ -339,16 +340,24 @@ return {
 						continue -- Rebirth biomes are earned, never sold
 					end
 					local cell = Util.card({ LayoutOrder = i, Parent = grid })
-					New("Frame", {
-						BackgroundColor3 = Color3.fromHex(t.ground),
+					local art = Sheet.icon("theme_" .. t.id, {
 						AnchorPoint = Vector2.new(0.5, 0),
-						Position = UDim2.new(0.5, 0, 0, 10),
-						Size = UDim2.fromOffset(110, 70),
+						Position = UDim2.new(0.5, 0, 0, 4),
+						Size = UDim2.fromOffset(82, 82),
 						Parent = cell,
-					}, {
-						Create.Corner(10),
-						Create.Stroke(5, Color3.fromHex(t.fence)),
 					})
+					if not art then
+						New("Frame", {
+							BackgroundColor3 = Color3.fromHex(t.ground),
+							AnchorPoint = Vector2.new(0.5, 0),
+							Position = UDim2.new(0.5, 0, 0, 10),
+							Size = UDim2.fromOffset(110, 70),
+							Parent = cell,
+						}, {
+							Create.Corner(10),
+							Create.Stroke(5, Color3.fromHex(t.fence)),
+						})
+					end
 					Util.text({
 						Text = t.name,
 						Font = Theme.Fonts.Display,
@@ -374,14 +383,22 @@ return {
 			local decorOwned = shop.decor or {}
 			for i, d in Config.Decor.List do
 				local cell = Util.card({ LayoutOrder = i, Parent = grid })
-				New("Frame", {
-					BackgroundColor3 = Color3.fromHex(d.color),
+				local art = Sheet.icon("decor_" .. d.id, {
 					AnchorPoint = Vector2.new(0.5, 0),
-					Position = UDim2.new(0.5, 0, 0, 10),
-					Size = UDim2.fromOffset(64, 64),
-					Rotation = 8,
+					Position = UDim2.new(0.5, 0, 0, 4),
+					Size = UDim2.fromOffset(74, 74),
 					Parent = cell,
-				}, { Create.Corner(14), Create.Stroke(3), Create.Shade(0.2) })
+				})
+				if not art then
+					New("Frame", {
+						BackgroundColor3 = Color3.fromHex(d.color),
+						AnchorPoint = Vector2.new(0.5, 0),
+						Position = UDim2.new(0.5, 0, 0, 10),
+						Size = UDim2.fromOffset(64, 64),
+						Rotation = 8,
+						Parent = cell,
+					}, { Create.Corner(14), Create.Stroke(3), Create.Shade(0.2) })
+				end
 				Util.text({
 					Text = d.name,
 					Font = Theme.Fonts.Display,
@@ -578,7 +595,9 @@ return {
 			if product.key == "ranchPass" then
 				return Icon.new("star", 40)
 			elseif product.handler == "Weather.Totem" then
-				return Icon.new("token", 40)
+				local weather = product.args and product.args.weather or ""
+				local name = "item_totem_" .. (if weather == "thunderstorm" then "thunder" else weather)
+				return Icon.new(if Sheet.has(Sheet.Icons, name) then name else "token", 40)
 			end
 			local first = product.grant and product.grant[1]
 			if first and first.kind == "egg" and first.id then

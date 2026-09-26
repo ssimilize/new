@@ -22,6 +22,7 @@ local Formulas = require(Shared.Logic.Formulas)
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
+local Shine = require(UI.Components.Shine)
 local Anim = require(UI.Anim)
 local Button = require(UI.Components.Button)
 local Panel = require(UI.Components.Panel)
@@ -729,6 +730,9 @@ return {
 					LayoutOrder = i,
 					Parent = squadRow,
 				}, { Create.Corner(Theme.Radius.Card), Create.Stroke(2.5, if m then Theme.Rarity(m.rarity or 1) else C.Line) })
+				if m then
+					Shine.attach(slot, m.rarity, Theme.Radius.Card)
+				end
 				slot.Activated:Connect(function()
 					editSlot(i)
 				end)

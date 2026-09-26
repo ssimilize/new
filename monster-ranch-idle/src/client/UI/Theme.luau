@@ -87,6 +87,14 @@ Theme.Images = {
 	ButtonTexture = "",
 }
 
+-- 9-slice skins for Theme.Images.PanelTexture / ButtonTexture (tools/ui/nine_slice.py draws them at
+-- 2x, hence SliceScale 0.5). They are overlays: outline, top highlight, inner shade (and the button
+-- lip) over the component's own colour, so one image serves every button colour.
+Theme.Slices = {
+	Panel = { Center = Rect.new(44, 44, 84, 84), Scale = 0.5 },
+	Button = { Center = Rect.new(32, 32, 64, 64), Scale = 0.5 },
+}
+
 function Theme.Rarity(index: number): Color3
 	local r = Config.Rarities.List[index]
 	return if r then hex(r.color) else Theme.Colors.Gray
