@@ -15,12 +15,12 @@ return function(t)
 
 	local Rules = Config.Genetics
 
-	local function genes(hp, atk, def, spd)
-		return { hp = hp, atk = atk, def = def, spd = spd }
+	local function genes(hp, atk, def, spd, luck)
+		return { hp = hp, atk = atk, def = def, spd = spd, luck = luck or { 0, 0 } }
 	end
 
 	local function uniform(a, b)
-		return genes({ a, b }, { a, b }, { a, b }, { a, b })
+		return genes({ a, b }, { a, b }, { a, b }, { a, b }, { a, b })
 	end
 
 	local function adultRecord(fields)
@@ -32,10 +32,10 @@ return function(t)
 	end
 
 	describe("Genetics rules", function()
-		it("gives HP, ATK, DEF and SPD genes and none to Luck", function()
-			expect(Rules.Stats).toEqual({ "hp", "atk", "def", "spd" })
-			expect(Genetics.MaxTotal).toBe(80)
-			expect(Genetics.Points(uniform(4, 5), "luck")).toBe(0)
+		it("gives every stat a gene, Luck last (update 3.7)", function()
+			expect(Rules.Stats).toEqual({ "hp", "atk", "def", "spd", "luck" })
+			expect(Genetics.MaxTotal).toBe(100)
+			expect(Genetics.Points(uniform(4, 5), "luck")).toBe(9)
 		end)
 
 		it("rolls hatch genes inside the hatch range and repeats them for a seed", function()
@@ -155,7 +155,7 @@ return function(t)
 			expect(lo).toBe(6)
 			expect(hi).toBe(15)
 			local preview = Genetics.Preview(a, b)
-			expect(#preview.stats).toBe(4)
+			expect(#preview.stats).toBe(5)
 			expect(preview.stats[4]).toEqual({ stat = "spd", lo = 1, hi = 12 })
 			expect(preview.surgeChance).toBeNear(Rules.SurgeChance + Rules.BigSurgeChance)
 		end)
@@ -167,16 +167,16 @@ return function(t)
 			expect(Formulas.Stats(adultRecord({ genes = uniform(0, 0) }))).toEqual(plain)
 		end)
 
-		it("multiplies HP, ATK, DEF and SPD by their gene bonus and leaves Luck alone", function()
+		it("multiplies every stat by its gene bonus", function()
 			local plain = Formulas.Stats(adultRecord())
-			local g = genes({ 10, 10 }, { 7, 8 }, { 0, 3 }, { 5, 0 })
+			local g = genes({ 10, 10 }, { 7, 8 }, { 0, 3 }, { 5, 0 }, { 4, 4 })
 			local boosted = Formulas.Stats(adultRecord({ genes = g }))
 			for _, stat in Rules.Stats do
 				expect(boosted[stat]).toBeNear(plain[stat] * (1 + Genetics.Bonus(g, stat)), 1)
 				expect(boosted[stat]).toBeAtLeast(plain[stat])
 			end
 			expect(boosted.hp).toBeGreaterThan(plain.hp)
-			expect(boosted.luck).toBe(plain.luck)
+			expect(boosted.luck).toBeGreaterThan(plain.luck)
 			expect(Formulas.MonsterPower(adultRecord({ genes = g }))).toBeGreaterThan(Formulas.MonsterPower(adultRecord()))
 		end)
 
@@ -242,7 +242,7 @@ return function(t)
 			local b = M:Create(p, { line = "bubblin", rarity = 2, stage = 3, genes = uniform(9, 10) }, "test", true)
 			local hatched = M:Create(p, { line = "mossbun", rarity = 1 }, "test", true)
 			expect(Genetics.Valid(hatched.genes)).toBe(true)
-			expect(Genetics.Total(hatched.genes)).toBeAtMost(8 * Rules.HatchRange[2])
+			expect(Genetics.Total(hatched.genes)).toBeAtMost(#Rules.Stats * 2 * Rules.HatchRange[2])
 			expect(h:Client(p).profile.Monsters.list[hatched.id].genes).toEqual(hatched.genes)
 
 			h:Call(p, "Breeding.Start", { pod = 1, a = a.id, b = b.id })
@@ -309,7 +309,7 @@ return function(t)
 			local before = Formulas.Stats(oldMonster())
 			local p = h:Join(userId, "Veteran")
 			local list = h:Section(p, "Monsters").list
-			expect(h.kernel.Data:Get(p)._meta.versions.Monsters).toBe(2)
+			expect(h.kernel.Data:Get(p)._meta.versions.Monsters).toBe(3)
 			for id, m in list do
 				expect(Genetics.Valid(m.genes)).toBe(true)
 				expect(m.genes).toEqual(Genetics.Seeded(Rng.seed("genes", id, m.born)))
@@ -319,7 +319,6 @@ return function(t)
 			for _, stat in Rules.Stats do
 				expect(after[stat]).toBeAtLeast(before[stat])
 			end
-			expect(after.luck).toBe(before.luck)
 			expect(h:Client(p).profile.Monsters.list.m1.genes).toEqual(list.m1.genes)
 
 			-- The same save migrated again (another server) gets the same genes.

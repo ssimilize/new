@@ -35,7 +35,7 @@ return function(t)
 	end
 
 	local function uniform(a, b)
-		return { hp = { a, b }, atk = { a, b }, def = { a, b }, spd = { a, b } }
+		return { hp = { a, b }, atk = { a, b }, def = { a, b }, spd = { a, b }, luck = { a, b } }
 	end
 
 	local function gradeTexts(c, root)
@@ -62,18 +62,18 @@ return function(t)
 		it("grades each gene stat, sums the genes and explains a pair when tapped", function()
 			local h = TestKernel.new({ systems = allSystems() })
 			local p = h:Join()
-			local genes = { hp = { 10, 10 }, atk = { 7, 8 }, def = { 0, 3 }, spd = { 5, 5 } }
+			local genes = { hp = { 10, 10 }, atk = { 7, 8 }, def = { 0, 3 }, spd = { 5, 5 }, luck = { 0, 0 } }
 			local m = h:System("Monsters"):Create(p, { line = "zappip", rarity = 3, stage = 3, genes = genes, gen = 4 }, "test", true)
 			local c = ClientHarness.new(h, p)
 			c:Advance(1)
 			local detail = c:Open("MonsterDetail", { id = m.id })
 			c:Advance(0.5)
 
-			expect(c:HasText("Genes 48/80 · Gen 4", detail)).toBe(true)
-			expect(gradeTexts(c, detail)).toEqual({ "A", "B", "D", "S" })
-			-- Luck has no gene, so its row has no grade.
+			expect(c:HasText("Genes 48/100 · Gen 4", detail)).toBe(true)
+			expect(gradeTexts(c, detail)).toEqual({ "A", "B", "D", "D", "S" })
+			-- Luck has had a gene since 3.7, so its row has a grade too.
 			local luck = detail:FindFirstChild("StatBar_Luck", true)
-			expect(luck.Parent:FindFirstChild("Grade", true)).toBeNil()
+			expect(luck.Parent:FindFirstChild("Grade", true) ~= nil).toBe(true)
 
 			local hp = detail:FindFirstChild("StatBar_HP", true).Parent:FindFirstChild("Grade", true)
 			c:Click(hp:FindFirstChild("Tap"))
@@ -108,14 +108,14 @@ return function(t)
 		it("translates the gene line, the grades and a pair's toast", function()
 			local h = TestKernel.new({ systems = allSystems() })
 			local p = h:Join()
-			local genes = { hp = { 10, 10 }, atk = { 7, 8 }, def = { 0, 3 }, spd = { 5, 5 } }
+			local genes = { hp = { 10, 10 }, atk = { 7, 8 }, def = { 0, 3 }, spd = { 5, 5 }, luck = { 0, 0 } }
 			local m = h:System("Monsters"):Create(p, { line = "zappip", rarity = 3, stage = 3, genes = genes, gen = 4 }, "test", true)
 			local c = ClientHarness.new(h, p, { localeId = "es-mx" })
 			c:Advance(1)
 			local detail = c:Open("MonsterDetail", { id = m.id })
 			c:Advance(0.5)
-			expect(c:HasText("Genes 48/80 · Gen. 4", detail)).toBe(true)
-			expect(gradeTexts(c, detail)).toEqual({ "A", "B", "D", "S" })
+			expect(c:HasText("Genes 48/100 · Gen. 4", detail)).toBe(true)
+			expect(gradeTexts(c, detail)).toEqual({ "A", "B", "D", "D", "S" })
 			local hp = detail:FindFirstChild("StatBar_HP", true).Parent:FindFirstChild("Grade", true)
 			c:Click(hp:FindFirstChild("Tap"))
 			c:Advance(0.3)

@@ -247,17 +247,34 @@ local PREPARE = {
 	Workshop = function()
 		c:Request("Workshop.Browse", { tab = "new" })
 	end,
+	-- Update 3.7: the Job Board with a miner, a forager and a scout three hours into their shift.
+	Jobs = function()
+		local miner = adult(me, "pebblet", 5)
+		local forager = adult(me, "zappip", 4)
+		local scout =
+			adult(me, "mossbun", 6, { genes = { hp = { 3, 4 }, atk = { 2, 5 }, def = { 4, 4 }, spd = { 3, 3 }, luck = { 9, 10 } } })
+		scout.stars = 4
+		c:Advance(1)
+		c:Request("Jobs.Assign", { slot = 1, job = "miner", id = miner.id })
+		c:Advance(0.6)
+		c:Request("Jobs.Assign", { slot = 2, job = "forager", id = forager.id, flavor = "spicy" })
+		c:Advance(0.6)
+		c:Request("Jobs.Assign", { slot = 3, job = "scout", id = scout.id })
+		h:Advance(3 * 3600)
+		c:Advance(1)
+	end,
 	-- Update 3.6: a bred Adult's genes (grades beside the stats, the gene line).
 	MonsterDetail = function()
-		local m = adult(me, "zappip", 4, { gen = 6, genes = { hp = { 9, 8 }, atk = { 10, 9 }, def = { 4, 6 }, spd = { 7, 5 } } })
+		local m =
+			adult(me, "zappip", 4, { gen = 6, genes = { hp = { 9, 8 }, atk = { 10, 9 }, def = { 4, 6 }, spd = { 7, 5 }, luck = { 6, 7 } } })
 		c:Advance(1)
 		c:Open("MonsterDetail", { id = m.id })
 		return true
 	end,
 	-- Update 3.6: two parents in a pod, their gene grades and the baby's gene range.
 	Breeding = function()
-		local a = adult(me, "cindlet", 4, { genes = { hp = { 6, 9 }, atk = { 8, 7 }, def = { 3, 5 }, spd = { 9, 10 } } })
-		local b = adult(me, "mossbun", 4, { genes = { hp = { 4, 5 }, atk = { 10, 6 }, def = { 8, 8 }, spd = { 2, 4 } } })
+		local a = adult(me, "cindlet", 4, { genes = { hp = { 6, 9 }, atk = { 8, 7 }, def = { 3, 5 }, spd = { 9, 10 }, luck = { 5, 8 } } })
+		local b = adult(me, "mossbun", 4, { genes = { hp = { 4, 5 }, atk = { 10, 6 }, def = { 8, 8 }, spd = { 2, 4 }, luck = { 3, 6 } } })
 		h:System("Currency"):Add(me, "coins", 1e9, "snapshot")
 		c:Advance(1)
 		c:Request("Breeding.Start", { pod = 1, a = a.id, b = b.id })

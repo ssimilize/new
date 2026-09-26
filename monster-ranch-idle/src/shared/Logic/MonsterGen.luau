@@ -142,7 +142,8 @@ function MonsterGen.New(rng, spec, now: number)
 		gen = spec.gen or 0,
 	}
 	-- Rolled after everything else so the rolls above stay as they were before genes.
-	record.genes = if Genetics.Valid(spec.genes) then Genetics.Copy(spec.genes) else Genetics.Roll(rng)
+	-- Given genes are kept pair by pair; a missing pair (Luck in pre-3.7 genes) is rolled.
+	record.genes = if type(spec.genes) == "table" then Genetics.Fill(spec.genes, rng) else Genetics.Roll(rng)
 	return record
 end
 

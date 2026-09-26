@@ -454,7 +454,7 @@ return {
 				LayoutOrder = 4,
 				Parent = content,
 			})
-			GeneGrades.row(m.genes, { Height = 20, PerRow = 2, LayoutOrder = 5, Parent = content })
+			GeneGrades.row(m.genes, { Height = 20, PerRow = 3, LayoutOrder = 5, Parent = content })
 			Util.text({
 				Text = string.format("Breeds left today: %d", breedsLeft(m.id)),
 				TextXAlignment = Enum.TextXAlignment.Center,
@@ -629,47 +629,45 @@ return {
 			end
 			Util.text({ Text = mutText, Size = UDim2.new(1, 0, 0, 20), LayoutOrder = 5, Parent = content })
 
-			-- Genes (update 3.6): the baby's bonus per stat before surges.
+			-- Genes (update 3.6): the baby's bonus per stat before surges, three stats a line
+			-- (five since Luck got a gene in 3.7), in fixed-width cells so the columns line up.
 			local genes = o.genes or Genetics.Preview(a.genes, b.genes)
+			local PER_LINE, CELL_W, LINE_H = 3, 112, 22
+			local lineCount = math.max(1, math.ceil(#(genes.stats or {}) / PER_LINE))
 			local genesRow = New("Frame", {
 				Name = "Genes",
 				BackgroundTransparency = 1,
-				Size = UDim2.new(1, 0, 0, 22),
+				Size = UDim2.new(1, 0, 0, lineCount * LINE_H + (lineCount - 1) * 4),
 				LayoutOrder = 6,
 				Parent = content,
 			})
-			local genesTitle = Util.text({ Text = "Genes", Size = UDim2.new(0, 90, 1, 0), Parent = genesRow })
+			local genesTitle = Util.text({ Text = "Genes", Size = UDim2.new(0, 90, 0, LINE_H), Parent = genesRow })
 			local cells = New("Frame", {
 				BackgroundTransparency = 1,
 				Position = UDim2.fromOffset(90, 0),
 				Size = UDim2.new(1, -90, 1, 0),
 				Parent = genesRow,
-			}, { Create.List("x", 10, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
+			}, { Create.Grid(Vector2.new(CELL_W, LINE_H), 4) })
+			local pct = Config.Genetics.PctPerPoint * 100
 			for i, g in genes.stats or {} do
 				local cell = New("Frame", {
 					BackgroundTransparency = 1,
-					AutomaticSize = Enum.AutomaticSize.X,
-					Size = UDim2.fromOffset(0, 22),
 					LayoutOrder = i,
 					Parent = cells,
-				}, { Create.List("x", 4, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
+				})
 				Util.text({
 					Text = Config.Genetics.StatNames[g.stat] or g.stat,
 					TextColor3 = C.TextMuted,
-					AutomaticSize = Enum.AutomaticSize.X,
 					TextWrapped = false,
-					Size = UDim2.fromOffset(0, 22),
-					LayoutOrder = 1,
+					Size = UDim2.new(0, 40, 1, 0),
 					Parent = cell,
 				})
-				local pct = Config.Genetics.PctPerPoint * 100
 				Util.text({
 					Text = string.format("+%d–%d%%", math.floor(g.lo * pct + 0.5), math.floor(g.hi * pct + 0.5)),
 					TextColor3 = GeneGrades.color(g.hi),
-					AutomaticSize = Enum.AutomaticSize.X,
 					TextWrapped = false,
-					Size = UDim2.fromOffset(0, 22),
-					LayoutOrder = 2,
+					Position = UDim2.fromOffset(42, 0),
+					Size = UDim2.new(1, -42, 1, 0),
 					Parent = cell,
 				})
 			end

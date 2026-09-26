@@ -59,7 +59,7 @@ function Listing.ItemView(kind: string, record)
 		weight = record.weight,
 		muts = table.clone(record.muts or {}),
 		traits = table.clone(record.traits or {}),
-		genes = if Genetics.Valid(record.genes) then Genetics.Copy(record.genes) else false,
+		genes = if type(record.genes) == "table" then Genetics.Copy(record.genes) else false,
 	}
 end
 
