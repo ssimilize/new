@@ -71,6 +71,7 @@ return {
 		"FamePlaza",
 		-- Glow-up X: a postcard from every finished expedition (the card, the send picker)
 		"Postcards",
+		"Visits", -- glow-up Y: the crown, the Visiting Showcase, Ranch of the Week
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

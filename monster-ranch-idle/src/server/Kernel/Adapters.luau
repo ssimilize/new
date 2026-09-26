@@ -974,6 +974,40 @@ function Adapters.Roblox()
 		}
 		else nil
 
+	-- Ranch visits (glow-up Y): one snapshot per player in its own DataStore (tagged with the
+	-- user id for erasure requests), and where a friend is playing right now. nil when the
+	-- store can't be opened: visits, snapshots and the Ranch of the Week stage are off then.
+	local ranchStore = storeOf("MonsterRanch_Ranches_v1")
+	adapters.Ranches = if ranchStore
+		then {
+			Save = function(userId: number, snap): boolean
+				return (pcall(function()
+					ranchStore:SetAsync("u" .. tostring(userId), snap, { userId })
+				end))
+			end,
+			Load = function(userId: number): (boolean, any)
+				local ok, snap = pcall(function()
+					return ranchStore:GetAsync("u" .. tostring(userId))
+				end)
+				return ok, if ok then snap else nil
+			end,
+			-- (true, { placeId, jobId }) while they play in this universe, (true, nil) when they
+			-- don't, (false, nil) when the lookup failed.
+			Locate = function(userId: number): (boolean, any)
+				local ok, _, _, placeId, jobId = pcall(function()
+					return TeleportService:GetPlayerPlaceInstanceAsync(userId)
+				end)
+				if not ok then
+					return false, nil
+				end
+				if type(placeId) == "number" and placeId ~= 0 and type(jobId) == "string" and jobId ~= "" then
+					return true, { placeId = placeId, jobId = jobId }
+				end
+				return true, nil
+			end,
+		}
+		else nil
+
 	return adapters
 end
 

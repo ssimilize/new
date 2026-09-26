@@ -62,6 +62,8 @@ local Config = {
 	-- Glow-up W: the Titanic size tier and numbered limited editions
 	Titanic = require(script.Titanic),
 	Editions = require(script.Editions),
+	-- Glow-up Y: likes that pay, the crown, ranch visits and snapshots, Ranch of the Week
+	Visits = require(script.Visits),
 }
 
 return Config

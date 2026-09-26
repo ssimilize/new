@@ -74,6 +74,8 @@ return {
 		"Postcards",
 		-- Glow-up W · numbered limited editions of event monsters
 		"Editions",
+		-- Glow-up Y · likes that pay, the crown, ranch visits and Ranch of the Week
+		"Visits",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

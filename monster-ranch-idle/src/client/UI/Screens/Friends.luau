@@ -197,6 +197,14 @@ function Friends.Build(ctx)
 		end
 		local level = StoreKit.level(store)
 		local order = 0
+		-- Glow-up Y: visit the friend's ranch (their server, or its snapshot in the Visiting Showcase).
+		local visits = ctx:GetController("Visits")
+		if visits and type(visits.Visit) == "function" then
+			local friend = picked
+			row(list, 0, string.format("See %s's ranch", friend.name), "Visit ranch", C.Blue, function()
+				visits.Visit(friend.userId, friend.name)
+			end)
+		end
 		local function nextOrder(): number
 			order += 1
 			return order
@@ -399,6 +407,10 @@ function Friends.Build(ctx)
 	return {
 		Root = panel.Root,
 		Open = function(params)
+			-- Glow-up Y: open with a friend picked ({ friend = { userId, name } }).
+			if type(params) == "table" and type(params.friend) == "table" and type(params.friend.userId) == "number" then
+				picked = { userId = params.friend.userId, name = tostring(params.friend.name or ""), online = params.friend.online == true }
+			end
 			if type(params) == "table" and DRAW[params.tab] then
 				tabs:Select(params.tab)
 			else
