@@ -198,6 +198,12 @@ Mastery.Ladder = {
 	{ points = 800, name = "Mythic", shards = 8, item = "title_mythic", item2 = "aura_mythic_flame" },
 }
 
+-- Glow-up O: Codex milestone titles and the Codex Crown aura (Config/Codex.Items) are Mastery
+-- cosmetics too: owned through Codex claims, equipped with Mastery.Equip.
+for _, item in require(script.Parent.Codex).Items do
+	table.insert(Mastery.Rewards, item)
+end
+
 Mastery.EquipKinds = { "aura", "flourish", "plinth", "title" }
 
 Mastery.ShopById = {}

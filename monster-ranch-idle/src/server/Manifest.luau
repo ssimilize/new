@@ -64,6 +64,8 @@ return {
 		-- Glow-up L · emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
 		"Community",
 		"Gifts",
+		-- Glow-up O · Codex milestones that pay
+		"Codex",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

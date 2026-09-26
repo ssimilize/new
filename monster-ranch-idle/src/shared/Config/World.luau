@@ -126,6 +126,13 @@ table.insert(World.Hub, {
 	screen = "Workshop",
 })
 
+-- Glow-up O: the Codex Museum and the Hall of Fame plaza (client-built, Config/Codex) south of the
+-- Market Square, either side of the path to plot 5. Scenery keeps off them (keepOut below).
+World.CodexGrounds = {
+	{ center = { 125, -222 }, size = { 90, 88 } }, -- Codex Museum (Logic/Museum.Layout fits inside)
+	{ center = { -120, -214 }, size = { 70, 40 } }, -- Hall of Fame plaza
+}
+
 -- The perimeter: a stone wall on a square of 2 x `half` studs round the origin, and an invisible
 -- barrier `barrier` studs tall on the same line so nobody jumps or climbs over. The play area
 -- inside (1600 x 1600) leaves room around the plots for future features. `segment` is the
@@ -142,7 +149,7 @@ World.Scenery = {
 	seed = 3203,
 	margin = 6, -- extra studs between an item and a keep-out zone
 	wallClearance = 8, -- studs kept clear inside the wall
-	keepOut = {},
+	keepOut = { World.CodexGrounds[1], World.CodexGrounds[2] },
 	kinds = {
 		-- Big things first so the small ones fill in around them.
 		-- Trees collide only through an invisible trunk post `trunk` x size wide.

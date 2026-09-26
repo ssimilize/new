@@ -28,11 +28,17 @@
 	  HallOfFame:StarShards(player) -> number
 	  HallOfFame:SpendStarShards(player, amount, reason) -> boolean      -- 3.3: the Mastery shop
 	  HallOfFame:AddStarShards(player, amount, reason)                   -- 3.3: Mastery rewards
+
+	Global (glow-up O, global.HallOfFame): plaza = { ["u" .. userId] = { slot, name, appearance, rarity } }
+	  each player's best statue (Logic/Museum.BestStatue) on the hub's Hall of Fame plaza, for
+	  everyone on the server; at most Config.Codex.Plaza.max (the rest wait for a free slot) and
+	  removed when the player leaves. Drawn by the client's FamePlaza controller.
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
+local Museum = require(Shared.Logic.Museum)
 
 local HallOfFame = {
 	Name = "HallOfFame",
@@ -65,6 +71,8 @@ local function mustSection(player)
 	end
 	return s
 end
+
+local publishPlaza -- glow-up O: defined with the plaza below (retire refreshes it)
 
 -- Public API ---------------------------------------------------------------------------
 
@@ -208,6 +216,7 @@ local function retire(player, id: string)
 	ctx.Bus:Publish("RanchXP", player, { amount = ctx.Config.Unlocks.XP.retire, reason = "retire" })
 	ctx.Bus:Publish("RateModifiersChanged", player, {})
 	ctx.Net:Fire(player, "HallOfFame.Retired", { appearance = appearance, stardust = stardust })
+	publishPlaza(player) -- glow-up O: a better statue replaces the one on the hub plaza
 	ctx.Analytics.Custom(player, "Retired", m.rarity, { line = m.line })
 	ctx:RequestSave(player)
 	return { stardust = stardust, legacy = gained, starShards = shards }
@@ -267,6 +276,57 @@ local function registerProviders()
 		Expeditions:RegisterLootModifier("expedition_loot", function(player)
 			return HallOfFame:UpgradeEffect(player, "expedition_loot", "lootPct")
 		end)
+	end
+end
+
+-- Hall of Fame plaza (glow-up O) --------------------------------------------------------
+
+local function plazaEntry(player, slot: number)
+	local s = ctx:Section(player)
+	local best = s and Museum.BestStatue(s.entries)
+	if not best then
+		return nil
+	end
+	local name = player.DisplayName
+	if type(name) ~= "string" or name == "" then
+		name = player.Name
+	end
+	return { slot = slot, name = name, appearance = best.appearance, rarity = best.rarity }
+end
+
+-- Puts `player`'s best statue on the plaza (or refreshes it) when a slot is free.
+function publishPlaza(player)
+	local global = ctx:Global()
+	global.plaza = global.plaza or {}
+	local key = "u" .. tostring(player.UserId)
+	local current = global.plaza[key]
+	local slot = if current then current.slot else Museum.FreeSlot(global.plaza, ctx.Config.Codex.Plaza.max)
+	if not slot then
+		return
+	end
+	local entry = plazaEntry(player, slot)
+	if entry or current then
+		global.plaza[key] = entry
+		ctx:DirtyGlobal("plaza", key)
+	end
+end
+
+function HallOfFame.PlayerAdded(player, _info)
+	publishPlaza(player)
+end
+
+function HallOfFame.PlayerRemoving(player)
+	local global = ctx:Global()
+	local key = "u" .. tostring(player.UserId)
+	if global.plaza and global.plaza[key] then
+		global.plaza[key] = nil
+		ctx:DirtyGlobal("plaza", key)
+		-- The freed slot goes to a player who was waiting (the leaver is no longer listed).
+		for _, other in ctx:Players() do
+			if other ~= player and not global.plaza["u" .. tostring(other.UserId)] then
+				publishPlaza(other)
+			end
+		end
 	end
 end
 

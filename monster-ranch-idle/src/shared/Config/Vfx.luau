@@ -839,6 +839,8 @@ Vfx.Mastery = {
 		},
 	},
 }
+-- Glow-up O: the Codex Crown aura, for completing the whole Codex (Config/Codex.Items).
+Vfx.Mastery.codexCrown = masteryTwinkle("star5", { { 0, "#8FD3FF" }, { 0.5, "#F2C230" }, { 1, "#FF7AC8" } }, 1.5, { 1.2, 1.8 }, 0.5)
 
 -- ─── World landmarks ─────────────────────────────────────────────────────────────────
 

@@ -50,6 +50,9 @@ return {
 		"Lamplight",
 		"SceneryMotion",
 		"Critters",
+		-- Glow-up O: the walk-in Codex Museum and the Hall of Fame plaza
+		"CodexMuseum",
+		"FamePlaza",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

@@ -35,6 +35,7 @@
 	  Mastery:LineTier(player, lineId) -> 0..#Tiers
 	  Mastery:WeekPoints(player) -> number               ladder points this leaderboard week
 	  Mastery:PerkEffect(player, effectKey) -> number
+	  Mastery:GrantItem(player, itemId, equipIfEmpty?) -> boolean   glow-up O: Codex titles and aura
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -235,6 +236,27 @@ local function fightWon(player, squad)
 end
 
 -- Queries --------------------------------------------------------------------------------
+
+-- Glow-up O: a cosmetic earned elsewhere (Codex milestones). Owned once; worn at once when
+-- nothing of its kind is equipped, so a player's own choice is never replaced.
+function Mastery:GrantItem(player, itemId: string, equipIfEmpty: boolean?): boolean
+	local s = ctx:Section(player)
+	local def = Config.ItemById[itemId]
+	if not s or not def or def.kind == "perk" then
+		return false
+	end
+	normalize(s)
+	grantItem(player, s, itemId)
+	if equipIfEmpty and not s.equipped[def.kind] then
+		s.equipped[def.kind] = def.id
+		ctx:Dirty(player, "equipped")
+		publishHere(player, s)
+		if def.kind == "aura" then
+			ctx.Bus:Publish("PlotChanged", player, {})
+		end
+	end
+	return true
+end
 
 function Mastery:RanchLevel(player): number
 	local s = ctx:Section(player)

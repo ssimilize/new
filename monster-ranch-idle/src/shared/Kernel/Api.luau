@@ -512,6 +512,14 @@ Api.Actions = {
 	["Gifts.Send"] = { schema = T.struct({ token = T.string(40, 1) }), rate = 1, returns = "{ left: number }" },
 	-- Picks the friend a Ranch Pass gift (product ranchPassGift) goes to; then Monetization.CanBuy.
 	["Gifts.PassTarget"] = { schema = T.struct({ to = T.userId }), rate = 1, returns = "{ name: string|false }" },
+
+	-- Codex milestones (glow-up O) · Config/Codex, Logic/Codex, Systems/Codex -----------------------
+	-- Each milestone once per account; gems via Rewards.Granted, titles and the aura via Mastery.
+	["Codex.Claim"] = {
+		schema = T.struct({ milestone = T.string(48, 1) }),
+		rate = 2,
+		returns = "{ milestone: string, gems: number, items: { itemId } }",
+	},
 }
 
 --[[
@@ -581,6 +589,7 @@ Api.State = {
 		Mastery = "{ level, xp, total, lines = { [lineId]: points }, rerolls = { [monsterId]: n }, owned = { [itemId]: true }, perks = { [perkId]: level }, equipped = { aura, flourish, plinth, title }, ladder = { season, xp, line, tier }, week = { id, xp, line } }",
 		Community = "{ invitedBy: userId|0, invites = { week, count }, invitesTotal, group: boolean, premiumDay }",
 		Gifts = "{ day, sent, to = { ['u'..userId]: n }, totalSent, totalReceived }",
+		Codex = "{ claimed = { [milestoneId]: unix }, owed = { itemId } }  -- glow-up O (badges private)",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -619,6 +628,7 @@ Api.State = {
 		Community = "{ premium = { ['u'..userId]: true } }  -- Roblox Premium members in this server (nameplate badge)",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 		Mastery = "{ here = { ['u'..userId]: { flourish: string|false, title: string|false, plinth: string|false } } }  -- equipped prestige cosmetics of players in this server",
+		HallOfFame = "{ plaza = { ['u'..userId]: { slot, name, appearance, rarity } } }  -- glow-up O: best statues on the hub plaza (<= Config.Codex.Plaza.max)",
 	},
 }
 
@@ -689,6 +699,7 @@ Api.Topics = {
 	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
+	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total' })  -- glow-up O",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------

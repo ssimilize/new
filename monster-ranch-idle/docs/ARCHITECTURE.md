@@ -256,6 +256,13 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Quests**: `Quests:GrantPass(player) -> boolean` (a gifted pass: premium now, else banked). **Accessories**: `:Stored(player, id)`, `:Take(player, id)`.
 - **Client**: controller `Community` (HUD Emotes / Friends buttons, G and D-pad down, emotes through the character's Animate `PlayEmote`, balcony pad prompts on parts with attribute `VipPad`); screens `EmoteWheel`, `Friends`; `World.PlayTrick(owner, id, trickId)`, `World.NearestOwn(position, range)`; `MonsterAnimator.HasState(state)`; Nameplates show VIP gold names and a Premium badge.
 
+### Glow-up O: Codex milestones, Codex Museum, Hall of Fame plaza
+- **Codex**: action `Codex.Claim { milestone }` (rate 2; fails "That milestone doesn't exist", "Already claimed", "Find N more forms first"). Milestones come from `Logic/Codex.Milestones()` (built from Species / Eggs / Regions / Elements + `Config/Codex`); discoveries stay in `profile.Monsters.codex`, read through the new `Monsters:Codex(player)` (read-only). State `profile.Codex = { claimed, owed }` (badges private). Public: `Codex:Claimed(player)`, `:ClaimableCount(player)`. Publishes `CodexClaimed`.
+- **Mastery** gains `Mastery:GrantItem(player, itemId, equipIfEmpty?) -> boolean`; `Config/Mastery` appends `Config.Codex.Items` (titles, aura `aura_codex_crown` -> `Config/Vfx` `Mastery.codexCrown`) to its Rewards, so Codex titles and the aura are equipped and shown like any Mastery cosmetic (one aura per monster).
+- **Badges adapter (optional, not yet in `Adapters.Roblox`)**: `ctx.Services.Badges.Award(userId, badgeId) -> boolean` (may yield; Codex calls it off the request through `Services.Spawn`). Absent = badges skipped; a failed award is retried on the next join. Kernel owner: add `adapters.Badges = { Award = function(userId, id) return BadgeService:AwardBadge(userId, id) end }`.
+- **HallOfFame**: `global.HallOfFame.plaza["u" .. userId] = { slot, name, appearance, rarity }`, the best statue (`Logic/Museum.BestStatue`) of each player on the server, at most `Config.Codex.Plaza.max`, refreshed on join and retire, removed on leave (a waiting player takes the freed slot).
+- **Client**: controllers `CodexMuseum` (walk-in hall, `Logic/Museum.Layout` / `Plan` / `newPool`, `Stats()` for tests) and `FamePlaza` (`Stats()`); both skip the hub place. The Codex screen takes `{ tab = "milestones" }`. `Config.World.CodexGrounds` keeps scenery off both grounds.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 
@@ -297,7 +304,7 @@ Canonical names (the HUD, world prompts and other screens open these):
 | `MonsterDetail` | C2 | `{ id }` |
 | `Ranch` | C2 | `{ pen? }` |
 | `WelcomeBack` | C2 | — (auto-opens when `session.WelcomeBack.pending`) |
-| `Codex` | C2 | — |
+| `Codex` | C2 | `{ tab? = "species"|"milestones" }` (glow-up O) |
 | `Expeditions` | C3 | `{ region? }` |
 | `Breeding` | C3 | — |
 | `Trade` | C3 | — |
