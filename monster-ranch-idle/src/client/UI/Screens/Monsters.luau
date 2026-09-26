@@ -34,6 +34,7 @@ local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local StoreKit = require(UI.Components.StoreKit)
 local Tiles = require(UI.Components.Tiles)
+local BondBadge = require(script.Parent.Parts.BondBadge) -- glow-up Q
 
 local New = Create.New
 local C = Theme.Colors
@@ -234,6 +235,7 @@ function Monsters.Build(ctx)
 		local footer = string.format("Lv %d · %s", m.lv or 1, Formulas.DisplayName(m))
 		local card = MonsterIcon.card(ap, CARD, footer)
 		card.Parent = cell
+		BondBadge.card(ctx, id, cell) -- glow-up Q: bond hearts
 		if (m.stars or 1) > 1 then
 			Create.Text({
 				Text = string.rep("★", math.min(m.stars, 5)),

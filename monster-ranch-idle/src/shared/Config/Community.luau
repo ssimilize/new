@@ -33,6 +33,12 @@ Community.TrickById = {}
 for _, trick in Community.Tricks do
 	Community.TrickById[trick.id] = trick
 end
+-- Glow-up Q: tricks a monster learns from bond hearts (Config.Bond.Tricks, field `bond`). They
+-- share TrickById so Community.Trick and World.PlayTrick take them; the emote wheel lists only
+-- Community.Tricks, and the Care screen lists these.
+for _, trick in require(script.Parent.Bond).Tricks do
+	Community.TrickById[trick.id] = trick
+end
 Community.TrickCooldown = 3 -- seconds between two tricks from one player
 Community.TrickRange = 45 -- studs: the client picks the nearest own pen monster within this
 

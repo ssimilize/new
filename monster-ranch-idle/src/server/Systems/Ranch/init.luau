@@ -17,7 +17,7 @@
 	are saved privately, so offline income never depends on which systems (passes, friends)
 	have loaded when the player comes back.
 
-	Rate of a pen = Σ Formulas.CoinRate(m) × (1 + Σ rate modifiers(player, elements of m))
+	Rate of a pen = Σ Formulas.CoinRate(m) × (1 + Σ rate modifiers(player, elements of m) + Σ monster modifiers(player, m))
 	                × (Double Coins pass ? Economy.DoubleCoinsMult : 1) × Π rate multipliers(player)
 	                (busy monsters: 0)
 	Jar cap (s)   = JarTiers[jarTier] + VIP bonus + Hoarder minutes × 60 of the pen's monsters
@@ -32,6 +32,7 @@
 	  Ranch:RegisterRateModifier(key, fn(player, elements) -> additive pct)
 	  Ranch:RegisterJarBonus(key, fn(player) -> seconds)
 	  Ranch:RegisterRateMultiplier(key, fn(player) -> factor)  -- e.g. Rebirth Stars (×1.5, ×2, …)
+	  Ranch:RegisterMonsterRateModifier(key, fn(player, monster) -> additive pct)  -- glow-up Q: Bond
 	  Ranch:ResetForRebirth(player, theme?)                   -- one fresh pen, tiers 1, decor back to storage
 	  Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id } } }
 	  Ranch:Refresh(player)                                   -- recompute after an input changed
@@ -59,6 +60,7 @@ local Config, Economy
 local Currency, Progression, Monsters
 
 local rateModifiers = {} -- [key] = fn(player, elements) -> pct
+local monsterModifiers = {} -- [key] = fn(player, monster) -> pct (glow-up Q: one monster's own bonus)
 local jarBonuses = {} -- [key] = fn(player) -> seconds
 local rateMultipliers = {} -- [key] = fn(player) -> factor (> 0)
 local joined = {} -- [player] = true once PlayerAdded finished (offline accrual applied)
@@ -190,7 +192,11 @@ local function compute(player): ({ number }, { number })
 		for _, id in pen.monsters do
 			local m = Monsters:Get(player, id)
 			if m and not m.busy then
-				rate += Jar.MonsterRate(Formulas.CoinRate(m), modifierPct(player, Formulas.Elements(m), cache), mult)
+				local pct = modifierPct(player, Formulas.Elements(m), cache)
+				for _, fn in monsterModifiers do
+					pct += numberFrom(fn, player, m)
+				end
+				rate += Jar.MonsterRate(Formulas.CoinRate(m), pct, mult)
 				hoarder += Config.Traits.Sum(Formulas.ActiveTraits(m), "jarCapMinutes")
 			end
 		end
@@ -352,6 +358,13 @@ end
 
 function Ranch:RegisterRateMultiplier(key: string, fn)
 	rateMultipliers[key] = fn
+	for _, player in ctx:Players() do
+		refresh(player)
+	end
+end
+
+function Ranch:RegisterMonsterRateModifier(key: string, fn)
+	monsterModifiers[key] = fn
 	for _, player in ctx:Players() do
 		refresh(player)
 	end

@@ -31,6 +31,9 @@
 	again on every respawn. Client bus: subscribes to "World.FocusPlot" (plotIndex).
 	Glow-up L: Community.Trick (server event) plays a trick on that pen monster; World.PlayTrick and
 	World.NearestOwn serve the emote wheel (Controllers/Community).
+	Glow-up Q: World.OwnTapHandler (set by Controllers/Care) takes a tap on an own monster first
+	(the Care menu); World.PlayCare plays a care reaction with hearts, World.MonsterModel finds a
+	pen monster's model for the bond nameplates.
 
 	Monsters are diffed by id and rebuilt only when their appearance changes; released models
 	are pooled by appearance key. At most MAX_PER_PEN monsters are rendered per pen.
@@ -1217,6 +1220,9 @@ local function onMonsterTapped(entry)
 	if entry.owner == player.UserId then
 		entry.animator:Play("happy")
 		Voices.Cry(entry.model, "pet")
+		if World.OwnTapHandler and World.OwnTapHandler(entry.id) then
+			return -- glow-up Q: the Care menu
+		end
 		ctx.Router:Open("MonsterDetail", { id = entry.id })
 		return
 	end
@@ -1438,6 +1444,38 @@ function World.NearestOwn(position: Vector3, range: number): string?
 		end
 	end
 	return best
+end
+
+-- Care (glow-up Q) ---------------------------------------------------------------------------------
+
+-- Plays a care reaction on one of the local player's pen monsters: the state (or "happy" while
+-- the animator lacks it), a cry and `hearts` heart particles. Returns the model, or nil.
+function World.PlayCare(id: string, state: string, hearts: number?): Model?
+	local view = if ownIndex then views[ownIndex] else nil
+	local entry = view and view.entries[id]
+	if not entry or not entry.alive then
+		return nil
+	end
+	entry.animator:Stop()
+	entry.animator:Play(if MonsterAnimator.HasState(state) then state else "happy")
+	entry.nextAt = os.clock() + 2.5
+	Voices.Cry(entry.model, "pet")
+	local root = entry.model.PrimaryPart
+	if root and (hearts or 0) > 0 then
+		burst("hearts", fx.hearts, root.Position + Vector3.new(0, 2, 0), hearts or 0)
+	end
+	return entry.model
+end
+
+-- A pen monster's model on any plot here (nil while it is not rendered).
+function World.MonsterModel(owner: number, id: string): Model?
+	for _, view in views do
+		if view.userId == owner then
+			local entry = view.entries[id]
+			return if entry and entry.alive then entry.model else nil
+		end
+	end
+	return nil
 end
 
 local function onTrick(payload)

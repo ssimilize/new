@@ -64,6 +64,8 @@ return {
 		-- Glow-up L · emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
 		"Community",
 		"Gifts",
+		-- Glow-up Q · bond hearts and care gestures
+		"Bond",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

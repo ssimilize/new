@@ -256,6 +256,12 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Quests**: `Quests:GrantPass(player) -> boolean` (a gifted pass: premium now, else banked). **Accessories**: `:Stored(player, id)`, `:Take(player, id)`.
 - **Client**: controller `Community` (HUD Emotes / Friends buttons, G and D-pad down, emotes through the character's Animate `PlayEmote`, balcony pad prompts on parts with attribute `VipPad`); screens `EmoteWheel`, `Friends`; `World.PlayTrick(owner, id, trickId)`, `World.NearestOwn(position, range)`; `MonsterAnimator.HasState(state)`; Nameplates show VIP gold names and a Premium badge.
 
+### Glow-up Q: Bond
+- **Bond** (numbers in `Config/Bond`, rules in `Logic/Bond`): action `Bond.Care { id, kind }` (kind `pet|brush|play`; own pen monster, each kind off its per-monster cooldown, `minGap` between cares) -> `{ hearts, points, gained, learned }`. Save `profile.Bond = { list = { [monsterId] = { pts, pet?, brush?, play? } }, cares }` (v1, `Migrate` = `Logic/Bond.Sanitize`). Global `global.Bond.here["u" .. userId] = { best, plates }`. Public: `Bond:Hearts(player, id)`, `Bond:Points(player, id)`. Topic `BondRaised`. Bond is keyed by monster id and deleted on `MonsterRemoved`, so it never travels with a trade; it never decays.
+- **Ranch** gains `RegisterMonsterRateModifier(key, fn(player, monster) -> pct)`: an additive bonus on one monster's own coin rate (Bond's "bond", at most +5%).
+- **Community**: a trick with a `bond` field (`Config/Bond.Tricks`, merged into `Config.Community.TrickById` but not `Tricks`) needs that many hearts on the monster; the emote wheel is unchanged.
+- **Client**: controller `Care`, screen `Care` (non-modal, `{ id }`); `World.OwnTapHandler(id) -> handled` (set by Care; an own-monster tap falls back to MonsterDetail without it), `World.PlayCare(id, state, hearts) -> Model?`, `World.MonsterModel(owner, id) -> Model?`; `Screens/Parts/BondBadge`.
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 

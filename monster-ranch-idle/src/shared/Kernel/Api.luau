@@ -512,6 +512,14 @@ Api.Actions = {
 	["Gifts.Send"] = { schema = T.struct({ token = T.string(40, 1) }), rate = 1, returns = "{ left: number }" },
 	-- Picks the friend a Ranch Pass gift (product ranchPassGift) goes to; then Monetization.CanBuy.
 	["Gifts.PassTarget"] = { schema = T.struct({ to = T.userId }), rate = 1, returns = "{ name: string|false }" },
+
+	-- Bond (glow-up Q) · Config.Bond, Systems/Bond ---------------------------------------------
+	-- A finished care gesture on an own pen monster; the kind must be off its cooldown for that monster.
+	["Bond.Care"] = {
+		schema = T.struct({ id = id, kind = T.enum(Config.Bond.KindIds) }),
+		rate = 1,
+		returns = "{ hearts: number, points: number, gained: boolean, learned: trickId|false }",
+	},
 }
 
 --[[
@@ -581,6 +589,7 @@ Api.State = {
 		Mastery = "{ level, xp, total, lines = { [lineId]: points }, rerolls = { [monsterId]: n }, owned = { [itemId]: true }, perks = { [perkId]: level }, equipped = { aura, flourish, plinth, title }, ladder = { season, xp, line, tier }, week = { id, xp, line } }",
 		Community = "{ invitedBy: userId|0, invites = { week, count }, invitesTotal, group: boolean, premiumDay }",
 		Gifts = "{ day, sent, to = { ['u'..userId]: n }, totalSent, totalReceived }",
+		Bond = "{ list = { [monsterId]: { pts, pet: unix?, brush: unix?, play: unix? } }, cares }  -- see Systems/Bond",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -619,6 +628,7 @@ Api.State = {
 		Community = "{ premium = { ['u'..userId]: true } }  -- Roblox Premium members in this server (nameplate badge)",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 		Mastery = "{ here = { ['u'..userId]: { flourish: string|false, title: string|false, plinth: string|false } } }  -- equipped prestige cosmetics of players in this server",
+		Bond = "{ here = { ['u'..userId]: { best = { { id, hearts, form, variant, name } }, plates = { { id, hearts, name } } } } }  -- ranch gate best friends + pen nameplates",
 	},
 }
 
@@ -689,6 +699,7 @@ Api.Topics = {
 	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
+	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------
