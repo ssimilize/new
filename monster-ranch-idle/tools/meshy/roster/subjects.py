@@ -675,6 +675,64 @@ SUBJECTS = {
     "lines, a sparkling ruff around its neck.",
     "constellhare": "Constellhare: a majestic star rabbit with tall upright ears crowned with bright stars, "
     "glowing constellation patterns across its golden fur, a sparkling mane.",
+    # ── Batch 11 (2026-09-26): lines 80-87, update 3.5 (Light & Void hybrids + the Pearl Egg). Crystal and quartz are
+    # drawn in warm gold or violet, never grey; the bunny keeps upright ears; the bug lies lengthwise on six legs.
+    # 80 heliopup (fox, light + sprout)
+    "heliopup": "Heliopup, a baby sunflower fox: golden-yellow fur, a small ruff of sunflower petals around its "
+    "neck, a leafy green tail tip, a tiny sun-shaped mark on its forehead.",
+    "heliolynx": "Heliolynx: a bigger sunflower petal mane, ear tufts like small leaves, a longer leafy tail with a "
+    "golden glow at the tip.",
+    "solarvixen": "Solarvixen: a graceful adult sun fox with a full blazing sunflower-petal mane, a long leafy tail "
+    "tipped with a glowing sun, golden sunray markings along its back.",
+    # 81 prismite (golem, light + stone)
+    "prismite": "Prismite, a baby quartz golem: a chunky body of smooth warm golden-cream quartz blocks with soft "
+    "rainbow glints, a small glowing crystal on its head, stubby block arms.",
+    "crystallum": "Crystallum: bigger golden quartz blocks, a cluster of glowing crystals on its shoulders, a "
+    "brighter crystal on its head, rainbow facets on its arms.",
+    "radiolith": "Radiolith: a big radiant quartz golem, massive golden-cream crystal arms, a crown of tall glowing "
+    "crystals, a glowing sun-shaped gem in its chest.",
+    # 82 dusklet (moth, light + gloom)
+    "dusklet": "Dusklet, a baby twilight moth: a fluffy body fading from sunset orange to deep purple, four small "
+    "rounded wings fading from gold to violet with tiny star dots, short feathery antennae.",
+    "gloamwing": "Gloamwing: bigger wings fading from warm sunset gold to night purple with a crescent-moon spot, "
+    "longer feathery antennae, a fluffier collar.",
+    "twilightmoth": "Twilightmoth: large majestic wings half sunset gold and half starry night purple, a sun and a "
+    "moon mark on the wings, long golden antennae, a thick fluffy mane.",
+    # 83 voidrop (blob, void + tide)
+    "voidrop": "Voidrop, a baby deep-sea blob: a round squishy deep navy body with tiny glowing star speckles inside, "
+    "a small glowing teal angler light on a short stalk, a pale blue belly.",
+    "trenchdrop": "Trenchdrop: a bigger deep-sea blob, a longer glowing angler stalk, little fin nubs on its sides, "
+    "swirling nebula-like patterns inside its body.",
+    "abyssdrop": "Abyssdrop: a big deep-sea blob with a bright glowing angler light, a crest of soft fins, a galaxy "
+    "of glowing stars swirling inside its navy body.",
+    # 84 weevoid (bug, void + sprout)
+    "weevoid": "Weevoid, a baby weevil lying lengthwise on the ground on six stubby legs: a round deep indigo shell "
+    "with tiny star speckles, a short curved snout, two small dark-green leaf sprouts on its back.",
+    "shadeweevil": "Shadeweevil: a bigger weevil, the same low lengthwise body on six legs, dark green thorny vines "
+    "curling over its starry indigo shell, a longer snout.",
+    "voidthorn": "Voidthorn: a big weevil, the same low lengthwise body on six sturdy legs, a starry indigo shell "
+    "wrapped in thick thorny vines with glowing violet buds, a long curved snout.",
+    # 85 shardlet (sprite, void + stone)
+    "shardlet": "Shardlet, a baby crystal sprite: a small round body of deep violet crystal with a swirling dark "
+    "void core glowing inside, tiny stubby arms, a trailing wisp tail of violet sparkles.",
+    "riftshard": "Riftshard: a bigger violet crystal body with a few sharp crystal points on its head, a brighter "
+    "swirling void core, a longer sparkling wisp tail.",
+    "singulith": "Singulith: a majestic crystal sprite, a violet crystal body with a crown of floating-looking but "
+    "attached crystal points, a glowing spiral void core, a long sparkling tail.",
+    # 86 candlet (slug, ember + light)
+    "candlet": "Candlet, a baby candle snail: a soft warm-peach body with two short eye-stalks, carrying a small "
+    "cream wax candle on its back with a little orange flame, soft wax drips down its sides.",
+    "waxwick": "Waxwick: a longer body carrying two cream wax candles with bright flames, golden candle-holder "
+    "trim, glowing wax drips.",
+    "chandelisnail": "Chandelisnail: a big snail carrying an ornate golden candelabra with three glowing candles, "
+    "warm light patterns on its peach body, golden trim.",
+    # 87 seahop (bunny, tide): the Pearl Egg's fourth line.
+    "seahop": "Seahop, a baby sea-hare bunny: soft lilac and aqua fur, long upright frilly ears like sea-slug frills, "
+    "small white pearl spots along its back, a round fluffy tail.",
+    "pearlhare": "Pearlhare: longer frilly upright ears with aqua edges, a string of shiny pearls around its neck, "
+    "more pearl spots.",
+    "nacrehare": "Nacrehare: a majestic sea hare with tall iridescent frilly ears shimmering like mother-of-pearl, "
+    "a pearl crest on its head, a pearly shimmering mane.",
 }
 
 

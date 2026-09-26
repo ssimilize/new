@@ -9,11 +9,13 @@
 return {
 	["+ Ember"] = "+ Brasa",
 	["+ Gloom"] = "+ Penumbra",
+	["+ Light"] = "+ Luz",
 	["+ Pen {1}"] = "+ Corral {1}",
 	["+ Spark"] = "+ Chispa",
 	["+ Sprout"] = "+ Brote",
 	["+ Stone"] = "+ Piedra",
 	["+ Tide"] = "+ Marea",
+	["+ Void"] = "+ Vacío",
 	["+1 breed per monster per day."] = "+1 cría por monstruo al día.",
 	["+1 breeding pod."] = "+1 cápsula de cría.",
 	["+1 expedition slot."] = "+1 espacio de expedición.",

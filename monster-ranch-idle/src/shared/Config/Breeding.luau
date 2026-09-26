@@ -32,6 +32,14 @@ Breeding.Hybrids = {
 	["ember+sprout"] = "pepperpip",
 	["spark+tide"] = "sparkeel",
 	["sprout+stone"] = "cobbun",
+	-- Update 3.5: Light & Void hybrids.
+	["light+sprout"] = "heliopup",
+	["light+stone"] = "prismite",
+	["gloom+light"] = "dusklet",
+	["tide+void"] = "voidrop",
+	["sprout+void"] = "weevoid",
+	["stone+void"] = "shardlet",
+	["ember+light"] = "candlet",
 }
 
 function Breeding.HybridFor(elementA: string, elementB: string): string?

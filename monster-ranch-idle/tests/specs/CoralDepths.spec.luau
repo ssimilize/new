@@ -172,12 +172,14 @@ return function(t)
 				lines[spec.line] = true
 				expect(spec.rarity).toBeAtLeast(2)
 			end
+			-- The three 1.1 Depths lines and Seahop from update 3.5.
 			local count = 0
 			for line in lines do
 				count += 1
-				expect(Config.Species.ById[line].added).toBe("1.1")
+				local added = Config.Species.ById[line].added
+				expect(added == "1.1" or line == "seahop").toBe(true)
 			end
-			expect(count).toBe(3)
+			expect(count).toBe(4)
 		end)
 
 		it("is never sold in the shop", function()

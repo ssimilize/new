@@ -51,10 +51,11 @@ return function(t)
 			for _, entry in o.species do
 				expect(entry.hybrid).toBe(entry.line == "steamling")
 			end
-			-- Every pair of launch elements has a recipe since update 3.4; ember + light has none.
-			local plain = Logic.Outcomes(a, parent({ line = "lumipup", form = "sunfang" }))
+			-- Every pair of launch elements has a recipe since update 3.4, and ember + light since 3.5;
+			-- ember + void has none.
+			local plain = Logic.Outcomes(a, parent({ line = "nullkit", form = "eventidelynx" }))
 			expect(#plain.species).toBe(2)
-			expect(pctOf(plain.species, "line", "lumipup")).toBeNear(50)
+			expect(pctOf(plain.species, "line", "nullkit")).toBeNear(50)
 			local same = Logic.Outcomes(a, parent({ id = "m2" }))
 			expect(#same.species).toBe(1)
 			expect(same.species[1].pct).toBeNear(100)

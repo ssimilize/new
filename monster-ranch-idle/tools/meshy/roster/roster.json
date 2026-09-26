@@ -2498,6 +2498,253 @@
         "celestial"
       ],
       "weight": 2.6
+    },
+    {
+      "added": "3.5",
+      "archetype": "fox",
+      "elements": [
+        "light",
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "heliopup",
+          "name": "Heliopup",
+          "stage": 1
+        },
+        {
+          "id": "heliolynx",
+          "name": "Heliolynx",
+          "stage": 2
+        },
+        {
+          "id": "solarvixen",
+          "name": "Solarvixen",
+          "stage": 3
+        }
+      ],
+      "id": "heliopup",
+      "order": 80,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 3
+    },
+    {
+      "added": "3.5",
+      "archetype": "golem",
+      "elements": [
+        "light",
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "prismite",
+          "name": "Prismite",
+          "stage": 1
+        },
+        {
+          "id": "crystallum",
+          "name": "Crystallum",
+          "stage": 2
+        },
+        {
+          "id": "radiolith",
+          "name": "Radiolith",
+          "stage": 3
+        }
+      ],
+      "id": "prismite",
+      "order": 81,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 15
+    },
+    {
+      "added": "3.5",
+      "archetype": "moth",
+      "elements": [
+        "light",
+        "gloom"
+      ],
+      "forms": [
+        {
+          "id": "dusklet",
+          "name": "Dusklet",
+          "stage": 1
+        },
+        {
+          "id": "gloamwing",
+          "name": "Gloamwing",
+          "stage": 2
+        },
+        {
+          "id": "twilightmoth",
+          "name": "Twilightmoth",
+          "stage": 3
+        }
+      ],
+      "id": "dusklet",
+      "order": 82,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 1
+    },
+    {
+      "added": "3.5",
+      "archetype": "blob",
+      "elements": [
+        "void",
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "voidrop",
+          "name": "Voidrop",
+          "stage": 1
+        },
+        {
+          "id": "trenchdrop",
+          "name": "Trenchdrop",
+          "stage": 2
+        },
+        {
+          "id": "abyssdrop",
+          "name": "Abyssdrop",
+          "stage": 3
+        }
+      ],
+      "id": "voidrop",
+      "order": 83,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 7
+    },
+    {
+      "added": "3.5",
+      "archetype": "bug",
+      "elements": [
+        "void",
+        "sprout"
+      ],
+      "forms": [
+        {
+          "id": "weevoid",
+          "name": "Weevoid",
+          "stage": 1
+        },
+        {
+          "id": "shadeweevil",
+          "name": "Shadeweevil",
+          "stage": 2
+        },
+        {
+          "id": "voidthorn",
+          "name": "Voidthorn",
+          "stage": 3
+        }
+      ],
+      "id": "weevoid",
+      "order": 84,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 2
+    },
+    {
+      "added": "3.5",
+      "archetype": "sprite",
+      "elements": [
+        "void",
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "shardlet",
+          "name": "Shardlet",
+          "stage": 1
+        },
+        {
+          "id": "riftshard",
+          "name": "Riftshard",
+          "stage": 2
+        },
+        {
+          "id": "singulith",
+          "name": "Singulith",
+          "stage": 3
+        }
+      ],
+      "id": "shardlet",
+      "order": 85,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 4
+    },
+    {
+      "added": "3.5",
+      "archetype": "slug",
+      "elements": [
+        "ember",
+        "light"
+      ],
+      "forms": [
+        {
+          "id": "candlet",
+          "name": "Candlet",
+          "stage": 1
+        },
+        {
+          "id": "waxwick",
+          "name": "Waxwick",
+          "stage": 2
+        },
+        {
+          "id": "chandelisnail",
+          "name": "Chandelisnail",
+          "stage": 3
+        }
+      ],
+      "id": "candlet",
+      "order": 86,
+      "pools": [
+        "hybrid"
+      ],
+      "weight": 2.5
+    },
+    {
+      "added": "3.5",
+      "archetype": "bunny",
+      "elements": [
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "seahop",
+          "name": "Seahop",
+          "stage": 1
+        },
+        {
+          "id": "pearlhare",
+          "name": "Pearlhare",
+          "stage": 2
+        },
+        {
+          "id": "nacrehare",
+          "name": "Nacrehare",
+          "stage": 3
+        }
+      ],
+      "id": "seahop",
+      "order": 87,
+      "pools": [
+        "pearl"
+      ],
+      "weight": 2.8
     }
   ]
 }
