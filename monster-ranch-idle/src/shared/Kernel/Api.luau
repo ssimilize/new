@@ -512,6 +512,14 @@ Api.Actions = {
 	["Gifts.Send"] = { schema = T.struct({ token = T.string(40, 1) }), rate = 1, returns = "{ left: number }" },
 	-- Picks the friend a Ranch Pass gift (product ranchPassGift) goes to; then Monetization.CanBuy.
 	["Gifts.PassTarget"] = { schema = T.struct({ to = T.userId }), rate = 1, returns = "{ name: string|false }" },
+
+	-- Companions (glow-up T) · Config.Companions, Systems/Companions -----------------------------
+	-- The monsters walking with the player, in formation order ({} sends them all home).
+	["Companions.Set"] = {
+		schema = T.struct({ ids = T.array(id, Config.Companions.MaxSlots, 0) }),
+		rate = 2,
+		returns = "{ ids: { monsterId } }",
+	},
 }
 
 --[[
@@ -581,6 +589,7 @@ Api.State = {
 		Mastery = "{ level, xp, total, lines = { [lineId]: points }, rerolls = { [monsterId]: n }, owned = { [itemId]: true }, perks = { [perkId]: level }, equipped = { aura, flourish, plinth, title }, ladder = { season, xp, line, tier }, week = { id, xp, line } }",
 		Community = "{ invitedBy: userId|0, invites = { week, count }, invitesTotal, group: boolean, premiumDay }",
 		Gifts = "{ day, sent, to = { ['u'..userId]: n }, totalSent, totalReceived }",
+		Companions = "{ ids = { monsterId } }  -- glow-up T: who walks with the player",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -619,6 +628,7 @@ Api.State = {
 		Community = "{ premium = { ['u'..userId]: true } }  -- Roblox Premium members in this server (nameplate badge)",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 		Mastery = "{ here = { ['u'..userId]: { flourish: string|false, title: string|false, plinth: string|false } } }  -- equipped prestige cosmetics of players in this server",
+		Companions = "{ walkers = { ['u'..userId]: { { id, appearance } } } }  -- glow-up T: each player's companions, drawn by every client",
 	},
 }
 

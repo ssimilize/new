@@ -2015,4 +2015,10 @@ return {
 	["VIP Rancher: the VIP Balcony by the plaza, a gold name, a daily crate and a chat tag."] = "Ranchero VIP: el Balcón VIP junto a la plaza, un nombre dorado, una caja diaria y una etiqueta de chat.",
 	["Go to balcony"] = "Ir al balcón",
 	["See VIP"] = "Ver VIP",
+	["Walk with me"] = "Camina conmigo",
+	["Stop walking"] = "Deja de caminar",
+	["Pick each monster once"] = "Elige cada monstruo una sola vez",
+	["You're riding that monster"] = "Estás montando ese monstruo",
+	["Walk with up to {1} monsters with VIP Rancher"] = "Camina con hasta {1} monstruos con Ranchero VIP",
+	["You can walk with up to {1} monsters"] = "Puedes caminar con hasta {1} monstruos",
 }

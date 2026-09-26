@@ -30,6 +30,9 @@ return {
 		-- 2.0 · Light & Void
 		"SkyIslands",
 		"Riding",
+		-- Glow-up T · companions at your side, animated mounts
+		"Companions",
+		"Mounts",
 		-- 3.2 · Frostbite Glacier
 		"Gamepad",
 		-- Particle effects (Visuals/Vfx): landmark ambience

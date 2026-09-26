@@ -256,6 +256,11 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Quests**: `Quests:GrantPass(player) -> boolean` (a gifted pass: premium now, else banked). **Accessories**: `:Stored(player, id)`, `:Take(player, id)`.
 - **Client**: controller `Community` (HUD Emotes / Friends buttons, G and D-pad down, emotes through the character's Animate `PlayEmote`, balcony pad prompts on parts with attribute `VipPad`); screens `EmoteWheel`, `Friends`; `World.PlayTrick(owner, id, trickId)`, `World.NearestOwn(position, range)`; `MonsterAnimator.HasState(state)`; Nameplates show VIP gold names and a Premium badge.
 
+### Glow-up T: Companions, animated mounts
+- **Companions** (rules `Logic/Companions`, tuning `Config/Companions`): action `Companions.Set { ids }` (≤ `MaxSlots`; each id own, not busy, not the ridden mount; at most `Slots` = 1, `VipSlots` = 3 with the `vip` pass). Save `profile.Companions = { ids }`, version 2 (v1 `{ id }` migrated). `global.Companions.walkers["u" .. userId] = { { id, appearance } }` (Monsters:Appearance, so a Mastery aura shows); pruned on `MonsterRemoved`, busy (`MonsterChanged`), `Mounted`; `PassesChanged` re-publishes; a lost pass keeps the save and draws the first slot. Public: `Companions:Of(player)`, `:Slots(player)`. Cosmetic only: no economy or battle effect.
+- **Riding** gains `Riding:MountOf(player) -> monsterId?`.
+- **Client:** controller `Companions` (follow, LOD, HUD badge; `PoseSubjects(position, radius, found)` feeds `World:OwnMonstersNear`, so photo mode's Pose reaches companions; `StateOf(userId, index)`, `ModelOf`, `Count` for tests), controller `Mounts` (poses every rider's welded `Mount`: walk / idle / hop from the root part's measured speed; `StateOf(userId)`, `SpeedOf(userId)`), `Visuals/Gait` (`new(model)`, `:Step(state, dt, speed) -> bob`, `:Play("trick"|"happy") -> boolean`, `:State()`: authored clips for a model its caller moves, walk clip rate from `Logic/Companions.ClipRate`), `UI/Screens/Parts/WalkToggle` (MonsterDetail's "Walk with me" / "Stop walking"; a full list drops its first entry).
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 

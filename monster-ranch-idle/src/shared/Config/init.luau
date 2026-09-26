@@ -50,6 +50,7 @@ local Config = {
 	-- Glow-up L: emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
 	Community = require(script.Community),
 	Ambience = require(script.Ambience),
+	Companions = require(script.Companions), -- glow-up T: a monster at your side
 }
 
 return Config
