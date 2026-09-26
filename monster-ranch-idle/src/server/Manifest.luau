@@ -70,6 +70,9 @@ return {
 		"Codex",
 		-- Glow-up Q · bond hearts and care gestures
 		"Bond",
+		-- Glow-up LR · live races on the track, racing gear
+		"LiveRace",
+		"RaceGear",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

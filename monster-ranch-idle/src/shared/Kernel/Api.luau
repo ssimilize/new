@@ -538,6 +538,24 @@ Api.Actions = {
 		rate = 1,
 		returns = "{ hearts: number, points: number, gained: boolean, learned: trickId|false }",
 	},
+
+	-- Live races (glow-up LR) · Config.LiveRace, Logic/LiveRace, Systems/LiveRace -------------------
+	-- Join rides the current mount (Riding); Progress reports the rider's position, the server checks it.
+	["LiveRace.Join"] = { schema = T.none, rate = 1, returns = "{ heat: number, lane: number }" },
+	["LiveRace.Leave"] = { schema = T.none, rate = 1, returns = "nil" },
+	["LiveRace.Progress"] = {
+		schema = T.struct({ heat = T.integer(1), x = T.number(-2000, 2000), z = T.number(-2000, 2000), drift = T.boolean }),
+		rate = 8,
+		returns = "{ accepted: boolean, x, z, progress, lap, meter, finished: boolean }",
+	},
+	["LiveRace.Jump"] = { schema = T.struct({ heat = T.integer(1) }), rate = 4, returns = "{ ok: boolean }" },
+	["LiveRace.Boost"] = { schema = T.struct({ heat = T.integer(1) }), rate = 2, returns = "{ meter: number, seconds: number }" },
+	-- Racing gear (glow-up LR) · Systems/RaceGear: cosmetic; item "" takes the kind off.
+	["RaceGear.Equip"] = {
+		schema = T.struct({ kind = T.enum(Config.LiveRace.GearKinds), item = T.string(40, 0) }),
+		rate = 3,
+		returns = "nil",
+	},
 }
 
 --[[
@@ -610,6 +628,7 @@ Api.State = {
 		Companions = "{ ids = { monsterId } }  -- glow-up T: who walks with the player",
 		Codex = "{ claimed = { [milestoneId]: unix }, owed = { itemId } }  -- glow-up O (badges private)",
 		Bond = "{ list = { [monsterId]: { pts, pet: unix?, brush: unix?, play: unix? } }, cares }  -- see Systems/Bond",
+		RaceGear = "{ owned = { [gearId]: true }, equipped = { saddle, trail, banner }, races, live, podiums, wins, duels }  -- glow-up LR",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -630,6 +649,7 @@ Api.State = {
 		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } }, moderator: boolean, queue = { view + reports, creatorId } }",
 		Arena = "{ rating, tier, attemptsLeft, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
 		Reminders = "{ available: boolean, prompt: boolean }  -- prompt = show Roblox's notification opt-in now",
+		LiveRace = "{ heat: number|false, meter, lap, progress, strikes, finished, dq, result = { place, time, finished, field, rewards, cup, dq }|false }  -- glow-up LR",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
@@ -651,6 +671,8 @@ Api.State = {
 		Companions = "{ walkers = { ['u'..userId]: { { id, appearance } } } }  -- glow-up T: each player's companions, drawn by every client",
 		HallOfFame = "{ plaza = { ['u'..userId]: { slot, name, appearance, rarity } } }  -- glow-up O: best statues on the hub plaza (<= Config.Codex.Plaza.max)",
 		Bond = "{ here = { ['u'..userId]: { best = { { id, hearts, form, variant, name } }, plates = { { id, hearts, name } } } } }  -- ranch gate best friends + pen nameplates",
+		LiveRace = "{ state: 'idle'|'lobby'|'countdown'|'running'|'podium', heat, lobbyEndsAt, goAt, podiumEndsAt, laps, racers = { { userId, name, appearance, lane, progress, lateral, finished, dq } }, ghosts = { { name, time, lane } }, results = { { name, place, time|false, ghost, userId, dq, appearance? } }|false }  -- glow-up LR",
+		RaceGear = "{ here = { ['u'..userId]: { saddle, trail, banner } } }  -- glow-up LR: equipped racing gear in this server",
 	},
 }
 
@@ -692,7 +714,7 @@ Api.Topics = {
 	CrystalCollected = "(player, { crystal: number })",
 	Mounted = "(player, { id: string, speed: number })",
 	SurfRun = "(player, { score: number, shells: number })",
-	RaceFinished = "(player, { place: number, time: number, day: number, cup: number })",
+	RaceFinished = "(player, { place: number, time: number, day: number, cup: number, live: boolean, riders: number })  -- live: glow-up LR",
 	HubTravel = "(player, { to: 'hub'|'main'|'server' })",
 	HubAdPosted = "(player, {})",
 	DesignPublished = "(player, { design: string })",

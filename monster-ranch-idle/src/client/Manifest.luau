@@ -35,6 +35,8 @@ return {
 		-- Glow-up T · companions at your side, animated mounts
 		"Companions",
 		"Mounts",
+		-- Glow-up LR: live races on the track (lobby, countdown, riding, podium), racing gear on mounts
+		"LiveRace",
 		-- 3.2 · Frostbite Glacier
 		"Gamepad",
 		-- Particle effects (Visuals/Vfx): landmark ambience

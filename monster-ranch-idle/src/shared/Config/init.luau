@@ -37,6 +37,7 @@ local Config = {
 	Arena = require(script.Arena),
 	Raids = require(script.Raids),
 	Racing = require(script.Racing),
+	LiveRace = require(script.LiveRace), -- glow-up LR: live races on the track, racing gear
 	TradingHub = require(script.TradingHub),
 	Workshop = require(script.Workshop),
 	Clubs = require(script.Clubs),
