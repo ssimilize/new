@@ -538,6 +538,17 @@ Api.Actions = {
 		rate = 1,
 		returns = "{ hearts: number, points: number, gained: boolean, learned: trickId|false }",
 	},
+
+	-- Visits (glow-up Y) · Config.Visits, Systems/Visits ---------------------------------------
+	-- A Roblox friend's ranch: here (plot), their server (teleport) or their snapshot (showcase).
+	["Visits.Visit"] = {
+		schema = T.struct({ userId = T.userId, snapshot = T.optional(T.boolean) }),
+		rate = 0.5,
+		returns = "{ mode: 'here'|'teleport'|'showcase', plot: number?, name: string? }",
+	},
+	["Visits.Leave"] = { schema = T.none, rate = 2, returns = "nil  -- close the Visiting Showcase" },
+	-- Like the ranch in the showcase (mailed to its owner); once per ranch per UTC day.
+	["Visits.Like"] = { schema = T.none, rate = 1, returns = "{ paid: boolean, counted: boolean }" },
 }
 
 --[[
@@ -610,6 +621,7 @@ Api.State = {
 		Companions = "{ ids = { monsterId } }  -- glow-up T: who walks with the player",
 		Codex = "{ claimed = { [milestoneId]: unix }, owed = { itemId } }  -- glow-up O (badges private)",
 		Bond = "{ list = { [monsterId]: { pts, pet: unix?, brush: unix?, play: unix? } }, cares }  -- see Systems/Bond",
+		Visits = "{ day, liked = { ['u'..userId]: true }, paidCount, got, week, weekLikes, received }  -- glow-up Y (paid private)",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -630,6 +642,7 @@ Api.State = {
 		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } }, moderator: boolean, queue = { view + reports, creatorId } }",
 		Arena = "{ rating, tier, attemptsLeft, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
 		Reminders = "{ available: boolean, prompt: boolean }  -- prompt = show Roblox's notification opt-in now",
+		Visits = "{ showcase: RanchSnapshot | false }  -- glow-up Y: the friend's ranch in this player's Visiting Showcase (Logic/Visits)",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
@@ -651,6 +664,7 @@ Api.State = {
 		Companions = "{ walkers = { ['u'..userId]: { { id, appearance } } } }  -- glow-up T: each player's companions, drawn by every client",
 		HallOfFame = "{ plaza = { ['u'..userId]: { slot, name, appearance, rarity } } }  -- glow-up O: best statues on the hub plaza (<= Config.Codex.Plaza.max)",
 		Bond = "{ here = { ['u'..userId]: { best = { { id, hearts, form, variant, name } }, plates = { { id, hearts, name } } } } }  -- ranch gate best friends + pen nameplates",
+		Visits = "{ crown = { userId, plot, likes, name } | false, stage = { week, userId, name, likes, monsters = { Appearance } } | false }  -- glow-up Y",
 	},
 }
 
@@ -723,6 +737,7 @@ Api.Topics = {
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
 	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total' })  -- glow-up O",
 	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
+	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------
@@ -732,6 +747,7 @@ Api.Shapes = {
 	Listing = "see ARCHITECTURE.md §8 → Listing (client view)",
 	Appearance = "see Logic/Appearance.luau",
 	BattleReplay = "see Logic/BattleSim.luau",
+	RanchSnapshot = "see Logic/Visits.luau (glow-up Y)",
 }
 
 return Api

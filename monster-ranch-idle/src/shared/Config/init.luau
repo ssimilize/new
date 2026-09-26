@@ -58,6 +58,8 @@ local Config = {
 	Codex = require(script.Codex),
 	-- Glow-up Q: bond hearts, care gestures, bond tricks
 	Bond = require(script.Bond),
+	-- Glow-up Y: likes that pay, the crown, ranch visits and snapshots, Ranch of the Week
+	Visits = require(script.Visits),
 }
 
 return Config

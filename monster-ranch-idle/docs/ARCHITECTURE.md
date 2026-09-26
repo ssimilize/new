@@ -281,6 +281,25 @@ Signatures are fixed. Implement exactly these names; add new methods freely, but
 - **Community**: a trick with a `bond` field (`Config/Bond.Tricks`, merged into `Config.Community.TrickById` but not `Tricks`) needs that many hearts on the monster; the emote wheel is unchanged.
 - **Client**: controller `Care`, screen `Care` (non-modal, `{ id }`); `World.OwnTapHandler(id) -> handled` (set by Care; an own-monster tap falls back to MonsterDetail without it), `World.PlayCare(id, state, hearts) -> Model?`, `World.MonsterModel(owner, id) -> Model?`; `Screens/Parts/BondBadge`.
 
+### Glow-up Y: Visits (likes that pay, the crown, ranch visits, Ranch of the Week)
+- **Data / rules:** `Config/Visits` (like rewards + daily caps, the like gate `Config.Visits.Gate`, crown look, snapshot limits, showcase / stage world spots, `Visits.Visit.teleportWaitSeconds`), `Logic/Visits` (`Build`, `Sanitize`, `Fit`, `Encode`/`Size`, `Leader` (crown, ties by earliest), `Monsters` (a snapshot's showiest, for the stage)), unit-tested in `Visits.spec`.
+- **Likes that pay:** `Social.Like` (a gate on this server) now also publishes `RanchLiked`, which Visits pays from — the liker and the owner once per pair per UTC day, gated by `Logic/Community.GiftGate` (Ranch Level, play time, account age; same shape as the Gifts gate) so a fresh alt can't farm rewards, and capped separately per day for likers and owners. A liker who fails the gate still likes (Social's counter, the crown and the weekly board are unaffected). `Social:AddLike` credits a snapshot like's mailed reward to the owner's `likes` counter.
+- **The crown:** counted likes received on this server today (module state; a UTC day resets it) crown the leading ranch's plot (`global.Visits.crown = { userId, plot, likes, name }`, ties go to whoever reached the count first); a new holder gets a toast. Drawn client-side over the plot's gate, live (the client re-reads the plot on every `global.Plots` / `global.Visits` change) and spinning every frame.
+- **Visiting:** `Visits.Visit { userId, snapshot? }` on a Roblox friend: on this server → their plot number; on another server of the universe (optional `Services.Ranches.Locate` + `Services.Teleport.ToServer`) → a teleport; offline, a full server, or asked again with `snapshot = true` → their saved snapshot (`Services.Ranches.Load`) into `session.Visits.showcase`, drawn only for the visitor by `Visuals/RanchShowcase` at `Config.Visits.Showcase` near the hub. `Visits.Like` on an open showcase snapshot pays the visitor and mails the owner (`Market:Send`, kind `Config.Visits.Likes.mailKind`) so their reward and weekly count land on their next join or sync, wherever they are. `Visits.Leave` closes it.
+- **Snapshots:** built from `Plots:Public(player)` (new public method, same shape as `global.Plots`) plus each pen monster's `Bond:Hearts` for the best-friends list; sanitised and trimmed to `Config.Visits.Snapshot.maxBytes` (monsters dropped from the fullest pen first, then best friends, then decor) before saving. Saved on `PlayerRemoving` and every `Snapshot.saveSeconds` while playing, skipped when unchanged (`Logic/Visits.Encode` as the change key).
+- **Ranch of the Week:** the weekly board `ranchlikes` (`Config.Leaderboards`, `Visits:WeekLikes`) ranks likes received; every `Stage.refreshSeconds` each server re-reads last week's #1 (`Services.Leaderboards.Top`), loads their snapshot and publishes `global.Visits.stage = { week, userId, name, likes, monsters }` (showiest monsters, `Logic/Visits.Monsters`) for the hub stage.
+- **Adapter the lead must add (optional; absent = visits, saves and the stage are off; the crown and likes-that-pay on this server still work):**
+  ```lua
+  ctx.Services.Ranches = {
+    Save(userId, snap) -> ok                    -- one key per userId (a small DataStore, e.g. MonsterRanch_Ranches_v1)
+    Load(userId) -> ok, snap?
+    Locate(userId) -> ok, { placeId, jobId }?    -- which running server (of this universe) the userId is on, if any
+  }
+  ```
+  Ranch visits also use the existing `Services.Players.IsFriendsWith`, `Services.Teleport.ToServer` and `Services.Leaderboards.Top`.
+- **Public API:** `Visits:WeekLikes(player)`, `Visits:Crown() -> userId?`, `Visits:SaveSnapshot(player) -> boolean`.
+- **Client:** controller `Visits` (crown model + spin, the Visiting Showcase bar (Like / Go there / Leave), the Ranch of the Week stage, models built only near the camera), `Visuals/RanchShowcase.Build(snap, origin, opts?) -> (Model, stats)` (a compact ranch drawn with the real `PenDress` plan). Friends screen row "Visit ranch" (`ctx:GetController("Visits").Visit(userId, name)`).
+
 ### World (client workstream C1, server-side geometry)
 - **World** (server): builds ground, plot floors, pen fences (collision), hub buildings and the spawn from `Config.World`. It uses `ctx.Services.Workspace`. It has no actions and is tested in Studio only.
 

@@ -22,6 +22,7 @@
 	Public API:
 	  Plots:GetPlot(player) -> 1..6 | nil   (nil when the server has more players than plots)
 	  Plots:Refresh(player)                 -- throttled rebuild
+	  Plots:Public(player) -> PublicPlot    -- glow-up Y: built now (Visits snapshots)
 ]]
 
 local Plots = {
@@ -172,6 +173,12 @@ function Plots:Refresh(player)
 		pending[player] = nil
 		rebuild(player)
 	end)
+end
+
+-- Glow-up Y: a fresh public plot record for any ready player (the ranch snapshot), built from the
+-- same public APIs as global.Plots; works on the hub place and while the player is leaving.
+function Plots:Public(player)
+	return buildPlot(player)
 end
 
 -- Lifecycle ---------------------------------------------------------------------------------

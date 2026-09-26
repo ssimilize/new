@@ -70,6 +70,8 @@ return {
 		"Codex",
 		-- Glow-up Q · bond hearts and care gestures
 		"Bond",
+		-- Glow-up Y · likes that pay, the crown, ranch visits and Ranch of the Week
+		"Visits",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

@@ -203,4 +203,13 @@ World.Sky = {
 	bridges = { { "landing", "sunrise" }, { "landing", "dusk" }, { "landing", "halo" }, { "landing", "rift" } },
 }
 
+-- Glow-up Y: the Visiting Showcase and the Ranch of the Week stage (client-built, Config/Visits),
+-- north of the Market Square either side of the path to plot 6. Scenery keeps off them.
+World.VisitGrounds = {
+	{ center = { 140, 236 }, size = { 120, 76 } }, -- Visiting Showcase
+	{ center = { -120, 214 }, size = { 50, 36 } }, -- Ranch of the Week stage
+}
+table.insert(World.Scenery.keepOut, World.VisitGrounds[1])
+table.insert(World.Scenery.keepOut, World.VisitGrounds[2])
+
 return World

@@ -10,6 +10,7 @@
 	  stage       highest global stage index cleared (Expeditions:Cleared + Regions.GlobalIndex)
 	  racing      Racing Cup points this week (Racing:CupPoints, 3.0)
 	  mastery     Mythic Ladder points earned this week (Mastery:WeekPoints, 3.3)
+	  ranchlikes  counted likes received this week (Visits:WeekLikes, glow-up Y)
 
 	Save section (profile.Leaderboards): { week, stampede }  -- stampede resets each week
 
@@ -35,7 +36,7 @@ local Formulas = require(Shared.Logic.Formulas)
 local Leaderboards = {
 	Name = "Leaderboards",
 	Dependencies = {},
-	OptionalDependencies = { "Monsters", "Boss", "HallOfFame", "Expeditions", "Racing", "Mastery" },
+	OptionalDependencies = { "Monsters", "Boss", "HallOfFame", "Expeditions", "Racing", "Mastery", "Visits" },
 }
 
 Leaderboards.Profile = {
@@ -125,6 +126,11 @@ local VALUES = {
 	mastery = function(player)
 		local Mastery = ctx:GetSystem("Mastery")
 		return if Mastery then Mastery:WeekPoints(player) else 0
+	end,
+	-- Glow-up Y: likes received this week that passed the like gate.
+	ranchlikes = function(player)
+		local Visits = ctx:GetSystem("Visits")
+		return if Visits then Visits:WeekLikes(player) else 0
 	end,
 }
 

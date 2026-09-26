@@ -62,6 +62,7 @@ return {
 		-- Glow-up O: the walk-in Codex Museum and the Hall of Fame plaza
 		"CodexMuseum",
 		"FamePlaza",
+		"Visits", -- glow-up Y: the crown, the Visiting Showcase, Ranch of the Week
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
