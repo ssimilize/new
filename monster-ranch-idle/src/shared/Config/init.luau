@@ -51,6 +51,7 @@ local Config = {
 	Community = require(script.Community),
 	Ambience = require(script.Ambience),
 	Companions = require(script.Companions), -- glow-up T: a monster at your side
+	Quality = require(script.Quality), -- glow-up P: automatic quality levels, particle budget, distance LOD
 }
 
 return Config

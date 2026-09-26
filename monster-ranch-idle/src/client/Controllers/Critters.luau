@@ -22,6 +22,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Logic = require(Shared.Logic.Ambience)
 local SceneryIndex = require(script.Parent.Parent.Visuals.SceneryIndex)
+local Quality = require(script.Parent.Parent.Visuals.Quality)
+local Streaming = require(script.Parent.Parent.Visuals.Streaming)
 
 local Cfg = Config.Ambience
 local C = Cfg.Critters
@@ -53,7 +55,7 @@ type Critter = {
 
 local ctx
 local connections = {}
-local lowGraphics = false
+local lowGraphics = false -- Visuals/Quality.IsLow() (glow-up P), set in Start
 local folder: Folder? = nil
 local pools: { [string]: { Critter } } = { butterflies = {}, fireflies = {}, birds = {}, fish = {} }
 local sincePick = math.huge
@@ -65,6 +67,7 @@ local railPoints: { Vector3 } = {}
 local fountainWater: BasePart? = nil
 local fountainBasin: BasePart? = nil
 local worldScanned = false
+local worldWatched = false
 local lastPlayerPos: Vector3? = nil
 local playerSpeed = 0
 -- Spots are rebuilt only when the scenery index changes (scanWorld resets the version).
@@ -180,6 +183,24 @@ local function scanWorld()
 	end
 	worldScanned = true
 	spotVersion = -1
+	if not worldWatched then
+		-- StreamingEnabled (glow-up P): pens, rails and the fountain can stream in later.
+		worldWatched = true
+		local rescan = function()
+			worldScanned = false
+		end
+		for _, name in { "Plots", "Hub" } do
+			table.insert(
+				connections,
+				Streaming.OnChild(world, name, function(child)
+					rescan()
+					for _, connection in Streaming.WatchTree(child, 1, rescan) do
+						table.insert(connections, connection)
+					end
+				end)
+			)
+		end
+	end
 	table.clear(penPoints)
 	table.clear(railPoints)
 	local plots = world:FindFirstChild("Plots")
@@ -496,12 +517,12 @@ end
 
 function Critters.Start()
 	SceneryIndex.Start()
+	lowGraphics = Quality.IsLow()
 	table.insert(
 		connections,
-		ctx.Store:Observe("profile.Settings", function(settings)
-			local low = type(settings) == "table" and settings.lowGraphics == true
-			if low ~= lowGraphics then
-				lowGraphics = low
+		Quality.Changed:Connect(function()
+			if Quality.IsLow() ~= lowGraphics then
+				lowGraphics = Quality.IsLow()
 				sincePick = math.huge
 			end
 		end)

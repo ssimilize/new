@@ -34,6 +34,7 @@ local Logic = require(ReplicatedStorage.Shared.Logic.Audio)
 local Client = script.Parent.Parent
 local Audio = require(Client.Audio)
 local Voices = require(Client.Audio.Voices)
+local Quality = require(Client.Visuals.Quality)
 
 local Soundscape = {
 	Name = "Soundscape",
@@ -48,7 +49,7 @@ local CHATTER_LOW = { count = 1, range = 28 }
 
 local ctx
 local weather = { id = "clear", night = false }
-local lowGraphics = false
+local lowGraphics = Quality.IsLow() -- Visuals/Quality (glow-up P)
 local state = {}
 local preview = nil
 local nextGustAt = 0
@@ -187,8 +188,8 @@ end
 
 function Soundscape.Start()
 	ctx.Store:Observe("global.Weather", onWeather)
-	ctx.Store:Observe("profile.Settings", function(settings)
-		lowGraphics = type(settings) == "table" and settings.lowGraphics == true
+	Quality.Changed:Connect(function()
+		lowGraphics = Quality.IsLow()
 	end)
 	ctx.Bus:Subscribe("Weather.Lightning", onLightning)
 	Audio.Preload("UI")

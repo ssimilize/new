@@ -58,6 +58,8 @@ Api.Actions = {
 	},
 	-- 3.2: "auto" follows the player's Roblox language (Shared/Locale).
 	["Settings.SetLanguage"] = { schema = T.struct({ language = T.enum(Locale.Choices) }), rate = 2, returns = "nil" },
+	-- Glow-up P: the Graphics choice; "low" also sets lowGraphics (reduced motion), the others clear it.
+	["Settings.SetGraphics"] = { schema = T.struct({ graphics = T.enum({ "auto", "high", "low" }) }), rate = 2, returns = "nil" },
 
 	-- Monsters (S2) ---------------------------------------------------------------
 	["Monsters.Rename"] = { schema = T.struct({ id = id, name = T.string(20) }), rate = 1, returns = "{ name: string } (filtered)" },
@@ -559,7 +561,7 @@ Api.State = {
 	profile = {
 		Currency = "{ coins, gems, stardust, friendship, treats, ribbons, tokens = { [eventId]: n }, food = { sweet, spicy, savory, sour } }",
 		Progression = "{ level, xp }",
-		Settings = "{ music, sfx, lowGraphics, hideBroadcasts, language }",
+		Settings = "{ music, sfx, lowGraphics, hideBroadcasts, language, graphics }",
 		Monsters = "{ list = { [id]: Monster }, codex = { [lineId]: { forms = { [formId]: true }, variants = { [n]: true }, count } }, nextId }",
 		HallOfFame = "{ entries = { Statue }, legacy = { [element]: pct }, upgrades = { [upgradeId]: level }, starShards }",
 		Rebirth = "{ stars, skills = { [skillId]: level }, lastAt, dust }",

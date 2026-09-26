@@ -14,14 +14,18 @@
 	  anim:IsMoving(), anim:GetPosition(), anim:Stop()  (Stop cancels a MoveTo)
 	  anim:GetState()                                  the state playing ("idle" after a one-shot ends)
 	  MonsterAnimator.SkinnedClip(...)                 which authored clip a 3D monster plays (below)
-	  MonsterAnimator.SetLowGraphics(bool)             fewer updates for every animator
+	  MonsterAnimator.SetLowGraphics(bool)             legacy: the level now comes from Visuals/Quality
+	  anim:SetOwn(bool)                                false = on another player's plot (World): far
+	                                                   ones update less often (distance LOD)
+	  MonsterAnimator.Updated()                        animators updated in the last frame (overlay)
 	  MonsterAnimator.Count()                          live animators (debug)
 	  MonsterAnimator.HasState(state)                  whether :Play knows `state` (else it plays idle)
 
 	One shared RenderStepped connection drives every animator. It connects when the first
-	animator is created and disconnects when the last one is destroyed. Animators further than
-	PAUSE_DISTANCE studs from the camera are paused; mid-distance ones (and all of them in low
-	graphics) update at a reduced rate. The model is moved with model:PivotTo(base * offset).
+	animator is created and disconnects when the last one is destroyed. How often each one updates
+	is Logic/Quality.AnimInterval (Config.Quality.Lod, glow-up P): by the Quality level, distance
+	from the camera (mid band; another plot's monsters also a far band), paused beyond animPause,
+	and throttled while behind the camera. The model is moved with model:PivotTo(base * offset).
 	Rainbow models (attribute Rainbow) and prismatic ones (attribute Prismatic, set by the
 	caller) cycle their "Body" part colour through a precomputed hue table.
 	Near animators also squash and stretch the "Body" part: through its SpecialMesh Scale when
@@ -38,17 +42,17 @@
 ]]
 
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MeshMonster = require(script.Parent.MeshMonster)
+local Quality = require(script.Parent.Quality)
+local Lod = require(ReplicatedStorage:WaitForChild("Shared").Logic.Quality)
+local LodConfig = require(ReplicatedStorage.Shared.Config).Quality.Lod
 
 local MonsterAnimator = {}
 MonsterAnimator.__index = MonsterAnimator
 
-local PAUSE_DISTANCE = 250
-local MID_DISTANCE = 90
 local SQUASH_DISTANCE = 60
-local MID_INTERVAL = 1 / 20
-local LOW_INTERVAL = 1 / 15
 local HUE_STEPS = 72
 
 local ONE_SHOT = { happy = 0.9, eat = 1.6, attack = 0.55, hurt = 0.5, trick = 1.1 }
@@ -72,8 +76,9 @@ local FLASH_COLOR = Color3.fromRGB(255, 90, 90)
 
 local animators = {} -- array of live animators
 local connection: RBXScriptConnection? = nil
-local lowGraphics = false
+local lowGraphics = Quality.IsLow()
 local clock = 0
+local updated = 0
 
 local function smooth(p: number): number
 	return p * p * (3 - 2 * p)
@@ -129,6 +134,7 @@ function MonsterAnimator.new(model: Model)
 		_intensity = 0,
 		_highlight = nil :: Highlight?,
 		_dead = false,
+		_own = true,
 		_index = 0,
 	}, MonsterAnimator)
 	table.insert(animators, self)
@@ -139,6 +145,18 @@ end
 
 function MonsterAnimator.SetLowGraphics(on: boolean)
 	lowGraphics = on == true
+end
+
+Quality.Changed:Connect(function()
+	lowGraphics = Quality.IsLow()
+end)
+
+function MonsterAnimator.Updated(): number
+	return updated
+end
+
+function MonsterAnimator:SetOwn(own: boolean)
+	self._own = own ~= false
 end
 
 function MonsterAnimator.Count(): number
@@ -457,20 +475,24 @@ function step(dt: number)
 	clock += dt
 	local camera = workspace.CurrentCamera
 	local camPos = if camera then camera.CFrame.Position else Vector3.zero
-	local pauseSq = PAUSE_DISTANCE * PAUSE_DISTANCE
-	local midSq = MID_DISTANCE * MID_DISTANCE
+	local look = if camera then camera.CFrame.LookVector else Vector3.new(0, 0, -1)
 	local squashSq = SQUASH_DISTANCE * SQUASH_DISTANCE
+	local level = if lowGraphics then 1 else Quality.Level()
+	local margin = LodConfig.behindMargin
+	local count = 0
 	for i = 1, #animators do
 		local a = animators[i]
 		if a and not a._dead and a.model.Parent ~= nil then
 			local d = a._pos - camPos
 			local distSq = d.X * d.X + d.Y * d.Y + d.Z * d.Z
 			a._accum += dt
-			if distSq <= pauseSq then
-				local interval = if lowGraphics then LOW_INTERVAL elseif distSq > midSq then MID_INTERVAL else 0
+			local onScreen = d.X * look.X + d.Y * look.Y + d.Z * look.Z > -(margin + a._size)
+			local interval = Lod.AnimInterval(LodConfig, level, a._own, math.sqrt(distSq), onScreen)
+			if interval then
 				if a._accum >= interval then
 					local elapsed = min(a._accum, 0.25)
 					a._accum = 0
+					count += 1
 					a:_update(elapsed, distSq <= squashSq)
 				end
 			else
@@ -478,6 +500,8 @@ function step(dt: number)
 			end
 		end
 	end
+	updated = count
+	Quality.Stats.animated = count
 end
 
 function MonsterAnimator:Destroy()

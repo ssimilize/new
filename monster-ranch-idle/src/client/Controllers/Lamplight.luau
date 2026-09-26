@@ -24,6 +24,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Logic = require(Shared.Logic.Ambience)
 local SceneryIndex = require(script.Parent.Parent.Visuals.SceneryIndex)
+local Quality = require(script.Parent.Parent.Visuals.Quality)
+local Streaming = require(script.Parent.Parent.Visuals.Streaming)
 
 local Cfg = Config.Ambience
 local L = Cfg.Lights
@@ -47,12 +49,11 @@ type Source = {
 	seed: number,
 }
 
-local ctx
 local connections = {}
 local sources: { Source } = {}
 local lit: { Source } = {}
 local folder: Folder? = nil
-local lowGraphics = false
+local lowGraphics = false -- Visuals/Quality.IsLow() (glow-up P), set in Start
 local sceneryVersion = -1
 local world: Instance? = nil
 local night = 0
@@ -278,18 +279,16 @@ local function step(dt: number)
 	end
 end
 
-function Lamplight.Init(context)
-	ctx = context
-end
+function Lamplight.Init(_context) end
 
 function Lamplight.Start()
 	SceneryIndex.Start()
+	lowGraphics = Quality.IsLow()
 	table.insert(
 		connections,
-		ctx.Store:Observe("profile.Settings", function(settings)
-			local low = type(settings) == "table" and settings.lowGraphics == true
-			if low ~= lowGraphics then
-				lowGraphics = low
+		Quality.Changed:Connect(function()
+			if Quality.IsLow() ~= lowGraphics then
+				lowGraphics = Quality.IsLow()
 				sincePick = math.huge
 			end
 		end)
@@ -301,6 +300,23 @@ function Lamplight.Start()
 			world = w
 			collect()
 			sincePick = math.huge
+			-- StreamingEnabled (glow-up P): doors, bodies and the fountain can stream in later.
+			local recollect = function()
+				if world then
+					collect()
+					sincePick = math.huge
+				end
+			end
+			for _, name in { "Hub", "Plots" } do
+				table.insert(
+					connections,
+					Streaming.OnChild(w, name, function(child)
+						for _, connection in Streaming.WatchTree(child, 1, recollect) do
+							table.insert(connections, connection)
+						end
+					end)
+				)
+			end
 		end
 	end)
 end

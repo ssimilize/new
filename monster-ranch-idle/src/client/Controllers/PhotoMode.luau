@@ -67,6 +67,7 @@ local PhotoRig = require(Shared.Logic.PhotoRig)
 
 local Client = script.Parent.Parent
 local Anim = require(Client.UI.Anim)
+local Quality = require(Client.Visuals.Quality)
 local Focus = require(Client.UI.Focus)
 local Voices = require(Client.Audio.Voices)
 
@@ -121,13 +122,15 @@ local capabilities = nil
 
 -- Settings -----------------------------------------------------------------------------------
 
+-- Effects follow the quality level (Visuals/Quality, glow-up P); reduced motion follows only the
+-- player's explicit Low choice (Settings.lowGraphics), never Auto dropping to Low.
 local function lowGraphics(): boolean
-	local settings = ctx.Store:Get("profile.Settings")
-	return type(settings) == "table" and settings.lowGraphics == true
+	return Quality.IsLow()
 end
 
 local function reducedMotion(): boolean
-	if not Anim.enabled or lowGraphics() then
+	local settings = ctx.Store:Get("profile.Settings")
+	if not Anim.enabled or (type(settings) == "table" and settings.lowGraphics == true) then
 		return true
 	end
 	local ok, on = pcall(function()

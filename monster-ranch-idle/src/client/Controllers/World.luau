@@ -8,8 +8,10 @@
 	  profile.Ranch + session.Ranch    live coin jars over the local player's own pens
 	                 (BillboardGuis in PlayerGui; tap = Ranch.Collect + coin burst)
 	  global.Weather night flag (monsters nap at night)
-	  profile.Settings.lowGraphics     fewer animation updates, fewer monsters on other plots, and
-	                 Vfx.SetQuality (other plots' auras off, effect rates and bursts halved)
+	  Visuals/Quality  the quality level (glow-up P): other plots draw fewer monsters per pen by
+	                 level and distance (Logic/Quality.PenCap, re-checked once a second as the camera
+	                 moves), their animators are marked SetOwn(false) for the animator's distance LOD;
+	                 Vfx and MonsterAnimator follow the level on their own
 
 	Particle effects (Visuals/Vfx): every pen monster is marked as own / other plot (Vfx.SetOwned).
 	Moment bursts: Eggs.Hatched and Monsters.Evolved burst at the monster once it appears in the
@@ -46,12 +48,14 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local JarModule = Shared.Logic:FindFirstChild("Jar")
 local Jar = if JarModule then require(JarModule) :: any else nil
+local QualityRules = require(Shared.Logic.Quality)
 
 local Client = script.Parent.Parent
 local MonsterModel = require(Client.Visuals.MonsterModel)
 local EggModel = require(Client.Visuals.EggModel)
 local MonsterAnimator = require(Client.Visuals.MonsterAnimator)
 local Vfx = require(Client.Visuals.Vfx)
+local Quality = require(Client.Visuals.Quality)
 local Audio = require(Client.Audio)
 local Voices = require(Client.Audio.Voices)
 local VfxConfig = require(Shared.Config.Vfx)
@@ -70,8 +74,7 @@ local World = {
 
 local PLOT_COUNT = #WorldConfig.Plots
 local MAX_PENS = math.min(Config.Economy.Pens.max, #WorldConfig.PenOffsets)
-local MAX_PER_PEN = 10
-local MAX_PER_PEN_LOW = 5 -- other players' pens in low graphics
+local MAX_PER_PEN = 10 -- own plot; other plots: Config.Quality.Lod.penCap by level and distance
 local MAX_STATUES = WorldConfig.StatueRow.count
 local STATUE_SPACING = WorldConfig.StatueRow.spacing
 local POOL_MAX = 40
@@ -101,7 +104,7 @@ local pool = {} -- [appearanceKey] = { Model }
 local poolCount = 0
 local connections = {}
 local running = false
-local lowGraphics = false
+local lowGraphics = Quality.IsLow()
 local night = false
 local latestPlots = nil
 local ownIndex: number? = nil
@@ -121,6 +124,15 @@ local function plotFrame(index: number): CFrame
 	local plot = WorldConfig.Plots[index]
 	local c = plot.center
 	return CFrame.new(c[1], WorldConfig.GroundY, c[3]) * CFrame.Angles(0, math.rad((plot.facing or 0) - 90), 0)
+end
+
+-- Studs from the camera to a plot's centre (the distance LOD's measure).
+local function plotDistance(index: number): number
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return 0
+	end
+	return (camera.CFrame.Position - plotFrame(index).Position).Magnitude
 end
 
 local function plotModel(index: number): Instance?
@@ -540,6 +552,7 @@ local function spawnEntry(view, id: string, appearance, key: string, pen: number
 	view.entries[id] = entry
 	local own = view.userId == player.UserId
 	Vfx.SetOwned(model, own) -- pooled models move between plots
+	entry.animator:SetOwn(own)
 	Voices.Track(model)
 	local pending = if own then pendingBursts[id] else nil
 	if pending then
@@ -552,7 +565,9 @@ end
 local function syncMonsters(view, data)
 	local seen = {}
 	local own = view.userId == player.UserId
-	local cap = if lowGraphics and not own then MAX_PER_PEN_LOW else MAX_PER_PEN
+	local distance = plotDistance(view.index)
+	view.lodBand = QualityRules.Band(Config.Quality.Lod, Quality.Level(), distance)
+	local cap = QualityRules.PenCap(Config.Quality.Lod, Quality.Level(), own, distance, MAX_PER_PEN)
 	for p, pen in data.pens or {} do
 		if type(p) == "number" and p <= MAX_PENS and type(pen) == "table" then
 			local n = 0
@@ -1357,17 +1372,39 @@ local function onPlots(list)
 	end
 end
 
+-- Distance LOD: another plot whose distance band changed is re-synced (more or fewer monsters).
+local function tickLod()
+	if type(latestPlots) ~= "table" then
+		return
+	end
+	local level = Quality.Level()
+	for index, view in views do
+		local data = latestPlots[index]
+		if view.userId ~= 0 and view.userId ~= player.UserId and type(data) == "table" then
+			if QualityRules.Band(Config.Quality.Lod, level, plotDistance(index)) ~= view.lodBand then
+				syncMonsters(view, data)
+			end
+		end
+	end
+end
+
 local function loop()
 	local elapsed = 0
+	local sinceLod = 0
 	while running do
 		local dt = task.wait(TICK)
 		elapsed += dt
+		sinceLod += dt
 		local now = ctx:Now()
 		tickWander()
 		tickJars(now)
 		if elapsed >= 0.5 then
 			elapsed = 0
 			tickEggs(now)
+		end
+		if sinceLod >= 1 then
+			sinceLod = 0
+			tickLod()
 		end
 	end
 end
@@ -1498,15 +1535,10 @@ function World.Start()
 	)
 	table.insert(
 		connections,
-		ctx.Store:Observe("profile.Settings", function(settings)
-			local low = type(settings) == "table" and settings.lowGraphics == true
-			Vfx.SetQuality(low)
-			if low ~= lowGraphics then
-				lowGraphics = low
-				MonsterAnimator.SetLowGraphics(low)
-				if latestPlots then
-					onPlots(latestPlots)
-				end
+		Quality.Changed:Connect(function()
+			lowGraphics = Quality.IsLow()
+			if latestPlots then
+				onPlots(latestPlots)
 			end
 		end)
 	)
