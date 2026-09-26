@@ -1,0 +1,560 @@
+{
+ "note": "2026-09-26 pet-genetics prototype: monsters kept LOCAL only (no publish) after the account moderation; prompts from prototypes/pet-genetics/monsters.py",
+ "jobs": [
+  {
+   "key": "pm_drizzlet",
+   "prompt": "Drizzlet, a baby rain sprite: a small round cloud-like body, a single big water droplet on top of its head, a wispy tail shaped like a trickle of rain. It is floating in the air, a small round body with tiny stubby arms and no legs, the lower body trailing off into a short wispy tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "arms",
+    "tail",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_zappip",
+   "prompt": "Zappip, a baby electric fox kit: lightning-bolt shaped ear tips, a zigzag lightning-bolt tail, little spark markings on its cheeks. It is standing on all four legs, with a head, ears and a tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "left ear",
+    "right ear",
+    "eyes",
+    "head decoration",
+    "tail",
+    "front legs",
+    "back legs"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_buzzbee",
+   "prompt": "Buzzbee, a baby electric bumblebee: a round fuzzy body with yellow and dark brown stripes, tiny wings, two antennae with little glowing ball tips, a small stinger shaped like a spark. It is standing on six short stubby legs, a round shell-backed body, two antennae and small wings folded on the back. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    6,
+    4.5,
+    5.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "antennae",
+    "wings",
+    "legs",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_pebblet",
+   "prompt": "Pebblet, a baby pebble golem: a round smooth stone body, stubby rock arms and legs, a few small pebbles on top of its head like a tiny hairdo. It is standing on two short thick legs, a chunky blocky body with big strong arms and a small head. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5.5,
+    4.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "head",
+    "eyes",
+    "mouth",
+    "left arm",
+    "right arm",
+    "legs",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_rumblet",
+   "prompt": "Rumblet, a baby mole: a soft round body, a pink nose, small shovel-like digging paws in front, a little pebble on its head. It is a round squishy body with no neck, standing on two stubby little feet, the face on the front of the body. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    4.5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "feet",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_crystomp",
+   "prompt": "Crystomp, a baby crystal golem: a chunky stone body with a few pale glowing crystals growing from its back and head, big stomping feet. It is standing on two short thick legs, a chunky blocky body with big strong arms and a small head. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5.5,
+    4.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "head",
+    "eyes",
+    "mouth",
+    "left arm",
+    "right arm",
+    "legs",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_hushling",
+   "prompt": "Hushling, a shy baby shadow sprite: a small round body like a soft puff of twilight, a little pointed hood-like tuft on top of its head, a few tiny pale star speckles on its body. It is floating in the air, a small round body with tiny stubby arms and no legs, the lower body trailing off into a short wispy tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "arms",
+    "tail",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_wisplet",
+   "prompt": "Wisplet, a baby will-o'-the-wisp sprite: a small round body with pale glowing spots on its round cheeks, a tiny solid lilac flame burning on the tip of its curled tail. It is floating in the air, a small round body with tiny stubby arms and no legs, the lower body trailing off into a short wispy tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "arms",
+    "tail",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_gloomcap",
+   "prompt": "Gloomcap, a baby mushroom blob: a round body wearing a big purple mushroom cap on its head, the cap dotted with pale glowing lilac spots. It is a round squishy body with no neck, standing on two stubby little feet, the face on the front of the body. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    4.5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "feet",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_steamling",
+   "prompt": "Steamling, a baby steam blob: a round body, warm orange on top fading to cool blue below, a solid puff of white steam curling up from the top of its head like a little cloud, rosy cheeks. It is a round squishy body with no neck, standing on two stubby little feet, the face on the front of the body. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    4.5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "feet",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_mudpuff",
+   "prompt": "Mudpuff, a baby frog blob: a soft round caramel body with a few round speckles and a little green lily pad on its head. It is a round squishy body with no neck, standing on two stubby little feet, the face on the front of the body. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    4.5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "feet",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_lavashell",
+   "prompt": "Lavashell, a baby lava golem: a chunky stone body with glowing orange lava cracks, a little rocky shell on its back, a tiny glowing ember on top of its head. It is standing on two short thick legs, a chunky blocky body with big strong arms and a small head. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5.5,
+    4.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "head",
+    "eyes",
+    "mouth",
+    "left arm",
+    "right arm",
+    "legs",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_eclipsette",
+   "prompt": "Eclipsette, a baby eclipse moth: a round fluffy purple body, rounded purple wings each with a golden ring like a solar eclipse, two feathery antennae. It is hovering in the air, with a small round body, two pairs of wings spread wide to the sides, two antennae and tiny legs tucked under. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    7,
+    5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "antennae",
+    "left wings",
+    "right wings",
+    "legs",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_mirebloom",
+   "prompt": "Mirebloom, a baby swamp-flower sprite: a small round body, a closed purple flower bud with two green leaves on top of its head, a short wispy tail like a trailing vine. It is floating in the air, a small round body with tiny stubby arms and no legs, the lower body trailing off into a short wispy tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "arms",
+    "tail",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_shellsnap",
+   "prompt": "Shellsnap, a baby shell crab-bug: a round blue shell on its back like a little clam, two small snapping claws at the front, two short eye-stalk antennae. It is standing on six short stubby legs, a round shell-backed body, two antennae and small wings folded on the back. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    6,
+    4.5,
+    5.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "antennae",
+    "wings",
+    "legs",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_jellow",
+   "prompt": "Jellow, a baby jelly blob: a round wobbly body of solid, opaque, glossy yellow jelly, a small jellyfish-like dome on top of its head with a wavy frilled rim, a few tiny bright spark spots. It is a round squishy body with no neck, standing on two stubby little feet, the face on the front of the body. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    4.5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "feet",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_lanternling",
+   "prompt": "Lanternling, a baby lantern fox standing on all four legs like a real fox kit: a round fluffy body, its own tail ending in a glowing paper-lantern shape, little flame-shaped ear tufts, glowing yellow cheek marks. It is standing on all four legs, with a head, ears and a tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "left ear",
+    "right ear",
+    "eyes",
+    "head decoration",
+    "tail",
+    "front legs",
+    "back legs"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_mochibun",
+   "prompt": "Mochibun, a baby mochi bunny: a soft round squishy body like a rice cake, short rounded ears, a little pink blush, a small smooth pebble charm on its forehead. It is sitting upright on two big hind feet, with small front paws, two long upright ears and a round tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    6,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "left ear",
+    "right ear",
+    "eyes",
+    "mouth",
+    "tail",
+    "feet",
+    "arms"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_wickit",
+   "prompt": "Wickit, a baby candle sprite: a small round body like a soft candle, a tiny solid yellow flame on top of its head like a wick, drips of wax on its sides. It is floating in the air, a small round body with tiny stubby arms and no legs, the lower body trailing off into a short wispy tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "arms",
+    "tail",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_cometkit",
+   "prompt": "Cometkit, a baby comet fox standing on all four legs like a real fox kit: a small orange fox with a big fluffy tail shaped like a comet's tail streaming behind it, a little star mark on its forehead. It is standing on all four legs, with a head, ears and a tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "left ear",
+    "right ear",
+    "eyes",
+    "head decoration",
+    "tail",
+    "front legs",
+    "back legs"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_orbiton",
+   "prompt": "Orbiton, a baby moon golem: a round stone body like a tiny moon with a few small craters, stubby rock arms and legs, a small glowing star on its forehead. It is standing on two short thick legs, a chunky blocky body with big strong arms and a small head. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5.5,
+    4.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "head",
+    "eyes",
+    "mouth",
+    "left arm",
+    "right arm",
+    "legs",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_budling",
+   "prompt": "Budling, a baby bud bunny: a small bunny with a closed flower bud on its head and leaf-shaped ears. It is sitting upright on two big hind feet, with small front paws, two long upright ears and a round tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    6,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "left ear",
+    "right ear",
+    "eyes",
+    "mouth",
+    "tail",
+    "feet",
+    "arms"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_pollenpuff",
+   "prompt": "Pollenpuff, a baby pollen moth: a round fluffy body like a ball of yellow pollen, four small rounded leaf-green wings with yellow dots, two short antennae tipped with little pollen balls. It is hovering in the air, with a small round body, two pairs of wings spread wide to the sides, two antennae and tiny legs tucked under. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    7,
+    5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "antennae",
+    "left wings",
+    "right wings",
+    "legs",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_tulipup",
+   "prompt": "Tulipup, a baby tulip fox standing on all four legs like a real fox kit: a small blue fox with a closed tulip bud on the tip of its tail, two small green leaves on its head like a sprout, round shiny water-drop spots on its back. It is standing on all four legs, with a head, ears and a tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "left ear",
+    "right ear",
+    "eyes",
+    "head decoration",
+    "tail",
+    "front legs",
+    "back legs"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_halobee",
+   "prompt": "Halobee, a baby light bee: a round golden shell with soft cream stripes, a small round glowing golden dome on top of its head, two short antennae with little glowing tips. It is standing on six short stubby legs, a round shell-backed body, two antennae and small wings folded on the back. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    6,
+    4.5,
+    5.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "antennae",
+    "wings",
+    "legs",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_dawnling",
+   "prompt": "Dawnling, a baby dawn sprite: a small round golden body, a tiny solid sunrise-shaped crest on top of its head, soft pink blush on its cheeks. It is floating in the air, a small round body with tiny stubby arms and no legs, the lower body trailing off into a short wispy tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "arms",
+    "tail",
+    "head decoration"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_nullkit",
+   "prompt": "Nullkit, a baby void kitten standing on all four legs like a real kitten: a small dark indigo kitten with big pointed ears tipped in cyan, tiny cyan star speckles on its fur, a fluffy tail. It is standing on all four legs, with a head, ears and a tail. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    5,
+    5.5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "left ear",
+    "right ear",
+    "eyes",
+    "head decoration",
+    "tail",
+    "front legs",
+    "back legs"
+   ],
+   "colormatch": false
+  },
+  {
+   "key": "pm_gravitoad",
+   "prompt": "Gravitoad, a baby space toad: a round squishy dark indigo toad with a pale lavender belly, tiny cyan star speckles on its back. It is a round squishy body with no neck, standing on two stubby little feet, the face on the front of the body. Big glossy black eyes with white highlights and a small happy mouth, clearly separate on the face. Pet Simulator toy style: a cute cube-shaped blocky rounded body, smooth toy surfaces, bright saturated colours, a simple readable silhouette.",
+   "size": [
+    5,
+    4.5,
+    5
+   ],
+   "maxTriangles": 20000,
+   "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "feet",
+    "head decoration"
+   ],
+   "colormatch": false
+  }
+ ]
+}
