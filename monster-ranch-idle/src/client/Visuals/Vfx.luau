@@ -4,7 +4,8 @@
 	never errors on a missing sprite (that emitter is skipped).
 
 		Vfx.AttachMonster(model, appearance) -> number    element auras (two elements: half rate each),
-		                                                   mutations, shiny / rainbow, epic+ ground glow;
+		                                                   mutations, shiny / rainbow, epic+ ground glow,
+		                                                   the mastery aura (appearance.aura, 3.3);
 		                                                   returns how many emitters it made
 		Vfx.SetOwned(model, owned)                         false = on another player's plot (World)
 		Vfx.AttachEgg(model, eggType, ready?) -> number    the egg's own sparkle (Config.Vfx.Eggs) and,
@@ -61,7 +62,7 @@ local Vfx = {}
 
 local POINT = Vector3.new(0.2, 0.2, 0.2)
 local HOVERING = { moth = true, sprite = true }
-local KIND_OFF_ON_OTHER_PLOTS = { aura = true, rarity = true }
+local KIND_OFF_ON_OTHER_PLOTS = { aura = true, rarity = true, mastery = true }
 local KIND_HALVED = { mutation = true, variant = true, landmark = true, egg = true }
 
 type Rec = { emitter: ParticleEmitter, rate: number, kind: string, spec: any }
@@ -318,6 +319,9 @@ function Vfx.AttachMonster(model: Model, appearance): number
 	local rarityDef = if type(rarity) == "number" then Config.Rarities.Get(rarity) else Config.Rarities.ById[rarity]
 	if rarityDef then
 		add(Presets.Rarity[rarityDef.id], "rarity", 1)
+	end
+	if type(appearance.aura) == "string" and Presets.Mastery then
+		add(Presets.Mastery[appearance.aura], "mastery", 1)
 	end
 
 	if #entry.recs == 0 then

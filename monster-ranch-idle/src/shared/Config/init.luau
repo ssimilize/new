@@ -46,6 +46,7 @@ local Config = {
 	Flags = require(script.Flags),
 	LoginStreak = require(script.LoginStreak),
 	Reminders = require(script.Reminders),
+	Mastery = require(script.Mastery), -- 3.3 endgame
 }
 
 return Config

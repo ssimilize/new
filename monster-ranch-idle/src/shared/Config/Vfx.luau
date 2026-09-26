@@ -45,7 +45,9 @@
 	x (1 - weight x night). `night` (0..1) follows Lighting.ClockTime through dusk and dawn.
 
 	Tables: Auras[element], Mutations[mutationId], Variants.shiny / .rainbow, Rarity[rarityId],
-	Landmarks[hubId | "skyGate"], Bursts[name], Night, Eggs[eggId], EggReady.
+	Landmarks[hubId | "skyGate"], Bursts[name], Night, Eggs[eggId], EggReady, Mastery[key] (3.3: a
+	monster's mastery aura, appearance.aura; Gold / Mythic lines and the Star Shard auras;
+	<= Budget.mastery each).
 
 	Eggs use the monster keys (at = feet / core / head / body, measured on the shell), authored for
 	an egg EggRefHeight studs tall (the incubator's); Visuals/Vfx scales them with the egg's height.
@@ -81,7 +83,7 @@ Vfx.Sprites = {
 	glow = { tint = true },
 }
 
-Vfx.Budget = { aura = 8, withMutations = 12, landmark = 60 }
+Vfx.Budget = { aura = 8, withMutations = 12, landmark = 60, mastery = 3 }
 
 local FADE = { { 0, 1 }, { 0.15, 0 }, { 0.75, 0.2 }, { 1, 1 } }
 local SOFT = { { 0, 1 }, { 0.2, 0.4 }, { 1, 1 } }
@@ -788,6 +790,54 @@ Vfx.Rarity = {
 	epic = groundGlow("#A259E0"),
 	legendary = groundGlow("#E99A10"),
 	mythic = groundGlow("#E8436F"),
+}
+
+-- Update 3.3 · Mastery auras (appearance.aura, set by the Mastery system): a light sprinkle on top
+-- of the element aura, so each stays within Budget.mastery live particles.
+local function masteryTwinkle(sprite: string, color: any, rate: number, lifetime: { number }, rise: number)
+	return {
+		{
+			sprite = sprite,
+			grey = true,
+			color = color,
+			at = "body",
+			rate = rate,
+			lifetime = lifetime,
+			size = TWINKLE,
+			transparency = SPARK,
+			speed = { 0.1, 0.3 },
+			spread = 180,
+			accel = { 0, rise, 0 },
+			rot = { 0, 45 },
+			rotSpeed = { -20, 20 },
+			lightEmission = 0.25,
+			lightInfluence = 0,
+		},
+	}
+end
+
+Vfx.Mastery = {
+	gold = masteryTwinkle("star", "#F2C230", 1.5, { 1, 1.6 }, 0.4),
+	mythic = masteryTwinkle("star5", { { 0, "#FF7AA2" }, { 1, "#E8436F" } }, 1.5, { 1.2, 1.8 }, 0.5),
+	starlight = masteryTwinkle("star", "#CFE8FF", 1.5, { 1.2, 1.8 }, 0.2),
+	aurora = masteryTwinkle("wisp", { { 0, "#5BE3A0" }, { 0.5, "#6FA8FF" }, { 1, "#B07CFF" } }, 1, { 2, 2.8 }, 0.3),
+	comet = masteryTwinkle("star5", { { 0, "#FFE08A" }, { 1, "#FF8A3D" } }, 1.2, { 1.5, 2.2 }, 0.6),
+	mythicFlame = {
+		{
+			sprite = "flame",
+			at = "feet",
+			rate = 1.5,
+			lifetime = { 1, 1.6 },
+			size = { { 0, 0.3 }, { 0.3, 0.5 }, { 1, 0.1 } },
+			transparency = FADE,
+			color = "#FF6FA0",
+			speed = { 0.4, 0.8 },
+			spread = 25,
+			accel = { 0, 0.6, 0 },
+			lightEmission = 0.3,
+			lightInfluence = 0.2,
+		},
+	},
 }
 
 -- ─── World landmarks ─────────────────────────────────────────────────────────────────

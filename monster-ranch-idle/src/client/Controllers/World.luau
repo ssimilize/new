@@ -416,6 +416,7 @@ local function appearanceKey(a): string
 		tostring(math.floor((a.weight or 0) * 10 + 0.5)),
 		tostring(a.archetype),
 		accessoryKey(a.acc), -- worn accessories are built into the model
+		tostring(a.aura or ""), -- 3.3 mastery aura (Vfx)
 	}, "|")
 end
 
@@ -610,9 +611,19 @@ local function clearStatues(view)
 	view.statueKey = ""
 end
 
+-- 3.3: the plinth style the plot's owner equipped (global.Mastery.here), or nil for the default.
+local function plinthFor(userId: number)
+	local here = ctx.Store:Get("global.Mastery.here")
+	local info = type(here) == "table" and here["u" .. tostring(userId)]
+	local id = type(info) == "table" and info.plinth
+	local def = type(id) == "string" and Config.Mastery.ItemById[id]
+	return if def and def.kind == "plinth" then def else nil
+end
+
 local function syncStatues(view, data)
 	local list = data.statues or {}
-	local keys = {}
+	local plinth = plinthFor(view.userId)
+	local keys = { if plinth then plinth.id else "" }
 	for i = 1, math.min(#list, MAX_STATUES) do
 		if type(list[i]) == "table" then
 			table.insert(keys, appearanceKey(list[i]))
@@ -640,8 +651,8 @@ local function syncStatues(view, data)
 				CanTouch = false,
 				Size = Vector3.new(WorldConfig.StatueRow.pedestal, 1.6, WorldConfig.StatueRow.pedestal),
 				CFrame = cf * CFrame.new(0, 0.8, 0),
-				Color = PEDESTAL,
-				Material = Enum.Material.SmoothPlastic,
+				Color = if plinth then Color3.fromHex(plinth.color) else PEDESTAL,
+				Material = if plinth then (Enum.Material :: any)[plinth.material] else Enum.Material.SmoothPlastic,
 				TopSurface = Enum.SurfaceType.Smooth,
 				Parent = view.folder,
 			})
@@ -1456,6 +1467,12 @@ function World.Start()
 		end)
 	)
 	table.insert(connections, ctx.Store:Observe("global.Plots", onPlots))
+	table.insert(
+		connections,
+		ctx.Store:Observe("global.Mastery.here", function()
+			onPlots(ctx.Store:Get("global.Plots"))
+		end)
+	)
 	task.spawn(loop)
 end
 

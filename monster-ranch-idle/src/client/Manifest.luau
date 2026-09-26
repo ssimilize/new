@@ -83,5 +83,7 @@ return {
 		"PhotoMode",
 		-- Glow-up · daily login streak
 		"LoginStreak",
+		-- 3.3 · Endgame
+		"Mastery",
 	},
 }

@@ -25,6 +25,7 @@ export type Appearance = {
 	lv: number,
 	stars: number,
 	acc: { [string]: string }?, -- worn accessories { [slot] = accessoryId } (1.5)
+	aura: string?, -- 3.3: mastery aura (Config.Vfx.Mastery key), added by Monsters:Appearance only
 }
 
 function Appearance.Of(m): Appearance

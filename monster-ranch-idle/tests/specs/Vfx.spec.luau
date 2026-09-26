@@ -77,6 +77,9 @@ return function(t)
 			table.insert(list, { name = "Eggs." .. id, specs = specs, kind = "monster" })
 		end
 		table.insert(list, { name = "EggReady", specs = Presets.EggReady, kind = "monster" })
+		for id, specs in Presets.Mastery do -- 3.3 mastery auras
+			table.insert(list, { name = "Mastery." .. id, specs = specs, kind = "monster" })
+		end
 		return list
 	end
 
@@ -366,6 +369,22 @@ return function(t)
 			for _, group in { Presets.Variants, Presets.Rarity } do
 				for _, specs in group do
 					expect(live(specs) <= 3).toBe(true)
+				end
+			end
+			-- 3.3: a mastery aura sits on top of everything above, so it stays a light sprinkle.
+			for id, specs in Presets.Mastery do
+				if live(specs) > Presets.Budget.mastery then
+					error(string.format("mastery aura %s has %.2f live particles", id, live(specs)))
+				end
+			end
+			for _, item in Config.Mastery.ItemById do
+				if item.kind == "aura" then
+					expect(type(Presets.Mastery[item.vfx]) == "table" and #Presets.Mastery[item.vfx] > 0).toBe(true)
+				end
+			end
+			for _, tier in Config.Mastery.Tiers do
+				if tier.aura then
+					expect(type(Presets.Mastery[tier.aura]) == "table").toBe(true)
 				end
 			end
 		end)

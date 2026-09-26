@@ -274,7 +274,7 @@ local function attack(player, index: number, ids)
 	if won then
 		rewards = Rewards:Grant(player, Config.WinReward, "arena_win")
 	end
-	ctx.Bus:Publish("ArenaBattle", player, { won = won, rating = record.rating })
+	ctx.Bus:Publish("ArenaBattle", player, { won = won, rating = record.rating, squad = table.clone(ids) })
 	publish(player)
 	return { replay = replay, win = won, delta = delta, rating = record.rating, tier = Logic.Tier(record.rating).id, rewards = rewards }
 end

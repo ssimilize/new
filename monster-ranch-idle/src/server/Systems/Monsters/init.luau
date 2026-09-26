@@ -24,7 +24,10 @@
 	  Monsters:AddMood(player, id, amount)
 	  Monsters:AddVisibleTrait(player, id) -> traitId?                  -- Rebirth's 3rd trait slot
 	  Monsters:SetAccessory(player, id, slot, accessoryId?) -> previous? -- Accessories (1.5)
-	MonsterRemoved's detail carries the removed record's `acc` (it is stripped from the record).
+	MonsterRemoved's detail carries the removed record's `acc` (it is stripped from the record)
+	and (3.3) its `line` and `rarity`.
+	  Monsters:RegisterAppearanceDecorator(key, fn(player, record, appearance))  -- 3.3: adds render-only
+	                                              fields (Mastery's aura) to Monsters:Appearance
 	  Monsters:CoinRate(player, id) -> number
 	  Monsters:Stats(player, id) -> stats?
 	  Monsters:Appearance(player, id) -> Appearance?
@@ -55,6 +58,7 @@ local Currency
 local Config
 
 local capacityProviders = {}
+local appearanceDecorators = {} -- [key] = fn(player, record, appearance)
 local moodFloorProviders = {}
 local growing = {} -- [player] = { [id] = true }
 
@@ -243,7 +247,15 @@ function Monsters:Remove(player, id: string, reason: string)
 	local acc = m.acc
 	m.acc = nil
 	ctx:Dirty(player, "list", id)
-	ctx.Bus:Publish("MonsterRemoved", player, { id = id, reason = reason, pen = m.pen, loc = m.loc, acc = acc })
+	ctx.Bus:Publish("MonsterRemoved", player, {
+		id = id,
+		reason = reason,
+		pen = m.pen,
+		loc = m.loc,
+		acc = acc,
+		line = m.line,
+		rarity = m.rarity,
+	})
 	return m
 end
 
@@ -340,7 +352,21 @@ end
 
 function Monsters:Appearance(player, id: string)
 	local m = Monsters:Get(player, id)
-	return m and Appearance.Of(m)
+	if not m then
+		return nil
+	end
+	local appearance = Appearance.Of(m)
+	for key, fn in appearanceDecorators do
+		local ok, err = pcall(fn, player, m, appearance)
+		if not ok then
+			warn(string.format("[Monsters] appearance decorator %s failed: %s", key, tostring(err)))
+		end
+	end
+	return appearance
+end
+
+function Monsters:RegisterAppearanceDecorator(key: string, fn)
+	appearanceDecorators[key] = fn
 end
 
 -- Growth -------------------------------------------------------------------------------
