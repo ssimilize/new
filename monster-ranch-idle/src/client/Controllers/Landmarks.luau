@@ -11,8 +11,13 @@
 	are placed in the visible parts' box, so a building is attached again a second after its last
 	new piece arrives. A building added later (a rebuilt hub) is attached when it
 	appears; one that leaves the Workspace is cleared by Vfx. Low graphics halves the landmark
-	rates through Vfx.SetQuality (World routes the setting). No state, actions or bus topics.
+	rates through Vfx.SetQuality (World routes the setting). It also drives the night glow: every
+	Lighting.ClockTime change (the Weather controller sweeps it through dusk and dawn) becomes
+	Vfx.SetNight(Vfx.NightFromClock(ClockTime)), for monsters, landmarks and bursts alike.
+	No state, actions or bus topics.
 ]]
+
+local Lighting = game:GetService("Lighting")
 
 local Client = script.Parent.Parent
 local Vfx = require(Client.Visuals.Vfx)
@@ -76,7 +81,13 @@ end
 
 function Landmarks.Init(_ctx) end
 
+local function followClock()
+	Vfx.SetNight(Vfx.NightFromClock(tonumber(Lighting.ClockTime) or 14))
+end
+
 function Landmarks.Start()
+	followClock()
+	table.insert(connections, Lighting:GetPropertyChangedSignal("ClockTime"):Connect(followClock))
 	task.spawn(function()
 		local world = workspace:WaitForChild("World", 60)
 		if not world then

@@ -32,13 +32,20 @@
 	  offset         monsters: { x, y, z } studs added to the anchor (scaled like sizes)
 	  box            landmarks and bursts: { x, y, z } studs, the part the particles spawn in
 	  core           a portal core: may glow above 0.3 (landmarks only)
+	  night          0..1: how much this emitter glows at night (default: its sprite's Night.sprites
+	                 weight; 0 keeps it as lit by day, which is right for smoke, dust and leaves)
 
 	Monster numbers are authored for a monster RefHeight studs tall; Visuals/Vfx scales sizes,
 	speeds, accelerations and offsets with the model's Height. Budgets (live particles =
 	rate x lifetime max): an aura <= 8, an aura with two mutations <= 12, a landmark <= 60.
 
+	Night: the daytime LightEmission rule (<= 0.3) is about the sunny sky washing glows out. After
+	dark the same sprites look dull and, with LightInfluence > 0, go grey with the world, so Night
+	lifts glowing sprites: LightEmission + boost x weight x night (up to cap) and LightInfluence
+	x (1 - weight x night). `night` (0..1) follows Lighting.ClockTime through dusk and dawn.
+
 	Tables: Auras[element], Mutations[mutationId], Variants.shiny / .rainbow, Rarity[rarityId],
-	Landmarks[hubId | "skyGate"], Bursts[name].
+	Landmarks[hubId | "skyGate"], Bursts[name], Night.
 ]]
 
 local Vfx = {}
@@ -1433,5 +1440,33 @@ Vfx.Bursts = {
 
 -- Evolve also throws a few of the monster's own element sprites (each aura emitter, this many).
 Vfx.EvolveElementEmit = 6
+
+-- The night glow boost (see the header). Clock hours: full day between dawn[2] and dusk[1], full
+-- night between dusk[2] and dawn[1], a smooth ramp in between (the Weather controller sweeps
+-- ClockTime from ~14 to ~0.5 through dusk and back through dawn). Sprites not listed have weight 0:
+-- matte things (leaf, petal, pebble, puff, confetti, heart, coin) stay lit like the world.
+Vfx.Night = {
+	boost = 0.45,
+	cap = 0.85,
+	dusk = { 17, 19 },
+	dawn = { 5, 7 },
+	sprites = {
+		flame = 1,
+		ember = 1,
+		bolt = 1,
+		star = 1,
+		star5 = 0.8,
+		prism = 1,
+		glow = 1,
+		swirl = 1,
+		voidswirl = 1,
+		rune = 1,
+		ring = 0.8,
+		snowflake = 0.6,
+		bubble = 0.5,
+		droplet = 0.4,
+		wisp = 0.5,
+	},
+}
 
 return Vfx
