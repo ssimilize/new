@@ -4,15 +4,23 @@
 	  top-left      coins / gems / food pills (count-up; gems → Store "gems", food → Store "food")
 	  top-right     Ranch Level + XP bar (Config.Unlocks.XPToNext) · ⚙ Settings button beside it
 	  top-centre    server weather banner (global.Weather) with mutation hint and countdown
-	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market
+	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market · Daily
 	                (locked until Config.Market.Unlock)
 	  right stack   Expeditions (finished badge) · Stampede card · Quests (claimable badge)
 	                · Breeding · Hall of Fame (locked until their Ranch Level)
-	  bottom-centre Ranch · "Collect all +X" (live jar total, session.Ranch) · Store
+	  bottom-centre Ranch · "Collect all +X" (live jar total, session.Ranch) · Store ("!" when the VIP crate is ready)
 
 	Public:
 	  Hud:GetTarget(name) -> GuiObject?   tutorial arrow targets: incubator, jar, shop, monster,
-	                                      expeditions, weather, quests (+ any button name)
+	                                      expeditions, weather, quests (+ any button name); the
+	                                      counters coins, gems, food and the level bar (level)
+	  Hud:HoldCounter(kind)               kind = "coins" | "gems" | "food": the pill keeps showing
+	                                      its current number while a reward flies in (Celebrate)
+	  Hud:ReleaseCounter(kind, seconds?)  counts up to the real balance over `seconds`
+	  Hud:PulseCounter(kind)              a bump as a flying icon lands
+	Holds nest, and each one lets go by itself after HOLD_LIMIT seconds.
+	While a Stampede is in its lobby or live, the Stampede card glows gold, pulses and shows a
+	badge until you join (the countdown on it is the time to the start / the end).
 	Client bus: "Hud.Flash" (buttonName | targetName) pulses that button.
 	The centre (weather banner, bottom bar) hides while a modal screen is open.
 	Market.MailCollected (update 1.3) shows as a toast ("Your Rare Cindlet sold for 12K!").
@@ -26,6 +34,10 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
+local Vip = require(Shared.Logic.Vip)
+local LoginStreak = require(Shared.Logic.LoginStreak)
+local MasteryLogic = require(Shared.Logic.Mastery)
+local CodexLogic = require(Shared.Logic.Codex) -- glow-up O: claimable milestones badge
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -136,6 +148,8 @@ local function previewIcon(lineId: string, size: number): GuiObject
 	return Icon.new("star", size)
 end
 
+local HOLD_LIMIT = 6 -- seconds a counter may be held before it lets go by itself
+
 local function pill(parent: Instance, kind: string, order: number, onTap: (() -> ())?)
 	-- The pill lays out its children, so the tap target lives on a plain holder around it.
 	local holder = Tiles.frame({ AutomaticSize = Enum.AutomaticSize.XY, Size = UDim2.new(), LayoutOrder = order, Parent = parent })
@@ -143,19 +157,54 @@ local function pill(parent: Instance, kind: string, order: number, onTap: (() ->
 	if onTap then
 		Tiles.tap(holder, onTap)
 	end
-	local state = { shown = 0, pill = p }
+	-- shown: the balance in the Store; display: the number on screen right now.
+	local state = { shown = 0, display = 0, holds = 0, holdToken = 0, stop = nil :: (() -> ())?, pill = p }
+	local function countTo(value: number, seconds: number)
+		if state.stop then
+			state.stop()
+		end
+		state.stop = Anim.countUp(p.Label, state.display, value, seconds, function(n)
+			state.display = n
+			return Format.short(math.floor(n + 0.5))
+		end)
+	end
 	function state.set(value: number)
 		if value == state.shown then
 			return
 		end
 		local from = state.shown
 		state.shown = value
-		Anim.countUp(p.Label, from, value, 0.6, function(n)
-			return Format.short(math.floor(n + 0.5))
-		end)
+		if state.holds > 0 then
+			return -- a reward is still flying in; release() shows the new total
+		end
+		countTo(value, 0.6)
 		if value > from then
 			Anim.pulse(p.Root, 0.06)
 		end
+	end
+	function state.release(seconds: number?)
+		if state.holds <= 0 then
+			return
+		end
+		state.holds -= 1
+		if state.holds == 0 then
+			countTo(state.shown, seconds or 0.6)
+		end
+	end
+	function state.hold()
+		state.holds += 1
+		state.holdToken += 1
+		local token = state.holdToken
+		if state.stop then
+			state.stop() -- freeze on the number the player is looking at
+			state.stop = nil
+		end
+		task.delay(HOLD_LIMIT, function()
+			if state.holdToken == token and state.holds > 0 then
+				state.holds = 1
+				state.release(0.6)
+			end
+		end)
 	end
 	return state
 end
@@ -163,11 +212,12 @@ end
 -- Refreshers ------------------------------------------------------------------------
 
 local pills = {}
-local level = { label = nil, pct = nil, bar = nil }
+local level = { label = nil, pct = nil, bar = nil, entry = nil }
 local weather = { frame = nil, text = nil, time = nil }
-local stampede = { title = nil, time = nil, iconHolder = nil, bossId = nil }
+local stampede = { title = nil, time = nil, iconHolder = nil, bossId = nil, card = nil, stroke = nil, live = false, pulseAt = 0 }
 local collect = { button = nil, last = -1 }
 local growReady = 0
+local codexClaimable = 0 -- glow-up O: recounted only when the Codex or its claims change
 
 local function refreshCurrency()
 	pills.coins.set(StoreKit.num(ctx.Store, "profile.Currency.coins"))
@@ -177,6 +227,8 @@ end
 
 local shownCap = 0 -- Config.Unlocks.MaxLevelAt when the level bar was last drawn
 
+local refreshLocks -- lock icons on the side buttons (defined below refreshLevel)
+
 local function refreshLevel()
 	local lv = StoreKit.level(ctx.Store)
 	local xp = StoreKit.num(ctx.Store, "profile.Progression.xp")
@@ -184,9 +236,37 @@ local function refreshLevel()
 	-- The cap is date-gated (60, then 70 from 3.2's launch); read it at the synced time.
 	local atCap = lv >= Config.Unlocks.MaxLevelAt(ctx:Now())
 	local frac = if atCap or need <= 0 then 1 else math.clamp(xp / need, 0, 1)
+	-- 3.3: at the cap the level bar becomes Ranch Mastery and opens the Mastery screen. The entry
+	-- also appears for a player with any Ranch Mastery or a Silver line (Config.Mastery.HudTier).
+	local mastery = StoreKit.tbl(ctx.Store, "profile.Mastery")
+	local mLevel = tonumber(mastery.level) or 0
+	local showEntry = atCap or mLevel > 0
+	if not showEntry and type(mastery.lines) == "table" then
+		for _, points in mastery.lines do
+			if MasteryLogic.TierIndex(tonumber(points) or 0) >= Config.Mastery.HudTier then
+				showEntry = true
+				break
+			end
+		end
+	end
+	if level.entry then
+		level.entry.Visible = showEntry and ctx.Router:Has("Mastery")
+	end
+	if atCap and showEntry then
+		local mXp = tonumber(mastery.xp) or 0
+		local mFrac = math.clamp(mXp / MasteryLogic.RanchCost(mLevel), 0, 1)
+		level.label.Text = string.format("Lv %d · Mastery %d", lv, mLevel)
+		level.pct.Text = string.format("%d%%", math.floor(mFrac * 100))
+		level.bar:SetValue(mFrac, true)
+		return refreshLocks()
+	end
 	level.label.Text = string.format("Ranch Lv %d", lv)
 	level.pct.Text = if atCap then "MAX" else string.format("%d%%", math.floor(frac * 100))
 	level.bar:SetValue(frac, true)
+	return refreshLocks()
+end
+
+refreshLocks = function()
 	for _, entry in buttons do
 		if entry.lockKey then
 			local locked = isLocked(entry)
@@ -243,6 +323,25 @@ local function refreshBadges()
 	local claim = StoreKit.claimableQuests(ctx.Store)
 	buttons.Quests.badge:Set(if claim > 0 then tostring(claim) else nil)
 	buttons.Monsters.badge:Set(if growReady > 0 then "!" else nil)
+	if buttons.Store and buttons.Store.badge then
+		-- VIP Rancher: today's crate is waiting in the Store.
+		local passes = ctx.Store:Get("session.Monetization.passes")
+		local vip = ctx.Store:Get("profile.Monetization.vip")
+		local owned = type(passes) == "table" and passes[Config.Monetization.VipCrate.pass] == true
+		local ready = Vip.CrateReady(owned, type(vip) == "table" and vip.day or nil, Vip.Day(now))
+		buttons.Store.badge:Set(if ready then "!" else nil)
+	end
+	-- Glow-up: the daily streak calendar has an unclaimed day.
+	local streak = ctx.Store:Get("profile.LoginStreak")
+	local daily = type(streak) == "table" and LoginStreak.Preview(streak, now // 86400).canClaim
+	buttons.Daily.badge:Set(if daily then "!" else nil)
+	-- Glow-up O: Codex milestones ready to claim.
+	buttons.Codex.badge:Set(if codexClaimable > 0 then tostring(codexClaimable) else nil)
+end
+
+local function refreshCodex()
+	codexClaimable = CodexLogic.Claimable(ctx.Store:Get("profile.Monsters.codex"), ctx.Store:Get("profile.Codex.claimed"))
+	refreshBadges()
 end
 
 local function refreshMonsters()
@@ -285,6 +384,21 @@ local function refreshStampede(now: number)
 	end
 	stampede.title.Text = title
 	stampede.time.Text = if target then Format.clock(math.max(0, target - now)) else ""
+	-- Lobby or live: the card glows and pulses (with a badge until you join) so the fight is
+	-- visible from the ranch; one tap opens the Boss screen.
+	local live = (boss.state == "active" or boss.state == "lobby") and not isLocked(buttons.Stampede)
+	local joined = StoreKit.tbl(ctx.Store, "session.Boss").joined == true
+	if live ~= stampede.live then
+		stampede.live = live
+		stampede.stroke.Color = if live then C.Gold else C.White
+		stampede.stroke.Thickness = if live then 4 else 2.5
+		stampede.card.BackgroundColor3 = if live then Color3.fromHex("#7A2A1F") else C.Dark
+	end
+	buttons.Stampede.badge:Set(if live and not joined then "!" else nil)
+	if live and not joined and now - stampede.pulseAt >= 2 then
+		stampede.pulseAt = now
+		Anim.pulse(stampede.card, 0.1)
+	end
 	local def = bossRotation(boss.bossId)
 	if def and def.id ~= stampede.bossId then
 		stampede.bossId = def.id
@@ -361,6 +475,7 @@ local function build()
 	end)
 	targets.coins = pills.coins.pill.Root
 	targets.gems = pills.gems.pill.Root
+	targets.food = pills.food.pill.Root
 
 	-- Ranch Level (top-right)
 	local lvFrame = Tiles.frame({
@@ -387,6 +502,19 @@ local function build()
 		Parent = lvFrame,
 	})
 	level.bar = Widgets.Bar({ Color = C.Blue, Position = UDim2.fromOffset(0, 28), Size = UDim2.new(1, 0, 0, 16), Parent = lvFrame })
+	-- 3.3: the Mastery entry, a tap target over the level bar (shown from the level cap on).
+	level.entry = New("TextButton", {
+		Name = "MasteryEntry",
+		Text = "",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 5,
+		Visible = false,
+		Parent = lvFrame,
+	})
+	level.entry.Activated:Connect(function()
+		openScreen("Mastery")
+	end)
 	targets.level = lvFrame
 
 	-- Settings: a small gear left of the level bar (its old left-stack slot is the Market's).
@@ -404,6 +532,38 @@ local function build()
 		end,
 	})
 	buttons.Settings = { gui = settingsButton.Root, button = settingsButton, color = C.Gray }
+
+	-- Photo mode: a small camera under the gear (top-right utility column, clear of both stacks).
+	local photoButton = Button.new({
+		Name = "Photo",
+		Text = "📷",
+		Color = C.Purple,
+		Size = UDim2.fromOffset(46, 46),
+		TextSize = 24,
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -246, 0, 64),
+		Parent = root,
+		OnClick = function()
+			openScreen("PhotoMode")
+		end,
+	})
+	buttons.Photo = { gui = photoButton.Root, button = photoButton, color = C.Purple }
+
+	-- Glow-up Z: build your ranch (placement mode), under the camera.
+	local buildButton = Button.new({
+		Name = "Build",
+		Text = "🔨",
+		Color = C.Orange,
+		Size = UDim2.fromOffset(46, 46),
+		TextSize = 24,
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -246, 0, 118),
+		Parent = root,
+		OnClick = function()
+			openScreen("Decorate")
+		end,
+	})
+	buttons.Build = { gui = buildButton.Root, button = buildButton, color = C.Orange }
 
 	-- Weather (top-centre)
 	local banner = New("Frame", {
@@ -472,11 +632,14 @@ local function build()
 		openScreen("Monsters")
 	end)
 	sideButton(left, "Codex", "Codex", C.Blue, previewIcon("zappip", 32), 4, function()
-		openScreen("Codex")
+		openScreen("Codex", if codexClaimable > 0 then { tab = "milestones" } else nil)
 	end)
 	sideButton(left, "Market", "Market", C.Orange, Icon.new("coin", 28), 5, function()
 		openScreen("Market")
 	end, Config.Market.Unlock)
+	sideButton(left, "Daily", "Daily", C.Gold, Icon.new("star", 28), 6, function()
+		openScreen("LoginStreak")
+	end)
 
 	-- Right stack
 	local right = Tiles.col({
@@ -502,6 +665,8 @@ local function build()
 		LayoutOrder = 2,
 		Parent = right,
 	}, { Create.Corner(Theme.Radius.Button), Create.Stroke(2.5, C.White, 0.1) })
+	stampede.card = card
+	stampede.stroke = card:FindFirstChildOfClass("UIStroke")
 	stampede.iconHolder = Tiles.frame({ Position = UDim2.fromOffset(6, 9), Size = UDim2.fromOffset(40, 40), Parent = card })
 	stampede.title = Create.Text({
 		Text = "STAMPEDE",
@@ -590,13 +755,23 @@ local function build()
 		LayoutOrder = 2,
 		Parent = bottom,
 		OnClick = function()
+			-- Hold the coin counter so it counts up as the coins land, not when the reply does.
+			local kit = ctx:GetController("Celebrate")
+			local hold = kit and kit:Hold({ "coins" })
 			local ok, res = StoreKit.request(ctx, "Ranch.CollectAll")
-			if ok then
-				local coins = type(res) == "table" and tonumber(res.coins) or 0
-				if coins > 0 then
-					ctx:Sound("CoinCollect")
-					ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+			local coins = if ok and type(res) == "table" then tonumber(res.coins) or 0 else 0
+			if coins > 0 then
+				ctx:Sound("CoinCollect")
+				if kit then
+					kit:Reward({ { kind = "coins", amount = coins } }, { from = collect.button.Root, hold = hold })
 				else
+					ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+				end
+			elseif hold then
+				hold:Release()
+			end
+			if ok then
+				if coins <= 0 then
 					ctx:Toast("The jars are empty. Come back soon!", "info")
 				end
 				collect.last = -1
@@ -617,7 +792,7 @@ local function build()
 			openScreen("Store")
 		end,
 	})
-	buttons.Store = { gui = storeButton.Root, button = storeButton, color = C.Pink }
+	buttons.Store = { gui = storeButton.Root, button = storeButton, color = C.Pink, badge = Tiles.badge(storeButton.Root) }
 
 	centre = { bottom }
 end
@@ -695,16 +870,46 @@ function Hud:Flash(name: string)
 	flash(name)
 end
 
+function Hud:HoldCounter(kind: string)
+	local state = pills[kind]
+	if state then
+		state.hold()
+	end
+end
+
+function Hud:ReleaseCounter(kind: string, seconds: number?)
+	local state = pills[kind]
+	if state then
+		state.release(seconds)
+	end
+end
+
+function Hud:PulseCounter(kind: string)
+	local state = pills[kind]
+	if state then
+		Anim.pulse(state.pill.Root, 0.12)
+	end
+end
+
 function Hud.Init(context)
 	ctx = context
 	build()
 	ctx.Store:Observe("profile.Currency", refreshCurrency)
+	ctx.Store:Observe("session.Boss", function()
+		if ctx.Store.Ready then
+			refreshStampede(ctx:Now())
+		end
+	end)
 	ctx.Store:Observe("profile.Progression", refreshLevel)
+	ctx.Store:Observe("profile.Mastery", refreshLevel)
 	ctx.Store:Observe("global.Weather", refreshWeather)
 	ctx.Store:Observe("profile.Monsters.list", refreshMonsters)
 	ctx.Store:Observe("profile.Quests", refreshBadges)
 	ctx.Store:Observe("profile.Expeditions.slots", refreshBadges)
 	ctx.Store:Observe("profile.Eggs.slots", refreshBadges)
+	ctx.Store:Observe("profile.LoginStreak", refreshBadges)
+	ctx.Store:Observe("profile.Codex", refreshCodex)
+	ctx.Store:Observe("profile.Monsters.codex", refreshCodex)
 	ctx.Bus:Subscribe("Hud.Flash", flash)
 	ctx.Net:On("Market.MailCollected", onMailCollected)
 	ctx.Router.Opened:Connect(refreshCentre)

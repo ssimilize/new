@@ -1540,7 +1540,8 @@ define("Workspace", {
 			if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" then
 				error("Raycast expects (Vector3, Vector3, RaycastParams?)", 2)
 			end
-			if params ~= nil and luneTypeof(params) ~= "RaycastParams" and typeof(params) ~= "RaycastParams" then
+			-- RaycastParams from the world's globals are tables the world's typeof knows (Lune's does not).
+			if params ~= nil and luneTypeof(params) ~= "RaycastParams" and recOf(self).world:typeof(params) ~= "RaycastParams" then
 				error("Raycast params must be RaycastParams", 2)
 			end
 			return recOf(self).world.raycastResult
@@ -1750,6 +1751,28 @@ define("UserInputService", {
 		end,
 		GetFocusedTextBox = function()
 			return nil
+		end,
+	},
+})
+
+-- HapticService: a connected pad vibrates; the latest motor values are kept in
+-- world.input.motors[padName][motorName] so a test can read what the game asked for.
+define("HapticService", {
+	methods = {
+		IsVibrationSupported = function(self, pad)
+			return table.find(recOf(self).world.input.gamepads, pad) ~= nil
+		end,
+		IsMotorSupported = function(self, pad, _motor)
+			return table.find(recOf(self).world.input.gamepads, pad) ~= nil
+		end,
+		SetMotor = function(self, pad, motor, value: number)
+			if luneTypeof(pad) ~= "EnumItem" or luneTypeof(motor) ~= "EnumItem" or type(value) ~= "number" then
+				error("SetMotor(inputType: Enum.UserInputType, motor: Enum.VibrationMotor, value: number)", 2)
+			end
+			local input = recOf(self).world.input
+			input.motors = input.motors or {}
+			input.motors[pad.Name] = input.motors[pad.Name] or {}
+			input.motors[pad.Name][motor.Name] = value
 		end,
 	},
 })

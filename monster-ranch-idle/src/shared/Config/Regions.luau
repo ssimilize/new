@@ -204,6 +204,33 @@ Regions.List = {
 		colors = { sky = "#CFEFFF", ground = "#EAF6FF" },
 		added = "3.0",
 	},
+	-- Glow-up DR · Deep Reef (roadmap 4.0 · Tides of the Deep): the underwater region, reached by
+	-- diving from the Dive Dock (Config.DeepReef); its Reef Gate opens these expeditions.
+	{
+		id = "reef",
+		short = "Reef", -- region tab label
+		name = "Deep Reef",
+		order = 8,
+		unlock = "region_reef",
+		opensAt = 1846076400, -- Sat 1 Jul 2028, 15:00 UTC (4.0 · Tides of the Deep)
+		elements = { "tide", "light" },
+		enemyLines = { "finnip", "glowray", "shellkin", "anglit", "jellow" },
+		levels = { 68, 82 },
+		rarity = { 5, 6 },
+		bosses = {
+			[10] = { name = "The Kelp Warden", line = "shellkin", form = "atolltitan" },
+			[20] = {
+				name = "The Lantern Tide",
+				line = "glowray",
+				form = "auroramanta",
+				firstClear = { { kind = "egg", id = "reef", amount = 2 } },
+			},
+		},
+		food = "sour",
+		eggs = { { egg = "reef", perMinute = 0.003, fromStage = 1 }, { egg = "royal", perMinute = 0.0005, fromStage = 10 } },
+		colors = { sky = "#0E5E7A", ground = "#1FA3A0" },
+		added = "4.0",
+	},
 }
 
 Regions.ById = {}

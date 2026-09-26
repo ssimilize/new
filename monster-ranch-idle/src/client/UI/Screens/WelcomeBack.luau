@@ -2,7 +2,9 @@
 	WelcomeBack (C2): the offline summary (mock-welcome). Opened by the Notifications
 	controller whenever session.WelcomeBack.pending turns true.
 
-	  away time, coin total, item cards (session.WelcomeBack.items { kind, text, icon? })
+	  away time, coin total (counts up on open, slower for a bigger total), item cards
+	  (session.WelcomeBack.items { kind, text, icon? }); the claimed coins fly from Collect
+	  into the HUD counter (Celebrate)
 	  Collect → WelcomeBack.Claim { double = false }
 	  Watch ad ×2 coins → WelcomeBack.Claim { double = true } (disabled with no welcomeDouble ads left)
 	  footer: next Stampede countdown
@@ -14,6 +16,7 @@ local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Appearance = require(Shared.Logic.Appearance)
+local Celebration = require(Shared.Logic.Celebration)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -186,15 +189,24 @@ function WelcomeBack.Build(ctx)
 	local claiming = false
 	local function claim(isDouble: boolean)
 		claiming = true
+		local kit = ctx:GetController("Celebrate")
+		local hold = kit and kit:Hold({ "coins" })
 		local ok, res = StoreKit.request(ctx, "WelcomeBack.Claim", { double = isDouble })
 		claiming = false
+		local coins = if ok and type(res) == "table" then tonumber(res.coins) or 0 else 0
 		if ok then
-			local coins = type(res) == "table" and tonumber(res.coins) or 0
 			ctx:Sound("CoinCollect")
 			if coins > 0 then
-				ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+				if kit then
+					kit:Reward({ { kind = "coins", amount = coins } }, { from = collect.Root, hold = hold })
+				else
+					ctx:Toast("+" .. Format.short(coins) .. " coins", "reward")
+				end
 			end
 			ctx.Router:Close("WelcomeBack")
+		end
+		if hold and coins <= 0 then
+			hold:Release()
 		end
 	end
 	collect:SetOnClick(function()
@@ -212,6 +224,15 @@ function WelcomeBack.Build(ctx)
 		Open = function()
 			watch.Start()
 			render()
+			local wb = StoreKit.tbl(store, "session.WelcomeBack")
+			local coins = tonumber(wb.coins) or 0
+			local kit = ctx:GetController("Celebrate")
+			if kit and wb.pending == true and coins > 0 then
+				local size = Celebration.CoinSize(coins, StoreKit.num(store, "session.Ranch.income"))
+				kit:CountUp(coinText, 0, coins, size, function(n)
+					return "+" .. Format.commas(math.floor(n + 0.5))
+				end)
+			end
 			if stopFooter then
 				stopFooter()
 			end

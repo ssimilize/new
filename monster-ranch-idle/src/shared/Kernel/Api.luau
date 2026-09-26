@@ -58,6 +58,8 @@ Api.Actions = {
 	},
 	-- 3.2: "auto" follows the player's Roblox language (Shared/Locale).
 	["Settings.SetLanguage"] = { schema = T.struct({ language = T.enum(Locale.Choices) }), rate = 2, returns = "nil" },
+	-- Glow-up P: the Graphics choice; "low" also sets lowGraphics (reduced motion), the others clear it.
+	["Settings.SetGraphics"] = { schema = T.struct({ graphics = T.enum({ "auto", "high", "low" }) }), rate = 2, returns = "nil" },
 
 	-- Monsters (S2) ---------------------------------------------------------------
 	["Monsters.Rename"] = { schema = T.struct({ id = id, name = T.string(20) }), rate = 1, returns = "{ name: string } (filtered)" },
@@ -326,6 +328,13 @@ Api.Actions = {
 	-- Boss (S4) -------------------------------------------------------------------
 	["Boss.Join"] = { schema = T.none, rate = 1, returns = "nil" },
 	["Boss.Cheer"] = { schema = T.struct({ taps = T.integer(1, Config.Boss.MaxTapsPerRequest) }), rate = 3, returns = "{ cheer: number }" },
+	-- Titan (glow-up TT): a scheduled, cross-server titan invasion, on the same unlock as Boss.
+	["Titan.Join"] = { schema = T.none, rate = 1, returns = "nil" },
+	["Titan.Cheer"] = {
+		schema = T.struct({ taps = T.integer(1, Config.Titan.MaxTapsPerRequest) }),
+		rate = 3,
+		returns = "{ cheer: number }",
+	},
 
 	-- Breeding (S5) ---------------------------------------------------------------
 	["Breeding.Start"] = { schema = T.struct({ pod = T.integer(1, 2), a = id, b = id }), rate = 2, returns = "{ endsAt: number }" },
@@ -454,6 +463,140 @@ Api.Actions = {
 		rate = 0.2,
 		returns = "{ passes: { [key]: boolean } }  -- after a client purchase prompt closes",
 	},
+	-- Asked before a product prompt: fails with why it can't be bought now (owned, off season).
+	["Monetization.CanBuy"] = { schema = T.struct({ product = T.key(Config.Monetization.ProductByKey) }), rate = 2, returns = "nil" },
+	-- VIP Rancher: one crate per UTC day (Config.Monetization.VipCrate); also fires Rewards.Granted.
+	["Monetization.ClaimVipCrate"] = { schema = T.none, rate = 1, returns = "{ rewards: { Reward }, day: number }" },
+
+	-- Login streak + reminders (glow-up) ---------------------------------------------
+	["LoginStreak.Claim"] = {
+		schema = T.none,
+		rate = 1,
+		returns = "{ day, streak, track, shieldUsed, restarted, milestone: number (0 = none), items: { Reward } }",
+	},
+	["Reminders.SetOptIn"] = { schema = T.struct({ on = T.boolean }), rate = 1, returns = "{ on: boolean }" },
+
+	-- Mastery (3.3 endgame, Config/Mastery) --------------------------------------------------
+	-- Rerolls one visible trait slot for Star Shards (a seeded roll; odds in Logic/Mastery).
+	["Mastery.Reroll"] = {
+		schema = T.struct({ id = id, slot = T.integer(1, Config.Traits.VisibleSlots + 1) }),
+		rate = 2,
+		returns = "{ trait: number, cost: number, rerolls: number }",
+	},
+	["Mastery.Buy"] = {
+		schema = T.struct({ item = T.key(Config.Mastery.ShopById) }),
+		rate = 2,
+		returns = "{ item: string, level: number }",
+	},
+	-- item "" takes the kind off.
+	["Mastery.Equip"] = {
+		schema = T.struct({ kind = T.enum(Config.Mastery.EquipKinds), item = T.string(40, 0) }),
+		rate = 3,
+		returns = "nil",
+	},
+
+	-- Community (glow-up L) · Config.Community, Systems/Community -----------------------------
+	-- A trick by the player's nearest own pen monster; everyone on the server sees Community.Trick.
+	["Community.Trick"] = {
+		schema = T.struct({ id = id, trick = T.key(Config.Community.TrickById) }),
+		rate = 1,
+		returns = "{ state: string }",
+	},
+	["Community.ClaimGroup"] = { schema = T.none, rate = 0.5, returns = "{ rewards: { Reward } }  -- once per account, group members" },
+	["Community.ClaimPremium"] = { schema = T.none, rate = 0.5, returns = "{ rewards: { Reward } }  -- once per UTC day, Premium" },
+	["Community.Balcony"] = { schema = T.struct({ enter = T.boolean }), rate = 1, returns = "nil  -- VIP balcony up / down" },
+
+	-- Gifts (glow-up L) · Config.Community.Gifts, Systems/Gifts --------------------------------
+	-- Two steps: Prepare checks everything and returns a token for the confirm dialog; Send spends it.
+	["Gifts.Prepare"] = {
+		schema = T.struct({
+			to = T.userId,
+			kind = T.enum(Config.Community.Gifts.kinds),
+			item = T.string(40, 1),
+			amount = T.integer(1, Config.Community.Gifts.maxFood),
+		}),
+		rate = 2,
+		returns = "{ token: string, name: string|false, kind, item, amount, left: number }",
+	},
+	["Gifts.Send"] = { schema = T.struct({ token = T.string(40, 1) }), rate = 1, returns = "{ left: number }" },
+	-- Picks the friend a Ranch Pass gift (product ranchPassGift) goes to; then Monetization.CanBuy.
+	["Gifts.PassTarget"] = { schema = T.struct({ to = T.userId }), rate = 1, returns = "{ name: string|false }" },
+
+	-- Companions (glow-up T) · Config.Companions, Systems/Companions -----------------------------
+	-- The monsters walking with the player, in formation order ({} sends them all home).
+	["Companions.Set"] = {
+		schema = T.struct({ ids = T.array(id, Config.Companions.MaxSlots, 0) }),
+		rate = 2,
+		returns = "{ ids: { monsterId } }",
+	},
+
+	-- Decor placement (glow-up Z) · Config/Decor, Logic/DecorLayout, Systems/Decor -----------------
+	-- The whole plot layout from placement mode; the server re-checks ownership, bounds, overlaps, cap.
+	["Decor.Save"] = {
+		schema = T.struct({
+			layout = T.array(
+				T.struct({
+					id = T.key(Config.Decor.ById),
+					x = T.integer(-64, 64),
+					z = T.integer(-64, 64),
+					rot = T.integer(0, 7),
+				}),
+				Config.Decor.Layout.capMax,
+				0
+			),
+		}),
+		rate = 0.5,
+		returns = "{ count: number }",
+	},
+
+	-- Codex milestones (glow-up O) · Config/Codex, Logic/Codex, Systems/Codex -----------------------
+	-- Each milestone once per account; gems via Rewards.Granted, titles and the aura via Mastery.
+	["Codex.Claim"] = {
+		schema = T.struct({ milestone = T.string(48, 1) }),
+		rate = 2,
+		returns = "{ milestone: string, gems: number, items: { itemId } }",
+	},
+
+	-- Bond (glow-up Q) · Config.Bond, Systems/Bond ---------------------------------------------
+	-- A finished care gesture on an own pen monster; the kind must be off its cooldown for that monster.
+	["Bond.Care"] = {
+		schema = T.struct({ id = id, kind = T.enum(Config.Bond.KindIds) }),
+		rate = 1,
+		returns = "{ hearts: number, points: number, gained: boolean, learned: trickId|false }",
+	},
+
+	-- Postcards (glow-up X) · Config/Postcards, Logic/Postcards, Systems/Postcards --------------
+	-- ★ keeps a postcard in the album for good (at most Config.Postcards.maxFavourites).
+	["Postcards.Favourite"] = { schema = T.struct({ card = id, on = T.boolean }), rate = 3, returns = "{ fav: boolean, kept: boolean }" },
+	-- An own postcard to a Roblox friend's album (Gifts' sender gates, Config.Postcards.Send caps).
+	["Postcards.Send"] = { schema = T.struct({ card = id, to = T.userId }), rate = 1, returns = "{ left: number }" },
+	-- Visits (glow-up Y) · Config.Visits, Systems/Visits ---------------------------------------
+	-- A Roblox friend's ranch: here (plot), their server (teleport) or their snapshot (showcase).
+	["Visits.Visit"] = {
+		schema = T.struct({ userId = T.userId, snapshot = T.optional(T.boolean) }),
+		rate = 0.5,
+		returns = "{ mode: 'here'|'teleport'|'showcase', plot: number?, name: string? }",
+	},
+	["Visits.Leave"] = { schema = T.none, rate = 2, returns = "nil  -- close the Visiting Showcase" },
+	-- Like the ranch in the showcase (mailed to its owner); once per ranch per UTC day.
+	["Visits.Like"] = { schema = T.none, rate = 1, returns = "{ paid: boolean, counted: boolean }" },
+	-- Live races (glow-up LR) · Config.LiveRace, Logic/LiveRace, Systems/LiveRace -------------------
+	-- Join rides the current mount (Riding); Progress reports the rider's position, the server checks it.
+	["LiveRace.Join"] = { schema = T.none, rate = 1, returns = "{ heat: number, lane: number }" },
+	["LiveRace.Leave"] = { schema = T.none, rate = 1, returns = "nil" },
+	["LiveRace.Progress"] = {
+		schema = T.struct({ heat = T.integer(1), x = T.number(-2000, 2000), z = T.number(-2000, 2000), drift = T.boolean }),
+		rate = 8,
+		returns = "{ accepted: boolean, x, z, progress, lap, meter, finished: boolean }",
+	},
+	["LiveRace.Jump"] = { schema = T.struct({ heat = T.integer(1) }), rate = 4, returns = "{ ok: boolean }" },
+	["LiveRace.Boost"] = { schema = T.struct({ heat = T.integer(1) }), rate = 2, returns = "{ meter: number, seconds: number }" },
+	-- Racing gear (glow-up LR) · Systems/RaceGear: cosmetic; item "" takes the kind off.
+	["RaceGear.Equip"] = {
+		schema = T.struct({ kind = T.enum(Config.LiveRace.GearKinds), item = T.string(40, 0) }),
+		rate = 3,
+		returns = "nil",
+	},
 }
 
 --[[
@@ -469,6 +612,11 @@ Api.Events = {
 	["Monsters.Evolved"] = "{ id: string, fromForm: string, toForm: string, stage: number }",
 	["Weather.Mutated"] = "{ id: string, mutation: string, result: 'added'|'combined' }",
 	["Boss.Result"] = "{ rank: number, share: number, damage: number, rewards: { Reward }, egg: boolean }",
+	["Boss.Starting"] = "{ bossId: string, startsAt: number }  -- to everyone as the lobby opens",
+	["Boss.Started"] = "{ bossId: string, startsAt: number, endsAt: number }  -- to everyone: the horn",
+	["Titan.Result"] = "{ won: boolean, damage: number, rewards: { Reward }, egg: boolean }",
+	["Titan.Starting"] = "{ titanId: string, startsAt: number }  -- to everyone as the lobby opens",
+	["Titan.Started"] = "{ titanId: string, startsAt: number, endsAt: number }  -- to everyone: the horn",
 	["Social.Broadcast"] = "{ kind: string, text: string, userId: number, appearance: Appearance? }",
 	["Trade.Incoming"] = "{ from: number, name: string }",
 	["Trade.Completed"] = "{ received: { { kind: string, appearance: Appearance? } } }",
@@ -476,6 +624,7 @@ Api.Events = {
 	["HallOfFame.Retired"] = "{ appearance: Appearance, stardust: number }",
 	["Raids.Result"] = "{ raid: string, replay: BattleReplay, win: boolean, rewards: { Reward } }",
 	["Market.MailCollected"] = "{ coins: number, items: { { kind, id } }, sold: { { key, price, proceeds, name? } }, returned: number }",
+	["Community.Trick"] = "{ owner: number, id: string, trick: string }  -- to everyone on the server",
 }
 
 --[[
@@ -490,7 +639,7 @@ Api.State = {
 	profile = {
 		Currency = "{ coins, gems, stardust, friendship, treats, ribbons, tokens = { [eventId]: n }, food = { sweet, spicy, savory, sour } }",
 		Progression = "{ level, xp }",
-		Settings = "{ music, sfx, lowGraphics, hideBroadcasts, language }",
+		Settings = "{ music, sfx, lowGraphics, hideBroadcasts, language, graphics }",
 		Monsters = "{ list = { [id]: Monster }, codex = { [lineId]: { forms = { [formId]: true }, variants = { [n]: true }, count } }, nextId }",
 		HallOfFame = "{ entries = { Statue }, legacy = { [element]: pct }, upgrades = { [upgradeId]: level }, starShards }",
 		Rebirth = "{ stars, skills = { [skillId]: level }, lastAt, dust }",
@@ -500,8 +649,8 @@ Api.State = {
 		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id } }",
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true } }",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
-		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true } }",
-		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true } }",
+		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true }, pass, passCredit }",
+		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true }, vip = { day, opened } }",
 		Leaderboards = "{ week, stampede }  -- this week's Stampede damage",
 		Events = "{ event, day, earned, login }  -- event tokens earned today (daily cap)",
 		EggHunt = "{ round, found = { spotIndex }, day, finds, total }",
@@ -515,6 +664,18 @@ Api.State = {
 		Raids = "{ day, rewarded, wins, runs }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n }, war = { day, n, claimed } }",
+		LoginStreak = "{ last, streak, pos, track, cycles, total, best, shield, shieldWeek, savedDay }  -- see Logic/LoginStreak",
+		Reminders = "{ on: boolean, asked: boolean, askedAt, stampede: boolean }",
+		Mastery = "{ level, xp, total, lines = { [lineId]: points }, rerolls = { [monsterId]: n }, owned = { [itemId]: true }, perks = { [perkId]: level }, equipped = { aura, flourish, plinth, title }, ladder = { season, xp, line, tier }, week = { id, xp, line } }",
+		Community = "{ invitedBy: userId|0, invites = { week, count }, invitesTotal, group: boolean, premiumDay }",
+		Gifts = "{ day, sent, to = { ['u'..userId]: n }, totalSent, totalReceived }",
+		Companions = "{ ids = { monsterId } }  -- glow-up T: who walks with the player",
+		Codex = "{ claimed = { [milestoneId]: unix }, owed = { itemId } }  -- glow-up O (badges private)",
+		Bond = "{ list = { [monsterId]: { pts, pet: unix?, brush: unix?, play: unix? } }, cares }  -- see Systems/Bond",
+		Postcards = "{ cards = { [cardId]: Card }, seq, day, sent, to = { ['u'..userId]: n }, totalSent, totalReceived }  -- glow-up X (Logic/Postcards)",
+		Visits = "{ day, liked = { ['u'..userId]: true }, paidCount, got, week, weekLikes, received }  -- glow-up Y (paid private)",
+		Decor = "{ layout = { { id, x, z, rot } }, migrated, starter }  -- glow-up Z: plot-local grid units, rot × 45°",
+		RaceGear = "{ owned = { [gearId]: true }, equipped = { saddle, trail, banner }, races, live, podiums, wins, duels }  -- glow-up LR",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -526,6 +687,7 @@ Api.State = {
 		Trade = "{ status: 'none'|'outgoing'|'incoming'|'open'|'countdown', partner = { userId, name }, mine = TradeSide, theirs = TradeSide, endsAt }",
 		Expeditions = "{ caravan = { id, host, region, stage, duration, members = { { userId, name } } }? }",
 		Boss = "{ joined: boolean, damage, cheer }",
+		Titan = "{ joined: boolean, damage, cheer }",
 		Clubs = "{ club: ClubView | false }  -- see Systems/Clubs header",
 		Market = "{ mail = { coins, items } }  -- mail waiting that could not be collected yet (e.g. ranch full)",
 		Contests = "{ entered: monsterId|false, votes = { [entryIndex]: stars } }  -- this show",
@@ -534,11 +696,15 @@ Api.State = {
 		TradingHub = "{ ad: adId|false, postedAt }",
 		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } }, moderator: boolean, queue = { view + reports, creatorId } }",
 		Arena = "{ rating, tier, attemptsLeft, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
+		Reminders = "{ available: boolean, prompt: boolean }  -- prompt = show Roblox's notification opt-in now",
+		Visits = "{ showcase: RanchSnapshot | false }  -- glow-up Y: the friend's ranch in this player's Visiting Showcase (Logic/Visits)",
+		LiveRace = "{ heat: number|false, meter, lap, progress, strikes, finished, dq, result = { place, time, finished, field, rewards, cup, dq }|false }  -- glow-up LR",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
 		Weather = "{ id, endsAt, nextRollAt, night: boolean, phaseEndsAt, summonedBy: string? }",
-		Boss = "{ state: 'idle'|'lobby'|'active', bossId, startsAt, endsAt, hp, maxHp, board = { { userId, name, damage } } }",
+		Boss = "{ state: 'idle'|'lobby'|'active', bossId, startsAt, endsAt, hp, maxHp, board = { { userId, name, damage } }, squads = { { userId, looks = { { line, form, stage, rarity, variant } } } } }",
+		Titan = "{ state: 'idle'|'lobby'|'active'|'fallen'|'retreated', titanId, startsAt, endsAt, hp, maxHp, servers, players, participants, poolOk, board = { { userId, name, damage } } }  -- hp/maxHp/servers/players are the SHARED pool; board is this server's top 10",
 		Plots = "{ ['1'..'6' as numbers]: PublicPlot }  -- array of 6",
 		Expeditions = "{ caravans = { [caravanId]: CaravanLobby } }",
 		Events = "{ id: string|false, name, endsAt, token = { name, glyph, color } | false }  -- the running seasonal event",
@@ -548,7 +714,16 @@ Api.State = {
 		Riding = "{ riders = { ['u'..userId]: { appearance, speed } } }",
 		Contests = "{ state: 'idle'|'entry'|'runway'|'results', show, theme, endsAt, nextAt, entries = { { userId, name, appearance } }, current, results = { { userId, name, appearance, score, votes, rank } } }",
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open, banner } }, ladder = { week, at, rows = { { rank, clubId, name, tag, color, emblem, points } } } }",
+		Monetization = "{ vip = { ['u'..userId]: true } }  -- VIP Rancher owners in this server (chat tags)",
+		Community = "{ premium = { ['u'..userId]: true } }  -- Roblox Premium members in this server (nameplate badge)",
 		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
+		Mastery = "{ here = { ['u'..userId]: { flourish: string|false, title: string|false, plinth: string|false } } }  -- equipped prestige cosmetics of players in this server",
+		Companions = "{ walkers = { ['u'..userId]: { { id, appearance } } } }  -- glow-up T: each player's companions, drawn by every client",
+		HallOfFame = "{ plaza = { ['u'..userId]: { slot, name, appearance, rarity } } }  -- glow-up O: best statues on the hub plaza (<= Config.Codex.Plaza.max)",
+		Bond = "{ here = { ['u'..userId]: { best = { { id, hearts, form, variant, name } }, plates = { { id, hearts, name } } } } }  -- ranch gate best friends + pen nameplates",
+		Visits = "{ crown = { userId, plot, likes, name } | false, stage = { week, userId, name, likes, monsters = { Appearance } } | false }  -- glow-up Y",
+		LiveRace = "{ state: 'idle'|'lobby'|'countdown'|'running'|'podium', heat, lobbyEndsAt, goAt, podiumEndsAt, laps, racers = { { userId, name, appearance, lane, progress, lateral, finished, dq } }, ghosts = { { name, time, lane } }, results = { { name, place, time|false, ghost, userId, dq, appearance? } }|false }  -- glow-up LR",
+		RaceGear = "{ here = { ['u'..userId]: { saddle, trail, banner } } }  -- glow-up LR: equipped racing gear in this server",
 	},
 }
 
@@ -564,7 +739,7 @@ Api.Topics = {
 	RanchXP = "(player, { amount: number, reason: string })",
 	LevelUp = "(player, { level: number })",
 	MonsterCreated = "(player, { id: string, source: 'hatch'|'breed'|'trade'|'reward'|'starter' })",
-	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth', acc: { [slot]: accessoryId }? })",
+	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth', acc: { [slot]: accessoryId }?, line: string?, rarity: number? })",
 	MonsterChanged = "(player, { id: string, fields: { string }? })",
 	MonsterFed = "(player, { id: string, flavor: string })",
 	MonsterLeveled = "(player, { id: string, lv: number })",
@@ -574,12 +749,15 @@ Api.Topics = {
 	EggHatched = "(player, { id: string, egg: string, rarity: number, variant: number })",
 	JarCollected = "(player, { coins: number })",
 	PenChanged = "(player, { pen: number })",
-	StageCleared = "(player, { region: string, stage: number, first: boolean })",
+	StageCleared = "(player, { region: string, stage: number, first: boolean, squad: { id }? })",
 	ExpeditionStarted = "(player, { slot: number, duration: number })",
-	ExpeditionClaimed = "(player, { slot: number, duration: number })",
+	ExpeditionClaimed = "(player, { slot: number, duration: number, region: string, stage: number, squad: { id }, loot: { Reward } })",
 	BossJoined = "(player, {})",
 	BossEnded = "(nil, { bossId: string, won: boolean })",
 	BossDamage = "(player, { damage: number, rank: number })  -- per participant when a Stampede ends",
+	TitanJoined = "(player, {})",
+	TitanEnded = "(nil, { titanId: string, won: boolean })",
+	TitanDamage = "(player, { damage: number, won: boolean })  -- per participant when a titan invasion ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
@@ -590,13 +768,13 @@ Api.Topics = {
 	CrystalCollected = "(player, { crystal: number })",
 	Mounted = "(player, { id: string, speed: number })",
 	SurfRun = "(player, { score: number, shells: number })",
-	RaceFinished = "(player, { place: number, time: number, day: number, cup: number })",
+	RaceFinished = "(player, { place: number, time: number, day: number, cup: number, live: boolean, riders: number })  -- live: glow-up LR",
 	HubTravel = "(player, { to: 'hub'|'main'|'server' })",
 	HubAdPosted = "(player, {})",
 	DesignPublished = "(player, { design: string })",
 	DesignBought = "(player, { design: string, creator: number })",
-	ArenaBattle = "(player, { won: boolean, rating: number })",
-	RaidFinished = "(player, { raid: string, win: boolean })",
+	ArenaBattle = "(player, { won: boolean, rating: number, squad: { id }? })",
+	RaidFinished = "(player, { raid: string, win: boolean, squad: { id }? })",
 	ContestEntered = "(player, { show: number, theme: string })",
 	ContestVoted = "(player, {})",
 	ContestPlaced = "(player, { rank: number, entries: number, theme: string, score: number })",
@@ -614,6 +792,14 @@ Api.Topics = {
 	MarketListed = "(player, { listing: string, key: string, price: number, club: boolean })",
 	MarketBought = "(player, { listing: string, key: string, kind: string, price: number, club: boolean })",
 	MarketSold = "(nil, { listing, key, kind, price, proceeds, buyer, seller, club })  -- on the buyer's server",
+	StreakClaimed = "(player, { day: number, streak: number, track: number, shieldUsed: boolean, restarted: boolean })",
+	RanchXPOverflow = "(player, { amount: number, reason: string })  -- Ranch XP earned at the level cap (Mastery banks it)",
+	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
+	GiftSent = "(player, { kind: string, to: number })",
+	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
+	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total' })  -- glow-up O",
+	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
+	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------
@@ -623,6 +809,7 @@ Api.Shapes = {
 	Listing = "see ARCHITECTURE.md §8 → Listing (client view)",
 	Appearance = "see Logic/Appearance.luau",
 	BattleReplay = "see Logic/BattleSim.luau",
+	RanchSnapshot = "see Logic/Visits.luau (glow-up Y)",
 }
 
 return Api

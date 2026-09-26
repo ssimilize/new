@@ -389,11 +389,17 @@ local function claimSlots(player, indices: { number })
 	local lists = {}
 	local total = 0
 	for _, index in indices do
-		local duration = slotsOf(player)[index].duration
+		local slot = slotsOf(player)[index]
+		local duration, region, stage, squad = slot.duration, slot.region, slot.stage, table.clone(slot.squad)
 		local loot, seconds = endRun(player, index, false)
 		table.insert(lists, loot)
 		total += seconds
-		ctx.Bus:Publish("ExpeditionClaimed", player, { slot = index, duration = duration })
+		-- region, stage, squad and loot: glow-up X writes a postcard from them.
+		ctx.Bus:Publish(
+			"ExpeditionClaimed",
+			player,
+			{ slot = index, duration = duration, region = region, stage = stage, squad = squad, loot = loot }
+		)
 		ctx.Analytics.Custom(player, "expedition_claim", duration, nil)
 	end
 	local granted = Rewards:Grant(player, Loot.Merge(lists), "expedition")
@@ -508,7 +514,7 @@ function Expeditions.Init(context)
 				rewards = Rewards:Grant(player, items, "stage_clear", { silent = true })
 				ctx.Bus:Publish("RanchXP", player, { amount = Config.Unlocks.XP.stageClearBase + stage, reason = "stage_clear" })
 			end
-			ctx.Bus:Publish("StageCleared", player, { region = payload.region, stage = stage, first = first })
+			ctx.Bus:Publish("StageCleared", player, { region = payload.region, stage = stage, first = first, squad = table.clone(ids) })
 			ctx.Analytics.Custom(player, "stage_clear", stage, { region = region.id, first = tostring(first) })
 		else
 			lastLoss[player] = key

@@ -45,7 +45,12 @@
 	x (1 - weight x night). `night` (0..1) follows Lighting.ClockTime through dusk and dawn.
 
 	Tables: Auras[element], Mutations[mutationId], Variants.shiny / .rainbow, Rarity[rarityId],
-	Landmarks[hubId | "skyGate"], Bursts[name], Night.
+	Landmarks[hubId | "skyGate"], Bursts[name], Night, Eggs[eggId], EggReady, Mastery[key] (3.3: a
+	monster's mastery aura, appearance.aura; Gold / Mythic lines and the Star Shard auras;
+	<= Budget.mastery each).
+
+	Eggs use the monster keys (at = feet / core / head / body, measured on the shell), authored for
+	an egg EggRefHeight studs tall (the incubator's); Visuals/Vfx scales them with the egg's height.
 ]]
 
 local Vfx = {}
@@ -78,7 +83,7 @@ Vfx.Sprites = {
 	glow = { tint = true },
 }
 
-Vfx.Budget = { aura = 8, withMutations = 12, landmark = 60 }
+Vfx.Budget = { aura = 8, withMutations = 12, landmark = 60, mastery = 3, titanic = 4 }
 
 local FADE = { { 0, 1 }, { 0.15, 0 }, { 0.75, 0.2 }, { 1, 1 } }
 local SOFT = { { 0, 1 }, { 0.2, 0.4 }, { 1, 1 } }
@@ -787,6 +792,93 @@ Vfx.Rarity = {
 	mythic = groundGlow("#E8436F"),
 }
 
+-- Glow-up W · the Titanic aura (appearance.titanic): a slow ground ring and rising embers on top
+-- of the other layers, within Budget.titanic live particles. Sizes grow with the model's Height,
+-- so a Titanic's ring is already three times wider than a normal monster's.
+Vfx.Titanic = {
+	{
+		sprite = "ring",
+		grey = true,
+		color = "#E8436F",
+		at = "feet",
+		offset = { 0, 0.1, 0 },
+		rate = 0.6,
+		lifetime = { 2.2, 2.6 },
+		size = { { 0, 1.2 }, { 1, 3.4 } },
+		transparency = SOFT,
+		speed = 0.01,
+		orientation = "VelocityPerpendicular",
+		lockedToPart = true,
+		lightEmission = 0.3,
+		lightInfluence = 0,
+	},
+	{
+		sprite = "star5",
+		grey = true,
+		color = { { 0, "#FFD447" }, { 1, "#E8436F" } },
+		at = "body",
+		rate = 1.5,
+		lifetime = { 1, 1.4 },
+		size = TWINKLE,
+		transparency = SPARK,
+		speed = { 0.2, 0.5 },
+		spread = 180,
+		accel = { 0, 0.8, 0 },
+		lightEmission = 0.3,
+		lightInfluence = 0,
+	},
+}
+
+-- Update 3.3 · Mastery auras (appearance.aura, set by the Mastery system): a light sprinkle on top
+-- of the element aura, so each stays within Budget.mastery live particles.
+local function masteryTwinkle(sprite: string, color: any, rate: number, lifetime: { number }, rise: number)
+	return {
+		{
+			sprite = sprite,
+			grey = true,
+			color = color,
+			at = "body",
+			rate = rate,
+			lifetime = lifetime,
+			size = TWINKLE,
+			transparency = SPARK,
+			speed = { 0.1, 0.3 },
+			spread = 180,
+			accel = { 0, rise, 0 },
+			rot = { 0, 45 },
+			rotSpeed = { -20, 20 },
+			lightEmission = 0.25,
+			lightInfluence = 0,
+		},
+	}
+end
+
+Vfx.Mastery = {
+	gold = masteryTwinkle("star", "#F2C230", 1.5, { 1, 1.6 }, 0.4),
+	mythic = masteryTwinkle("star5", { { 0, "#FF7AA2" }, { 1, "#E8436F" } }, 1.5, { 1.2, 1.8 }, 0.5),
+	starlight = masteryTwinkle("star", "#CFE8FF", 1.5, { 1.2, 1.8 }, 0.2),
+	aurora = masteryTwinkle("wisp", { { 0, "#5BE3A0" }, { 0.5, "#6FA8FF" }, { 1, "#B07CFF" } }, 1, { 2, 2.8 }, 0.3),
+	comet = masteryTwinkle("star5", { { 0, "#FFE08A" }, { 1, "#FF8A3D" } }, 1.2, { 1.5, 2.2 }, 0.6),
+	mythicFlame = {
+		{
+			sprite = "flame",
+			at = "feet",
+			rate = 1.5,
+			lifetime = { 1, 1.6 },
+			size = { { 0, 0.3 }, { 0.3, 0.5 }, { 1, 0.1 } },
+			transparency = FADE,
+			color = "#FF6FA0",
+			speed = { 0.4, 0.8 },
+			spread = 25,
+			accel = { 0, 0.6, 0 },
+			lightEmission = 0.3,
+			lightInfluence = 0.2,
+		},
+	},
+}
+-- Glow-up O: the Codex Crown aura, for completing the whole Codex (Config/Codex.Items).
+Vfx.Mastery.codexCrown = masteryTwinkle("star5", { { 0, "#8FD3FF" }, { 0.5, "#F2C230" }, { 1, "#FF7AC8" } }, 1.5, { 1.2, 1.8 }, 0.5)
+
 -- ─── World landmarks ─────────────────────────────────────────────────────────────────
 
 -- A portal's vortex, glow core and pulse ring. `y` is the opening's height as a fraction of the
@@ -1436,6 +1528,232 @@ Vfx.Bursts = {
 			lightInfluence = 0.3,
 		},
 	},
+	-- Glow-up N (Controllers/Cinematics). The evolution vortex is this burst fired every
+	-- Config.Cinematics.Evolve.vortexEvery seconds in the monster's element colour (<= ~20 live).
+	evolveVortex = {
+		{
+			sprite = "wisp",
+			grey = true,
+			color = "#FFFFFF",
+			useColor = true,
+			box = { 3, 0.5, 3 },
+			emit = 5,
+			lifetime = { 0.6, 0.8 },
+			size = { { 0, 0.3 }, { 0.3, 0.9 }, { 1, 0 } },
+			transparency = POP,
+			speed = { 5, 8 },
+			spread = 12,
+			rotSpeed = { -360, 360 },
+			zOffset = 1,
+			lightEmission = 0.3,
+			lightInfluence = 0,
+		},
+		ring("#FFFFFF", 6),
+	},
+	-- Golden and Rainbow hatches: a shower of stars and confetti from above the monster.
+	shinyShower = {
+		{
+			sprite = "star5",
+			grey = true,
+			color = "#FFE38A",
+			useColor = true,
+			box = { 4, 0.5, 4 },
+			emit = 16,
+			lifetime = { 1, 1.4 },
+			size = { { 0, 0.3 }, { 0.2, 0.6 }, { 1, 0.3 } },
+			transparency = POP,
+			speed = { 1, 3 },
+			spread = 30,
+			accel = { 0, -12, 0 },
+			rotSpeed = { -180, 180 },
+			zOffset = 1,
+			lightEmission = 0.3,
+			lightInfluence = 0.2,
+		},
+		{
+			sprite = "confetti",
+			grey = true,
+			color = RAINBOW,
+			box = { 4, 0.5, 4 },
+			emit = 12,
+			lifetime = { 1.2, 1.6 },
+			size = { { 0, 0.4 }, { 1, 0.3 } },
+			transparency = POP,
+			speed = { 1, 2 },
+			spread = 40,
+			accel = { 0, -9, 0 },
+			rotSpeed = { -240, 240 },
+			zOffset = 1,
+			lightEmission = 0.2,
+			lightInfluence = 0.3,
+		},
+	},
+	-- A star-up after MonsterDetail closes (World's "monsterStarUp" moment).
+	starUp = {
+		{
+			sprite = "star5",
+			emit = 12,
+			lifetime = { 0.8, 1.1 },
+			size = { { 0, 0.3 }, { 0.2, 0.7 }, { 1, 0.3 } },
+			transparency = POP,
+			speed = { 6, 9 },
+			spread = 50,
+			accel = { 0, -12, 0 },
+			rotSpeed = { -180, 180 },
+			zOffset = 1,
+			lightEmission = 0.25,
+			lightInfluence = 0.2,
+		},
+		ring("#FFB547", 9),
+	},
+}
+
+-- ─── Eggs ────────────────────────────────────────────────────────────────────────────
+
+Vfx.EggRefHeight = 2.6
+
+-- Twinkles that blink on the shell's surface.
+local function eggTwinkle(sprite: string, color: string, rate: number, size: number)
+	return {
+		sprite = sprite,
+		grey = true,
+		color = color,
+		at = "body",
+		shape = "Sphere",
+		shapeStyle = "Surface",
+		rate = rate,
+		lifetime = { 0.6, 0.9 },
+		size = { { 0, 0 }, { 0.35, size }, { 1, 0 } },
+		transparency = { { 0, 1 }, { 0.25, 0.1 }, { 1, 1 } },
+		speed = 0.05,
+		rotSpeed = { -60, 60 },
+		lightEmission = 0.3,
+		lightInfluence = 0,
+	}
+end
+
+local SNOWFALL = {
+	sprite = "snowflake",
+	grey = true,
+	color = "#DDF3FF",
+	at = "head",
+	rate = 0.9,
+	lifetime = { 1.8, 2.4 },
+	size = { { 0, 0.2 }, { 1, 0.12 } },
+	speed = { 0.3, 0.6 },
+	spread = 70,
+	accel = { 0, -0.7, 0 },
+	rot = { 0, 360 },
+	rotSpeed = { -40, 40 },
+	lightEmission = 0.2,
+	lightInfluence = 0.3,
+}
+
+local EMBERS = {
+	sprite = "ember",
+	at = "body",
+	shape = "Sphere",
+	shapeStyle = "Surface",
+	rate = 1.2,
+	lifetime = { 0.9, 1.3 },
+	size = { { 0, 0.14 }, { 1, 0.03 } },
+	speed = 0.3,
+	accel = { 0, 1.6, 0 },
+	lightEmission = 0.3,
+	lightInfluence = 0,
+}
+
+-- The eggs that sparkle (the others stay still: their painted pattern is the show).
+Vfx.Eggs = {
+	royal = { eggTwinkle("star", "#FFD447", 1.6, 0.34) },
+	crystal = {
+		eggTwinkle("star", "#E8F9FF", 2, 0.36),
+		{
+			sprite = "prism",
+			at = "body",
+			shape = "Sphere",
+			shapeStyle = "Surface",
+			rate = 0.5,
+			lifetime = { 0.7, 1 },
+			size = { { 0, 0 }, { 0.4, 0.3 }, { 1, 0 } },
+			speed = 0.05,
+			lightEmission = 0.3,
+			lightInfluence = 0,
+		},
+	},
+	starlit = { eggTwinkle("star", "#FFE680", 1.8, 0.32) },
+	celestial = {
+		eggTwinkle("star", "#D6CCFF", 1.5, 0.32),
+		{
+			sprite = "star5",
+			grey = true,
+			color = "#B9A7FF",
+			at = "head",
+			rate = 0.5,
+			lifetime = { 1.4, 1.8 },
+			size = { { 0, 0.18 }, { 1, 0.06 } },
+			speed = { 0.4, 0.7 },
+			spread = 40,
+			rotSpeed = { -90, 90 },
+			lightEmission = 0.3,
+			lightInfluence = 0,
+		},
+	},
+	frostfall = { SNOWFALL },
+	glacier = { SNOWFALL, eggTwinkle("star", "#FFFFFF", 1, 0.26) },
+	stampede = { EMBERS },
+	raid = { EMBERS, eggTwinkle("star", "#F5C630", 0.8, 0.26) },
+	leviathan = {
+		{
+			sprite = "bubble",
+			grey = true,
+			color = "#BFEFFF",
+			at = "body",
+			shape = "Sphere",
+			shapeStyle = "Surface",
+			rate = 1,
+			lifetime = { 1.2, 1.6 },
+			size = { { 0, 0.08 }, { 1, 0.16 } },
+			speed = 0.2,
+			accel = { 0, 1.2, 0 },
+			lightEmission = 0.2,
+			lightInfluence = 0.4,
+		},
+	},
+}
+
+-- An incubator egg that is ready to hatch: a soft warm halo behind it and twinkles rising off it.
+Vfx.EggReady = {
+	{
+		sprite = "glow",
+		grey = true,
+		color = "#FFD98A",
+		at = "core",
+		rate = 1.2,
+		lifetime = { 1.4, 1.6 },
+		size = { { 0, 2.4 }, { 0.5, 3.1 }, { 1, 2.4 } },
+		transparency = { { 0, 1 }, { 0.35, 0.72 }, { 1, 1 } },
+		speed = 0,
+		zOffset = -1,
+		lightEmission = 0.3,
+		lightInfluence = 0,
+	},
+	{
+		sprite = "star",
+		grey = true,
+		color = "#FFE9A8",
+		at = "body",
+		shape = "Sphere",
+		shapeStyle = "Surface",
+		rate = 2.4,
+		lifetime = { 0.9, 1.3 },
+		size = { { 0, 0.1 }, { 0.3, 0.34 }, { 1, 0 } },
+		speed = 0.5,
+		accel = { 0, 1.4, 0 },
+		rotSpeed = { -90, 90 },
+		lightEmission = 0.3,
+		lightInfluence = 0,
+	},
 }
 
 -- Evolve also throws a few of the monster's own element sprites (each aura emitter, this many).
@@ -1466,6 +1784,181 @@ Vfx.Night = {
 		bubble = 0.5,
 		droplet = 0.4,
 		wisp = 0.5,
+	},
+}
+
+--[[
+	Scenery (Ambience, Controllers/SceneryMotion + Visuals/SceneryFx): effects on scenery kinds and
+	the plaza fountain. Same spec keys and rules as above, except:
+	  at    { x, y, z } fractions of the item's world box (y = -0.5 is its floor, 0.5 its top)
+	  on    fountain only: the Hub/Fountain part the spec is measured on ("BowlWater", "Water")
+	Budget: live particles <= Vfx.Budget.scenery per item. Only the nearest few items carry them
+	(Config.Ambience.Scenery), and lowGraphics halves every rate.
+]]
+Vfx.Budget.scenery = 45
+Vfx.Scenery = {
+	campfire = {
+		{
+			sprite = "flame",
+			at = { 0, -0.15, 0 },
+			box = { 1, 0.3, 1 },
+			rate = 7,
+			lifetime = { 0.5, 0.8 },
+			size = { { 0, 0.6 }, { 0.3, 1.3 }, { 1, 0.2 } },
+			speed = { 2, 3 },
+			spread = 10,
+			accel = { 0, 1, 0 },
+			rot = { -10, 10 },
+			lightEmission = 0.3,
+			lightInfluence = 0,
+		},
+		{
+			sprite = "ember",
+			at = { 0, -0.1, 0 },
+			box = { 1.2, 0.3, 1.2 },
+			rate = 3,
+			lifetime = { 1.2, 1.8 },
+			size = { { 0, 0.22 }, { 1, 0 } },
+			transparency = SPARK,
+			speed = { 3, 5 },
+			spread = 25,
+			accel = { 0.6, 0.5, 0.3 },
+			rotSpeed = { -90, 90 },
+			lightEmission = 0.3,
+			lightInfluence = 0,
+		},
+		{
+			sprite = "puff",
+			grey = true,
+			color = "#9A9A9A",
+			at = { 0, 0.15, 0 },
+			box = { 0.8, 0.2, 0.8 },
+			rate = 1.5,
+			lifetime = { 3, 4 },
+			size = { { 0, 0.8 }, { 1, 3.2 } },
+			transparency = { { 0, 1 }, { 0.2, 0.55 }, { 1, 1 } },
+			speed = { 2, 2.5 },
+			accel = { 0.8, 0.3, 0.4 },
+			drag = 0.3,
+			rot = { 0, 360 },
+			rotSpeed = { -20, 20 },
+			lightEmission = 0.15,
+			lightInfluence = 1,
+		},
+	},
+	windmill = {
+		{
+			sprite = "leaf",
+			grey = true,
+			color = "#9BCB6A",
+			at = { 0, 0.22, 0 },
+			box = { 10, 6, 10 },
+			rate = 0.8,
+			lifetime = { 4, 6 },
+			size = 0.5,
+			transparency = SOFT,
+			speed = { 1, 2 },
+			spread = 180,
+			accel = { 3, -0.4, 1.5 },
+			rot = { 0, 360 },
+			rotSpeed = { -120, 120 },
+			lightEmission = 0.15,
+			lightInfluence = 1,
+		},
+		{
+			sprite = "puff",
+			grey = true,
+			color = "#F4E7C8",
+			at = { 0, 0, 0 },
+			box = { 12, 8, 12 },
+			rate = 1.2,
+			lifetime = { 3, 4 },
+			size = 0.3,
+			transparency = FAINT,
+			speed = { 0.3, 0.6 },
+			spread = 180,
+			accel = { 1.5, 0.2, 0.6 },
+			lightEmission = 0.2,
+			lightInfluence = 1,
+		},
+	},
+	fountain = {
+		-- the jet out of the top bowl
+		{
+			sprite = "droplet",
+			grey = true,
+			color = "#CFEFFF",
+			on = "BowlWater",
+			at = { 0, 0.5, 0 },
+			box = { 0.8, 0.2, 0.8 },
+			rate = 16,
+			lifetime = { 0.9, 1.1 },
+			size = { { 0, 0.35 }, { 1, 0.2 } },
+			transparency = { { 0, 0.6 }, { 0.1, 0.1 }, { 1, 1 } },
+			speed = { 10, 12 },
+			spread = 8,
+			accel = { 0, -24, 0 },
+			orientation = "VelocityParallel",
+			lightEmission = 0.2,
+			lightInfluence = 0.6,
+		},
+		-- the curtain falling off the bowl's rim (a ring: the cylinder's side)
+		{
+			sprite = "droplet",
+			grey = true,
+			color = "#BFE9FF",
+			on = "BowlWater",
+			at = { 0, 0, 0 },
+			box = { 7.2, 0.2, 7.2 },
+			shape = "Cylinder",
+			shapeStyle = "Surface",
+			shapeInOut = "Outward",
+			rate = 18,
+			lifetime = { 0.6, 0.7 },
+			size = 0.3,
+			transparency = { { 0, 0.5 }, { 0.1, 0.15 }, { 1, 0.6 } },
+			speed = { 1, 1.5 },
+			accel = { 0, -30, 0 },
+			orientation = "VelocityParallel",
+			lightEmission = 0.2,
+			lightInfluence = 0.6,
+		},
+		-- ripples spreading on the basin
+		{
+			sprite = "ring",
+			grey = true,
+			color = "#E6F7FF",
+			on = "Water",
+			at = { 0, 0.5, 0 },
+			box = { 18, 0.1, 18 },
+			rate = 1.2,
+			lifetime = { 1.6, 1.6 },
+			size = { { 0, 1 }, { 1, 5 } },
+			transparency = { { 0, 1 }, { 0.15, 0.4 }, { 1, 1 } },
+			speed = 0.02,
+			orientation = "VelocityPerpendicular",
+			lightEmission = 0.2,
+			lightInfluence = 0.5,
+		},
+		-- mist where the curtain lands
+		{
+			sprite = "puff",
+			grey = true,
+			color = "#E8F7FF",
+			on = "Water",
+			at = { 0, 0.5, 0 },
+			box = { 8, 0.2, 8 },
+			shape = "Cylinder",
+			shapeStyle = "Surface",
+			rate = 3,
+			lifetime = { 1.5, 2.2 },
+			size = { { 0, 1 }, { 1, 2.5 } },
+			transparency = FAINT,
+			speed = { 0.5, 1 },
+			rotSpeed = { -20, 20 },
+			lightEmission = 0.15,
+			lightInfluence = 1,
+		},
 	},
 }
 

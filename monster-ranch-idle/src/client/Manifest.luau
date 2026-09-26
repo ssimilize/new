@@ -8,6 +8,8 @@ return {
 	Controllers = {
 		-- 3.2 · first, so every text any other controller builds is shown translated
 		"Localize",
+		-- Glow-up P · the quality level every visual reads (before the controllers that read it)
+		"Quality",
 		-- C2 · HUD & core
 		"Hud",
 		"Notifications",
@@ -22,6 +24,7 @@ return {
 		"TradeRequests",
 		"Leaderboards",
 		"Nameplates",
+		"ChatTags",
 		-- 1.4 · Spring Bloom
 		"EggHunt",
 		-- 1.5 · Showtime
@@ -29,10 +32,54 @@ return {
 		-- 2.0 · Light & Void
 		"SkyIslands",
 		"Riding",
+		-- Glow-up T · companions at your side, animated mounts
+		"Companions",
+		"Mounts",
+		-- Glow-up LR: live races on the track (lobby, countdown, riding, podium), racing gear on mounts
+		"LiveRace",
+		-- Glow-up DR · the Deep Reef you dive into, swimming and swimming mounts
+		"DeepReef",
 		-- 3.2 · Frostbite Glacier
 		"Gamepad",
 		-- Particle effects (Visuals/Vfx): landmark ambience
 		"Landmarks",
+		-- Audio (client/Audio): music, ambience beds, monster chatter; Sound Check in Studio
+		"Soundscape",
+		-- Glow-up: celebrations that travel, the moment queue, the Stampede call
+		"Celebrate",
+		"Stampede",
+		-- Glow-up U: the Stampede live in the world (arena, giant, squads, cheer bolts, storm)
+		"StampedeArena",
+		-- Glow-up TT: scheduled titan invasions (bigger banner, the shared HP bar, the giant)
+		"TitanInvasion",
+		-- Photo mode: free camera, filters, frames, stickers, CaptureService
+		"PhotoMode",
+		-- Glow-up N: camera shots (hatch in the world, evolution, star-up / level-up looks)
+		"CameraDirector",
+		"Cinematics",
+		-- Glow-up · daily streak auto-open + reminder opt-in
+		"DailyLogin",
+		-- Glow-up L: emote wheel, Friends button, VIP balcony pads
+		"Community",
+		-- Glow-up Q: care menu on own-monster taps, bond nameplates, best friends at the ranch gate
+		"Care",
+		-- Glow-up W: "#37/500" tags on numbered limited-edition monsters in pens
+		"EditionPlates",
+		-- Ambience (Config/Ambience): sky and clouds, dusk lights, scenery that moves, ambient life
+		"Sky",
+		"Lamplight",
+		"SceneryMotion",
+		"Critters",
+		-- Glow-up R: pens that grow and the Feed Garden (Config/Pens, Visuals/PenDress)
+		"Pens",
+		-- Glow-up O: the walk-in Codex Museum and the Hall of Fame plaza
+		"CodexMuseum",
+		"FamePlaza",
+		-- Glow-up X: a postcard from every finished expedition (the card, the send picker)
+		"Postcards",
+		"Visits", -- glow-up Y: the crown, the Visiting Showcase, Ranch of the Week
+		-- Glow-up Z: every plot's placed decor, night lights, placement mode's world side
+		"Decor",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -69,5 +116,20 @@ return {
 		-- 2.1 · Arena & Raids
 		"Arena",
 		"Raids",
+		-- Photo mode (non-modal; opened by the HUD camera button, P or D-pad up)
+		"PhotoMode",
+		-- Glow-up · daily login streak
+		"LoginStreak",
+		-- 3.3 · Endgame
+		"Mastery",
+		-- Glow-up L · emotes and tricks, gifts, invites, community rewards
+		"EmoteWheel",
+		"Friends",
+		-- Glow-up Q · care gestures and bond hearts (non-modal)
+		"Care",
+		-- Glow-up X · postcards from expeditions
+		"Album",
+		-- Glow-up Z · build your ranch: placement mode's toolbar and tray (non-modal)
+		"Decorate",
 	},
 }

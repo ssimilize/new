@@ -625,11 +625,31 @@ function Quests.PassAt(now: number)
 	return current
 end
 
+-- The Ranch Pass is sold only while a season runs (startsAt <= now < endsAt): before the first
+-- season and in the gap between two there is nothing to unlock yet. A pass bought anyway is
+-- banked by the Quests system and unlocks the next season.
+function Quests.PassOnSale(now: number): boolean
+	local season = Quests.PassAt(now)
+	return now >= season.startsAt and now < season.endsAt
+end
+
+-- The first season that starts after `now`, or nil when none is scheduled yet.
+function Quests.NextSeason(now: number)
+	local nextSeason = nil
+	for _, season in Quests.Seasons do
+		if season.startsAt > now and (nextSeason == nil or season.startsAt < nextSeason.startsAt) then
+			nextSeason = season
+		end
+	end
+	return nextSeason
+end
+
 -- Codes (case-insensitive). `expires` is a Unix time or nil.
 Quests.Codes = {
 	RANCH = { reward = { { kind = "gems", amount = 50 } } },
 	FROSTFALL = { reward = { { kind = "token", id = "frostfall", amount = 100 } }, expires = 1798761600 },
-	GROUP = { reward = { { kind = "egg", id = "crystal", amount = 1 } }, requiresGroup = true },
+	-- The GROUP code became the "Join our group" reward row (Config.Community.Group, glow-up L). A
+	-- code may still set `requiresGroup = true` to need membership of GroupId.
 	-- Update 3.2 launch code (expires 1 Apr 2028, the 3.3 launch).
 	FROSTBITE = { reward = { { kind = "egg", id = "glacier", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1838214000 },
 	-- Update 3.1 launch code: Lantern Coins for the Lunar Lanterns rerun (expires 26 Feb 2028).
@@ -653,7 +673,7 @@ Quests.Codes = {
 	-- Update 1.1 launch code (expires 6 Feb 2027).
 	CORALDEPTHS = { reward = { { kind = "egg", id = "pearl", amount = 1 }, { kind = "gems", amount = 50 } }, expires = 1801872000 },
 }
-Quests.GroupId = 0 -- set to the Roblox group id for the GROUP code
+Quests.GroupId = 0 -- the Roblox group id: shows the "Join our group" reward row (docs/GO_LIVE.md)
 
 -- Topics whose detail carries a count (progress += detail[field]); every other topic counts 1.
 Quests.CountField = { EggBought = "amount", AccessoryGained = "amount" }

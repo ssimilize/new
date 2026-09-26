@@ -129,6 +129,21 @@ return function(t)
 			expect(env.penCalls).toBe(before + 3)
 		end)
 
+		it("rebuilds when a monster puts an accessory on, and shows what it wears", function()
+			local h, env = boot()
+			local p = h:Join()
+			local M = h:System("Monsters")
+			local m = M:Create(p, { line = "cindlet", rarity = 1 }, "test", true)
+			env.pens[p.UserId] = { { theme = "meadow", decor = {}, monsters = { m.id } } }
+			h:Advance(2 * Config.Social.PlotRefreshSeconds + 1)
+			local before = env.penCalls
+			local def = Config.Accessories.List[1]
+			M:SetAccessory(p, m.id, def.slot, def.id)
+			expect(env.penCalls).toBe(before + 1)
+			h:Advance(Config.Social.PlotRefreshSeconds)
+			expect(h:Client(p).global.Plots[1].pens[1].monsters[1].appearance.acc).toEqual({ [def.slot] = def.id })
+		end)
+
 		it("works without the optional systems", function()
 			local h = boot(false)
 			local p = h:Join(nil, "Solo")

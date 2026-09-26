@@ -9,6 +9,7 @@
 	Actions: Riding.Mount { id } (an Adult that is not busy), Riding.Dismount.
 	The rider is dismounted when the monster changes owner, leaves the ranch or becomes busy,
 	and when the player leaves. Publishes Mounted (player, { id, speed }).
+	Public: Riding:MountOf(player) -> monsterId? (glow-up T: a mount can't also walk as a companion).
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -107,6 +108,10 @@ function Riding.Init(context)
 			publish(player) -- new accessories, level or mutation show on the mount
 		end
 	end)
+end
+
+function Riding:MountOf(player): string?
+	return mounts[player]
 end
 
 function Riding.PlayerAdded(player, _info)

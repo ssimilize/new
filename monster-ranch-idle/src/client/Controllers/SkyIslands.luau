@@ -8,6 +8,8 @@
 	  · Wind crystals (client-only, Workspace.SkyCrystals): one glowing crystal per
 	    Config.SkyIslands.Crystals spot that has recharged for this player
 	    (profile.SkyIslands.taken), with a "Collect" prompt → SkyIslands.Collect.
+
+	SkyIslands.IsOnIslands() -> boolean   the local character is up on the islands (Soundscape).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -52,6 +54,7 @@ end
 local function teleport(at: { number }, lift: number)
 	local character = Players.LocalPlayer.Character
 	if character and character.PrimaryPart then
+		ctx:Sound("Teleport")
 		character:PivotTo(CFrame.new(at[1], at[2] + lift, at[3] + 6))
 	end
 end
@@ -152,6 +155,20 @@ local function wire(skyFolder: Instance)
 			end
 		end)
 	end
+end
+
+-- Every island sits well above the ground map; anything within ISLAND_MARGIN studs under the lowest
+-- island top counts as up there (bridges sag, players jump off edges before respawning).
+local ISLAND_MARGIN = 40
+local lowestIsland = math.huge
+for _, island in Sky.islands do
+	lowestIsland = math.min(lowestIsland, island.center[2])
+end
+
+function SkyIslands.IsOnIslands(): boolean
+	local character = Players.LocalPlayer and Players.LocalPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return root ~= nil and root:IsA("BasePart") and root.Position.Y >= lowestIsland - ISLAND_MARGIN
 end
 
 function SkyIslands.Init(context)

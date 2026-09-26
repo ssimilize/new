@@ -3,9 +3,11 @@
 
 	Global state (global.Plots): always 6 entries (Config.World plots); an empty plot has userId = 0.
 	  { userId, name, level, likes,
-	    pens = { { theme, decor = { decorId }, monsters = { { id, appearance } } } },
+	    pens = { { theme, decor = { decorId }, monsters = { { id, appearance } }, capacity, jarTier } },
 	    statues = { Appearance },
-	    incubators = { { type, endsAt } } }
+	    incubators = { { type, endsAt } },
+	    garden = { tier, plots = { { flavor, readyAt } } } | false,    -- glow-up R (Ranch:PublicGarden)
+	    layout = { { id, x, z, rot } } }   -- glow-up Z: placed decor (Decor:Layout), plot-local grid units
 
 	A player gets the lowest free plot when they become ready (bus PlayerReady) and frees it when
 	they leave. Plot contents are rebuilt from other systems' public APIs:
@@ -21,12 +23,13 @@
 	Public API:
 	  Plots:GetPlot(player) -> 1..6 | nil   (nil when the server has more players than plots)
 	  Plots:Refresh(player)                 -- throttled rebuild
+	  Plots:Public(player) -> PublicPlot    -- glow-up Y: built now (Visits snapshots)
 ]]
 
 local Plots = {
 	Name = "Plots",
 	Dependencies = { "Monsters", "Progression" },
-	OptionalDependencies = { "Social", "Ranch", "HallOfFame", "Eggs" },
+	OptionalDependencies = { "Social", "Ranch", "HallOfFame", "Eggs", "Decor" },
 }
 
 local PLOT_COUNT = 6
@@ -55,10 +58,11 @@ local VISIBLE_FIELDS = {
 	loc = true,
 	pen = true,
 	busy = true,
+	acc = true, -- worn accessories are drawn on the monster
 }
 
 local function emptyPlot()
-	return { userId = 0, name = "", level = 0, likes = 0, pens = {}, statues = {}, incubators = {} }
+	return { userId = 0, name = "", level = 0, likes = 0, pens = {}, statues = {}, incubators = {}, garden = false, layout = {} }
 end
 
 -- Calls an optional system's method; returns nil if the system is absent or the call fails.
@@ -89,6 +93,9 @@ local function buildPens(player)
 			theme = pen.theme or false,
 			decor = table.clone(pen.decor or {}),
 			monsters = monsters,
+			-- Glow-up R: upgrades are drawn on the pen (Controllers/Pens).
+			capacity = tonumber(pen.capacity) or Config.Economy.Pens.startCapacity,
+			jarTier = tonumber(pen.jarTier) or 1,
 		})
 	end
 	return pens
@@ -114,6 +121,8 @@ local function buildPlot(player)
 		pens = buildPens(player),
 		statues = statues,
 		incubators = incubators,
+		garden = optional("Ranch", "PublicGarden", player) or false, -- glow-up R
+		layout = optional("Decor", "Layout", player) or {}, -- glow-up Z
 	}
 end
 
@@ -166,6 +175,12 @@ function Plots:Refresh(player)
 		pending[player] = nil
 		rebuild(player)
 	end)
+end
+
+-- Glow-up Y: a fresh public plot record for any ready player (the ranch snapshot), built from the
+-- same public APIs as global.Plots; works on the hub place and while the player is leaving.
+function Plots:Public(player)
+	return buildPlot(player)
 end
 
 -- Lifecycle ---------------------------------------------------------------------------------

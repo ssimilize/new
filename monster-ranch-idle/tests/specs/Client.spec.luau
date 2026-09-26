@@ -285,7 +285,15 @@ return function(t)
 		end)
 
 		it("survives a long random walk through the whole UI", function()
-			local h = TestKernel.new({ systems = allSystems() })
+			-- A fixed start at nightfall (lamps, lights and night-only paths run the same way on every
+			-- run; the real clock made night-only bugs come and go).
+			local Phase = t.Shared("Logic.WeatherRoll").Phase
+			local start = 1900000000
+			local night, endsAt = Phase(start)
+			if not night then
+				start = endsAt
+			end
+			local h = TestKernel.new({ systems = allSystems(), startTime = start })
 			local player = h:Join()
 			veteran(h, player)
 			local c = ClientHarness.new(h, player)
@@ -429,9 +437,13 @@ return function(t)
 			local shop = c:Open("EggShop")
 			c:Advance(0.5)
 			expect(c:HasText("Lantern", shop)).toBe(true)
+			local Sheet = c:require(c.clientFolder.UI.Art.Sheet)
+			local artId, artOffset = Sheet.find(Sheet.Icons, "token_lunarlanterns")
 			local glyphs = {}
 			for _, d in shop:GetDescendants() do
-				if d:IsA("TextLabel") and d.Text == "✺" then
+				-- The event's own token: its sheet icon, or the ✺ glyph while the sheet has no id.
+				local art = artId ~= nil and d:IsA("ImageLabel") and d.Image == artId and d.ImageRectOffset == artOffset
+				if art or (d:IsA("TextLabel") and d.Text == "✺") then
 					table.insert(glyphs, d)
 				end
 			end
@@ -495,6 +507,99 @@ return function(t)
 			expect(h.adapters.network.clubs[clubId].members.u8902.role).toBe("officer")
 			expectClean(a)
 			expectClean(b)
+		end)
+
+		it("builds your ranch: places, rotates, moves, undoes and saves decor", function()
+			local Social = t.Shared("Config").Social
+			local h = TestKernel.new({ systems = allSystems() })
+			local player = h:Join()
+			veteran(h, player)
+			local c = ClientHarness.new(h, player)
+			c:Advance(Social.PlotRefreshSeconds + 1)
+			local plotIndex = h:System("Plots"):GetPlot(player)
+
+			local screen = c:Open("Decorate")
+			c:Advance(0.5)
+			expectClean(c)
+			expect(c:HasText("Decor 0 /", screen)).toBe(true)
+
+			-- Place the starter Wooden Crate, then rotate and move it.
+			c:Click(screen:FindFirstChild("Piece_wood_crate", true))
+			c:Advance(0.2)
+			local decor = c.kernel:GetController("Decor")
+			expect(#decor.Draft()).toBe(1)
+			local placedX, placedZ = decor.Draft()[1].x, decor.Draft()[1].z
+			c:Click(screen:FindFirstChild("Rotate", true))
+			c:Advance(0.2)
+			expect(decor.Draft()[1].rot).toBe(1)
+			decor.MoveTo(-30, -25)
+			c:Advance(0.2)
+			expect(decor.Draft()[1].x).toBe(-30)
+			expect(decor.Draft()[1].z).toBe(-25)
+			expect(decor.Problems()[1]).toBeNil()
+
+			-- Undo restores the move (rotation kept); another undo restores the original spot.
+			c:Click(screen:FindFirstChild("Undo", true))
+			c:Advance(0.2)
+			expect(decor.Draft()[1].x).toBe(placedX)
+			expect(decor.Draft()[1].z).toBe(placedZ)
+			expect(decor.Draft()[1].rot).toBe(1)
+			c:Click(screen:FindFirstChild("Undo", true))
+			c:Advance(0.2)
+			expect(decor.Draft()[1].rot).toBe(0)
+
+			-- Save sends the whole layout and the world draws it.
+			c:Click(screen:FindFirstChild("Save", true))
+			c:Advance(0.5)
+			expect(h:System("Decor"):Layout(player)).toEqual(decor.Draft())
+			c:Close("Decorate")
+			c:Advance(0.5)
+			expect(decor.Active()).toBe(false)
+			expect(decor.Count(plotIndex)).toBe(1)
+			expectClean(c)
+		end)
+
+		it("keeps the night lights working when a lit layout is rebuilt", function()
+			local Social = t.Shared("Config").Social
+			local Phase = t.Shared("Logic.WeatherRoll").Phase
+			local start = 1900000000
+			local night, endsAt = Phase(start)
+			if not night then
+				start = endsAt + 120 -- two minutes into the night, past the dusk sweep
+			end
+			local h = TestKernel.new({ systems = allSystems(), startTime = start })
+			local player = h:Join()
+			veteran(h, player)
+			local c = ClientHarness.new(h, player)
+			c:Advance(Social.PlotRefreshSeconds + 1)
+			local plotIndex = h:System("Plots"):GetPlot(player)
+			local decor = c.kernel:GetController("Decor")
+
+			local function lit(): number
+				local n = 0
+				for _, d in decor.PlotFolder(plotIndex):GetDescendants() do
+					if d:IsA("PointLight") and d.Enabled then
+						n += 1
+					end
+				end
+				return n
+			end
+			-- The pooled lights go to the lamps nearest the camera: look at this plot.
+			local centre = t.Shared("Config").World.Plots[plotIndex].center
+			local target = t.Roblox.Vector3.new(centre[1], centre[2], centre[3])
+			c.world.workspace.CurrentCamera.CFrame = t.Roblox.CFrame.lookAt(target + t.Roblox.Vector3.new(0, 26, 30), target)
+			local layout = { { id = "wood_lamp", x = -30, z = -25, rot = 0 }, { id = "wood_lamp", x = -24, z = -25, rot = 0 } }
+			h:Call(player, "Decor.Save", { layout = layout })
+			c:Advance(Social.PlotRefreshSeconds + 3)
+			expect(decor.Count(plotIndex)).toBe(2)
+			expect(lit()).toBe(2)
+
+			-- Moving the lamps rebuilds both pieces, and their pooled lights go with them.
+			layout[1].x, layout[2].x = -36, -30
+			h:Call(player, "Decor.Save", { layout = layout })
+			c:Advance(Social.PlotRefreshSeconds + 3)
+			expect(lit()).toBe(2)
+			expectClean(c)
 		end)
 	end)
 end

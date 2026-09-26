@@ -20,6 +20,7 @@ local Format = require(Shared.Logic.Format)
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
+local Sheet = require(UI.Art.Sheet)
 local Button = require(UI.Components.Button)
 local Panel = require(UI.Components.Panel)
 local Widgets = require(UI.Components.Widgets)
@@ -168,13 +169,21 @@ return {
 				LayoutOrder = order,
 				Parent = grid,
 			}, { Create.Corner(10) })
-			New("Frame", {
-				BackgroundColor3 = Color3.fromHex(def.color),
+			local art = Sheet.icon("acc_" .. def.id, {
 				AnchorPoint = Vector2.new(0.5, 0),
-				Position = UDim2.new(0.5, 0, 0, 8),
-				Size = UDim2.fromOffset(44, 44),
+				Position = UDim2.new(0.5, 0, 0, 4),
+				Size = UDim2.fromOffset(50, 50),
 				Parent = card,
-			}, { Create.Round(), Create.Stroke(3, Color3.fromHex(def.color2 or def.color)) })
+			})
+			if not art then
+				New("Frame", {
+					BackgroundColor3 = Color3.fromHex(def.color),
+					AnchorPoint = Vector2.new(0.5, 0),
+					Position = UDim2.new(0.5, 0, 0, 8),
+					Size = UDim2.fromOffset(44, 44),
+					Parent = card,
+				}, { Create.Round(), Create.Stroke(3, Color3.fromHex(def.color2 or def.color)) })
+			end
 			Util.text({
 				Text = def.name,
 				Font = Theme.Fonts.Display,

@@ -24,6 +24,7 @@ return {
 		-- S4 · Adventure
 		"Expeditions",
 		"Boss",
+		"Titan", -- glow-up TT: scheduled cross-server titan invasions
 		-- S5 · Social & world
 		"Breeding",
 		"Weather",
@@ -56,6 +57,31 @@ return {
 		"Racing",
 		"TradingHub",
 		"Workshop",
+		-- Glow-up · daily login streak + offline reminders
+		"LoginStreak",
+		"Reminders",
+		-- 3.3 · Endgame (Ranch Mastery, Line Mastery, Star Shard shop, Mythic Ladder)
+		"Mastery",
+		-- Glow-up L · emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
+		"Community",
+		"Gifts",
+		-- Glow-up T · a monster at your side
+		"Companions",
+		-- Glow-up O · Codex milestones that pay
+		"Codex",
+		-- Glow-up Q · bond hearts and care gestures
+		"Bond",
+		-- Glow-up X · postcards from expeditions (the Market mailbox sends them to friends)
+		"Postcards",
+		-- Glow-up W · numbered limited editions of event monsters
+		"Editions",
+		-- Glow-up Y · likes that pay, the crown, ranch visits and Ranch of the Week
+		"Visits",
+		-- Glow-up Z · build your ranch (free decor placement)
+		"Decor",
+		-- Glow-up LR · live races on the track, racing gear
+		"LiveRace",
+		"RaceGear",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

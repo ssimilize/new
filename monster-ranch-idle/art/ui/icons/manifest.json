@@ -1,0 +1,723 @@
+[
+ {
+  "name": "cur_coin",
+  "group": "Currencies",
+  "file": "cells/cur_coin.png",
+  "from": "raw/cur_coin_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "cur_gem",
+  "group": "Currencies",
+  "file": "cells/cur_gem.png",
+  "from": "raw/cur_gem_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "cur_food",
+  "group": "Currencies",
+  "file": "cells/cur_food.png",
+  "from": "raw/cur_food_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "cur_treat",
+  "group": "Currencies",
+  "file": "cells/cur_treat.png",
+  "from": "raw/cur_treat_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "cur_stardust",
+  "group": "Currencies",
+  "file": "cells/cur_stardust.png",
+  "from": "raw/cur_stardust_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "cur_starshard",
+  "group": "Currencies",
+  "file": "cells/cur_starshard.png",
+  "from": "raw/cur_starshard_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "cur_ribbon",
+  "group": "Currencies",
+  "file": "cells/cur_ribbon.png",
+  "from": "raw/cur_ribbon_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "cur_friendship",
+  "group": "Currencies",
+  "file": "cells/cur_friendship.png",
+  "from": "raw/cur_friendship_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "cur_token",
+  "group": "Currencies",
+  "file": "cells/cur_token.png",
+  "from": "raw/cur_token_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "cur_xp",
+  "group": "Currencies",
+  "file": "cells/cur_xp.png",
+  "from": "raw/cur_xp_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "food_sweet",
+  "group": "Currencies",
+  "file": "cells/food_sweet.png",
+  "from": "raw/food_sweet_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "food_spicy",
+  "group": "Currencies",
+  "file": "cells/food_spicy.png",
+  "from": "raw/food_spicy_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "food_savory",
+  "group": "Currencies",
+  "file": "cells/food_savory.png",
+  "from": "raw/food_savory_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "food_sour",
+  "group": "Currencies",
+  "file": "cells/food_sour.png",
+  "from": "raw/food_sour_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "token_frostfall",
+  "group": "Currencies",
+  "file": "cells/token_frostfall.png",
+  "from": "raw/token_frostfall_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "token_lunarlanterns",
+  "group": "Currencies",
+  "file": "cells/token_lunarlanterns.png",
+  "from": "raw/token_lunarlanterns_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "token_springbloom",
+  "group": "Currencies",
+  "file": "cells/token_springbloom.png",
+  "from": "raw/token_springbloom_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "token_summersplash",
+  "group": "Currencies",
+  "file": "cells/token_summersplash.png",
+  "from": "raw/token_summersplash_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "token_harvestmoon",
+  "group": "Currencies",
+  "file": "cells/token_harvestmoon.png",
+  "from": "raw/token_harvestmoon_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "item_heirloom",
+  "group": "Items",
+  "file": "cells/item_heirloom.png",
+  "from": "raw/item_heirloom_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "item_totem_rain",
+  "group": "Items",
+  "file": "cells/item_totem_rain.png",
+  "from": "raw/item_totem_rain_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "item_totem_thunder",
+  "group": "Items",
+  "file": "cells/item_totem_thunder.png",
+  "from": "raw/item_totem_thunder_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "item_totem_starfall",
+  "group": "Items",
+  "file": "cells/item_totem_starfall.png",
+  "from": "raw/item_totem_starfall_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "item_crate",
+  "group": "Items",
+  "file": "cells/item_crate.png",
+  "from": "raw/item_crate_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "item_trophy",
+  "group": "Items",
+  "file": "cells/item_trophy.png",
+  "from": "raw/item_trophy_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "item_star",
+  "group": "Items",
+  "file": "cells/item_star.png",
+  "from": "raw/item_star_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_hay_bale",
+  "group": "Decor",
+  "file": "cells/decor_hay_bale.png",
+  "from": "raw/decor_hay_bale_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_water_trough",
+  "group": "Decor",
+  "file": "cells/decor_water_trough.png",
+  "from": "raw/decor_water_trough_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_flower_bed",
+  "group": "Decor",
+  "file": "cells/decor_flower_bed.png",
+  "from": "raw/decor_flower_bed_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_scratch_post",
+  "group": "Decor",
+  "file": "cells/decor_scratch_post.png",
+  "from": "raw/decor_scratch_post_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_mud_puddle",
+  "group": "Decor",
+  "file": "cells/decor_mud_puddle.png",
+  "from": "raw/decor_mud_puddle_r2.png",
+  "attempts": 2
+ },
+ {
+  "name": "decor_lantern",
+  "group": "Decor",
+  "file": "cells/decor_lantern.png",
+  "from": "raw/decor_lantern_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_fountain",
+  "group": "Decor",
+  "file": "cells/decor_fountain.png",
+  "from": "raw/decor_fountain_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_rainbow_arch",
+  "group": "Decor",
+  "file": "cells/decor_rainbow_arch.png",
+  "from": "raw/decor_rainbow_arch_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_crystal_cluster",
+  "group": "Decor",
+  "file": "cells/decor_crystal_cluster.png",
+  "from": "raw/decor_crystal_cluster_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_snow_globe",
+  "group": "Decor",
+  "file": "cells/decor_snow_globe.png",
+  "from": "raw/decor_snow_globe_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_gift_pile",
+  "group": "Decor",
+  "file": "cells/decor_gift_pile.png",
+  "from": "raw/decor_gift_pile_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_golden_statue",
+  "group": "Decor",
+  "file": "cells/decor_golden_statue.png",
+  "from": "raw/decor_golden_statue_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_paper_lantern",
+  "group": "Decor",
+  "file": "cells/decor_paper_lantern.png",
+  "from": "raw/decor_paper_lantern_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_moon_gate",
+  "group": "Decor",
+  "file": "cells/decor_moon_gate.png",
+  "from": "raw/decor_moon_gate_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_jack_o_lantern",
+  "group": "Decor",
+  "file": "cells/decor_jack_o_lantern.png",
+  "from": "raw/decor_jack_o_lantern_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_haunted_tree",
+  "group": "Decor",
+  "file": "cells/decor_haunted_tree.png",
+  "from": "raw/decor_haunted_tree_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_beach_ball",
+  "group": "Decor",
+  "file": "cells/decor_beach_ball.png",
+  "from": "raw/decor_beach_ball_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_tiki_torch",
+  "group": "Decor",
+  "file": "cells/decor_tiki_torch.png",
+  "from": "raw/decor_tiki_torch_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_tulip_patch",
+  "group": "Decor",
+  "file": "cells/decor_tulip_patch.png",
+  "from": "raw/decor_tulip_patch_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_bloom_arch",
+  "group": "Decor",
+  "file": "cells/decor_bloom_arch.png",
+  "from": "raw/decor_bloom_arch_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_sandcastle",
+  "group": "Decor",
+  "file": "cells/decor_sandcastle.png",
+  "from": "raw/decor_sandcastle_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_beach_umbrella",
+  "group": "Decor",
+  "file": "cells/decor_beach_umbrella.png",
+  "from": "raw/decor_beach_umbrella_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_shell_pile",
+  "group": "Decor",
+  "file": "cells/decor_shell_pile.png",
+  "from": "raw/decor_shell_pile_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "decor_tide_pool",
+  "group": "Decor",
+  "file": "cells/decor_tide_pool.png",
+  "from": "raw/decor_tide_pool_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_wood",
+  "group": "Pen themes",
+  "file": "cells/theme_wood.png",
+  "from": "raw/theme_wood_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_stone",
+  "group": "Pen themes",
+  "file": "cells/theme_stone.png",
+  "from": "raw/theme_stone_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_candy",
+  "group": "Pen themes",
+  "file": "cells/theme_candy.png",
+  "from": "raw/theme_candy_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_snowglobe",
+  "group": "Pen themes",
+  "file": "cells/theme_snowglobe.png",
+  "from": "raw/theme_snowglobe_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_boardwalk",
+  "group": "Pen themes",
+  "file": "cells/theme_boardwalk.png",
+  "from": "raw/theme_boardwalk_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_lantern_garden",
+  "group": "Pen themes",
+  "file": "cells/theme_lantern_garden.png",
+  "from": "raw/theme_lantern_garden_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_blossom_glade",
+  "group": "Pen themes",
+  "file": "cells/theme_blossom_glade.png",
+  "from": "raw/theme_blossom_glade_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_tropical_lagoon",
+  "group": "Pen themes",
+  "file": "cells/theme_tropical_lagoon.png",
+  "from": "raw/theme_tropical_lagoon_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_haunted_hollow",
+  "group": "Pen themes",
+  "file": "cells/theme_haunted_hollow.png",
+  "from": "raw/theme_haunted_hollow_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_starfield",
+  "group": "Pen themes",
+  "file": "cells/theme_starfield.png",
+  "from": "raw/theme_starfield_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_crystal_tundra",
+  "group": "Pen themes",
+  "file": "cells/theme_crystal_tundra.png",
+  "from": "raw/theme_crystal_tundra_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_aurora_isle",
+  "group": "Pen themes",
+  "file": "cells/theme_aurora_isle.png",
+  "from": "raw/theme_aurora_isle_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_sunset_mesa",
+  "group": "Pen themes",
+  "file": "cells/theme_sunset_mesa.png",
+  "from": "raw/theme_sunset_mesa_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "theme_nebula",
+  "group": "Pen themes",
+  "file": "cells/theme_nebula.png",
+  "from": "raw/theme_nebula_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_sprout_cap",
+  "group": "Accessories",
+  "file": "cells/acc_sprout_cap.png",
+  "from": "raw/acc_sprout_cap_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_top_hat",
+  "group": "Accessories",
+  "file": "cells/acc_top_hat.png",
+  "from": "raw/acc_top_hat_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_royal_crown",
+  "group": "Accessories",
+  "file": "cells/acc_royal_crown.png",
+  "from": "raw/acc_royal_crown_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_party_hat",
+  "group": "Accessories",
+  "file": "cells/acc_party_hat.png",
+  "from": "raw/acc_party_hat_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_witch_hat",
+  "group": "Accessories",
+  "file": "cells/acc_witch_hat.png",
+  "from": "raw/acc_witch_hat_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_wizard_hat",
+  "group": "Accessories",
+  "file": "cells/acc_wizard_hat.png",
+  "from": "raw/acc_wizard_hat_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_beanie",
+  "group": "Accessories",
+  "file": "cells/acc_beanie.png",
+  "from": "raw/acc_beanie_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_flower_crown",
+  "group": "Accessories",
+  "file": "cells/acc_flower_crown.png",
+  "from": "raw/acc_flower_crown_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_halo",
+  "group": "Accessories",
+  "file": "cells/acc_halo.png",
+  "from": "raw/acc_halo_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_bunny_ears",
+  "group": "Accessories",
+  "file": "cells/acc_bunny_ears.png",
+  "from": "raw/acc_bunny_ears_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_devil_horns",
+  "group": "Accessories",
+  "file": "cells/acc_devil_horns.png",
+  "from": "raw/acc_devil_horns_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_chef_hat",
+  "group": "Accessories",
+  "file": "cells/acc_chef_hat.png",
+  "from": "raw/acc_chef_hat_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_sun_hat",
+  "group": "Accessories",
+  "file": "cells/acc_sun_hat.png",
+  "from": "raw/acc_sun_hat_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_hero_helmet",
+  "group": "Accessories",
+  "file": "cells/acc_hero_helmet.png",
+  "from": "raw/acc_hero_helmet_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_space_helmet",
+  "group": "Accessories",
+  "file": "cells/acc_space_helmet.png",
+  "from": "raw/acc_space_helmet_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_round_glasses",
+  "group": "Accessories",
+  "file": "cells/acc_round_glasses.png",
+  "from": "raw/acc_round_glasses_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_sunglasses",
+  "group": "Accessories",
+  "file": "cells/acc_sunglasses.png",
+  "from": "raw/acc_sunglasses_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_star_shades",
+  "group": "Accessories",
+  "file": "cells/acc_star_shades.png",
+  "from": "raw/acc_star_shades_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_monocle",
+  "group": "Accessories",
+  "file": "cells/acc_monocle.png",
+  "from": "raw/acc_monocle_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_hero_mask",
+  "group": "Accessories",
+  "file": "cells/acc_hero_mask.png",
+  "from": "raw/acc_hero_mask_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_mustache",
+  "group": "Accessories",
+  "file": "cells/acc_mustache.png",
+  "from": "raw/acc_mustache_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_blush",
+  "group": "Accessories",
+  "file": "cells/acc_blush.png",
+  "from": "raw/acc_blush_r2.png",
+  "attempts": 2
+ },
+ {
+  "name": "acc_snorkel",
+  "group": "Accessories",
+  "file": "cells/acc_snorkel.png",
+  "from": "raw/acc_snorkel_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_red_scarf",
+  "group": "Accessories",
+  "file": "cells/acc_red_scarf.png",
+  "from": "raw/acc_red_scarf_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_bow_tie",
+  "group": "Accessories",
+  "file": "cells/acc_bow_tie.png",
+  "from": "raw/acc_bow_tie_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_pink_bow",
+  "group": "Accessories",
+  "file": "cells/acc_pink_bow.png",
+  "from": "raw/acc_pink_bow_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_gold_medal",
+  "group": "Accessories",
+  "file": "cells/acc_gold_medal.png",
+  "from": "raw/acc_gold_medal_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_flower_lei",
+  "group": "Accessories",
+  "file": "cells/acc_flower_lei.png",
+  "from": "raw/acc_flower_lei_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_pearl_necklace",
+  "group": "Accessories",
+  "file": "cells/acc_pearl_necklace.png",
+  "from": "raw/acc_pearl_necklace_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_jingle_bell",
+  "group": "Accessories",
+  "file": "cells/acc_jingle_bell.png",
+  "from": "raw/acc_jingle_bell_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_royal_cape",
+  "group": "Accessories",
+  "file": "cells/acc_royal_cape.png",
+  "from": "raw/acc_royal_cape_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_hero_cape",
+  "group": "Accessories",
+  "file": "cells/acc_hero_cape.png",
+  "from": "raw/acc_hero_cape_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_bat_wings",
+  "group": "Accessories",
+  "file": "cells/acc_bat_wings.png",
+  "from": "raw/acc_bat_wings_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_fairy_wings",
+  "group": "Accessories",
+  "file": "cells/acc_fairy_wings.png",
+  "from": "raw/acc_fairy_wings_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_backpack",
+  "group": "Accessories",
+  "file": "cells/acc_backpack.png",
+  "from": "raw/acc_backpack_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_jetpack",
+  "group": "Accessories",
+  "file": "cells/acc_jetpack.png",
+  "from": "raw/acc_jetpack_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_surfboard",
+  "group": "Accessories",
+  "file": "cells/acc_surfboard.png",
+  "from": "raw/acc_surfboard_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_starlight_crown",
+  "group": "Accessories",
+  "file": "cells/acc_starlight_crown.png",
+  "from": "raw/acc_starlight_crown_r1.png",
+  "attempts": 1
+ },
+ {
+  "name": "acc_rainbow_wings",
+  "group": "Accessories",
+  "file": "cells/acc_rainbow_wings.png",
+  "from": "raw/acc_rainbow_wings_r1.png",
+  "attempts": 1
+ }
+]

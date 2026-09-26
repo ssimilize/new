@@ -19,6 +19,18 @@ Leaderboards.Boards = {
 	{ id = "stage", name = "Highest Stage", short = "Stage", title = "Trailblazer", format = "stage", color = "#43B649" },
 	-- Update 3.0: Racing Cup points from this week's races (Config.Racing.CupPoints).
 	{ id = "racing", name = "Racing Cup", short = "Racing", title = "Speed Demon", format = "count", unit = "pts", color = "#FF8A3D" },
+	-- Update 3.3: Mythic Ladder points earned this week (Config.Mastery; Mastery:WeekPoints).
+	{ id = "mastery", name = "Mastery", title = "Grand Master", format = "count", unit = "pts", color = "#E8436F" },
+	-- Glow-up Y: likes received this week (Visits:WeekLikes); last week's #1 stands on the hub stage.
+	{
+		id = "ranchlikes",
+		name = "Ranch of the Week",
+		short = "Likes",
+		title = "Ranch of the Week",
+		format = "count",
+		unit = "likes",
+		color = "#FF6FA8",
+	},
 }
 
 Leaderboards.ById = {}

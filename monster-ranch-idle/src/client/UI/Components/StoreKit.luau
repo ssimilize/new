@@ -308,6 +308,8 @@ function StoreKit.request(ctx, action: string, payload: any?): (boolean, any)
 	local ok, res = ctx.Net:RequestOnce(action, payload)
 	if not ok and res ~= "Busy" then
 		ctx:Toast(StoreKit.errorText(res), "error")
+	elseif ok and string.find(action, ".Buy", 1, true) then
+		ctx:Sound("Purchase") -- Shop.BuyEgg, Shop.BuyFood, Accessories.Buy, …
 	end
 	return ok, res
 end

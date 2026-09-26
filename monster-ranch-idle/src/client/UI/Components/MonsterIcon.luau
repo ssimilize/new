@@ -7,13 +7,18 @@
 		MonsterIcon.egg("crystal", 64)
 		MonsterIcon.silhouette(lineId, 64) -- undiscovered Codex / hybrid preview
 
-	Replace with image-based portraits later by filling `MonsterIcon.Portraits[formId]`.
+	Portraits: when the form's cell in UI/Art/Portraits sits on an uploaded sheet, `new` shows the
+	rendered portrait (tools/ui/portraits.py) instead of the blob, tinted for the Golden / Rainbow
+	variants and the Shadow mutation. `MonsterIcon.Portraits[formId] = "rbxassetid://..."` still
+	overrides both with a single image. `card` adds the rarity shine (Components/Shine) from Epic up.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Theme = require(script.Parent.Parent.Theme)
 local Create = require(script.Parent.Parent.Create)
+local Sheet = require(script.Parent.Parent.Art.Sheet)
+local Shine = require(script.Parent.Shine)
 
 local New = Create.New
 local INK = Theme.Colors.Ink
@@ -95,6 +100,33 @@ local function feature(parent, element: string, archetype: string, body: Color3,
 	end
 end
 
+-- Mutation dots (top right), on both the portrait and the blob.
+local function mutationDots(root, appearance)
+	for i, m in appearance.muts or {} do
+		blob(root, Theme.Mutation(m), Vector2.new(0.92 - (i - 1) * 0.15, 0.1), Vector2.new(0.14, 0.14), true, 8)
+	end
+end
+
+-- The rendered portrait, or nil while its sheet is not uploaded.
+local function portraitArt(root, appearance): ImageLabel?
+	local art = Sheet.portrait(appearance.form, { Name = "Portrait", ZIndex = 2, Parent = root })
+	if not art then
+		return nil
+	end
+	if appearance.variant == 1 then
+		art.ImageColor3 = Color3.fromHex("#FFE08A") -- Golden
+	elseif appearance.variant == 2 then
+		rainbow(art)
+	end
+	for _, m in appearance.muts or {} do
+		if m == "shadow" then
+			art.ImageColor3 = Color3.fromHex("#8E7FB8")
+		end
+	end
+	mutationDots(root, appearance)
+	return art
+end
+
 function MonsterIcon.new(appearance, size: number?): Frame
 	local px = size or 80
 	local root = New("Frame", {
@@ -105,6 +137,9 @@ function MonsterIcon.new(appearance, size: number?): Frame
 	local portrait = MonsterIcon.Portraits[appearance.form]
 	if portrait then
 		New("ImageLabel", { BackgroundTransparency = 1, Image = portrait, Size = UDim2.fromScale(1, 1), Parent = root })
+		return root
+	end
+	if portraitArt(root, appearance) then
 		return root
 	end
 
@@ -147,10 +182,7 @@ function MonsterIcon.new(appearance, size: number?): Frame
 	blob(holder, Color3.fromHex("#FF8FA3"), Vector2.new(0.27, 0.64), Vector2.new(0.1, 0.06), false, 5).BackgroundTransparency = 0.3
 	blob(holder, Color3.fromHex("#FF8FA3"), Vector2.new(0.73, 0.64), Vector2.new(0.1, 0.06), false, 5).BackgroundTransparency = 0.3
 
-	-- Mutation dots (top right).
-	for i, m in appearance.muts or {} do
-		blob(root, Theme.Mutation(m), Vector2.new(0.92 - (i - 1) * 0.15, 0.1), Vector2.new(0.14, 0.14), true, 8)
-	end
+	mutationDots(root, appearance)
 	return root
 end
 
@@ -255,6 +287,7 @@ function MonsterIcon.card(appearance, size: number, footer: string?): Frame
 	local icon = MonsterIcon.new(appearance, size - 14)
 	icon.Position = UDim2.fromOffset(7, 5)
 	icon.Parent = card
+	Shine.attach(card, appearance.rarity, Theme.Radius.Card)
 	if footer then
 		Create.Text({
 			Text = footer,

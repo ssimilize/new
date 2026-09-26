@@ -5,47 +5,88 @@
 		local anim = MonsterAnimator.new(model)
 		anim:SetBase(CFrame.new(x, floorY, z))    -- ground point + facing (front is -Z)
 		anim:Play("idle")                          -- idle | walk | happy | eat | attack | hurt | sleep
-		anim:MoveTo(Vector3.new(x, floorY, z), function() end)   -- hop-walk, faces travel direction
+		anim:Play("sit")                           -- sit (loops) | trick (once) | faint (holds until the next Play)
+		anim:MoveTo(Vector3.new(x, floorY, z), function() end)   -- hop-walk, turns toward travel direction
+		anim:Play("shake")                         -- shake (once: shaking off rain) | shiver (loops: cold)
 		anim:Destroy()                             -- stops animating (does not destroy the model)
 
 	Extra (non-contract) helpers:
 	  anim:Play("wobble") + anim:SetIntensity(0..1)   egg wobble (faster near 1)
 	  anim:IsMoving(), anim:GetPosition(), anim:Stop()  (Stop cancels a MoveTo)
-	  MonsterAnimator.SetLowGraphics(bool)             fewer updates for every animator
+	  anim:GetState()                                  the state playing ("idle" after a one-shot ends)
+	  MonsterAnimator.SkinnedClip(...)                 which authored clip a 3D monster plays (below)
+	  MonsterAnimator.SetLowGraphics(bool)             legacy: the level now comes from Visuals/Quality
+	  anim:SetOwn(bool)                                false = on another player's plot (World): far
+	                                                   ones update less often (distance LOD)
+	  MonsterAnimator.Updated()                        animators updated in the last frame (overlay)
 	  MonsterAnimator.Count()                          live animators (debug)
+	  MonsterAnimator.HasState(state)                  whether :Play knows `state` (else it plays idle)
+	  anim:FaceToward(position)                        turn in place toward a point (smoothly, at rest)
+	  anim:SetPace(k), anim:GetSpeed()                 walking speed multiplier (1 = normal) and the speed
+	  MonsterAnimator.SetTurnRates(walk, face)         radians per second (glow-up S: Config/PenLife.Motion)
+
+	Glow-up S (living pens): a walker turns toward its heading at a limited rate instead of snapping,
+	going slower while it faces away; MoveTo while already walking only retargets (the walk cycle
+	keeps its time, so a brain can steer with short legs). Skinned models shake and shiver over idle.
 
 	One shared RenderStepped connection drives every animator. It connects when the first
-	animator is created and disconnects when the last one is destroyed. Animators further than
-	PAUSE_DISTANCE studs from the camera are paused; mid-distance ones (and all of them in low
-	graphics) update at a reduced rate. The model is moved with model:PivotTo(base * offset).
+	animator is created and disconnects when the last one is destroyed. How often each one updates
+	is Logic/Quality.AnimInterval (Config.Quality.Lod, glow-up P): by the Quality level, distance
+	from the camera (mid band; another plot's monsters also a far band), paused beyond animPause,
+	and throttled while behind the camera. The model is moved with model:PivotTo(base * offset).
 	Rainbow models (attribute Rainbow) and prismatic ones (attribute Prismatic, set by the
 	caller) cycle their "Body" part colour through a precomputed hue table.
 	Near animators also squash and stretch the "Body" part: through its SpecialMesh Scale when
 	it has one (cheap, no physics update), otherwise through its Size (never welds).
 	Skinned models (attribute Skinned, built by MeshMonster) play their authored clips instead: walk
-	while moving, idle at rest (slowed for sleep), hop for happy and attack. Their hop-walk bounce is
-	dropped (the walk clip bobs) and "happy" keeps only its spin.
+	while moving, idle at rest, and sleep, eat, attack, hurt, faint, sit and trick by name; happy is
+	cheer or cheer2 at random. A form whose modules lack a clip (rigged before the extra clips) falls
+	back to what it did before: sleep is idle slowed, eat, hurt, sit and faint keep the procedural
+	offset over idle, happy and trick spin through hop, attack lunges through hop. The hop-walk bounce
+	is dropped (the walk clip bobs). Authored attack, hurt, trick and cheer clips run their own length.
+	A skinned model's "Body" (it has none) is never squashed or hue-cycled: its Rainbow look is a
+	static texture (MonsterLooks). When it wears accessories, MeshMonster.Follow moves them onto the
+	new pose right after each Pose, so they get the same distance LOD as the clip.
 ]]
 
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MeshMonster = require(script.Parent.MeshMonster)
+local Quality = require(script.Parent.Quality)
+local Lod = require(ReplicatedStorage:WaitForChild("Shared").Logic.Quality)
+local LodConfig = require(ReplicatedStorage.Shared.Config).Quality.Lod
 
 local MonsterAnimator = {}
 MonsterAnimator.__index = MonsterAnimator
 
-local PAUSE_DISTANCE = 250
-local MID_DISTANCE = 90
 local SQUASH_DISTANCE = 60
-local MID_INTERVAL = 1 / 20
-local LOW_INTERVAL = 1 / 15
 local HUE_STEPS = 72
 
-local ONE_SHOT = { happy = 0.9, eat = 1.6, attack = 0.55, hurt = 0.5 }
-local LOOPING = { idle = true, walk = true, sleep = true, wobble = true }
+local ONE_SHOT = { happy = 0.9, eat = 1.6, attack = 0.55, hurt = 0.5, trick = 1.1, shake = 0.8 }
+local LOOPING = { idle = true, walk = true, sleep = true, wobble = true, sit = true, shiver = true }
+local HOLD = { faint = true } -- stays until the next Play or MoveTo
+local CLIP_LENGTH = { happy = true, attack = true, hurt = true, trick = true } -- authored ones run their own length
 
 local TAU = math.pi * 2
 local sin, cos, abs, min, clamp = math.sin, math.cos, math.abs, math.min, math.clamp
+local atan2 = math.atan2
+
+local turnRate = 7 -- radians per second while walking
+local faceRate = 4 -- turning in place (FaceToward)
+
+-- Heading of a look vector as a yaw about +Y (front is -Z), and the shortest turn toward another.
+local function yawOf(x: number, z: number): number
+	return atan2(-x, -z)
+end
+
+local function turnToward(from: number, to: number, maxStep: number): number
+	local delta = (to - from + math.pi) % TAU - math.pi
+	if abs(delta) <= maxStep then
+		return to
+	end
+	return from + (if delta > 0 then maxStep else -maxStep)
+end
 
 -- Precomputed colours so hue cycling never allocates per frame.
 local RAINBOW = table.create(HUE_STEPS)
@@ -60,8 +101,9 @@ local FLASH_COLOR = Color3.fromRGB(255, 90, 90)
 
 local animators = {} -- array of live animators
 local connection: RBXScriptConnection? = nil
-local lowGraphics = false
+local lowGraphics = Quality.IsLow()
 local clock = 0
+local updated = 0
 
 local function smooth(p: number): number
 	return p * p * (3 - 2 * p)
@@ -84,7 +126,8 @@ end
 
 function MonsterAnimator.new(model: Model)
 	local root = model.PrimaryPart
-	local body = model:FindFirstChild("Body")
+	local skinned = model:GetAttribute("Skinned") == true
+	local body = if skinned then nil else model:FindFirstChild("Body")
 	local height = model:GetAttribute("Height")
 	local self = setmetatable({
 		model = model,
@@ -103,13 +146,22 @@ function MonsterAnimator.new(model: Model)
 		_hueOffset = math.random(1, HUE_STEPS),
 		_rainbow = model:GetAttribute("Rainbow") == true,
 		_prismatic = model:GetAttribute("Prismatic") == true,
-		_skinned = model:GetAttribute("Skinned") == true,
+		_skinned = skinned,
+		_wearing = skinned and MeshMonster.Follow(model), -- attached accessories to keep on the bones
+		_has = function(clip: string): boolean
+			return MeshMonster.HasClip(model, clip)
+		end,
+		_cheer = "cheer",
+		_length = 0,
 		_target = nil :: Vector3?,
 		_onArrive = nil :: (() -> ())?,
 		_speed = 5 + (if type(height) == "number" then height else 3) * 0.6,
+		_pace = 1,
+		_faceYaw = nil :: number?,
 		_intensity = 0,
 		_highlight = nil :: Highlight?,
 		_dead = false,
+		_own = true,
 		_index = 0,
 	}, MonsterAnimator)
 	table.insert(animators, self)
@@ -122,12 +174,35 @@ function MonsterAnimator.SetLowGraphics(on: boolean)
 	lowGraphics = on == true
 end
 
+Quality.Changed:Connect(function()
+	lowGraphics = Quality.IsLow()
+end)
+
+function MonsterAnimator.Updated(): number
+	return updated
+end
+
+function MonsterAnimator:SetOwn(own: boolean)
+	self._own = own ~= false
+end
+
+function MonsterAnimator.SetTurnRates(walk: number, face: number)
+	turnRate = math.max(0.5, walk)
+	faceRate = math.max(0.5, face)
+end
+
 function MonsterAnimator.Count(): number
 	return #animators
 end
 
+-- Does :Play know this state? (Callers pick a fallback for a state an art pass adds later.)
+function MonsterAnimator.HasState(state: string): boolean
+	return ONE_SHOT[state] ~= nil or LOOPING[state] == true
+end
+
 function MonsterAnimator:SetBase(cframe: CFrame)
 	self._base = cframe
+	self._faceYaw = nil
 	self._pos = cframe.Position
 	if self._state ~= "walk" then
 		self.model:PivotTo(cframe)
@@ -138,8 +213,28 @@ function MonsterAnimator:GetPosition(): Vector3
 	return self._pos
 end
 
+function MonsterAnimator:SetPace(k: number)
+	self._pace = clamp(k, 0.2, 3)
+end
+
+function MonsterAnimator:GetSpeed(): number
+	return self._speed * self._pace
+end
+
+-- Turns in place toward `position` over the next frames (a walk or SetBase cancels it).
+function MonsterAnimator:FaceToward(position: Vector3)
+	local d = position - self._pos
+	if d.X * d.X + d.Z * d.Z > 1e-4 then
+		self._faceYaw = yawOf(d.X, d.Z)
+	end
+end
+
 function MonsterAnimator:IsMoving(): boolean
 	return self._target ~= nil
+end
+
+function MonsterAnimator:GetState(): string
+	return self._state
 end
 
 function MonsterAnimator:SetIntensity(x: number)
@@ -150,7 +245,7 @@ function MonsterAnimator:Play(state: string)
 	if self._dead then
 		return
 	end
-	if not (ONE_SHOT[state] or LOOPING[state]) then
+	if not (ONE_SHOT[state] or LOOPING[state] or HOLD[state]) then
 		state = "idle"
 	end
 	if state == "walk" and self._target == nil then
@@ -160,6 +255,14 @@ function MonsterAnimator:Play(state: string)
 		self._t = 0
 	end
 	self._state = state
+	if state == "happy" then
+		self._cheer = if math.random() < 0.5 then "cheer" else "cheer2"
+	end
+	self._length = ONE_SHOT[state] or 0
+	local clip = if state == "happy" then self._cheer else state
+	if self._skinned and CLIP_LENGTH[state] and MeshMonster.HasClip(self.model, clip) then
+		self._length = MeshMonster.Length(self.model, clip) or self._length
+	end
 	if state == "hurt" then
 		self:_flash()
 	end
@@ -171,7 +274,8 @@ function MonsterAnimator:MoveTo(position: Vector3, onArrive: (() -> ())?)
 	end
 	self._target = Vector3.new(position.X, self._pos.Y, position.Z)
 	self._onArrive = onArrive
-	if not ONE_SHOT[self._state] then
+	self._faceYaw = nil
+	if not ONE_SHOT[self._state] and self._state ~= "walk" then
 		self._state = "walk"
 		self._t = 0
 	end
@@ -258,6 +362,17 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 	local phase = self._phase
 	local offset: CFrame
 
+	local faceYaw = self._faceYaw
+	if faceYaw and state ~= "walk" then
+		local look = self._base.LookVector
+		local yaw = yawOf(look.X, look.Z)
+		local newYaw = turnToward(yaw, faceYaw, faceRate * dt)
+		self._base = CFrame.new(self._pos) * CFrame.Angles(0, newYaw, 0)
+		if newYaw == faceYaw then
+			self._faceYaw = nil
+		end
+	end
+
 	if state == "walk" then
 		local target = self._target
 		if not target then
@@ -267,17 +382,23 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 			local pos = self._pos
 			local delta = target - pos
 			local dist = delta.Magnitude
-			local move = self._speed * dt
+			-- Turn toward the heading at a limited rate; slow down while facing away so the path
+			-- still ends at the target (no orbiting), and never snap round.
+			local look = self._base.LookVector
+			local yaw = yawOf(look.X, look.Z)
+			local want = if dist > 1e-3 then yawOf(delta.X, delta.Z) else yaw
+			local newYaw = turnToward(yaw, want, turnRate * dt)
+			local move = self._speed * self._pace * dt * math.max(0.2, cos(want - newYaw))
 			if dist <= move or dist < 0.05 then
 				self._pos = target
-				self._base = CFrame.lookAt(target, target + self._base.LookVector)
+				self._base = CFrame.new(target) * CFrame.Angles(0, newYaw, 0)
 				self:_arrive()
 				offset = CFrame.identity
 			else
 				local dir = delta / dist
 				local newPos = pos + dir * move
 				self._pos = newPos
-				self._base = CFrame.lookAt(newPos, newPos + dir)
+				self._base = CFrame.new(newPos) * CFrame.Angles(0, newYaw, 0)
 				local hop = (t * 2.6) % 1
 				local height = sin(hop * math.pi) * s * 0.22
 				self:_squash(-0.12 * sin(hop * math.pi) + 0.08 * (if hop < 0.12 then 1 - hop / 0.12 else 0), near)
@@ -293,7 +414,7 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 		self:_squash(0.035 * b, near)
 		offset = CFrame.new(0, -s * 0.06, 0) * CFrame.Angles(0.08, 0, 0.22)
 	elseif state == "happy" then
-		local p = min(t / ONE_SHOT.happy, 1)
+		local p = min(t / self._length, 1)
 		local e = smooth(p)
 		self:_squash(-0.1 * sin(p * math.pi), near)
 		offset = CFrame.new(0, sin(p * math.pi) * s * 0.7, 0) * CFrame.Angles(0, e * TAU, 0)
@@ -301,7 +422,7 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 			self:_endOneShot()
 		end
 	elseif state == "eat" then
-		local p = min(t / ONE_SHOT.eat, 1)
+		local p = min(t / self._length, 1)
 		local nod = abs(sin(t * 9)) * 0.35 * (1 - p * 0.3)
 		self:_squash(0.04 * sin(t * 18), near)
 		offset = CFrame.new(0, 0, -s * 0.05) * CFrame.Angles(-nod, 0, 0)
@@ -309,7 +430,7 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 			self:_endOneShot()
 		end
 	elseif state == "attack" then
-		local p = min(t / ONE_SHOT.attack, 1)
+		local p = min(t / self._length, 1)
 		local lunge = if p < 0.35 then -0.25 * (p / 0.35) else sin((p - 0.35) / 0.65 * math.pi) * 1.1
 		self:_squash(0.08 * sin(p * math.pi), near)
 		offset = CFrame.new(0, sin(p * math.pi) * s * 0.12, -lunge * s * 0.5) * CFrame.Angles(-0.25 * sin(p * math.pi), 0, 0)
@@ -317,13 +438,43 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 			self:_endOneShot()
 		end
 	elseif state == "hurt" then
-		local p = min(t / ONE_SHOT.hurt, 1)
+		local p = min(t / self._length, 1)
 		local shake = sin(t * 55) * s * 0.08 * (1 - p)
 		if self._highlight then
 			self._highlight.FillTransparency = 0.15 + 0.85 * p
 		end
 		self:_squash(0, near)
 		offset = CFrame.new(shake, 0, s * 0.06 * (1 - p)) * CFrame.Angles(0.15 * (1 - p), 0, 0)
+		if p >= 1 then
+			self:_endOneShot()
+		end
+	elseif state == "sit" then
+		local b = sin(t * 1.6 + phase)
+		self:_squash(0.12 + 0.02 * b, near)
+		offset = CFrame.new(0, -s * 0.04, 0) * CFrame.Angles(-0.15, 0, 0)
+	elseif state == "shake" then
+		-- A wet-dog shake: a fast roll that dies away, with a little hop at the start.
+		local p = min(t / self._length, 1)
+		local roll = sin(t * 38) * 0.28 * (1 - p)
+		self:_squash(0.06 * sin(t * 38) * (1 - p), near)
+		offset = CFrame.new(0, sin(min(p * 3, 1) * math.pi) * s * 0.08, 0) * CFrame.Angles(0, sin(t * 19) * 0.12 * (1 - p), roll)
+		if p >= 1 then
+			self:_endOneShot()
+		end
+	elseif state == "shiver" then
+		-- Small and quick, hunched a little: cold, not hurt.
+		local jitter = sin(t * 47 + phase) * 0.035 + sin(t * 31) * 0.02
+		self:_squash(0.06, near)
+		offset = CFrame.new(jitter * s * 0.4, -s * 0.02, 0) * CFrame.Angles(0, 0, jitter)
+	elseif state == "faint" then
+		local e = smooth(min(t / 0.7, 1))
+		self:_squash(0.08 * e, near)
+		offset = CFrame.new(0, s * 0.15 * e, 0) * CFrame.Angles(0, 0, 1.4 * e)
+	elseif state == "trick" then
+		local p = min(t / self._length, 1)
+		local h = self._halfHeight
+		self:_squash(-0.1 * sin(p * math.pi), near)
+		offset = CFrame.new(0, h + sin(p * math.pi) * s * 0.6, 0) * CFrame.Angles(-smooth(p) * TAU, 0, 0) * CFrame.new(0, -h, 0)
 		if p >= 1 then
 			self:_endOneShot()
 		end
@@ -340,20 +491,15 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 	end
 
 	if self._skinned then
-		local clip, time, loop = "idle", t + phase, true
-		if state == "walk" then
-			clip, time = "walk", t
-			offset = CFrame.identity
-		elseif state == "happy" or state == "attack" then
-			clip, time, loop = "hop", t, false
-			offset = if state == "happy" then CFrame.Angles(0, smooth(min(t / ONE_SHOT.happy, 1)) * TAU, 0) else offset
-		elseif state == "idle" then
-			offset = CFrame.identity
-		elseif state == "sleep" then
-			time = (t + phase) * 0.4
-			offset = CFrame.identity
+		local clip, time, loop, keep = MonsterAnimator.SkinnedClip(state, self._has, t, phase, self._cheer)
+		if not keep then
+			local spin = clip == "hop" and (state == "happy" or state == "trick")
+			offset = if spin then CFrame.Angles(0, smooth(min(t / self._length, 1)) * TAU, 0) else CFrame.identity
 		end
 		MeshMonster.Pose(self.model, clip, time, loop)
+		if self._wearing then
+			MeshMonster.Follow(self.model)
+		end
 	end
 
 	local body = self._body
@@ -368,24 +514,68 @@ function MonsterAnimator:_update(dt: number, near: boolean)
 	self.model:PivotTo(self._base * offset)
 end
 
+-- Which authored clip a skinned monster plays in `state`, at what time and whether it loops, and
+-- whether the procedural offset worked out for the state still applies (keep): the fallbacks for a
+-- form whose modules have only idle, walk and hop. has(clip) says whether the form has a clip;
+-- cheer is the happy variant picked on Play. Pure, so the spec can check any set of clips.
+function MonsterAnimator.SkinnedClip(
+	state: string,
+	has: (string) -> boolean,
+	t: number,
+	phase: number,
+	cheer: string?
+): (string, number, boolean, boolean)
+	if state == "walk" then
+		return "walk", t, true, false
+	elseif state == "happy" or state == "attack" or state == "trick" then
+		local clip = if state == "happy" then cheer or "cheer" else state
+		if has(clip) then
+			return clip, t, false, false
+		end
+		return "hop", t, false, state == "attack" -- attack keeps its lunge; happy and trick spin
+	elseif state == "sleep" then
+		if has("sleep") then
+			return "sleep", t, true, false
+		end
+		return "idle", (t + phase) * 0.4, true, false
+	elseif state == "eat" or state == "sit" then
+		if has(state) then
+			return state, t, true, false
+		end
+		return "idle", t + phase, true, true
+	elseif state == "hurt" or state == "faint" then
+		if has(state) then
+			return state, t, false, false
+		end
+		return "idle", if state == "faint" then 0 else t + phase, true, true
+	elseif state == "shake" or state == "shiver" then
+		return "idle", t + phase, true, true -- procedural over idle (no clip is authored for these)
+	end
+	return "idle", t + phase, true, false
+end
+
 function step(dt: number)
 	clock += dt
 	local camera = workspace.CurrentCamera
 	local camPos = if camera then camera.CFrame.Position else Vector3.zero
-	local pauseSq = PAUSE_DISTANCE * PAUSE_DISTANCE
-	local midSq = MID_DISTANCE * MID_DISTANCE
+	local look = if camera then camera.CFrame.LookVector else Vector3.new(0, 0, -1)
 	local squashSq = SQUASH_DISTANCE * SQUASH_DISTANCE
+	local level = if lowGraphics then 1 else Quality.Level()
+	local margin = LodConfig.behindMargin
+	local count = 0
 	for i = 1, #animators do
 		local a = animators[i]
 		if a and not a._dead and a.model.Parent ~= nil then
 			local d = a._pos - camPos
 			local distSq = d.X * d.X + d.Y * d.Y + d.Z * d.Z
 			a._accum += dt
-			if distSq <= pauseSq then
-				local interval = if lowGraphics then LOW_INTERVAL elseif distSq > midSq then MID_INTERVAL else 0
+			local onScreen = d.X * look.X + d.Y * look.Y + d.Z * look.Z > -(margin + a._size)
+			local interval = Lod.AnimInterval(LodConfig, level, a._own, math.sqrt(distSq), onScreen)
+			if interval then
 				if a._accum >= interval then
 					local elapsed = min(a._accum, 0.25)
 					a._accum = 0
+					count += 1
 					a:_update(elapsed, distSq <= squashSq)
 				end
 			else
@@ -393,6 +583,8 @@ function step(dt: number)
 			end
 		end
 	end
+	updated = count
+	Quality.Stats.animated = count
 end
 
 function MonsterAnimator:Destroy()

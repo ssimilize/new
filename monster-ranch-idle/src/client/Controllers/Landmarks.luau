@@ -14,29 +14,54 @@
 	rates through Vfx.SetQuality (World routes the setting). It also drives the night glow: every
 	Lighting.ClockTime change (the Weather controller sweeps it through dusk and dawn) becomes
 	Vfx.SetNight(Vfx.NightFromClock(ClockTime)), for monsters, landmarks and bursts alike.
-	No state, actions or bus topics.
+	Portals (raidPortal, hubPortal and the Sky Gate) also hum: a positional PortalHum loop
+	(Audio.LoopAt), removed with the landmark. No state, actions or bus topics.
 ]]
 
 local Lighting = game:GetService("Lighting")
 
 local Client = script.Parent.Parent
 local Vfx = require(Client.Visuals.Vfx)
+local Audio = require(Client.Audio)
+local Streaming = require(Client.Visuals.Streaming)
 
 local Landmarks = {
 	Name = "Landmarks",
 	Dependencies = {},
 }
 
+local PORTALS = { raidPortal = true, hubPortal = true, skyGate = true }
+
 local connections = {}
 local attached = {} -- [Instance] = true
 
 local pending = {} -- [Instance] = true while a re-attach is scheduled
+local waiting = {} -- [Instance] = true while its Body has not streamed in yet
 
 local function attach(instance: Instance, id: any)
 	if type(id) ~= "string" or attached[instance] then
 		return
 	end
-	if Vfx.AttachLandmark(instance, id) then
+	if not Vfx.AttachLandmark(instance, id) then
+		-- StreamingEnabled (glow-up P): the Body may arrive after the model; try again then.
+		if not waiting[instance] then
+			waiting[instance] = true
+			local connection
+			connection = instance.ChildAdded:Connect(function(child)
+				if child.Name == "Body" or child:IsA("BasePart") then
+					connection:Disconnect()
+					waiting[instance] = nil
+					attach(instance, id)
+				end
+			end)
+			table.insert(connections, connection)
+		end
+		return
+	end
+	do
+		if PORTALS[id] then
+			Audio.LoopAt("PortalHum", instance)
+		end
 		attached[instance] = true
 		table.insert(
 			connections,
@@ -93,16 +118,25 @@ function Landmarks.Start()
 		if not world then
 			return
 		end
-		local hub = world:WaitForChild("Hub", 30)
-		local buildings = hub and hub:WaitForChild("Buildings", 30)
-		if buildings then
-			watchBuildings(buildings)
-		end
-		local sky = world:WaitForChild("Sky", 30)
-		local gate = sky and sky:WaitForChild("Gate", 30)
-		if gate and gate:WaitForChild("Body", 30) then
-			attach(gate, "skyGate")
-		end
+		-- No WaitForChild timeouts (glow-up P): with StreamingEnabled the Sky Gate may only
+		-- stream in when the player goes near it, long after joining.
+		table.insert(
+			connections,
+			Streaming.OnChild(world, "Hub", function(hub)
+				table.insert(connections, Streaming.OnChild(hub, "Buildings", watchBuildings))
+			end)
+		)
+		table.insert(
+			connections,
+			Streaming.OnChild(world, "Sky", function(sky)
+				table.insert(
+					connections,
+					Streaming.OnChild(sky, "Gate", function(gate)
+						attach(gate, "skyGate")
+					end)
+				)
+			end)
+		)
 	end)
 end
 

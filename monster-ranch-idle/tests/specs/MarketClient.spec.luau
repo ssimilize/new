@@ -189,8 +189,8 @@ return function(t)
 				end
 			end)
 			c:Advance(0.3)
-			expect(c:HasText("Your Rare Golden Cindlet sold for 12K! +11K coins", c.kernel.UI.Overlay)).toBe(true)
-			expect(c:HasText("1 market item came back to you", c.kernel.UI.Overlay)).toBe(true)
+			expect(c:HasText("Your Rare Golden Cindlet sold for 12K! +11K coins", c.kernel.UI.Feedback)).toBe(true)
+			expect(c:HasText("1 market item came back to you", c.kernel.UI.Feedback)).toBe(true)
 			expectClean(c)
 		end)
 
@@ -299,7 +299,7 @@ return function(t)
 			-- toast, which only stays up a few seconds, so watch for it from the moment of the sale.
 			local arrived, toasted = false, false
 			for _ = 1, (Market.MailSyncSeconds + 5) * 2 do
-				toasted = toasted or a:HasText("sold for 5K", a.kernel.UI.Overlay)
+				toasted = toasted or a:HasText("sold for 5K", a.kernel.UI.Feedback)
 				for _, e in a.events do
 					if e.name == "Market.MailCollected" then
 						arrived = true

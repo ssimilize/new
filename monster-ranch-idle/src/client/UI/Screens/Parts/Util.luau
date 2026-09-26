@@ -31,6 +31,7 @@ local Icon = require(UI.Components.Icon)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local Widgets = require(UI.Components.Widgets)
 local StoreKit = require(UI.Components.StoreKit)
+local ShowpieceChips = require(script.Parent.ShowpieceChips) -- glow-up W
 
 local New = Create.New
 local C = Theme.Colors
@@ -312,7 +313,12 @@ function Util.valueLines(ap)
 	table.insert(lines, { text = string.format("Lv %d %s", ap.lv or 1, stars(ap.stars)), color = C.Text })
 	if ap.weight then
 		local w = Format.weight(ap.weight)
-		table.insert(lines, { text = if Util.isHuge(ap) then w .. " · Huge" else w, color = C.TextMuted })
+		local size = ShowpieceChips.sizeTag(ap)
+		local text = if size == "TITANIC" then w .. " · Titanic" elseif size == "HUGE" then w .. " · Huge" else w
+		table.insert(lines, { text = text, color = C.TextMuted })
+	end
+	if type(ap.ltdNo) == "number" then -- glow-up W: limited edition number
+		table.insert(lines, { text = string.format("Limited edition #%d of %d", ap.ltdNo, tonumber(ap.ltdOf) or 0), color = C.Purple })
 	end
 	return lines
 end
@@ -342,10 +348,11 @@ function Util.tagChips(ap, parent: Instance, layoutOrder: number?)
 	end
 	if ap.weight then
 		Widgets.Chip({ Text = Format.weight(ap.weight), Color = C.PanelDeep, Parent = row })
-		if Util.isHuge(ap) then
+		if Util.isHuge(ap) and ap.titanic ~= true then
 			Widgets.Chip({ Text = "HUGE", Color = C.Orange, Parent = row })
 		end
 	end
+	ShowpieceChips.add(ap, row) -- glow-up W: TITANIC, #37/500
 	Widgets.Chip({ Text = "Lv " .. tostring(ap.lv or 1), Color = C.Blue, Parent = row })
 	Widgets.Chip({ Text = stars(ap.stars), Color = C.Gold, Parent = row })
 	return row

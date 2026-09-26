@@ -4,9 +4,11 @@ skeleton, key clips, export, and render previews. Runs inside Blender; each rig 
 folder on sys.path and imports it.
 
 A rig script supplies three things: landmarks fitted from the model's own shape, a skeleton built
-from them, and clip functions. Every body type keys the same three clips (idle, walk, hop), which is
-what MonsterAnimator plays. Clip functions return (pose, lift): pose maps a bone to a world-axis
-rotation, or to (rotation, world offset) for a bone that also moves; lift moves the body bone.
+from them, and clip functions. Every body type keys the same three clips (idle, walk, hop) and the
+nine EXTRA ones (sleep, eat, cheer, cheer2, attack, hurt, faint, sit, trick), which is what
+MonsterAnimator plays. Clip functions return (pose, lift): pose maps a bone to a world-axis
+rotation, or to (rotation, world offset) for a bone that also moves; lift moves the body bone. An
+extra clip may return (pose, lift, ground) too: see animate_extra.
 
 The model is scaled to 1 m tall with its lowest point on the ground (or `lift` above it, for body
 types that hover), centred on x and y, facing -y (Blender), as Meshy delivers it.
@@ -420,6 +422,114 @@ def pulse(t: float, start: float, end: float) -> float:
     return math.sin(math.pi * (t - start) / (end - start))
 
 
+# The clips added after the first three (2026-09-26), keyed by animate_extra: name -> (seconds,
+# frames per second, mode). "loop" clips close on their first frame, "once" clips start and end at
+# rest (so they blend back to idle), a "hold" clip ends on a pose the game keeps (faint). They are
+# keyed at 10 or 15 fps, not 30 (MeshMonster interpolates between frames), so the nine fit one
+# module per form under Studio's Source cap: MeshMonsterClips/<form>, beside MeshMonsters/<form>.
+# MonsterAnimator reads the lengths from the module, so a change here needs no game change.
+EXTRA = {
+    "sleep": (3.0, 10, "loop"),
+    "eat": (1.2, 15, "loop"),
+    "cheer": (1.2, 15, "once"),
+    "cheer2": (1.2, 15, "once"),
+    "attack": (0.8, 15, "once"),
+    "hurt": (0.6, 15, "once"),
+    "faint": (1.2, 15, "hold"),
+    "sit": (3.0, 10, "loop"),
+    "trick": (1.4, 15, "once"),
+}
+
+
+def ease(x: float) -> float:
+    """Smoothstep of x clamped to 0..1."""
+    x = min(1.0, max(0.0, x))
+    return x * x * (3 - 2 * x)
+
+
+def ramp(t: float, start: float, end: float) -> float:
+    """0 before start, easing up to 1 at end, 1 after."""
+    return ease((t - start) / (end - start))
+
+
+def box(arm):
+    """The rest mesh's bounds (lo, hi), stored on the armature by animate_extra."""
+    b = list(arm["box"])
+    return Vector(b[:3]), Vector(b[3:])
+
+
+def joint(arm, name: str) -> Vector:
+    return arm.data.bones[name].head_local.copy()
+
+
+def about(arm, q: Quaternion, point, bone: str) -> Vector:
+    """The world offset that keeps `point` still while `bone` turns by q about its own joint: so a
+    body can roll about its middle, or sit back about its front paws."""
+    p = Vector(point) - joint(arm, bone)
+    return p - q @ p
+
+
+def lowest_z(mesh) -> float:
+    """The lowest point of the posed (skinned) mesh, in world space."""
+    dg = bpy.context.evaluated_depsgraph_get()
+    ev = mesh.evaluated_get(dg)
+    me = ev.to_mesh()
+    co = np.empty(len(me.vertices) * 3)
+    me.vertices.foreach_get("co", co)
+    ev.to_mesh_clear()
+    m = np.array(mesh.matrix_world)
+    return float((co.reshape(-1, 3) @ m[2, :3] + m[2, 3]).min())
+
+
+def animate_extra(arm, mesh, clips: dict, lift_bone: str = "hips") -> dict:
+    """Keys the EXTRA clips: clips maps every EXTRA name to a function(arm, frame, frames) ->
+    (pose, lift) or (pose, lift, ground). Each frame is posed and the skinned mesh measured: the
+    body is raised so nothing sinks below the ground, then lowered by `ground` (0..1) of what is
+    left under it, so ground=1 lays the lowest point on the floor (lying down; hovering body types
+    landing). Every bone's rotation and location is keyed, so no clip inherits another's state.
+    Leaves the actions the armature had (idle, walk, hop) as they were."""
+    missing = [name for name in EXTRA if name not in clips]
+    if missing:
+        raise SystemExit(f"animate_extra: no clip function for {', '.join(missing)}")
+    m = np.array(mesh.matrix_world)
+    P = points(mesh) @ m[:3, :3].T + m[:3, 3]
+    arm["box"] = [float(v) for v in (*P.min(0), *P.max(0))]
+    arm.animation_data_create()
+    keep = arm.animation_data.action
+    actions = {}
+    for name, (seconds, fps, mode) in EXTRA.items():
+        n = round(seconds * fps)
+        arm.animation_data.action = None
+        frames = []
+        for f in range(n + 1):
+            out = clips[name](arm, f % n if mode == "loop" else f, n)
+            pose, lift = out[0], out[1]
+            ground = out[2] if len(out) > 2 else 0.0
+            apply_pose(arm, pose, lift, lift_bone)
+            low = lowest_z(mesh)
+            clear = max(low, 0.0)
+            dz = (clear - low) - ground * clear
+            if abs(dz) > 1e-7:
+                apply_pose(arm, pose, lift + Vector((0, 0, dz)), lift_bone)
+            frames.append([(pb.rotation_quaternion.copy(), pb.location.copy()) for pb in arm.pose.bones])
+        action = bpy.data.actions.new(name)
+        action.use_fake_user = True
+        action["fps"] = fps
+        action["mode"] = mode
+        arm.animation_data.action = action
+        for f, state in enumerate(frames):
+            for pb, (q, loc) in zip(arm.pose.bones, state):
+                pb.rotation_quaternion = q
+                pb.location = loc
+                pb.keyframe_insert("rotation_quaternion", frame=f)
+                pb.keyframe_insert("location", frame=f)
+        action.frame_range = (0, n)
+        actions[name] = action
+        log(f"clip {name}: {n} frames at {fps} fps ({mode})")
+    arm.animation_data.action = keep
+    return actions
+
+
 # ─── Output ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -535,19 +645,22 @@ def previews(arm, actions, out: Path, rest_only: bool = False, views=None, lift_
             break
         arm.animation_data.action = action
         total = int(action.frame_range[1])
-        step = 2 if total <= 30 else 3
-        manifest["clips"][name] = {"step": step, "views": {}}
+        fps = int(action.get("fps", FPS))
+        # An extra clip (10 or 15 fps) is drawn at every frame, a "hold" one up to its last.
+        step = 1 if fps < FPS else (2 if total <= 30 else 3)
+        last = total + 1 if action.get("mode") == "hold" else total
+        manifest["clips"][name] = {"step": step, "fps": fps, "views": {}}
         for view, (eye, target) in views.items():
             aim(cam, eye, target)
             files = []
-            for f in range(0, total, step):
+            for f in range(0, last, step):
                 bpy.context.scene.frame_set(f)
                 path = frames_dir / f"{name}_{view}_{f:03d}.png"
                 render(path)
                 files.append(path.name)
             manifest["clips"][name]["views"][view] = files
     (frames_dir / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
-    arm.animation_data.action = actions["idle"]
+    arm.animation_data.action = actions.get("idle")
     log("previews rendered")
 
 
@@ -561,9 +674,10 @@ def framed_views(P: np.ndarray):
     }
 
 
-def run(src: Path, out: Path, args, fit, build, clips, lift: float = 0.0, lift_bone: str = "hips", moving=(), give_back=(("ear.", below_base),), views=None):
-    """The whole rig: import, fit landmarks, build the skeleton, skin, key the clips, export,
-    render previews. fit(mesh) -> marks (JSON-able); build(marks) -> armature."""
+def run(src: Path, out: Path, args, fit, build, clips, lift: float = 0.0, lift_bone: str = "hips", moving=(), give_back=(("ear.", below_base),), views=None, extra=None):
+    """The whole rig: import, fit landmarks, build the skeleton, skin, key the clips (then the
+    EXTRA ones, `extra`), export, render previews. fit(mesh) -> marks (JSON-able); build(marks) ->
+    armature."""
     out.mkdir(parents=True, exist_ok=True)
     mesh = import_model(src, lift)
     log(f"islands after welding: {islands(mesh)}")
@@ -572,6 +686,9 @@ def run(src: Path, out: Path, args, fit, build, clips, lift: float = 0.0, lift_b
     arm = build(marks)
     skin(mesh, arm, give_back)
     actions = animate(arm, clips, lift_bone, moving)
+    if extra:
+        actions.update(animate_extra(arm, mesh, extra, lift_bone))
+        arm.animation_data.action = actions["idle"]
     export(out)
     if "--no-preview" not in args:
         previews(arm, actions, out, "--rest-only" in args, views(points(mesh)) if callable(views) else views, lift_bone)

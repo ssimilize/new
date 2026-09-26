@@ -22,6 +22,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from riglib import X, Y, Z, armature, below_base, chain, finish, footprint_scale, footprints, framed_views, inboard, log, pulse, rot, run, set_game_scale  # noqa: E402
+from riglib import about, box, ramp  # noqa: E402
 
 ARGS = sys.argv[sys.argv.index("--") + 1 :]
 SRC, OUT = Path(ARGS[0]).resolve(), Path(ARGS[1]).resolve()
@@ -161,17 +162,162 @@ def clip_hop(arm, f, n):
     return pose, Vector((0, 0, 0.22 * up))
 
 
+
+# ─── The extra clips (riglib.EXTRA: sleep, eat, cheer, cheer2, attack, hurt, faint, sit, trick) ──
+
+
+def env(t: float, rise: float = 0.12, fall: float = 0.85) -> float:
+    """1 through a one-shot clip, easing in from 0 at its start and back to 0 at its end."""
+    return ramp(t, 0.0, rise) * (1 - ramp(t, fall, 1.0))
+
+
+def centre(arm) -> Vector:
+    lo, hi = box(arm)
+    return (lo + hi) / 2
+
+
+def wing_pose(pose, back, up, bend=0.0):
+    """back: + swings the wings back (as wings()); up: + raises them; bend: the outer halves."""
+    pose["wing.L.1"] = rot(Z, back) @ rot(Y, -up)
+    pose["wing.R.1"] = rot(Z, -back) @ rot(Y, up)
+    pose["wing.L.2"] = rot(Z, bend)
+    pose["wing.R.2"] = rot(Z, -bend)
+
+
+def feelers(pose, lean, sway=0.0):
+    pose["antenna.L"] = rot(X, lean) @ rot(Y, sway)
+    pose["antenna.R"] = rot(X, lean) @ rot(Y, -sway)
+
+
+def clip_sleep(arm, f, n):
+    """Lands, folds its wings back over the body like a tent, antennae drooping; slow breaths."""
+    b = math.sin(2 * math.pi * f / n)
+    pose = {"body": rot(X, 8), "head": rot(X, 18 + 2 * b)}
+    wing_pose(pose, 62 - 4 * b, 12, 10)
+    feelers(pose, 35)
+    for side in ("L", "R"):
+        pose[f"leg.{side}"] = rot(X, -20)
+    return pose, Vector((0, 0, -LIFT)), 1.0
+
+
+def clip_eat(arm, f, n):
+    """Hovers low, nose down to a flower, sipping with small nods; slow wingbeats."""
+    t = f / n
+    sip = 0.5 - 0.5 * math.cos(2 * math.pi * 3 * t)
+    flap = 0.5 - 0.5 * math.cos(2 * math.pi * 2 * t)
+    pose = {"body": rot(X, 22), "head": rot(X, 15 + 8 * sip)}
+    wing_pose(pose, 30 * flap, 0, 8 * flap)
+    feelers(pose, 20 + 6 * sip)
+    return pose, Vector((0, 0, -0.1 + 0.01 * math.sin(2 * math.pi * t)))
+
+
+def clip_cheer(arm, f, n):
+    """Flutters up with a happy wiggle, antennae up."""
+    t = f / n
+    r = ramp(t, 0.0, 0.25) * (1 - ramp(t, 0.7, 1.0))
+    beat = math.sin(math.pi * 6 * t) ** 2
+    pose = {"body": rot(Y, 14 * math.sin(4 * math.pi * t) * r), "head": rot(X, -8 * r)}
+    wing_pose(pose, 45 * beat, 10 * beat * r, 15 * beat)
+    feelers(pose, -15 * r)
+    for side in ("L", "R"):
+        pose[f"leg.{side}"] = rot(X, 25 * r)
+    return pose, Vector((0, 0, 0.2 * r))
+
+
+def clip_cheer2(arm, f, n):
+    """Spreads its wings wide in a display and pops up twice."""
+    t = f / n
+    e = env(t, 0.15, 0.8)
+    pop = max(0.0, math.sin(4 * math.pi * t))
+    pose = {"body": rot(X, -12 * e), "head": rot(X, -6 * e)}
+    wing_pose(pose, -12 * e + 10 * pop, 18 * e, -6 * e)
+    feelers(pose, -18 * e, 10 * e)
+    return pose, Vector((0, 0, 0.12 * pop))
+
+
+def clip_attack(arm, f, n):
+    """Rears back and up, then dives forward wings swept back, and recovers."""
+    t = f / n
+    wind = ramp(t, 0.0, 0.35) * (1 - ramp(t, 0.35, 0.5))
+    hit = ramp(t, 0.35, 0.52) * (1 - ramp(t, 0.6, 1.0))
+    pose = {"body": rot(X, -20 * wind + 28 * hit), "head": rot(X, 10 * hit)}
+    wing_pose(pose, -10 * wind + 55 * hit, 15 * wind, 15 * hit)
+    feelers(pose, -20 * (wind + hit))
+    return pose, Vector((0, 0.1 * wind - 0.26 * hit, 0.08 * wind - 0.08 * hit))
+
+
+def clip_hurt(arm, f, n):
+    """Knocked back and down in the air, wings crumpling forward."""
+    t = f / n
+    e = ramp(t, 0.0, 0.15) * (1 - ramp(t, 0.3, 1.0))
+    shake = math.sin(2 * math.pi * 5 * t) * e
+    pose = {"body": rot(X, -22 * e) @ rot(Y, 10 * shake), "head": rot(X, -10 * e)}
+    wing_pose(pose, -12 * e, 10 * e, -10 * e)
+    feelers(pose, -30 * e)
+    return pose, Vector((0, 0.1 * e, -0.04 * e))
+
+
+def clip_faint(arm, f, n):
+    """Flutters weakly, drifts down to the ground and lies tipped over, wings flat."""
+    t = f / n
+    fall = ramp(t, 0.2, 0.85)
+    flap = (0.5 - 0.5 * math.cos(2 * math.pi * 2 * t)) * (1 - fall)
+    q = rot(Y, 25 * fall) @ rot(X, 12 * fall)
+    pose = {"body": q, "head": rot(X, 20 * fall)}
+    wing_pose(pose, 20 * flap, -8 * fall, 0)
+    feelers(pose, 40 * fall)
+    for side in ("L", "R"):
+        pose[f"leg.{side}"] = rot(X, -30 * fall)
+    return pose, about(arm, q, centre(arm), "body") + Vector((0, 0, -LIFT * fall)), fall
+
+
+def clip_sit(arm, f, n):
+    """Lands and rests, wings raised and slowly opening and closing."""
+    t = f / n
+    b = math.sin(2 * math.pi * t)
+    pose = {"body": rot(X, -4), "head": rot(Z, 8 * math.sin(2 * math.pi * t)) @ rot(X, 4)}
+    wing_pose(pose, 18, 50 + 18 * b, 6)
+    feelers(pose, 8 * math.sin(4 * math.pi * t), 6)
+    return pose, Vector((0, 0, -LIFT)), 1.0
+
+
+def clip_trick(arm, f, n):
+    """A barrel roll: rises and turns a full circle about its long axis."""
+    t = f / n
+    e = env(t)
+    q = rot(Y, 360 * ramp(t, 0.1, 0.9))
+    beat = math.sin(math.pi * 7 * t) ** 2
+    pose = {"body": q, "head": rot(X, -8 * e)}
+    wing_pose(pose, 35 * beat, 0, 12 * beat)
+    feelers(pose, -20 * e)
+    return pose, about(arm, q, centre(arm), "body") + Vector((0, 0, 0.18 * math.sin(math.pi * t)))
+
+
+EXTRA_CLIPS = {
+    "sleep": clip_sleep,
+    "eat": clip_eat,
+    "cheer": clip_cheer,
+    "cheer2": clip_cheer2,
+    "attack": clip_attack,
+    "hurt": clip_hurt,
+    "faint": clip_faint,
+    "sit": clip_sit,
+    "trick": clip_trick,
+}
+
 CLIPS = {"idle": (clip_idle, 60), "walk": (clip_walk, 24), "hop": (clip_hop, 24)}
 
-run(
-    SRC,
-    OUT,
-    ARGS,
-    fit,
-    build,
-    CLIPS,
-    lift=LIFT,
-    lift_bone="body",
-    give_back=(("antenna.", below_base), ("wing.", inboard)),
-    views=framed_views,
-)
+if __name__ == "__main__":  # add_clips.py imports the clip functions
+    run(
+        SRC,
+        OUT,
+        ARGS,
+        fit,
+        build,
+        CLIPS,
+        lift=LIFT,
+        lift_bone="body",
+        give_back=(("antenna.", below_base), ("wing.", inboard)),
+        views=framed_views,
+        extra=EXTRA_CLIPS,
+    )

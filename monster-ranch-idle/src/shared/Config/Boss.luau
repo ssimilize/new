@@ -43,4 +43,31 @@ Boss.Rewards = {
 -- Cheer taps accepted per second per player (server-side cap on top of the request rate limit).
 Boss.MaxTapsPerSecond = 15
 
+-- Glow-up U: the Stampede, live in the world (Controllers/StampedeArena, Logic/StampedeArena).
+-- Where it stands: Config.World.StampedeArena. Nothing here changes damage or rewards.
+Boss.Arena = {
+	squadPerPlayer = 3, -- squad looks per player in global.Boss.squads (server cap)
+	squadPlayers = 16, -- players listed there, in join order
+	maxMonsters = { 8, 16, 24 }, -- squad models drawn, by Visuals/Quality level (low, medium, high)
+	bossScale = 8, -- the giant: MonsterModel.Build opts.scale
+	ringInner = 18, -- studs from the centre to the first ring of squads
+	ringGap = 6, -- studs between rings
+	ringSpacing = 6, -- studs between neighbours on a ring
+	attackEvery = 2.4, -- seconds between one squad monster's attacks (staggered round the ring)
+	bossAttackEvery = 4.5, -- the giant swings this often
+	flinchGap = 1.5, -- at most one hurt flinch this often while damage lands
+	staggers = { 0.75, 0.5, 0.25 }, -- HP fractions where the giant staggers
+	chargeFrom = 70, -- studs east of the centre the giant charges in from
+	boltsPerSecond = 6, -- cheer bolts drawn per second (taps beyond this still count)
+	boltSeconds = 0.35, -- flight time of a bolt
+	viewRange = 320, -- models are built while the player is this close to the centre
+	nearRange = 90, -- the Cheer button shows this close; farther away, "To the arena"
+	roarPitch = 0.55, -- the giant's cry, pitched down
+	fallSeconds = 2.2, -- the fall before the loot fountain
+	fountainSeconds = 2.6, -- the fountain before the result popup
+	leaveSeconds = 4, -- after the fall or the end, models are removed this much later
+	storm = { tint = "#A9B4D6", brightness = -0.09, contrast = 0.12, saturation = -0.28, fade = 2.5 },
+	lightningEvery = { 7, 14 }, -- seconds between lightning flashes while the fight runs
+}
+
 return Boss

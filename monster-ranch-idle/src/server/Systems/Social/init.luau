@@ -14,7 +14,7 @@
 
 	Actions:
 	  Social.Pet { owner, id }  -- owner's monster +PetMood (× Charmer), petter +FriendshipPerPet
-	  Social.Like { owner }     -- +1 like on the owner's ranch; PlotChanged for the owner
+	  Social.Like { owner }     -- +1 like on the owner's ranch; PlotChanged for the owner, RanchLiked (glow-up Y)
 
 	Broadcasts (Social.Broadcast event): EggHatched (rarity/variant/Huge rules in
 	Config.Social.Broadcasts), Bred (hybrid discovery, Huge), Mutated (Prismatic) and
@@ -24,6 +24,7 @@
 	Public API:
 	  Social:GetFriendBoost(player) -> pct (0.1 = +10%)
 	  Social:GetLikes(player) -> number
+	  Social:AddLike(player)          -- glow-up Y: +1 like from a snapshot visit (Visits mail)
 	  Social:Broadcast(kind, text, player?, appearance?, scope?)   -- scope "server" (default) | "global" | "none"
 	Registers the Ranch rate modifier "friends" (optional dependency) in Start().
 ]]
@@ -152,6 +153,17 @@ end
 function Social:GetLikes(player): number
 	local s = ctx:Section(player)
 	return s and s.likes or 0
+end
+
+-- Glow-up Y: a like given to this player's ranch snapshot on another server (Visits mail).
+function Social:AddLike(player)
+	local s = ctx:Section(player)
+	if not s then
+		return
+	end
+	s.likes = (s.likes or 0) + 1
+	ctx:Dirty(player, "likes")
+	ctx.Bus:Publish("PlotChanged", player, {})
 end
 
 function Social:Broadcast(kind: string, text: string, player, appearance, scope: string?)
@@ -336,6 +348,7 @@ local function like(player, payload)
 	ownerSection.likes = (ownerSection.likes or 0) + 1
 	ctx:Dirty(owner, "likes")
 	ctx.Bus:Publish("PlotChanged", owner, {})
+	ctx.Bus:Publish("RanchLiked", player, { owner = owner.UserId }) -- glow-up Y: Visits pays and crowns
 	return { likes = ownerSection.likes }
 end
 

@@ -8,13 +8,17 @@
 			Icon = Icon.new("coin", 26),     -- optional GuiObject shown left of the text
 			OnClick = function() ... end,
 			Parent = frame,
+			Sound = "UITab",                 -- optional Config.Sounds key (default "ButtonClick"; false = silent)
 		})
 		b:SetText("Collect +48K")  b:SetDisabled(true)  b:SetColor(Theme.Colors.Orange)
+
+	A press clicks (client/Audio); a press on a disabled button plays "Locked" with its shake.
 ]]
 
 local Theme = require(script.Parent.Parent.Theme)
 local Create = require(script.Parent.Parent.Create)
 local Anim = require(script.Parent.Parent.Anim)
+local Audio = require(script.Parent.Parent.Parent.Audio)
 
 local New = Create.New
 
@@ -37,6 +41,7 @@ export type Props = {
 	Parent: Instance?,
 	Round: boolean?,
 	ZIndex: number?,
+	Sound: (string | false)?,
 }
 
 function Button.new(props: Props)
@@ -44,7 +49,9 @@ function Button.new(props: Props)
 	self._color = props.Color or Theme.Colors.Green
 	self._disabled = props.Disabled == true
 	self._onClick = props.OnClick
+	self._sound = if props.Sound == nil then "ButtonClick" else props.Sound
 
+	local stroke = Create.Stroke(Theme.Stroke.Button)
 	local root = New("TextButton", {
 		Name = props.Name or "Button",
 		Text = "",
@@ -57,11 +64,11 @@ function Button.new(props: Props)
 		ZIndex = props.ZIndex or 1,
 	}, {
 		if props.Round then Create.Round() else Create.Corner(Theme.Radius.Button),
-		Create.Stroke(Theme.Stroke.Button),
+		stroke,
 		Create.Shade(0.18),
 	})
 	-- Bottom lip gives the 3D look.
-	New("Frame", {
+	local lip = New("Frame", {
 		Name = "Lip",
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BackgroundTransparency = 0.8,
@@ -72,6 +79,24 @@ function Button.new(props: Props)
 		ZIndex = root.ZIndex,
 		Parent = root,
 	}, { if props.Round then Create.Round() else Create.Corner(Theme.Radius.Button) })
+	-- With the uploaded skin, one 9-slice image draws the outline, highlight, shade and lip over the
+	-- colour fill (pill buttons keep the shapes: the skin's corners are the 14 px button radius).
+	local skin = Theme.Images.ButtonTexture
+	if skin ~= "" and not props.Round then
+		stroke.Enabled = false
+		lip.Visible = false
+		New("ImageLabel", {
+			Name = "Skin",
+			BackgroundTransparency = 1,
+			Image = skin,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Theme.Slices.Button.Center,
+			SliceScale = Theme.Slices.Button.Scale,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = root.ZIndex,
+			Parent = root,
+		})
+	end
 
 	local content = New("Frame", {
 		Name = "Content",
@@ -115,7 +140,11 @@ function Button.new(props: Props)
 	root.Activated:Connect(function()
 		if self._disabled then
 			Anim.shake(root)
+			Audio.Play("Locked")
 			return
+		end
+		if self._sound then
+			Audio.Play(self._sound)
 		end
 		if self._onClick then
 			task.spawn(self._onClick)

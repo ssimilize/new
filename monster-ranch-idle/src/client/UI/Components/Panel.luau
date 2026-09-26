@@ -58,6 +58,22 @@ function Panel.new(props: {
 		ClipsDescendants = true,
 		Parent = root,
 	}, { Create.Corner(Theme.Radius.Panel), Create.Stroke(Theme.Stroke.Panel) })
+	-- With the uploaded skin, a 9-slice overlay above the card (and its header) draws the outline,
+	-- the top highlight and the inner shade; the card keeps its cream fill underneath.
+	if Theme.Images.PanelTexture ~= "" then
+		(card:FindFirstChildOfClass("UIStroke") :: UIStroke).Enabled = false
+		New("ImageLabel", {
+			Name = "Skin",
+			BackgroundTransparency = 1,
+			Image = Theme.Images.PanelTexture,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Theme.Slices.Panel.Center,
+			SliceScale = Theme.Slices.Panel.Scale,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 3,
+			Parent = root,
+		})
+	end
 
 	local header = New("Frame", {
 		Name = "Header",

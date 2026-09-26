@@ -7,21 +7,39 @@
 	                 pen theme colours and decor, the owner sign above each plot gate
 	  profile.Ranch + session.Ranch    live coin jars over the local player's own pens
 	                 (BillboardGuis in PlayerGui; tap = Ranch.Collect + coin burst)
-	  global.Weather night flag (monsters nap at night)
-	  profile.Settings.lowGraphics     fewer animation updates, fewer monsters on other plots, and
-	                 Vfx.SetQuality (other plots' auras off, effect rates and bursts halved)
+	  global.Weather night and weather: read by Visuals/PenBrain (glow-up S), which decides what pen
+	                 monsters do next from their traits (tickWander calls PenBrain.Tick)
+	  Visuals/Quality  the quality level (glow-up P): other plots draw fewer monsters per pen by
+	                 level and distance (Logic/Quality.PenCap, re-checked once a second as the camera
+	                 moves), their animators are marked SetOwn(false) for the animator's distance LOD;
+	                 Vfx and MonsterAnimator follow the level on their own
 
 	Particle effects (Visuals/Vfx): every pen monster is marked as own / other plot (Vfx.SetOwned).
 	Moment bursts: Eggs.Hatched and Monsters.Evolved burst at the monster once it appears in the
 	pen (or at the character if it does not within HATCH_WAIT), Progression.LevelUp round the
 	character; the client bus topic "Vfx.Burst" (name, { id }?) takes "monsterLevelUp" (at that pen
-	monster, MonsterDetail) and "rebirth" (character + Star Altar, the Rebirth screen). Coin and
-	heart bursts use the coin / heart sprites, or the plain emitters while those are not uploaded.
+	monster, MonsterDetail) and "rebirth" (character + Star Altar, the Rebirth screen). Every moment
+	goes through Celebrate:Moment, which holds it while a screen or popup covers the world (the
+	hatch reveal, the evolution popup, MonsterDetail, Rebirth) and plays it once the view clears.
+	Coin and heart bursts use the coin / heart sprites, or the plain emitters while those are not
+	uploaded. A jar tap also flies its coins into the HUD counter (Celebrate:Reward).
 
-	Taps on monsters are raycast against their Body parts: own monster -> MonsterDetail,
-	someone else's -> Social.Pet with hearts. Taps on own eggs open Incubators.
+	Sounds (client/Audio): pen monsters are tracked for Soundscape's chatter, cry when they play
+	"happy" (rate-limited in Audio/Voices), when petted and on a level-up burst; a jar collect is
+	a positional JarCollect plus a CoinTick streak.
+
+	Taps on monsters are raycast against their Body parts (a 3D monster's invisible Hit box):
+	own monster -> MonsterDetail, someone else's -> Social.Pet with hearts. Taps on own eggs open Incubators.
 	The local character is moved to its plot once global.Plots lists the local UserId, and
 	again on every respawn. Client bus: subscribes to "World.FocusPlot" (plotIndex).
+	Glow-up N: the evolve moment and the monsterLevelUp / monsterStarUp bursts ("Vfx.Burst" topic)
+	first offer Cinematics a shot (Evolved / Spotlight); World:OwnMonster and World:IncubatorEgg
+	tell it where things are.
+	Glow-up L: Community.Trick (server event) plays a trick on that pen monster; World.PlayTrick and
+	World.NearestOwn serve the emote wheel (Controllers/Community).
+	Glow-up Q: World.OwnTapHandler (set by Controllers/Care) takes a tap on an own monster first
+	(the Care menu); World.PlayCare plays a care reaction with hearts, World.MonsterModel finds a
+	pen monster's model for the bond nameplates.
 
 	Monsters are diffed by id and rebuilt only when their appearance changes; released models
 	are pooled by appearance key. At most MAX_PER_PEN monsters are rendered per pen.
@@ -37,12 +55,17 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local JarModule = Shared.Logic:FindFirstChild("Jar")
 local Jar = if JarModule then require(JarModule) :: any else nil
+local QualityRules = require(Shared.Logic.Quality)
 
 local Client = script.Parent.Parent
 local MonsterModel = require(Client.Visuals.MonsterModel)
 local EggModel = require(Client.Visuals.EggModel)
 local MonsterAnimator = require(Client.Visuals.MonsterAnimator)
+local PenBrain = require(Client.Visuals.PenBrain) -- glow-up S: what pen monsters do next
 local Vfx = require(Client.Visuals.Vfx)
+local Quality = require(Client.Visuals.Quality)
+local Audio = require(Client.Audio)
+local Voices = require(Client.Audio.Voices)
 local VfxConfig = require(Shared.Config.Vfx)
 local Theme = require(Client.UI.Theme)
 local Create = require(Client.UI.Create)
@@ -59,8 +82,7 @@ local World = {
 
 local PLOT_COUNT = #WorldConfig.Plots
 local MAX_PENS = math.min(Config.Economy.Pens.max, #WorldConfig.PenOffsets)
-local MAX_PER_PEN = 10
-local MAX_PER_PEN_LOW = 5 -- other players' pens in low graphics
+local MAX_PER_PEN = 10 -- own plot; other plots: Config.Quality.Lod.penCap by level and distance
 local MAX_STATUES = WorldConfig.StatueRow.count
 local STATUE_SPACING = WorldConfig.StatueRow.spacing
 local POOL_MAX = 40
@@ -90,8 +112,7 @@ local pool = {} -- [appearanceKey] = { Model }
 local poolCount = 0
 local connections = {}
 local running = false
-local lowGraphics = false
-local night = false
+local lowGraphics = Quality.IsLow()
 local latestPlots = nil
 local ownIndex: number? = nil
 local ranchProfile = nil
@@ -110,6 +131,15 @@ local function plotFrame(index: number): CFrame
 	local plot = WorldConfig.Plots[index]
 	local c = plot.center
 	return CFrame.new(c[1], WorldConfig.GroundY, c[3]) * CFrame.Angles(0, math.rad((plot.facing or 0) - 90), 0)
+end
+
+-- Studs from the camera to a plot's centre (the distance LOD's measure).
+local function plotDistance(index: number): number
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return 0
+	end
+	return (camera.CFrame.Position - plotFrame(index).Position).Magnitude
 end
 
 local function plotModel(index: number): Instance?
@@ -309,6 +339,17 @@ local function expectMonster(id: any, name: string, opts, ready: (Model) -> bool
 	end)
 end
 
+-- Plays an in-world moment where the player can see it: Celebrate holds it while a screen or
+-- popup covers the world. Without the kit (it failed to start) the moment plays at once.
+local function moment(key: string, fn: () -> (), opts: { [string]: any }?)
+	local kit = ctx:GetController("Celebrate")
+	if kit then
+		kit:Moment(key, fn, opts)
+	else
+		fn()
+	end
+end
+
 local function onHatched(payload)
 	local monster = type(payload) == "table" and payload.monster
 	if type(monster) ~= "table" then
@@ -316,42 +357,89 @@ local function onHatched(payload)
 	end
 	local rarity = type(monster.rarity) == "number" and Config.Rarities.Get(monster.rarity)
 	local opts = { color = if rarity then Color3.fromHex(rarity.color) else nil }
-	expectMonster(monster.id, "hatch", opts, function()
-		return true
-	end)
+	-- The hatch reveal is the feedback while it is up; the burst waits for it to close.
+	moment("hatch:" .. tostring(monster.id), function()
+		expectMonster(monster.id, "hatch", opts, function()
+			return true
+		end)
+	end, { flourish = false })
 end
 
 local function onEvolved(payload)
 	if type(payload) ~= "table" then
 		return
 	end
-	local line = nil
-	local entry = ownEntry(payload.id)
-	if entry then
-		line = entry.model:GetAttribute("Line")
-	end
-	local def = type(line) == "string" and Config.Species.ById[line]
-	expectMonster(payload.id, "evolve", { elements = if def then def.elements else nil }, function(model)
-		return model:GetAttribute("Form") == payload.toForm
-	end)
+	moment("evolve:" .. tostring(payload.id), function()
+		local cine = ctx:GetController("Cinematics") -- glow-up N: the evolution shot, when it plays
+		if cine and cine:Evolved(payload) then
+			return
+		end
+		local line = nil
+		local entry = ownEntry(payload.id)
+		if entry then
+			line = entry.model:GetAttribute("Line")
+		end
+		local def = type(line) == "string" and Config.Species.ById[line]
+		expectMonster(payload.id, "evolve", { elements = if def then def.elements else nil }, function(model)
+			return model:GetAttribute("Form") == payload.toForm
+		end)
+	end, { flourish = false })
 end
 
 local function onBurstTopic(name: any, info: any)
 	if name == "monsterLevelUp" and type(info) == "table" then
-		momentAt(info.id, "monsterLevelUp")
+		-- MonsterDetail shows its own shockwave at the click.
+		moment("monsterLevelUp:" .. tostring(info.id), function()
+			local cine = ctx:GetController("Cinematics") -- glow-up N: a short look at the monster
+			if cine and cine:Spotlight(info.id, "monsterLevelUp") then
+				return
+			end
+			momentAt(info.id, "monsterLevelUp")
+			local entry = ownEntry(info.id)
+			if entry then
+				Voices.Cry(entry.model, "levelUp")
+			end
+		end, { flourish = false })
+	elseif name == "monsterStarUp" and type(info) == "table" then -- glow-up N (MonsterDetail star-up)
+		moment("monsterStarUp:" .. tostring(info.id), function()
+			local cine = ctx:GetController("Cinematics")
+			if not (cine and cine:Spotlight(info.id, "starUp")) then
+				momentAt(info.id, "starUp")
+			end
+		end, { flourish = false })
 	elseif name == "rebirth" then
-		local feet = characterFeet()
-		if feet then
-			Vfx.Burst("rebirth", feet)
-		end
-		local altar = hubBody("starAltar")
-		if altar then
-			Vfx.Burst("rebirth", altar.CFrame * CFrame.new(0, -altar.Size.Y / 2 + 0.2, -altar.Size.Z * 0.85))
-		end
+		moment("rebirth", function()
+			local feet = characterFeet()
+			if feet then
+				Vfx.Burst("rebirth", feet)
+			end
+			local altar = hubBody("starAltar")
+			if altar then
+				Vfx.Burst("rebirth", altar.CFrame * CFrame.new(0, -altar.Size.Y / 2 + 0.2, -altar.Size.Z * 0.85))
+			end
+		end)
 	end
 end
 
 -- Model pool ------------------------------------------------------------------------------
+
+local function accessoryKey(acc): string
+	if type(acc) ~= "table" then
+		return ""
+	end
+	local list = {}
+	for slot, id in acc do
+		table.insert(list, tostring(slot) .. "=" .. tostring(id))
+	end
+	table.sort(list)
+	return table.concat(list, "+")
+end
+
+-- The part a tap raycasts: a placeholder's "Body", a 3D monster's invisible "Hit" box.
+local function tapPart(model: Model): BasePart?
+	local part = model:FindFirstChild("Body") or model:FindFirstChild("Hit")
+	return if part and part:IsA("BasePart") then part else nil
+end
 
 local function appearanceKey(a): string
 	return table.concat({
@@ -363,6 +451,9 @@ local function appearanceKey(a): string
 		table.concat(a.muts or {}, "+"),
 		tostring(math.floor((a.weight or 0) * 10 + 0.5)),
 		tostring(a.archetype),
+		accessoryKey(a.acc), -- worn accessories are built into the model
+		tostring(a.aura or ""), -- 3.3 mastery aura (Vfx)
+		if a.titanic == true then "T" else "", -- glow-up W: Titanic size and aura
 	}, "|")
 end
 
@@ -381,7 +472,7 @@ local function acquireModel(appearance, key: string): Model?
 		poolCount -= 1
 		return table.remove(list)
 	end
-	local ok, model = pcall(MonsterModel.Build, appearance)
+	local ok, model = pcall(MonsterModel.Build, appearance, { inPen = true }) -- a Titanic stays inside the fence
 	if not ok then
 		warn("[World] MonsterModel.Build failed: " .. tostring(model))
 		return nil
@@ -389,8 +480,8 @@ local function acquireModel(appearance, key: string): Model?
 	if hasMutation(appearance, "prismatic") then
 		model:SetAttribute("Prismatic", true)
 	end
-	local body = model:FindFirstChild("Body")
-	if body and body:IsA("BasePart") then
+	local body = tapPart(model)
+	if body then
 		body.CanQuery = true
 	end
 	return model
@@ -441,6 +532,7 @@ local function removeEntry(view, entry)
 		bodyToEntry[entry.body] = nil
 	end
 	entry.animator:Destroy()
+	Voices.Untrack(entry.model)
 	releaseModel(entry.model, entry.key)
 	view.entries[entry.id] = nil
 end
@@ -460,7 +552,7 @@ local function spawnEntry(view, id: string, appearance, key: string, pen: number
 		return nil
 	end
 	local height = model:GetAttribute("Height")
-	local body = model:FindFirstChild("Body")
+	local body = tapPart(model)
 	local entry = {
 		id = id,
 		key = key,
@@ -469,7 +561,7 @@ local function spawnEntry(view, id: string, appearance, key: string, pen: number
 		owner = view.userId,
 		name = appearance.name,
 		model = model,
-		body = if body and body:IsA("BasePart") then body else nil,
+		body = body,
 		animator = MonsterAnimator.new(model),
 		margin = 1.5 + (if type(height) == "number" then height * 0.4 else 1.2),
 		nextAt = 0,
@@ -483,6 +575,8 @@ local function spawnEntry(view, id: string, appearance, key: string, pen: number
 	view.entries[id] = entry
 	local own = view.userId == player.UserId
 	Vfx.SetOwned(model, own) -- pooled models move between plots
+	entry.animator:SetOwn(own)
+	Voices.Track(model)
 	local pending = if own then pendingBursts[id] else nil
 	if pending then
 		pendingBursts[id] = nil
@@ -494,7 +588,9 @@ end
 local function syncMonsters(view, data)
 	local seen = {}
 	local own = view.userId == player.UserId
-	local cap = if lowGraphics and not own then MAX_PER_PEN_LOW else MAX_PER_PEN
+	local distance = plotDistance(view.index)
+	view.lodBand = QualityRules.Band(Config.Quality.Lod, Quality.Level(), distance)
+	local cap = QualityRules.PenCap(Config.Quality.Lod, Quality.Level(), own, distance, MAX_PER_PEN)
 	for p, pen in data.pens or {} do
 		if type(p) == "number" and p <= MAX_PENS and type(pen) == "table" then
 			local n = 0
@@ -534,7 +630,8 @@ end
 local function goldTint(model: Model)
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") then
-			if d.Name ~= "Root" then
+			-- A 3D monster's textured Mesh ignores Color: it wears the Golden look (MonsterLooks) instead.
+			if d.Name ~= "Root" and d.Name ~= "Mesh" and d.Name ~= "Hit" then
 				local c = d.Color
 				local lum = 0.3 * c.R + 0.59 * c.G + 0.11 * c.B
 				d.Color = GOLD_DARK:Lerp(GOLD_LIGHT, math.clamp(lum * 1.2, 0, 1))
@@ -554,9 +651,19 @@ local function clearStatues(view)
 	view.statueKey = ""
 end
 
+-- 3.3: the plinth style the plot's owner equipped (global.Mastery.here), or nil for the default.
+local function plinthFor(userId: number)
+	local here = ctx.Store:Get("global.Mastery.here")
+	local info = type(here) == "table" and here["u" .. tostring(userId)]
+	local id = type(info) == "table" and info.plinth
+	local def = type(id) == "string" and Config.Mastery.ItemById[id]
+	return if def and def.kind == "plinth" then def else nil
+end
+
 local function syncStatues(view, data)
 	local list = data.statues or {}
-	local keys = {}
+	local plinth = plinthFor(view.userId)
+	local keys = { if plinth then plinth.id else "" }
 	for i = 1, math.min(#list, MAX_STATUES) do
 		if type(list[i]) == "table" then
 			table.insert(keys, appearanceKey(list[i]))
@@ -584,13 +691,13 @@ local function syncStatues(view, data)
 				CanTouch = false,
 				Size = Vector3.new(WorldConfig.StatueRow.pedestal, 1.6, WorldConfig.StatueRow.pedestal),
 				CFrame = cf * CFrame.new(0, 0.8, 0),
-				Color = PEDESTAL,
-				Material = Enum.Material.SmoothPlastic,
+				Color = if plinth then Color3.fromHex(plinth.color) else PEDESTAL,
+				Material = if plinth then (Enum.Material :: any)[plinth.material] else Enum.Material.SmoothPlastic,
 				TopSurface = Enum.SurfaceType.Smooth,
 				Parent = view.folder,
 			})
 			table.insert(view.statues, pedestal)
-			local ok, model = pcall(MonsterModel.Build, appearance, { vfx = false }) -- statues: no particles
+			local ok, model = pcall(MonsterModel.Build, appearance, { vfx = false, look = "golden" }) -- statues: no particles
 			if ok then
 				goldTint(model)
 				model.Name = "Statue"
@@ -682,7 +789,7 @@ local function setReady(view, egg)
 	if not root then
 		return
 	end
-	New("PointLight", { Color = READY_COLOR, Brightness = 3, Range = 9, Parent = root })
+	EggModel.SetReady(egg.model, true) -- a warm glow and rising twinkles
 	if view.userId == player.UserId then
 		local gui = New("BillboardGui", {
 			Name = "Ready",
@@ -936,21 +1043,33 @@ local function collect(pen: number)
 	end
 	jar.busy = true
 	Anim.pulse(jar.button, 0.15)
+	-- The coin counter waits for the coins to fly in rather than jumping on the reply.
+	local kit = ctx:GetController("Celebrate")
+	local hold = kit and kit:Hold({ "coins" })
 	local ok, result = ctx.Net:Request("Ranch.Collect", { pen = pen })
 	jar.busy = false
+	local coins = if ok and type(result) == "table" then tonumber(result.coins) or 0 else 0
 	if ok then
 		local floor = ownIndex and penFloor(ownIndex, pen)
 		local area = if ownIndex then penArea(ownIndex, pen) else nil
-		if area then
-			burst("coins", fx.coins, area.Position + Vector3.new(0, 4, 0), 24)
+		local at = if area then area.Position + Vector3.new(0, 4, 0) else nil
+		if at then
+			burst("coins", fx.coins, at, 24)
 		end
-		local coins = type(result) == "table" and tonumber(result.coins) or 0
 		if floor and coins > 0 then
 			floatText(floor, "+" .. Format.short(coins), Theme.Colors.Gold)
 		end
-		ctx:Sound("CoinCollect")
+		-- The landing coins tick up the streak (Celebrate); here, the jar itself.
+		Audio.Chain({ "JarCollect", "CoinCollect" }, { at = if area then area.Position else nil })
+		if kit and coins > 0 then
+			-- From the jar on screen (the float text already says "+N", so no second label).
+			kit:Reward({ { kind = "coins", amount = coins } }, { from = at, hold = hold, label = false })
+		end
 	else
 		ctx:Toast(tostring(result), "error")
+	end
+	if hold and coins <= 0 then
+		hold:Release()
 	end
 end
 
@@ -1089,44 +1208,9 @@ end
 
 -- Wandering -------------------------------------------------------------------------------------
 
-local function decide(entry, clockNow: number)
-	local animator = entry.animator
-	local roll = math.random()
-	if night and roll < 0.55 then
-		animator:Play("sleep")
-		entry.nextAt = clockNow + 6 + math.random() * 10
-		return
-	end
-	roll = math.random()
-	if roll < 0.62 then
-		local area, hx, hz = penArea(entry.plot, entry.pen)
-		entry.nextAt = math.huge
-		animator:MoveTo(randomPoint(area, hx, hz, entry.margin), function()
-			if entry.alive then
-				entry.nextAt = os.clock() + 1.5 + math.random() * 3.5
-			end
-		end)
-	elseif roll < 0.74 then
-		animator:Play("happy")
-		entry.nextAt = clockNow + 2 + math.random() * 2
-	elseif roll < 0.86 then
-		animator:Play("eat")
-		entry.nextAt = clockNow + 2.5 + math.random() * 2.5
-	else
-		animator:Play("idle")
-		entry.nextAt = clockNow + 2 + math.random() * 3
-	end
-end
-
+-- Glow-up S: Visuals/PenBrain decides (traits, night pile, weather, greetings, steering).
 local function tickWander()
-	local clockNow = os.clock()
-	for _, view in views do
-		for _, entry in view.entries do
-			if clockNow >= entry.nextAt and not entry.animator:IsMoving() then
-				decide(entry, clockNow)
-			end
-		end
-	end
+	PenBrain.Tick(os.clock())
 end
 
 -- Taps -------------------------------------------------------------------------------------------
@@ -1134,6 +1218,10 @@ end
 local function onMonsterTapped(entry)
 	if entry.owner == player.UserId then
 		entry.animator:Play("happy")
+		Voices.Cry(entry.model, "pet")
+		if World.OwnTapHandler and World.OwnTapHandler(entry.id) then
+			return -- glow-up Q: the Care menu
+		end
 		ctx.Router:Open("MonsterDetail", { id = entry.id })
 		return
 	end
@@ -1157,6 +1245,8 @@ local function onMonsterTapped(entry)
 				local position = if head and head:IsA("Attachment") then head.WorldPosition else (root :: BasePart).Position
 				burst("hearts", fx.hearts, position, 10)
 				floatText(at, "♥", Theme.Colors.Pink)
+				Audio.Play("Pet", { at = position })
+				Voices.Cry(entry.model, "pet")
 			end
 		end
 		local left = type(result) == "table" and tonumber(result.left)
@@ -1272,11 +1362,29 @@ local function onPlots(list)
 	end
 end
 
+-- Distance LOD: another plot whose distance band changed is re-synced (more or fewer monsters).
+local function tickLod()
+	if type(latestPlots) ~= "table" then
+		return
+	end
+	local level = Quality.Level()
+	for index, view in views do
+		local data = latestPlots[index]
+		if view.userId ~= 0 and view.userId ~= player.UserId and type(data) == "table" then
+			if QualityRules.Band(Config.Quality.Lod, level, plotDistance(index)) ~= view.lodBand then
+				syncMonsters(view, data)
+			end
+		end
+	end
+end
+
 local function loop()
 	local elapsed = 0
+	local sinceLod = 0
 	while running do
 		local dt = task.wait(TICK)
 		elapsed += dt
+		sinceLod += dt
 		local now = ctx:Now()
 		tickWander()
 		tickJars(now)
@@ -1284,6 +1392,162 @@ local function loop()
 			elapsed = 0
 			tickEggs(now)
 		end
+		if sinceLod >= 1 then
+			sinceLod = 0
+			tickLod()
+		end
+	end
+end
+
+-- Photo mode (PhotoMode controller): the local player's pen monsters within `radius` studs of
+-- `position`, nearest first, as { model, animator } (the animator is live; do not Destroy it).
+function World:OwnMonstersNear(position: Vector3, radius: number): { { model: Model, animator: any } }
+	local view = if ownIndex then views[ownIndex] else nil
+	local found = {}
+	for _, entry in if view then view.entries else {} do
+		if entry.alive then
+			local distance = (entry.animator:GetPosition() - position).Magnitude
+			if distance <= radius then
+				table.insert(found, { model = entry.model, animator = entry.animator, distance = distance })
+			end
+		end
+	end
+	-- Glow-up T: the monsters walking with us pose too.
+	local companions = ctx:GetController("Companions")
+	if companions and companions.PoseSubjects then
+		companions:PoseSubjects(position, radius, found)
+	end
+	table.sort(found, function(a, b)
+		return a.distance < b.distance
+	end)
+	return found
+end
+
+-- Glow-up N (Controllers/Cinematics): the local player's pen monster `id` as { model, animator }
+-- (live; do not Destroy them), kept from wandering off for `still` seconds while a shot frames it.
+function World:OwnMonster(id: any, still: number?): { model: Model, animator: any }?
+	local entry = ownEntry(id)
+	if not entry then
+		return nil
+	end
+	if still then
+		entry.nextAt = math.max(entry.nextAt, os.clock() + still)
+	end
+	return { model = entry.model, animator = entry.animator }
+end
+
+-- Glow-up N: the centre of the local player's incubator egg of `eggType` (the one drawn in `slot`
+-- when it matches, else the first ready one whose model is not in `taken`) and its model; an egg
+-- World already cleared gives the pad spot for `slot` and no model. Nil without an own plot.
+function World:IncubatorEgg(eggType: string, slot: number, taken: { [Model]: boolean }?): (CFrame?, Model?)
+	local view = if ownIndex then views[ownIndex] else nil
+	if not view then
+		return nil, nil
+	end
+	local skip = taken or {}
+	local found = view.eggs[slot]
+	if not (found and found.key == eggType and not skip[found.model]) then
+		found = nil
+		for i = 1, #EGG_SPOTS do
+			local egg = view.eggs[i]
+			if egg and egg.key == eggType and egg.ready and not skip[egg.model] then
+				found = egg
+				break
+			end
+		end
+	end
+	if found then
+		return CFrame.new(found.model:GetPivot().Position), found.model
+	end
+	local spot = EGG_SPOTS[math.clamp(math.floor(tonumber(slot) or 1), 1, #EGG_SPOTS)]
+	local top = padTop(view.index)
+	return CFrame.new((top * CFrame.new(spot[1], 1.3, spot[2])).Position), nil
+end
+
+-- Tricks (glow-up L) ------------------------------------------------------------------------------
+
+-- Plays a Config.Community trick on a pen monster (any plot), falling back while the animator
+-- lacks the trick's own state. Returns whether that monster is on screen here.
+function World.PlayTrick(owner: number, id: string, trickId: string): boolean
+	local def = Config.Community and Config.Community.TrickById[trickId]
+	if not def then
+		return false
+	end
+	for _, view in views do
+		if view.userId == owner then
+			local entry = view.entries[id]
+			if entry and entry.alive then
+				local state = def.state
+				if not MonsterAnimator.HasState(state) then
+					state = def.fallback or "happy"
+				end
+				entry.animator:Stop()
+				entry.animator:Play(state)
+				entry.nextAt = os.clock() + 2.5
+				if state == "happy" or state == "trick" then
+					Voices.Cry(entry.model, "happy")
+				end
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- The local player's pen monster nearest to `position` within `range` studs, or nil.
+function World.NearestOwn(position: Vector3, range: number): string?
+	local view = if ownIndex then views[ownIndex] else nil
+	if not view then
+		return nil
+	end
+	local best, bestDistance = nil, range
+	for id, entry in view.entries do
+		local root = entry.alive and entry.model.PrimaryPart
+		if root then
+			local distance = (root.Position - position).Magnitude
+			if distance <= bestDistance then
+				best, bestDistance = id, distance
+			end
+		end
+	end
+	return best
+end
+
+-- Care (glow-up Q) ---------------------------------------------------------------------------------
+
+-- Plays a care reaction on one of the local player's pen monsters: the state (or "happy" while
+-- the animator lacks it), a cry and `hearts` heart particles. Returns the model, or nil.
+function World.PlayCare(id: string, state: string, hearts: number?): Model?
+	local view = if ownIndex then views[ownIndex] else nil
+	local entry = view and view.entries[id]
+	if not entry or not entry.alive then
+		return nil
+	end
+	entry.animator:Stop()
+	entry.animator:Play(if MonsterAnimator.HasState(state) then state else "happy")
+	entry.nextAt = os.clock() + 2.5
+	Voices.Cry(entry.model, "pet")
+	local root = entry.model.PrimaryPart
+	if root and (hearts or 0) > 0 then
+		burst("hearts", fx.hearts, root.Position + Vector3.new(0, 2, 0), hearts or 0)
+	end
+	return entry.model
+end
+
+-- A pen monster's model on any plot here (nil while it is not rendered).
+function World.MonsterModel(owner: number, id: string): Model?
+	for _, view in views do
+		if view.userId == owner then
+			local entry = view.entries[id]
+			return if entry and entry.alive then entry.model else nil
+		end
+	end
+	return nil
+end
+
+local function onTrick(payload)
+	if type(payload) == "table" and type(payload.owner) == "number" and type(payload.id) == "string" then
+		World.PlayTrick(payload.owner, payload.id, tostring(payload.trick))
 	end
 end
 
@@ -1298,13 +1562,17 @@ function World.Init(context)
 	table.insert(connections, ctx.Bus:Subscribe("Vfx.Burst", onBurstTopic))
 	table.insert(connections, ctx.Net:On("Eggs.Hatched", onHatched))
 	table.insert(connections, ctx.Net:On("Monsters.Evolved", onEvolved))
+	table.insert(connections, ctx.Net:On("Community.Trick", onTrick)) -- glow-up L: emote wheel tricks
 	table.insert(
 		connections,
 		ctx.Net:On("Progression.LevelUp", function()
-			local feet = characterFeet()
-			if feet then
-				Vfx.Burst("ranchLevelUp", feet)
-			end
+			-- The level-up banner and the HUD shockwave are the feedback while a screen is open.
+			moment("ranchLevelUp", function()
+				local feet = characterFeet()
+				if feet then
+					Vfx.Burst("ranchLevelUp", feet)
+				end
+			end, { flourish = false })
 		end)
 	)
 end
@@ -1322,6 +1590,15 @@ function World.Start()
 	running = true
 
 	connectInput()
+	PenBrain.Attach(ctx, {
+		views = views,
+		area = penArea,
+		penModel = penModel,
+		plotFrame = plotFrame,
+		own = function()
+			return ownIndex
+		end,
+	})
 	table.insert(
 		connections,
 		player.CharacterAdded:Connect(function(character)
@@ -1330,22 +1607,11 @@ function World.Start()
 	)
 	table.insert(
 		connections,
-		ctx.Store:Observe("profile.Settings", function(settings)
-			local low = type(settings) == "table" and settings.lowGraphics == true
-			Vfx.SetQuality(low)
-			if low ~= lowGraphics then
-				lowGraphics = low
-				MonsterAnimator.SetLowGraphics(low)
-				if latestPlots then
-					onPlots(latestPlots)
-				end
+		Quality.Changed:Connect(function()
+			lowGraphics = Quality.IsLow()
+			if latestPlots then
+				onPlots(latestPlots)
 			end
-		end)
-	)
-	table.insert(
-		connections,
-		ctx.Store:Observe("global.Weather", function(weather)
-			night = type(weather) == "table" and weather.night == true
 		end)
 	)
 	table.insert(
@@ -1362,12 +1628,19 @@ function World.Start()
 		end)
 	)
 	table.insert(connections, ctx.Store:Observe("global.Plots", onPlots))
+	table.insert(
+		connections,
+		ctx.Store:Observe("global.Mastery.here", function()
+			onPlots(ctx.Store:Get("global.Plots"))
+		end)
+	)
 	task.spawn(loop)
 end
 
 -- Tears everything down (not called by the kernel today; kept so the controller can be unplugged).
 function World.Destroy()
 	running = false
+	PenBrain.Detach()
 	for _, connection in connections do
 		connection:Disconnect()
 	end

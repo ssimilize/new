@@ -4,14 +4,23 @@
 	Design rule (Config/Monetization.luau): nothing here skips a timer. Robux buys parallel
 	capacity, convenience, cosmetics and server-wide fun; ads give a small, capped boost.
 
-	Save section (profile.Monetization):
+	Save section (profile.Monetization), version 2:
 	  ads      = { day, counts = { [placement] = n } }   -- reset every UTC day
 	  once     = { [productKey] = true }                 -- oncePerAccount products bought
-	  receipts = { { id, product, t } }                  -- PRIVATE, newest last, ≤ Config.ReceiptHistory
+	  vip      = { day, opened }                         -- v2: UTC day of the last VIP crate, crates opened
+	  receipts = { { id, product, t, fallback? } }       -- PRIVATE, newest last, ≤ Config.ReceiptHistory
 
 	Session (session.Monetization):
 	  passes            = { [passKey] = boolean }         -- every pass key, cached on join
 	  paidRandomAllowed = boolean                         -- PolicyService, cached on join (fails closed)
+
+	Global (global.Monetization):
+	  vip = { ['u'..userId] = true }                      -- VIP owners in this server (chat tags)
+
+	Actions:
+	  Monetization.RefreshPasses                  -> { passes }
+	  Monetization.CanBuy { product }             -> nil, or fails with why it can't be bought now
+	  Monetization.ClaimVipCrate                  -> { rewards, day }   (also fires Rewards.Granted)
 
 	Public API (other systems):
 	  Monetization:HasPass(player, key) -> boolean                     -- cached value only (no yield)
@@ -20,13 +29,29 @@
 	  Monetization:CanWatchAd(player, placement) -> boolean, reason?   -- no yield; reason is player-facing
 	  Monetization:AdsLeft(player, placement) -> number
 	  Monetization:PaidRandomAllowed(player) -> boolean
+	  Monetization:RegisterProductCheck(handlerKey, fn(player, product) -> (boolean, reason?))
+	  Monetization:CanBuy(player, productKey) -> boolean, reason?     -- no yield; reason is player-facing
 
 	Publishes PassesChanged and RateModifiersChanged (pass ownership changed, including on join
 	when the player owns any pass), Purchase and AdWatched.
 
 	Receipts are idempotent: a PurchaseId already in `receipts` returns PurchaseGranted without
 	granting again, and a receipt being processed right now is never processed twice at once.
-	Anything that can't be granted returns NotProcessedYet, so Roblox retries on a later join.
+	Anything that can't be granted yet (player not here, unknown product, missing or failing
+	handler) returns NotProcessedYet, so Roblox retries on a later join.
+
+	Purchases that can't be honoured as bought are refused before the prompt (CanBuy: the Store
+	and the Quests screen ask first; product handlers add their own rule with
+	RegisterProductCheck). A receipt that arrives anyway still gets fair value, never nothing:
+	  - a once-per-account product bought again pays Config.GemValue(price) gems (the best gem-pack
+	    rate for what was spent) and is recorded with `fallback = "gems"`;
+	  - the Ranch Pass handler (Quests) banks a pass bought outside a season, or a second one in
+	    the same season, for the next season.
+	Both go through the same receipt history, so a replayed receipt is never paid twice.
+
+	VIP crate: one per UTC day for VIP owners (missed days don't stack), rolled by Logic/Vip from
+	Config.VipCrate, seeded by (userId, day); the fixed gift where paid random items are
+	restricted. The day is recorded before anything is granted.
 ]]
 
 local Monetization = {
@@ -34,12 +59,21 @@ local Monetization = {
 	Dependencies = { "Rewards" },
 }
 
+local Shared = game:GetService("ReplicatedStorage").Shared
+local Vip = require(Shared.Logic.Vip)
+
 local DEFAULT_RECEIPT_HISTORY = 200
 
 Monetization.Profile = {
-	Version = 1,
+	Version = 2,
 	Default = function()
-		return { ads = { day = 0, counts = {} }, once = {}, receipts = {} }
+		return { ads = { day = 0, counts = {} }, once = {}, vip = { day = 0, opened = 0 }, receipts = {} }
+	end,
+	Migrate = function(section, fromVersion)
+		if fromVersion < 2 and type(section.vip) ~= "table" then
+			section.vip = { day = 0, opened = 0 } -- v2: VIP daily crate
+		end
+		return section
 	end,
 	Private = { "receipts" },
 }
@@ -49,6 +83,7 @@ local Config -- Config.Monetization
 local Rewards
 
 local productHandlers = {} -- [handlerKey] = fn(player, product, receiptInfo) -> boolean
+local productChecks = {} -- [handlerKey] = fn(player, product) -> (boolean, reason?)
 local processing = {} -- [purchaseId] = true while a receipt is being granted
 local watching = {} -- [player] = true while a rewarded ad is showing
 
@@ -93,6 +128,17 @@ local function session(player)
 	return s
 end
 
+-- VIP owners are listed server-wide so every client can tag their chat messages.
+local function setVipTag(player, on: boolean)
+	local global = ctx:Global()
+	global.vip = global.vip or {}
+	local key = "u" .. tostring(player.UserId)
+	if (global.vip[key] == true) ~= on then
+		global.vip[key] = if on then true else nil
+		ctx:DirtyGlobal("vip")
+	end
+end
+
 local function publishPasses(player)
 	local s = session(player)
 	ctx.Bus:Publish("PassesChanged", player, { passes = table.clone(s.passes) })
@@ -116,6 +162,7 @@ local function setOwned(player, keys: { string }): boolean
 	if changed then
 		ctx:DirtySession(player, "passes")
 		publishPasses(player)
+		setVipTag(player, s.passes[Config.VipCrate.pass] == true)
 	end
 	return changed
 end
@@ -156,8 +203,8 @@ local function hasReceipt(section, purchaseId: string): boolean
 	return false
 end
 
-local function recordReceipt(section, purchaseId: string, productKey: string)
-	table.insert(section.receipts, { id = purchaseId, product = productKey, t = ctx:Now() })
+local function recordReceipt(section, purchaseId: string, productKey: string, fallback: string?)
+	table.insert(section.receipts, { id = purchaseId, product = productKey, t = ctx:Now(), fallback = fallback })
 	local limit = Config.ReceiptHistory or DEFAULT_RECEIPT_HISTORY
 	while #section.receipts > limit do
 		table.remove(section.receipts, 1)
@@ -187,6 +234,20 @@ local function grant(player, product, receiptInfo): boolean
 	return ok
 end
 
+-- What a repeat once-per-account product pays instead (see the header).
+local function grantDuplicate(player, product): boolean
+	local gems = Config.GemValue(product.price or 0)
+	local ok, err = pcall(function()
+		Rewards:Grant(player, { { kind = "gems", amount = gems } }, "purchase:" .. product.key)
+	end)
+	if not ok then
+		warn(string.format("[Monetization] duplicate %s fallback failed: %s", product.key, tostring(err)))
+		return false
+	end
+	ctx:Notify(player, string.format("You already own the %s, so you got %d gems instead.", product.name, gems), "reward")
+	return true
+end
+
 local function processReceipt(receiptInfo)
 	local Marketplace = ctx.Services.Marketplace
 	local player = ctx:PlayerByUserId(receiptInfo.PlayerId)
@@ -214,15 +275,17 @@ local function processReceipt(receiptInfo)
 		)
 		return Marketplace.NotProcessedYet
 	end
-	if product.oncePerAccount and section.once[product.key] then
-		-- The store hides bought once-only products; never grant twice, and don't take the
-		-- Robux for nothing either.
-		warn(string.format("[Monetization] %s already bought %s (once per account)", tostring(receiptInfo.PlayerId), product.key))
-		return Marketplace.NotProcessedYet
-	end
+	-- The Store shows bought once-only products as Owned and CanBuy refuses them, so this is a
+	-- stale client or a second device: never grant the pack twice, never keep Robux for nothing.
+	local duplicate = product.oncePerAccount == true and section.once[product.key] == true
 
 	processing[purchaseId] = true
-	local granted = grant(player, product, receiptInfo)
+	local granted
+	if duplicate then
+		granted = grantDuplicate(player, product)
+	else
+		granted = grant(player, product, receiptInfo)
+	end
 	processing[purchaseId] = nil
 	if not granted then
 		return Marketplace.NotProcessedYet
@@ -233,15 +296,15 @@ local function processReceipt(receiptInfo)
 	if not section then
 		return Marketplace.NotProcessedYet
 	end
-	recordReceipt(section, purchaseId, product.key)
-	if product.oncePerAccount then
+	recordReceipt(section, purchaseId, product.key, if duplicate then "gems" else nil)
+	if product.oncePerAccount and not duplicate then
 		section.once[product.key] = true
 		ctx:Dirty(player, "once", product.key)
 	end
 	ctx:RequestSave(player)
 	local robux = tonumber(receiptInfo.CurrencySpent) or product.price or 0
 	ctx.Bus:Publish("Purchase", player, { product = product.key, robux = robux })
-	ctx.Analytics.Custom(player, "Purchase", robux, { product = product.key })
+	ctx.Analytics.Custom(player, "Purchase", robux, { product = product.key, fallback = if duplicate then "gems" else nil })
 	return Marketplace.PurchaseGranted
 end
 
@@ -263,6 +326,37 @@ function Monetization:RegisterProduct(handlerKey: string, fn)
 		warn("[Monetization] product handler registered twice: " .. handlerKey)
 	end
 	productHandlers[handlerKey] = fn
+end
+
+function Monetization:RegisterProductCheck(handlerKey: string, fn)
+	assert(type(handlerKey) == "string" and type(fn) == "function", "[Monetization] RegisterProductCheck(handlerKey, fn)")
+	productChecks[handlerKey] = fn
+end
+
+function Monetization:CanBuy(player, productKey: string): (boolean, string?)
+	local product = Config.ProductByKey[productKey]
+	if not product then
+		return false, "That item isn't for sale"
+	end
+	local section = ctx:Section(player)
+	if not section then
+		return false, "Your ranch is still loading"
+	end
+	if product.oncePerAccount and section.once[product.key] == true then
+		return false, "You already own this"
+	end
+	local check = product.handler and productChecks[product.handler]
+	if check then
+		local ok, allowed, reason = pcall(check, player, product)
+		if not ok then
+			warn(string.format("[Monetization] check '%s' errored: %s", product.handler, tostring(allowed)))
+			return false, "Purchase unavailable right now"
+		end
+		if allowed ~= true then
+			return false, reason or "Purchase unavailable right now"
+		end
+	end
+	return true, nil
 end
 
 function Monetization:AdsLeft(player, placement: string): number
@@ -324,6 +418,7 @@ function Monetization.Init(context)
 	Rewards = ctx:GetSystem("Rewards")
 	-- Module state belongs to one kernel (tests boot several in one process).
 	table.clear(productHandlers)
+	table.clear(productChecks)
 	table.clear(processing)
 	table.clear(watching)
 
@@ -349,6 +444,38 @@ function Monetization.Init(context)
 		setOwned(player, checkOwnership(player))
 		return { passes = table.clone(session(player).passes) }
 	end)
+
+	ctx.Net:Handle("Monetization.CanBuy", function(player, payload)
+		local ok, reason = Monetization:CanBuy(player, payload.product)
+		if not ok then
+			ctx:Fail(reason or "Purchase unavailable right now")
+		end
+		return nil
+	end)
+
+	ctx.Net:Handle("Monetization.ClaimVipCrate", function(player)
+		local crate = Config.VipCrate
+		local section = ctx:Section(player)
+		if not section then
+			ctx:Fail("Your ranch is still loading")
+		end
+		if not Monetization:HasPass(player, crate.pass) then
+			ctx:Fail("The VIP crate comes with the VIP Rancher pass")
+		end
+		local today = ctx:Day()
+		if not Vip.CrateReady(true, section.vip.day, today) then
+			ctx:Fail("You already opened today's VIP crate. Come back tomorrow!")
+		end
+		-- Record the claim before granting: nothing below yields, and a failure can't repeat it.
+		section.vip.day = today
+		section.vip.opened = (tonumber(section.vip.opened) or 0) + 1
+		ctx:Dirty(player, "vip")
+		local items = Vip.RollCrate(crate, player.UserId, today, Monetization:PaidRandomAllowed(player))
+		local granted = Rewards:Grant(player, items, crate.source)
+		ctx:RequestSave(player)
+		ctx.Analytics.Custom(player, "VipCrate", 1, { day = today })
+		return { rewards = granted, day = today }
+	end)
 end
 
 function Monetization.PlayerAdded(player, _info)
@@ -365,6 +492,7 @@ end
 
 function Monetization.PlayerRemoving(player)
 	watching[player] = nil
+	setVipTag(player, false)
 end
 
 return Monetization

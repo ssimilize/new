@@ -55,26 +55,43 @@ function Anim.pulse(gui: GuiObject, amount: number?)
 	Anim.tween(s, { Scale = 1 }, 0.3, Enum.EasingStyle.Back)
 end
 
+-- A "no" shake. A list or grid layout owns its children's Position, so inside one the shake
+-- wobbles Rotation instead (which layouts leave alone); elsewhere it moves the gui sideways.
+-- A second shake while one is running is ignored, so the resting value is never lost.
 function Anim.shake(gui: GuiObject)
-	if not Anim.enabled then
+	if not Anim.enabled or gui:GetAttribute("AnimShaking") == true then
 		return
 	end
+	local parent = gui.Parent
+	local inLayout = parent ~= nil and parent:FindFirstChildWhichIsA("UIGridStyleLayout") ~= nil
+	gui:SetAttribute("AnimShaking", true)
 	local origin = gui.Position
+	local rotation = gui.Rotation
 	task.spawn(function()
 		for i = 1, 6 do
-			local dx = (if i % 2 == 0 then 1 else -1) * (7 - i)
-			gui.Position = origin + UDim2.fromOffset(dx, 0)
+			local side = if i % 2 == 0 then 1 else -1
+			if inLayout then
+				gui.Rotation = rotation + side * (7 - i) * 1.4
+			else
+				gui.Position = origin + UDim2.fromOffset(side * (7 - i), 0)
+			end
 			task.wait(0.03)
 		end
-		gui.Position = origin
+		if inLayout then
+			gui.Rotation = rotation
+		else
+			gui.Position = origin
+		end
+		gui:SetAttribute("AnimShaking", nil)
 	end)
 end
 
 -- Counts a TextLabel from one number to another. `format` turns a number into text.
-function Anim.countUp(label: TextLabel, from: number, to: number, time: number?, format: (number) -> string)
+-- Returns a function that stops the count where it is (the label keeps its current text).
+function Anim.countUp(label: TextLabel, from: number, to: number, time: number?, format: (number) -> string): () -> ()
 	if not Anim.enabled or from == to then
 		label.Text = format(to)
-		return
+		return function() end
 	end
 	local duration = time or 0.5
 	local start = os.clock()
@@ -87,6 +104,9 @@ function Anim.countUp(label: TextLabel, from: number, to: number, time: number?,
 			conn:Disconnect()
 		end
 	end)
+	return function()
+		conn:Disconnect()
+	end
 end
 
 -- Gentle infinite bob for attention (tutorial arrows, "READY!" badges). Returns a stop fn.

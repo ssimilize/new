@@ -4,10 +4,16 @@
 	Schedule (aligned to the clock, so every server fights at :00 and :30):
 	  idle ──(LobbySeconds before start)──► lobby ──(startsAt)──► active ──(endsAt or HP 0)──► idle
 	  next start = ceil(now / Period) × Period; boss = Rotation[(startsAt / Period) % #Rotation + 1]
+	  A period that overlaps a scheduled titan invasion (glow-up TT, when the Titan system runs:
+	  Logic/Titan.Overlaps) is skipped, so the Stampede and the titan never share the arena.
 
 	Global (global.Boss):
 	  { state = "idle"|"lobby"|"active", bossId, startsAt, endsAt, hp, maxHp, participants,
-	    board = { { userId, name, damage } } }        -- board: top 10 by damage
+	    board = { { userId, name, damage } },          -- board: top 10 by damage
+	    squads = { { userId, looks = { { line, form, stage, rarity, variant } } } } }
+	  squads (glow-up U): what each joined squad looks like, for the arena drawn in the world
+	  (Controllers/StampedeArena); in join order, at most Arena.squadPlayers players and
+	  Arena.squadPerPlayer looks each. Render-only (no monster ids); cleared when a lobby opens.
 	  While idle, startsAt/endsAt/bossId describe the NEXT fight; hp/maxHp/board keep the
 	  last fight's result until the next lobby opens.
 	Session (session.Boss): { joined, damage, cheer }   -- cheer 0..1
@@ -24,6 +30,10 @@
 	Boss Brawler is weighted by each squad member's share of the squad's power.
 	Max HP = Σ squad power × Duration × HpPerSquadPower × 0.8.
 
+	Announcements (to every player on the server, joined or not):
+	  Boss.Starting { bossId, startsAt }          when the lobby opens (LobbySeconds before the start)
+	  Boss.Started  { bossId, startsAt, endsAt }  the horn, when the fight goes live
+
 	End: everyone who joined and is still on the server gets the participation chest (players
 	below minDamageShare only if they cheered). The top 3 by damage get a Stampede Egg; others
 	with ≥ shareForEggChance of the damage have an eggChance roll. Fires Boss.Result per
@@ -36,11 +46,12 @@
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Formulas = require(Shared.Logic.Formulas)
+local TitanLogic = require(Shared.Logic.Titan)
 
 local Boss = {
 	Name = "Boss",
 	Dependencies = { "Progression", "Rewards", "Monsters", "Expeditions" },
-	OptionalDependencies = { "Weather" },
+	OptionalDependencies = { "Weather", "Titan" },
 }
 
 local BOARD_SIZE = 10
@@ -80,9 +91,25 @@ local function setSession(player, joined: boolean, damage: number, cheer: number
 	ctx:DirtySession(player)
 end
 
+-- Glow-up TT: a scheduled titan invasion holds the arena at some point of this period (its
+-- lobby to its end), so this Stampede is skipped and the two giants never share the arena.
+local function titanHolds(startsAt: number): boolean
+	local T = ctx.Config.Titan
+	if not T or not ctx:GetSystem("Titan") then
+		return false
+	end
+	return TitanLogic.Overlaps(T.Schedule, T.Duration, T.LobbySeconds, startsAt - Cfg.LobbySeconds, startsAt + Cfg.Duration)
+end
+
 local function scheduleNext(now: number)
 	local G = global()
 	local startsAt = nextStart(now)
+	for _ = 1, 8 do -- past a titan invasion (a couple of periods at most)
+		if not titanHolds(startsAt) then
+			break
+		end
+		startsAt += Cfg.Period
+	end
 	G.state = "idle"
 	G.startsAt = startsAt
 	G.endsAt = startsAt + Cfg.Duration
@@ -91,6 +118,7 @@ local function scheduleNext(now: number)
 	G.maxHp = G.maxHp or 0
 	G.participants = G.participants or 0
 	G.board = G.board or {}
+	G.squads = G.squads or {}
 	ctx:DirtyGlobal()
 end
 
@@ -122,10 +150,12 @@ local function openLobby()
 	G.maxHp = 0
 	G.participants = 0
 	G.board = {}
+	G.squads = {}
 	ctx:DirtyGlobal()
 	for _, player in ctx:Players() do
 		setSession(player, false, 0, 0)
 	end
+	ctx.Net:FireAll("Boss.Starting", { bossId = G.bossId, startsAt = G.startsAt })
 end
 
 local function hpShare(power: number, seconds: number): number
@@ -142,6 +172,26 @@ local function activate()
 	G.maxHp = math.floor(hpShare(total, Cfg.Duration))
 	G.hp = G.maxHp
 	ctx:DirtyGlobal()
+	ctx.Net:FireAll("Boss.Started", { bossId = G.bossId, startsAt = G.startsAt, endsAt = G.endsAt })
+end
+
+-- Glow-up U: the squad's looks for the arena in the world, capped (render-only, no ids).
+local function addSquadLooks(player, ids: { string })
+	local arena = Cfg.Arena
+	local G = global()
+	if not arena or #G.squads >= arena.squadPlayers then
+		return
+	end
+	local looks = {}
+	for _, id in ids do
+		local m = Monsters:Get(player, id)
+		if m and #looks < arena.squadPerPlayer then
+			table.insert(looks, { line = m.line, form = m.form, stage = m.stage, rarity = m.rarity, variant = m.variant or 0 })
+		end
+	end
+	if #looks > 0 then
+		table.insert(G.squads, { userId = player.UserId, looks = looks })
+	end
 end
 
 -- Damage ------------------------------------------------------------------------------------
@@ -240,7 +290,11 @@ local function tick()
 	local now = ctx:Now()
 	local G = global()
 	if G.state == "idle" and now >= G.startsAt - Cfg.LobbySeconds then
-		openLobby()
+		if titanHolds(G.startsAt) then
+			scheduleNext(G.startsAt + 1) -- the next period
+		else
+			openLobby()
+		end
 	end
 	if G.state == "lobby" and now >= G.startsAt then
 		activate()
@@ -331,6 +385,7 @@ function Boss.Init(context)
 		}
 		table.insert(participants, entry)
 		byUser[player.UserId] = entry
+		addSquadLooks(player, ids)
 		if G.state == "active" then
 			local share = math.floor(hpShare(power, math.max(0, G.endsAt - ctx:Now())))
 			G.maxHp += share
@@ -369,6 +424,14 @@ function Boss.Init(context)
 	end)
 
 	ctx:Every(Cfg.TickSeconds, tick)
+end
+
+-- Glow-up TT: optional systems are ready only once every Init has run, so the plan made in Init
+-- could not see Titan yet. Plan the next Stampede again, past any titan invasion.
+function Boss.Start()
+	if global().state == "idle" then
+		scheduleNext(ctx:Now())
+	end
 end
 
 function Boss.PlayerAdded(player)

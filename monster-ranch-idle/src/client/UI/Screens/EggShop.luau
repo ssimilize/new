@@ -19,6 +19,7 @@ local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Appearance = require(Shared.Logic.Appearance)
+local Titanic = require(Shared.Logic.Titanic)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -354,6 +355,34 @@ function EggShop.Build(ctx)
 			LayoutOrder = 20,
 			Parent = oddsList,
 		})
+		-- Glow-up W: the size tiers roll on every hatch, so their odds are shown with every egg, and an
+		-- egg that hatches limited lines says so. Own labels, so the notes above keep their catalogue text.
+		local sizeOdds = Titanic.Odds()
+		Tiles.label({
+			Name = "SizeOdds",
+			Text = string.format("Huge %s · Titanic %s", Format.percent(sizeOdds.huge, 2), Format.percent(sizeOdds.titanic, 2)),
+			TextSize = Theme.TextSize.Small,
+			TextColor3 = C.TextMuted,
+			Size = UDim2.new(1, 0, 0, 20),
+			LayoutOrder = 21,
+			Parent = oddsList,
+		})
+		local limited = false
+		for _, lineId in pool do
+			limited = limited or Config.Editions.ByLine[lineId] ~= nil
+		end
+		if limited then
+			Tiles.label({
+				Name = "LimitedNote",
+				Text = string.format("Limited editions: each line is numbered, %d per line", Config.Editions.DefaultSize),
+				TextSize = Theme.TextSize.Small,
+				TextColor3 = C.TextMuted,
+				TextScaled = true,
+				Size = UDim2.new(1, 0, 0, 20),
+				LayoutOrder = 22,
+				Parent = oddsList,
+			})
+		end
 		local speciesRow = New("ScrollingFrame", {
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
@@ -362,7 +391,7 @@ function EggShop.Build(ctx)
 			AutomaticCanvasSize = Enum.AutomaticSize.X,
 			ScrollingDirection = Enum.ScrollingDirection.X,
 			ScrollBarThickness = 4,
-			LayoutOrder = 21,
+			LayoutOrder = 23,
 			Parent = oddsList,
 		}, { Create.List("x", 4, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
 		local codex = StoreKit.tbl(store, "profile.Monsters.codex")

@@ -1,7 +1,7 @@
 --[[
 	Weather controller (C1): the look of the server weather and the day/night cycle.
 
-	Reads global.Weather { id, night, phaseEndsAt, ... } and profile.Settings.lowGraphics.
+	Reads global.Weather { id, night, phaseEndsAt, ... } and Visuals/Quality.IsLow() (glow-up P).
 	  day/night   Lighting.ClockTime holds ~14 by day and ~0.5 at night. Around each phase
 	              change it sweeps forward through dusk or dawn, centred on phaseEndsAt, so
 	              every client computes the same sky from server time (no tween state).
@@ -10,7 +10,9 @@
 	              so weather changes fade in and out over a few seconds.
 	  particles   one invisible anchored part follows the camera with rain, snow and star
 	              streak emitters (rates only, never re-created). lowGraphics scales rates down.
-	  extras      thunderstorm lightning flashes (Lighting.Brightness + ColorCorrection pulses),
+	              They use the Vfx sprites (droplet, snowflake, petal, star; applySprites).
+	  extras      thunderstorm lightning flashes (Lighting.Brightness + ColorCorrection pulses; each one
+	              publishes client bus "Weather.Lightning" (strength 0..1) so Soundscape times thunder),
 	              aurora animated tint over ColorCorrection and the Atmosphere sky colour.
 
 	One RenderStepped connection; properties are written only when their value changes.
@@ -21,6 +23,7 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared").Config)
+local Quality = require(script.Parent.Parent.Visuals.Quality)
 local WeatherConfig = Config.Weather
 
 local Weather = {
@@ -216,7 +219,7 @@ local current = {}
 local target = {}
 local written = {}
 local settled = false
-local lowGraphics = false
+local lowGraphics = Quality.IsLow() -- Visuals/Quality (glow-up P)
 local weatherState = nil
 local weatherId = "clear"
 local isNight = false
@@ -231,6 +234,7 @@ local baseLightingBrightness = 2.5
 local clock = 0
 local nextFlashAt = 0
 local flashAt = -10
+local held = false -- glow-up DR: Weather.Hold (the Deep Reef has the light while you swim)
 
 -- Target -------------------------------------------------------------------------------------
 
@@ -335,6 +339,47 @@ local function newEmitter(name: string, props: { [string]: any }): ParticleEmitt
 	return e
 end
 
+--[[
+	Ambience layer "weatherSprites" (Config.Ambience.Layers): the Vfx sprites (Config/VfxSprites)
+	replace the default sparkle, tinted by each emitter's own colours (grey twins). A sprite not
+	uploaded yet keeps the default texture. Sizes grow to suit a textured sprite, and pollen's
+	LightEmission drops to the daylight rule (Config/Vfx header) so petals keep their colour.
+]]
+local WEATHER_SPRITES = {
+	rain = { sprite = "droplet", size = 0.3 },
+	snow = { sprite = "snowflake", size = 0.55, rot = true },
+	pollen = { sprite = "petal", size = 0.4, rot = true, lightEmission = 0.25 },
+	stars = { sprite = "star", size = { 1.6, 0.2 } },
+}
+
+local function applySprites()
+	local layers = Config.Ambience and Config.Ambience.Layers
+	local override = Lighting:GetAttribute("Ambience_weatherSprites")
+	if override == false or (override == nil and layers and layers.weatherSprites == false) then
+		return
+	end
+	local module = ReplicatedStorage.Shared.Config:FindFirstChild("VfxSprites")
+	local ok, sprites = pcall(require, module)
+	if not ok or type(sprites) ~= "table" then
+		return
+	end
+	for key, look in WEATHER_SPRITES do
+		local row = sprites[look.sprite]
+		local id = type(row) == "table" and (row.grey or row.color)
+		local e = emitters[key]
+		if e and type(id) == "string" and id ~= "" then
+			e.Texture = id
+			e.Size = if type(look.size) == "table" then NumberSequence.new(look.size[1], look.size[2]) else NumberSequence.new(look.size)
+			if look.rot then
+				e.Rotation = NumberRange.new(0, 360)
+			end
+			if look.lightEmission then
+				e.LightEmission = look.lightEmission
+			end
+		end
+	end
+end
+
 local function build()
 	cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "WeatherColor"
@@ -415,6 +460,8 @@ local function build()
 		LightEmission = 1,
 	})
 
+	applySprites()
+
 	for _, key in FIELDS do
 		current[key] = 0
 	end
@@ -428,6 +475,9 @@ end
 
 local function step(dt: number)
 	clock += dt
+	if held then
+		return
+	end
 	local now = ctx:Now()
 
 	if not settled then
@@ -456,6 +506,7 @@ local function step(dt: number)
 		if clock >= nextFlashAt then
 			flashAt = clock
 			nextFlashAt = clock + 4 + math.random() * 9
+			ctx.Bus:Publish("Weather.Lightning", current.lightning)
 		end
 		local t = clock - flashAt
 		if t < 0.08 then
@@ -539,8 +590,8 @@ function Weather.Start()
 	table.insert(connections, ctx.Store:Observe("global.Weather", onWeather))
 	table.insert(
 		connections,
-		ctx.Store:Observe("profile.Settings", function(settings)
-			lowGraphics = type(settings) == "table" and settings.lowGraphics == true
+		Quality.Changed:Connect(function()
+			lowGraphics = Quality.IsLow()
 		end)
 	)
 	table.insert(connections, RunService.RenderStepped:Connect(step))
@@ -559,6 +610,25 @@ function Weather.Destroy()
 	end
 	emitterPart:Destroy()
 	Lighting.Brightness = baseLightingBrightness
+end
+
+--[[
+	Glow-up DR: Weather.Hold(true) hands the light to another controller (the Deep Reef while you
+	swim): nothing is written and the weather particles stop. Hold(false) takes it back: every
+	property is written again on the next frame, whatever the holder changed meanwhile.
+]]
+function Weather.Hold(on: boolean)
+	held = on == true
+	table.clear(written)
+	if held then
+		for _, emitter in emitters do
+			emitter.Rate = 0
+		end
+	end
+end
+
+function Weather.IsHeld(): boolean
+	return held
 end
 
 return Weather

@@ -326,15 +326,24 @@ return function(t)
 		end)
 
 		it("require the group when asked", function()
-			local h = boot()
-			local p = h:Join()
-			expect(h:Reject(p, "Quests.Redeem", { code = "group" })).toContain("Join our Roblox group")
-			h.adapters.groups[p.UserId] = { [Q.GroupId] = true }
-			h:Advance(2)
-			h:Call(p, "Quests.Redeem", { code = "group" })
-			expect(h:Section(p, "Quests").codes.GROUP).toBe(true)
-			h:Advance(2)
-			expect(h:Reject(p, "Quests.Redeem", { code = "group" })).toBe("You already used that code")
+			-- GROUP itself became the group reward row (Community.spec); any code can still ask.
+			expect(Q.Codes.GROUP).toBe(nil)
+			Q.Codes.GROUP = { reward = { { kind = "gems", amount = 5 } }, requiresGroup = true }
+			local ok, err = pcall(function()
+				local h = boot()
+				local p = h:Join()
+				expect(h:Reject(p, "Quests.Redeem", { code = "group" })).toContain("Join our Roblox group")
+				h.adapters.groups[p.UserId] = { [Q.GroupId] = true }
+				h:Advance(2)
+				h:Call(p, "Quests.Redeem", { code = "group" })
+				expect(h:Section(p, "Quests").codes.GROUP).toBe(true)
+				h:Advance(2)
+				expect(h:Reject(p, "Quests.Redeem", { code = "group" })).toBe("You already used that code")
+			end)
+			Q.Codes.GROUP = nil
+			if not ok then
+				error(err, 0)
+			end
 		end)
 	end)
 
@@ -404,7 +413,12 @@ return function(t)
 			expect(buyPass(h, p, "rp1")).toBe("PurchaseGranted")
 			expect(h:System("Quests"):PassPremium(p)).toBe(true)
 			expect(buyPass(h, p, "rp1")).toBe("PurchaseGranted") -- same receipt replayed
-			expect(buyPass(h, p, "rp2")).toBe("NotProcessedYet") -- a second pass this season is refused
+			-- A second pass this season is never left unprocessed: it is banked for the next season.
+			expect(buyPass(h, p, "rp2")).toBe("PurchaseGranted")
+			expect(h:Section(p, "Quests").passCredit).toBe(1)
+			expect(h:LastEvent(p, "Kernel.Notify").payload.text).toContain("saved for Season")
+			expect(buyPass(h, p, "rp2")).toBe("PurchaseGranted")
+			expect(h:Section(p, "Quests").passCredit).toBe(1)
 			local data = h:Call(p, "Quests.ClaimPass", { tier = 1, track = "premium" })
 			expect(data.rewards[1].amount).toBe(Q.Pass.tiers[1].premium[1].amount)
 			expect(h:Section(p, "Currency").gems).toBe(25 + 50 + 30)
@@ -435,6 +449,107 @@ return function(t)
 			end)
 			Q.Pass.season = season
 			assert(ok, err)
+		end)
+	end)
+
+	describe("Ranch Pass sales outside a season", function()
+		local S1 = Q.Seasons[1]
+
+		local function sortedSeasons()
+			local list = table.clone(Q.Seasons)
+			table.sort(list, function(a, b)
+				return a.startsAt < b.startsAt
+			end)
+			return list
+		end
+
+		local function buyPass(h, p, purchaseId: string)
+			local product = Config.Monetization.ProductByKey.ranchPass
+			local saved = product.productId
+			product.productId = 8801
+			local ok, result = pcall(h.adapters._processReceipt, {
+				PlayerId = p.UserId,
+				ProductId = 8801,
+				PurchaseId = purchaseId,
+				CurrencySpent = product.price,
+			})
+			product.productId = saved
+			assert(ok, result)
+			return result
+		end
+
+		it("is on sale only while a season runs, and knows when the next one starts", function()
+			expect(Q.PassOnSale(S1.startsAt - 1)).toBe(false)
+			expect(Q.PassOnSale(S1.startsAt)).toBe(true)
+			expect(Q.PassOnSale(S1.endsAt - 1)).toBe(true)
+			expect(Q.NextSeason(S1.startsAt - 1)).toBe(S1)
+			local list = sortedSeasons()
+			for i = 1, #list - 1 do
+				local a, b = list[i], list[i + 1]
+				if b.startsAt > a.endsAt then
+					-- A gap between two seasons: not on sale, and the next is b.
+					expect(Q.PassOnSale(a.endsAt)).toBe(false)
+					expect(Q.NextSeason(a.endsAt)).toBe(b)
+				end
+			end
+			expect(Q.NextSeason(list[#list].startsAt)).toBeNil()
+			expect(Q.PassOnSale(list[#list].endsAt + 1)).toBe(false)
+		end)
+
+		it("refuses the prompt before a season and when premium is already on", function()
+			local h = boot({ startTime = S1.startsAt - 86400 })
+			local p = h:Join(7310)
+			expect(h:Reject(p, "Monetization.CanBuy", { product = "ranchPass" })).toContain("goes on sale in")
+
+			local h2 = boot({ startTime = S1.startsAt + 3600 })
+			local q = h2:Join(7311)
+			h2:Call(q, "Monetization.CanBuy", { product = "ranchPass" })
+			buyPass(h2, q, "on1")
+			h2:Advance(2)
+			expect(h2:Reject(q, "Monetization.CanBuy", { product = "ranchPass" })).toBe("You already have this season's Ranch Pass")
+		end)
+
+		it("banks a pass bought before the season and unlocks it when the season opens", function()
+			local h = boot({ startTime = S1.startsAt - 60 })
+			local p = h:Join(7312)
+			expect(buyPass(h, p, "early1")).toBe("PurchaseGranted")
+			local s = h:Section(p, "Quests")
+			expect(s.pass.premium).toBe(false)
+			expect(s.passCredit).toBe(1)
+			expect(h:Client(p).profile.Quests.passCredit).toBe(1)
+			expect(h:System("Quests"):PassPremium(p)).toBe(false)
+
+			-- Online when the season opens: the 30 s sweep applies it.
+			h:Advance(100)
+			s = h:Section(p, "Quests")
+			expect(s.passCredit).toBe(0)
+			expect(s.pass.premium).toBe(true)
+			expect(h:System("Quests"):PassPremium(p)).toBe(true)
+			expect(buyPass(h, p, "early1")).toBe("PurchaseGranted") -- replay: nothing more
+			expect(h:Section(p, "Quests").passCredit).toBe(0)
+		end)
+
+		it("banks a pass bought in the gap after a season and unlocks the next one on join", function()
+			local list = sortedSeasons()
+			local a, b
+			for i = 1, #list - 1 do
+				if list[i + 1].startsAt > list[i].endsAt then
+					a, b = list[i], list[i + 1]
+					break
+				end
+			end
+			assert(a and b, "expected a gap between two seasons in Config.Quests.Seasons")
+			local h = boot({ startTime = a.endsAt + 3600 })
+			local p = h:Join(7313)
+			expect(buyPass(h, p, "gap1")).toBe("PurchaseGranted")
+			expect(h:Section(p, "Quests").passCredit).toBe(1)
+			expect(h:LastEvent(p, "Kernel.Notify").payload.text).toContain(string.format("Season %d", b.season))
+
+			local p2 = h:Rejoin(p, b.startsAt - h.kernel.Clock.Now() + 10)
+			local s = h:Section(p2, "Quests")
+			expect(s.pass.season).toBe(b.season)
+			expect(s.pass.premium).toBe(true)
+			expect(s.passCredit).toBe(0)
 		end)
 	end)
 end

@@ -4,7 +4,10 @@
   stylua <module dir>      # the checks format generated modules like any other source
 
 Writes:
-  <module dir>/<form>.luau   bounds, scale, bones and clips: what the game needs at run time
+  <module dir>/<form>.luau   bounds, scale, bones and the idle, walk and hop clips
+  <module dir>/../MeshMonsterClips/<form>.luau   the rig's extra clips (riglib.EXTRA) when it has
+                             them: a module of their own, as both would not fit under the Source
+                             cap (clipdata.py)
   <rig dir>/mesh.json        the mesh (vertices, triangles, UVs, skin weights, bones), which
                              publish_meshes.luau publishes from Studio as a Mesh asset
   <texture dir>/<form>.png   the texture at 1024 px (Roblox's cap), plus _normal and _roughness
@@ -35,6 +38,9 @@ from pathlib import Path
 
 import bpy
 from mathutils import Matrix
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import clipdata  # noqa: E402
 
 ARGS = sys.argv[sys.argv.index("--") + 1 :]
 FORM, MODULES, TEXTURES = ARGS[0], Path(ARGS[1]).resolve(), Path(ARGS[2]).resolve()
@@ -107,20 +113,14 @@ def main():
             f"cframe = {{ {t.x:.5f}, {t.y:.5f}, {t.z:.5f}, {q.x:.6f}, {q.y:.6f}, {q.z:.6f}, {q.w:.6f} }} }},"
         )
 
-    # Clips: every frame of every action, each bone's pose in its own rest frame.
+    # Clips: every frame of idle, walk and hop, each bone's pose in its own rest frame. The extra
+    # clips go in a module of their own (below).
     clip_lines = []
-    scene = bpy.context.scene
     for action in bpy.data.actions:
-        arm.animation_data.action = action
-        start, end = (int(x) for x in action.frame_range)
-        data = []
-        for f in range(start, end + 1):
-            scene.frame_set(f)
-            for b in bones:
-                pb = arm.pose.bones[b.name]
-                loc, rot, _ = pb.matrix_basis.decompose()
-                data += [rot.x, rot.y, rot.z, rot.w, loc.x, loc.y, loc.z]
-        clip_lines.append(f"\t\t{action.name} = {{ fps = {FPS}, frames = {end - start + 1}, data = [[\n{b64('f', data)}\n]] }},")
+        if action.name not in clipdata.BASE:
+            continue
+        frames, data = clipdata.sample(arm, action)
+        clip_lines.append(clipdata.clip_line(action.name, FPS, frames, data))
 
     lo = [min(positions[i::3]) for i in range(3)]
     hi = [max(positions[i::3]) for i in range(3)]
@@ -169,6 +169,12 @@ return {{
         raise SystemExit(f"{FORM}.luau is {len(text)} characters: over Studio's Source cap")
     (MODULES / f"{FORM}.luau").write_text(text, encoding="utf-8", newline="\n")
     files = {f"{FORM}.luau": text}
+    extra = clipdata.extras_module(FORM, arm, [a.name for a in bpy.data.actions if a.name not in clipdata.BASE])
+    if extra:
+        clips_dir = MODULES.parent / "MeshMonsterClips"
+        clips_dir.mkdir(exist_ok=True)
+        (clips_dir / f"{FORM}.luau").write_text(extra, encoding="utf-8", newline="\n")
+        files[f"MeshMonsterClips/{FORM}.luau"] = extra
 
     # Textures (bake_texture.py's, once it has run), at 1024: the base colour, plus the normal and
     # roughness maps when the model has them (kept for an uploaded-mesh path; see asset_ids.py).
