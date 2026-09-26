@@ -55,9 +55,23 @@ return function(t)
 		return frame * CFrame.new(o[1], 0.4, o[3]), Config.World.PenSize[1] / 2, Config.World.PenSize[2] / 2
 	end
 
+	-- A fixed start at the beginning of a long daytime phase: the real clock could put dusk inside
+	-- a test (pens nap at night instead of shivering or sheltering), so nothing here reads it.
+	local START = (function()
+		local at = 1900000000
+		for _ = 1, 6 do
+			local night, endsAt = WeatherRoll.Phase(at)
+			if not night and endsAt - at >= 600 then
+				return at
+			end
+			at = endsAt + 1
+		end
+		error("no daytime phase of 10 minutes near the fixed start")
+	end)()
+
 	-- Boots a ranch with four monsters in pen 1 and the camera looking at the plot.
 	local function boot()
-		local h = TestKernel.new({ systems = allSystems() })
+		local h = TestKernel.new({ systems = allSystems(), startTime = START })
 		local p = h:Join()
 		local c = ClientHarness.new(h, p)
 		c:Advance(1)
