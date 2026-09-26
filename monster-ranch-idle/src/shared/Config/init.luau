@@ -49,6 +49,7 @@ local Config = {
 	Mastery = require(script.Mastery), -- 3.3 endgame
 	-- Glow-up L: emotes and tricks, gifts, invites, group reward, Premium perks, VIP balcony
 	Community = require(script.Community),
+	Ambience = require(script.Ambience),
 }
 
 return Config

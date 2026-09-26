@@ -10,6 +10,7 @@
 	              so weather changes fade in and out over a few seconds.
 	  particles   one invisible anchored part follows the camera with rain, snow and star
 	              streak emitters (rates only, never re-created). lowGraphics scales rates down.
+	              They use the Vfx sprites (droplet, snowflake, petal, star; applySprites).
 	  extras      thunderstorm lightning flashes (Lighting.Brightness + ColorCorrection pulses; each one
 	              publishes client bus "Weather.Lightning" (strength 0..1) so Soundscape times thunder),
 	              aurora animated tint over ColorCorrection and the Atmosphere sky colour.
@@ -336,6 +337,47 @@ local function newEmitter(name: string, props: { [string]: any }): ParticleEmitt
 	return e
 end
 
+--[[
+	Ambience layer "weatherSprites" (Config.Ambience.Layers): the Vfx sprites (Config/VfxSprites)
+	replace the default sparkle, tinted by each emitter's own colours (grey twins). A sprite not
+	uploaded yet keeps the default texture. Sizes grow to suit a textured sprite, and pollen's
+	LightEmission drops to the daylight rule (Config/Vfx header) so petals keep their colour.
+]]
+local WEATHER_SPRITES = {
+	rain = { sprite = "droplet", size = 0.3 },
+	snow = { sprite = "snowflake", size = 0.55, rot = true },
+	pollen = { sprite = "petal", size = 0.4, rot = true, lightEmission = 0.25 },
+	stars = { sprite = "star", size = { 1.6, 0.2 } },
+}
+
+local function applySprites()
+	local layers = Config.Ambience and Config.Ambience.Layers
+	local override = Lighting:GetAttribute("Ambience_weatherSprites")
+	if override == false or (override == nil and layers and layers.weatherSprites == false) then
+		return
+	end
+	local module = ReplicatedStorage.Shared.Config:FindFirstChild("VfxSprites")
+	local ok, sprites = pcall(require, module)
+	if not ok or type(sprites) ~= "table" then
+		return
+	end
+	for key, look in WEATHER_SPRITES do
+		local row = sprites[look.sprite]
+		local id = type(row) == "table" and (row.grey or row.color)
+		local e = emitters[key]
+		if e and type(id) == "string" and id ~= "" then
+			e.Texture = id
+			e.Size = if type(look.size) == "table" then NumberSequence.new(look.size[1], look.size[2]) else NumberSequence.new(look.size)
+			if look.rot then
+				e.Rotation = NumberRange.new(0, 360)
+			end
+			if look.lightEmission then
+				e.LightEmission = look.lightEmission
+			end
+		end
+	end
+end
+
 local function build()
 	cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "WeatherColor"
@@ -415,6 +457,8 @@ local function build()
 		Orientation = Enum.ParticleOrientation.VelocityParallel,
 		LightEmission = 1,
 	})
+
+	applySprites()
 
 	for _, key in FIELDS do
 		current[key] = 0

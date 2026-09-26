@@ -45,6 +45,11 @@ return {
 		"DailyLogin",
 		-- Glow-up L: emote wheel, Friends button, VIP balcony pads
 		"Community",
+		-- Ambience (Config/Ambience): sky and clouds, dusk lights, scenery that moves, ambient life
+		"Sky",
+		"Lamplight",
+		"SceneryMotion",
+		"Critters",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
