@@ -1,10 +1,9 @@
 --[[
 	Reminders adapter: the Roblox services behind offline reminders (MemoryStore, HttpService
-	with an experience secret, LocalizationService). The Reminders system prefers
-	ctx.Services.Reminders when the kernel provides one (tests plug an in-memory fake there);
-	otherwise it builds this one, and only when Config.Reminders is filled in. It belongs in
-	Kernel/Adapters.luau as Services.Reminders; it lives here so this packet leaves the kernel
-	alone. Every call is wrapped in pcall and fails soft (ok = false).
+	with an experience secret, LocalizationService), exposed by Adapters.Roblox() as
+	ctx.Services.Reminders (tests plug an in-memory fake there instead). The Reminders system
+	only uses it when Config.Reminders is filled in. Every call is wrapped in pcall and fails soft
+	(ok = false).
 
 	Shape (the fake in tests/specs/Reminders.spec.luau implements the same):
 	  Available() -> boolean

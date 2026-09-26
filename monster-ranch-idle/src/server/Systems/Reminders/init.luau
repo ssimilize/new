@@ -31,7 +31,6 @@
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Logic = require(Shared.Logic.Reminders)
-local Adapter = require(script.Adapter)
 
 local Reminders = {
 	Name = "Reminders",
@@ -52,23 +51,13 @@ Reminders.Profile = {
 local ctx
 local Config
 
-local roblox = nil
-local triedRoblox = false
 local polling = false
 local leaseCounter = 0
 local countries = {} -- [player] = country code (rough local time for quiet hours)
 local promptedThisSession = {} -- [player] = true once the opt-in prompt was offered
 
 local function adapter()
-	local provided = ctx.Services.Reminders
-	if provided ~= nil then
-		return provided
-	end
-	if not triedRoblox then
-		triedRoblox = true
-		roblox = Adapter.Roblox()
-	end
-	return roblox
+	return ctx.Services.Reminders -- Kernel/RemindersAdapter in live servers, a fake in tests; nil = off
 end
 
 local function enabled(): boolean

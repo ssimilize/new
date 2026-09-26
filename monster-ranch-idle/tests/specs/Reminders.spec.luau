@@ -23,7 +23,7 @@ return function(t)
 		return out
 	end
 
-	-- In-memory stand-in for the MemoryStore + Open Cloud adapter (Systems/Reminders/Adapter).
+	-- In-memory stand-in for the MemoryStore + Open Cloud adapter (Kernel/RemindersAdapter).
 	local function fakeAdapter()
 		local f = { maps = { queue = {}, caps = {} }, posts = {}, result = { true, 200 }, available = true, calls = 0 }
 		function f.Available()

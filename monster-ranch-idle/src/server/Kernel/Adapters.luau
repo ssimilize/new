@@ -7,6 +7,8 @@
 	Every adapter call that can fail is wrapped in pcall and returns a safe default.
 ]]
 
+local RemindersAdapter = require(script.Parent.RemindersAdapter)
+
 local Adapters = {}
 
 local REMOTES_FOLDER = "KernelRemotes"
@@ -92,6 +94,7 @@ function Adapters.Roblox()
 	local MessagingService = game:GetService("MessagingService")
 	local TextService = game:GetService("TextService")
 	local AnalyticsService = game:GetService("AnalyticsService")
+	local BadgeService = game:GetService("BadgeService")
 
 	local isStudio = RunService:IsStudio()
 	local nameCache = {}
@@ -932,6 +935,20 @@ function Adapters.Roblox()
 		end
 		return nil
 	end
+	-- Offline reminders (glow-up I): MemoryStore queue + Open Cloud notifications. nil when the
+	-- services can't be reached; the Reminders system is off then.
+	adapters.Reminders = RemindersAdapter.Roblox()
+
+	-- Roblox badges (glow-up O: Codex milestones). May yield; callers run it through Spawn.
+	adapters.Badges = {
+		Award = function(userId: number, badgeId: number): boolean
+			local ok, awarded = pcall(function()
+				return BadgeService:AwardBadge(userId, badgeId)
+			end)
+			return ok and awarded == true
+		end,
+	}
+
 	return adapters
 end
 
