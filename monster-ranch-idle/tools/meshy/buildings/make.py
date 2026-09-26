@@ -85,6 +85,11 @@ BUILDINGS = {
     "hubPortal": "A cartoon travel portal tower for a trading hub: a sky-blue (#4FB6F2) round stone tower "
     "with a big arched doorway filled with a swirling blue portal, a pointed blue roof with a golden coin "
     "shape on top as its sign. Taller than it is wide.",
+    # Not a World.Hub building: the gate on the Sky Islands' landing isle (World.Sky.gate, Build.luau).
+    "skyGate": "A cartoon sky gate for floating sky islands: a tall rounded arch made of fluffy white "
+    "cloud-stone with golden (#F2C94C) trim, a pair of small white feathered wings on top of the arch, "
+    "the arch standing on a round puffy cloud base, a swirling light-blue and white sky portal filling "
+    "the whole opening of the arch, a few small golden stars set into the arch. Taller than it is wide.",
     "workshop": "A cozy cartoon crafting workshop: a pink (#FF7AC8) timber-framed cottage with a big "
     "chimney, a workbench with tools under a small awning at the front, a big gear-and-hammer shape on the "
     "roof as its sign, wooden crates of materials against the wall. Wider than it is tall.",

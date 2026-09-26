@@ -1,6 +1,6 @@
 --[[
 	World/BuildingMeshes: the Meshy models that dress the placeholder buildings (Dress.luau), by
-	building id: a World.Hub id, or "barn" for every plot's barn. Written by
+	building id: a World.Hub id, "barn" for every plot's barn, or "skyGate" for the Sky Gate. Written by
 	`tools/blender/export_static.py ids`; a building missing here keeps its placeholder boxes.
 
 	A building comes in pieces, each its own mesh with its own 1024 px texture (Roblox's cap), so a
@@ -185,6 +185,15 @@ return {
 			{ mesh = "rbxassetid://92565404923109", texture = "rbxassetid://100095929129117", offset = { -0.18768, 0.13515, -0.16607 } },
 			{ mesh = "rbxassetid://139245343469524", texture = "rbxassetid://82544509849959", offset = { -0.23449, -0.27205, 0.21141 } },
 			{ mesh = "rbxassetid://88217014377415", texture = "rbxassetid://71335464003730", offset = { -0.17846, 0.14457, 0.21336 } },
+		},
+	},
+	skyGate = {
+		size = { 0.71477, 1, 0.70316 },
+		parts = {
+			{ mesh = "rbxassetid://72040011483655", texture = "rbxassetid://117296064995465", offset = { 0.1146, -0.23182, 0 } },
+			{ mesh = "rbxassetid://76488113513884", texture = "rbxassetid://127689789783210", offset = { -0.11407, -0.19158, 0.0003 } },
+			{ mesh = "rbxassetid://93601691556535", texture = "rbxassetid://100844811062070", offset = { 0.00037, -0.01895, -0.00018 } },
+			{ mesh = "rbxassetid://74813302553383", texture = "rbxassetid://137390625731845", offset = { -0.00094, 0.22102, -0.0005 } },
 		},
 	},
 }

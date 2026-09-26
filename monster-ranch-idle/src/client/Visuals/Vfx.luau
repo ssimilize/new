@@ -7,9 +7,9 @@
 		                                                   mutations, shiny / rainbow, epic+ ground glow;
 		                                                   returns how many emitters it made
 		Vfx.SetOwned(model, owned)                         false = on another player's plot (World)
-		Vfx.AttachLandmark(instance, id) -> Folder?        a hub building Model (placed in its visible box) or
-		                                                   a BasePart (the Sky Gate's Portal); id is a
-		                                                   Config.Vfx.Landmarks key
+		Vfx.AttachLandmark(instance, id) -> Folder?        a building Model with a Body (a hub building,
+		                                                   the Sky Gate; placed in its visible box) or a
+		                                                   BasePart; id is a Config.Vfx.Landmarks key
 		Vfx.Burst(name, cframeOrPosition, opts?) -> number one-shot :Emit from pooled emitters; returns
 		                                                   how many emitters fired (0 = nothing to show:
 		                                                   unknown name or no sprite uploaded yet)

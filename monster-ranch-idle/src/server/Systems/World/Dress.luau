@@ -14,7 +14,8 @@
 
 local Dress = {}
 
--- Building id -> the models to dress: hub buildings by their HubId, and every plot's Barn.
+-- Building id -> the models to dress: hub buildings by their HubId, every plot's Barn, and the
+-- Sky Gate on the landing isle (Sky/Gate, "skyGate").
 local function targets(world: Instance): { [string]: { Instance } }
 	local list = {}
 	local function add(id, model)
@@ -30,6 +31,11 @@ local function targets(world: Instance): { [string]: { Instance } }
 				add(id, model)
 			end
 		end
+	end
+	local sky = world:FindFirstChild("Sky")
+	local gate = sky and sky:FindFirstChild("Gate")
+	if gate then
+		add("skyGate", gate)
 	end
 	local plots = world:FindFirstChild("Plots")
 	if plots then

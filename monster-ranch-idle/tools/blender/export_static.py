@@ -18,7 +18,7 @@ Why pieces: Roblox draws a texture at 1024 px at most, and one 1024 texture over
 came to ~14 texels a stud (the Egg Shop, 2026-09-25: soft walls up close); Meshy's own is 4096 px.
 Each piece is its own MeshPart with its own 1024 texture, so N pieces hold N times the texels.
 PIECES defaults to what reaches DENSITY texels a stud at the building's size in game (its placeholder's
-footprint in Config/World.luau, which World/Dress.luau fits it to), at most MAX_PIECES: a 6-stud stage
+footprint in Config/World.luau, or Build.luau's SKY_GATE_BODY for skyGate, which World/Dress.luau fits it to), at most MAX_PIECES: a 6-stud stage
 needs far fewer than a 20-stud shop, and every piece is a texture in memory on a phone.
 
 Then publish every piece from Studio (_G.MeshPublishRun(base, { "<ID>_p0", ... }) with base serving
@@ -79,6 +79,13 @@ def footprint(building: str) -> tuple[float, float]:
     """The placeholder's x and z size in studs: World.BarnSize for the barn, else its World.Hub entry."""
     import re
 
+    if building == "skyGate":
+        # Not a World.Hub building: Build.luau gives the Sky Gate an invisible Body of this size.
+        build = (ROOT / "src" / "server" / "Systems" / "World" / "Build.luau").read_text(encoding="utf-8")
+        found = re.search(r"SKY_GATE_BODY = Vector3\.new\((\d+), \d+, (\d+)\)", build)
+        if not found:
+            raise SystemExit("skyGate: no SKY_GATE_BODY in Build.luau")
+        return float(found.group(1)), float(found.group(2))
     text = (ROOT / "src" / "shared" / "Config" / "World.luau").read_text(encoding="utf-8")
     if building == "barn":
         found = re.search(r"World\.BarnSize = \{ (\d+), \d+, (\d+) \}", text)

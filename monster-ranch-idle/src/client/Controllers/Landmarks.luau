@@ -5,7 +5,7 @@
 	  Hub/Buildings/<id>   every hub building whose HubId has a preset (raidPortal, hubPortal, gate,
 	                       starAltar, showStage, hallOfFame, arena, championsArena, surfShack,
 	                       eggShop, workshop), placed in its visible box
-	  Sky/Gate/Portal      the Sky Gate portal (preset "skyGate")
+	  Sky/Gate             the Sky Gate arch (preset "skyGate"), placed in its visible box too
 
 	World/Dress swaps a building's look for its 3D mesh pieces after the building exists; effects
 	are placed in the visible parts' box, so a building is attached again a second after its last
@@ -89,9 +89,8 @@ function Landmarks.Start()
 		end
 		local sky = world:WaitForChild("Sky", 30)
 		local gate = sky and sky:WaitForChild("Gate", 30)
-		local portal = gate and gate:WaitForChild("Portal", 30)
-		if portal then
-			attach(portal, "skyGate")
+		if gate and gate:WaitForChild("Body", 30) then
+			attach(gate, "skyGate")
 		end
 	end)
 end

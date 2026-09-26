@@ -23,7 +23,8 @@
 	  Sky/Islands/<id>               Model: Top (walkable grass disc), Rock* underside, Tree*
 	  Sky/Bridges/Bridge<i>          cloud bridges between island edges
 	  Sky/LaunchPad, Sky/ReturnPad   pads (attr SkyPad = "launch"|"return"); the client adds prompts
-	  Sky/Gate                       arch (attr Screen = "Expeditions", Region = "sky")
+	  Sky/Gate                       arch (attr Screen = "Expeditions", Region = "sky") with an invisible
+	                               Body (World/Dress fits its 3D model there) and the Portal prompt part
 
 	On the Trading Hub place (Build.world(Config, "hub"), update 3.0): Ground, Hub/Plaza and
 	Hub/Buildings/<id> from Config.TradingHub.World (booths are booth1..n, screen "Trade"),
@@ -489,6 +490,8 @@ local SKY = {
 	trunk = hex("#9C6130"),
 	leaves = hex("#7FD18B"),
 }
+-- The Sky Gate's footprint for its 3D model (see buildSky; tools/blender/export_static.py reads it).
+local SKY_GATE_BODY = Vector3.new(14, 20, 14)
 
 local function buildSky(World, root: Instance)
 	local Sky = World.Sky
@@ -560,6 +563,11 @@ local function buildSky(World, root: Instance)
 	gate:SetAttribute("Region", "sky")
 	gate.Parent = sky
 	local g = v3(Sky.gate)
+	-- World/Dress fits the Sky Gate's 3D model (BuildingMeshes.skyGate) to this invisible box, its
+	-- front (-Z) turned towards the return pad players arrive at; the boxes below stay as the
+	-- placeholder, and the Portal part keeps the Enter prompt either way.
+	local facing = CFrame.new(g + Vector3.new(0, SKY_GATE_BODY.Y / 2, 0)) * CFrame.Angles(0, math.pi, 0)
+	block("Body", SKY_GATE_BODY, facing, SKY.gate, gate, { Transparency = 1, CanCollide = false, CanQuery = false })
 	block("PostL", Vector3.new(2, 14, 2), CFrame.new(g + Vector3.new(-7, 7, 0)), SKY.gate, gate)
 	block("PostR", Vector3.new(2, 14, 2), CFrame.new(g + Vector3.new(7, 7, 0)), SKY.gate, gate)
 	block("Lintel", Vector3.new(18, 2, 2.4), CFrame.new(g + Vector3.new(0, 15, 0)), SKY.gate, gate)

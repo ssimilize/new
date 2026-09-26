@@ -28,7 +28,7 @@
 	                 hovering body types (moth, sprite) turn "feet" into "core".
 	                 landmarks: { x, y, z } as fractions of the box round the building's visible
 	                 parts (its 3D mesh once dressed), in Body's orientation (front is -Z, y = -0.5
-	                 is the floor); the Sky Gate uses its Portal part.
+	                 is the floor); the Sky Gate is measured the same way (its Gate model has a Body).
 	  offset         monsters: { x, y, z } studs added to the anchor (scaled like sizes)
 	  box            landmarks and bursts: { x, y, z } studs, the part the particles spawn in
 	  core           a portal core: may glow above 0.3 (landmarks only)
@@ -940,16 +940,19 @@ Vfx.Landmarks = {
 		},
 	}, -0.27, 0.8),
 	-- The Sky Gate's Portal part (12 x 13 x 0.4): offsets are fractions of that panel.
+	-- The Sky Gate's 3D arch (BuildingMeshes.skyGate; box ~14 x 20 x 14 studs, deep for its cloud
+	-- base): the opening is ~4.5 x 9.5 studs at mid height on the arch's centre plane, so these sit
+	-- near z = 0, not on the box's front face (tuned in Studio 2026-09-26).
 	skyGate = {
 		{
 			sprite = "swirl",
 			grey = true,
-			color = "#FFFFFF",
-			at = { 0, 0, 0 },
-			rate = 0.8,
+			color = "#BFE3FF",
+			at = { 0, 0, -0.09 },
+			rate = 0.45,
 			lifetime = { 3, 3 },
-			size = { { 0, 0 }, { 0.2, 9 }, { 1, 10 } },
-			transparency = { { 0, 1 }, { 0.2, 0.35 }, { 0.8, 0.35 }, { 1, 1 } },
+			size = { { 0, 0 }, { 0.25, 4.2 }, { 1, 4.6 } },
+			transparency = { { 0, 1 }, { 0.25, 0.55 }, { 0.75, 0.55 }, { 1, 1 } },
 			speed = 0.02,
 			direction = "Front",
 			orientation = "VelocityPerpendicular",
@@ -962,11 +965,11 @@ Vfx.Landmarks = {
 			grey = true,
 			color = "#EAF6FF",
 			core = true,
-			at = { 0, 0, -1 },
+			at = { 0, 0, -0.1 },
 			rate = 1,
 			lifetime = { 1.5, 2 },
-			size = { { 0, 2 }, { 0.5, 5 }, { 1, 4 } },
-			transparency = { { 0, 1 }, { 0.3, 0.5 }, { 1, 1 } },
+			size = { { 0, 1 }, { 0.5, 2.8 }, { 1, 2.4 } },
+			transparency = { { 0, 1 }, { 0.3, 0.6 }, { 1, 1 } },
 			speed = 0,
 			lightEmission = 0.7,
 			lightInfluence = 0,
@@ -975,11 +978,11 @@ Vfx.Landmarks = {
 			sprite = "star",
 			grey = true,
 			color = "#FFFFFF",
-			at = { 0, 0, 0 },
-			box = { 12, 13, 1 },
+			at = { 0, 0, -0.1 },
+			box = { 6, 10, 1 },
 			rate = 3,
 			lifetime = { 0.8, 1.2 },
-			size = { { 0, 0 }, { 0.3, 0.8 }, { 1, 0 } },
+			size = { { 0, 0 }, { 0.3, 0.7 }, { 1, 0 } },
 			transparency = SPARK,
 			speed = { 0.3, 0.8 },
 			spread = 180,
@@ -990,9 +993,9 @@ Vfx.Landmarks = {
 			sprite = "leaf",
 			grey = true,
 			color = "#E8FFF0",
-			at = { 0, 0, 0 },
-			box = { 12, 13, 1 },
-			rate = 1.5,
+			at = { 0, 0, -0.1 },
+			box = { 6, 10, 1 },
+			rate = 1.2,
 			lifetime = { 2.5, 3.5 },
 			size = 0.5,
 			speed = { 0.5, 1 },
