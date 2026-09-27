@@ -423,6 +423,25 @@ Api.Actions = {
 		returns = "{ tile, find: { kind, fossil?, piece?, duplicate?, complete?, id?, amount? }?, hint, left, done, rewards: { Reward }, missed: { number }? }",
 	},
 
+	-- Observatory & Star Charts (3.12) · see Config/Observatory and Logic/Observatory ------
+	["Observatory.Start"] = {
+		schema = T.struct({ chart = T.key(Config.Observatory.ById) }),
+		rate = 2,
+		returns = "{ id: number, chart: string, stars: { { x: number, y: number } }, order: { number }, left: number, limit: number }",
+	},
+	["Observatory.Submit"] = {
+		schema = T.struct({
+			id = T.integer(1),
+			taps = T.array(
+				T.struct({ star = T.integer(1, Config.Observatory.MaxStars), t = T.number(0, 600) }),
+				Config.Observatory.MaxStars,
+				1
+			),
+		}),
+		rate = 2,
+		returns = "{ success: boolean, why: string?, chart: string, progress: number, charted: boolean, left: number }",
+	},
+
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
 	["Weekly.Claim"] = {
 		schema = T.struct({ step = T.integer(1, #Config.Weekly.Chest) }),
@@ -811,6 +830,7 @@ Api.State = {
 		Dojo = "{ training = false | { id, tech, lv, startedAt, readyAt }, trained }  -- 3.11: the Dojo mat (Logic/Dojo)",
 		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
 		DigSite = "{ day, digs, shovels, n, open = false | { id, left, tiles = { { t, hint?, kind?, fossil?, piece?, id?, amount?, duplicate? } } }, pieces = { [fossilId]: { [pieceId]: true } }, total }  -- 3.11 (secret is private)",
+		Observatory = "{ night, used, n, charts = { [chartId]: observations }, seen }  -- 3.12 (secret is private)",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
@@ -949,6 +969,7 @@ Api.Topics = {
 	ExhibitDonated = "(player, { set: string, item: string })  -- 3.12: a Museum exhibit filled (donated or placed automatically)",
 	TowerFloorCleared = "(player, { floor: number, best: number })  -- 3.12: a Trial Tower floor won (best = this week's highest floor)",
 	StarCharted = "(player, { chart: string })  -- 3.12: an Observatory star chart finished",
+	StarSighted = "(player, { chart: string })  -- 3.12: a successful Observatory sighting (the weekly goal stars_5)",
 	MerchantBought = "(player, { item: string, pay: string })  -- 3.11: a Travelling Merchant purchase (item = offer id, pay = coins|gems|amber|fish|dishes)",
 	FishCaught = "(player, { fish: string, rarity: string, weight: number, seasonal: boolean })  -- 3.10: a catch at the Fishing Pond (weight in kg; seasonal: 3.11)",
 	SeasonChanged = "(player, { season: string })  -- 3.11: on join when the last season seen differs, and at the turnover",

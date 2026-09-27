@@ -57,6 +57,10 @@ World.Pond = { offset = { 30, 0, -47 }, size = { 20, 12 }, rim = 1, dock = { 9, 
 -- included); `pit` is the roped-off sand ({ x, z }) at the footprint's east end; the tool rack (its
 -- "Dig" prompt) stands at the west end, facing the pond's dock.
 World.DigSite = { offset = { 62, 0, -47 }, size = { 22, 12 }, pit = { 16, 10 } }
+-- Update 3.12: the Observatory in the north strip west of the Apiary's spot. `size` is the whole
+-- footprint ({ x, z }: the round base and the telescope's step); `dome` is the dome's diameter.
+-- The telescope (its "Stargaze" prompt) points out of the dome's slit, facing +z (the pens).
+World.Observatory = { offset = { -50, 0, -47 }, size = { 16, 14 }, dome = 12 }
 
 -- Hub buildings (Market Square), relative to the origin.
 World.Hub = {

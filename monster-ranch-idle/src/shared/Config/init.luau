@@ -21,6 +21,7 @@ local Config = {
 	GeneLab = require(script.GeneLab), -- 3.10: the Gene Lab
 	Fishing = require(script.Fishing), -- 3.10: Fishing Pond
 	DigSite = require(script.DigSite), -- 3.11: Dig Site & Fossils
+	Observatory = require(script.Observatory), -- 3.12: Observatory & Star Charts
 	Merchant = require(script.Merchant), -- 3.11: the Travelling Merchant
 	Seasons = require(script.Seasons), -- 3.11: Ranch Seasons
 	Techniques = require(script.Techniques), -- 3.11: Dojo techniques

@@ -19,6 +19,7 @@
 	    Gate                         Model with PostL, PostR, Sign (client adds the owner name)
 	    FishingPond                  Model (attr PlotId, 3.10) with Water, Bed, Rim*, Dock, DockPost*
 	    DigSite                      Model (attr PlotId, 3.11) with Sand, Mound*, Post, RopeN/S/E, Rack, RackPost, Shovel*, Sign
+	    Observatory                  Model (attr PlotId, 3.12) with Base, Wall, Dome, Slit, Door, Step, Tripod, Telescope
 	  SpawnLocation
 	  Boundary/Wall<1-4>             low stone wall on the perimeter (Config.World.Boundary)
 	  Boundary/Barrier<1-4>          invisible, tall, collides: keeps players on the map
@@ -74,6 +75,9 @@ local COLORS = {
 	sandDark = hex("#CDAE6E"),
 	rope = hex("#D9B77A"),
 	metal = hex("#8E949A"),
+	dome = hex("#E9EEF5"), -- 3.12
+	night = hex("#2B3A6B"),
+	brass = hex("#C99A3B"),
 }
 
 local PEN_FLOOR_HEIGHT = 0.8 -- floor top sits at GroundY + 0.4
@@ -526,6 +530,46 @@ local function buildPlot(World, plot, parent: Instance)
 		dig.PrimaryPart = rack
 		dig:SetAttribute("PlotId", plot.id)
 		dig.Parent = model
+	end
+
+	-- Update 3.12: the Observatory (Config.World.Observatory); the client puts the "Stargaze"
+	-- prompt on the telescope.
+	local obsDef = World.Observatory
+	if obsDef then
+		local obs = Instance.new("Model")
+		obs.Name = "Observatory"
+		local o = obsDef.offset
+		local d = obsDef.dome
+		local obsCf = plotCf * CFrame.new(o[1], 0, o[3])
+		local wallH = 5
+		disc("Base", d + 1, 0.6, (obsCf * CFrame.new(0, 0.3, 0)).Position, COLORS.stone, obs, { CastShadow = false })
+		disc("Wall", d, wallH, (obsCf * CFrame.new(0, 0.6 + wallH / 2, 0)).Position, COLORS.kitchen, obs)
+		local dome = newPart("Part", "Dome", Vector3.new(d, d, d), obsCf * CFrame.new(0, 0.6 + wallH, 0), COLORS.dome, obs)
+		dome.Shape = Enum.PartType.Ball
+		-- The slit down the dome's south face, facing the pens.
+		block("Slit", Vector3.new(1.6, d * 0.42, 0.4), obsCf * CFrame.new(0, 0.6 + wallH + d * 0.2, d / 2 - 0.9), COLORS.night, obs, {
+			Material = Enum.Material.Neon,
+			CastShadow = false,
+		})
+		block("Door", Vector3.new(2.6, 3.6, 0.4), obsCf * CFrame.new(-3, 0.6 + 1.8, d / 2 - 0.4), COLORS.door, obs)
+		-- The telescope on its step outside the slit.
+		local stepCf = obsCf * CFrame.new(2.6, 0, d / 2 + 0.1)
+		block("Step", Vector3.new(3, 0.8, 1.6), stepCf * CFrame.new(0, 0.4, 0), COLORS.stone, obs)
+		block("Tripod", Vector3.new(0.4, 2.6, 0.4), stepCf * CFrame.new(0, 0.8 + 1.3, 0), COLORS.metal, obs, {
+			Material = Enum.Material.Metal,
+		})
+		local scope = block(
+			"Telescope",
+			Vector3.new(0.8, 0.8, 3.4),
+			stepCf * CFrame.new(0, 3.6, 0) * CFrame.Angles(math.rad(35), 0, 0),
+			COLORS.brass,
+			obs,
+			{ Material = Enum.Material.Metal }
+		)
+		scope:SetAttribute("Observatory", true)
+		obs.PrimaryPart = scope
+		obs:SetAttribute("PlotId", plot.id)
+		obs.Parent = model
 	end
 
 	-- Gate at the front edge (facing the hub); the client writes the owner's name above it.
