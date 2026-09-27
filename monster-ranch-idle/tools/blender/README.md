@@ -27,24 +27,12 @@ done from Studio, in Edit, with both files served on localhost (`python -m http.
 A re-rig needs a re-publish (the bones and skin live in the mesh asset); a texture-only change needs
 only a new upload.
 
-**Uploads go through the burner account** (owner's rule, 2026-09-27): Studio's `upload_image` and
-`publish_meshes.luau` upload as Studio's signed-in main account, so new uploads use the burner
-gravelxpixel's Open Cloud key instead. The low-poly meshes (`lowpoly.py`, R2-LOWQ) are the first to go
-that way:
-
-1. `python tools/blender/lowpoly.py --all --fbx` decimates every published form to ~1,500 triangles
-   and writes `<out>/<form>/mesh.json` and `mesh.fbx` (the armature and the low mesh).
-2. `python tools/blender/upload_lowmesh.py --all` uploads each FBX as a Model from the burner, reads
-   the mesh id out of the imported model (`lowmesh_inspect.luau`) and checks its size and bones against
-   `mesh.json`. It is resumable (`<out>/uploads.json`).
-3. `python tools/blender/upload_lowmesh.py --record` writes the ids (`asset_ids.py lowMesh=`).
-
-Two FBX settings matter, both found on cindlet: Roblox reads Blender's FBX as centimetres (so
-`global_scale` 0.01 gives 1 Blender unit = 1 stud), and with the default secondary bone axis every
-bone imports rolled 180 degrees about its length (`-X` rolls it back). With both, cindlet's bones
-matched the rig to 0.00001 studs and 0.12 degrees and it bent exactly like the full mesh in Play.
-The burner's assets start private: the owner makes them Open Use (or grants the universe). A low
-mesh that fails to load at runtime is dropped for the session and the full mesh is drawn.
+**Low-poly meshes** (R2-LOWQ, Low graphics and crowd-capped fights) go the same way as the full ones:
+`python tools/blender/lowpoly.py --all` decimates every published form to ~1,500 triangles on the same
+rig into `<out>/<form>/mesh.json`; serve `<out>` and run `publish_meshes.luau` with `suffix = "low"`;
+record them with `asset_ids.py --json` (`{"form": {"lowMesh": "rbxassetid://N"}}`). They reuse the
+form's texture. A low mesh that fails to load at runtime is dropped for the session and the full mesh
+is drawn. (The owner's burner account is for generated images and decals only, not meshes.)
 
 The first version shipped the mesh arrays in the modules and built every monster through its own
 EditableMesh at runtime, which needed no mesh upload. Roblox's EditableMesh memory budget reserves a
@@ -101,8 +89,7 @@ below 1 in their module (a slug is drawn with about a fox's bulk, not its height
 - `export_roblox.py`: the form's Luau module (under Studio's 200,000-character Source cap), its
   `mesh.json`, and the 1024 px textures.
 - `publish_meshes.luau`, `asset_ids.py`: publishing the meshes and recording the ids (above).
-- `lowpoly.py`, `lowpoly_export.py`, `upload_lowmesh.py`, `lowmesh_inspect.luau`: the low-poly meshes
-  and their burner upload (above).
+- `lowpoly.py`, `lowpoly_export.py`: the low-poly meshes (above).
 - `export_static.py`: the same road for a building (no rig): `python tools/blender/export_static.py
   eggShop 0` turns it to face -Y, drops the underside, cuts it into pieces of equal area (each its
   own 1024 px texture: Roblox's cap, so a big building needs several) and bakes and exports each.
