@@ -10,6 +10,7 @@
 	Filling:
 	  fossils  by itself: FossilFound with complete = true; back-filled on join (DigSite:Completed)
 	  stars    by itself: StarCharted; back-filled on join (Observatory:Charted)
+	  insects  by itself (3.13): BugCaught; back-filled on join (Bugs:Caught); the bug is not used up
 	  aquarium Exhibits.Donate: one fish of that kind is used up (Fishing:SpendFish(player, 1, id))
 	  relics   Exhibits.Donate: one copy from decor storage (Shop:TakeDecor); placed copies never
 	  honey    Exhibits.Donate: one jar (Apiary:SpendHoney(player, kind, 1))
@@ -39,7 +40,7 @@ local Logic = require(Shared.Logic.Exhibits)
 local Exhibits = {
 	Name = "Exhibits",
 	Dependencies = { "Progression", "Rewards" },
-	OptionalDependencies = { "Shop", "Decor", "Fishing", "DigSite", "Apiary", "Observatory", "Tourists", "Mastery" },
+	OptionalDependencies = { "Shop", "Decor", "Fishing", "DigSite", "Apiary", "Observatory", "Tourists", "Mastery", "Bugs" },
 }
 
 local function normalize(s)
@@ -141,6 +142,17 @@ local function backfill(player, s)
 			for chartId, yes in charted do
 				if yes and type(chartId) == "string" then
 					fill(player, s, "stars", chartId, false)
+				end
+			end
+		end
+	end
+	local Bugs = ctx:GetSystem("Bugs")
+	if Bugs and Bugs.Caught then
+		local ok, caught = pcall(Bugs.Caught, Bugs, player)
+		if ok and type(caught) == "table" then
+			for bugId, n in caught do
+				if type(bugId) == "string" and type(n) == "number" and n > 0 then
+					fill(player, s, "insects", bugId, false)
 				end
 			end
 		end
@@ -284,6 +296,12 @@ function Exhibits.Init(context)
 		local s = ctx:Section(player)
 		if s and type(detail) == "table" and type(detail.chart) == "string" then
 			fill(player, s, "stars", detail.chart, true)
+		end
+	end)
+	ctx.Bus:Subscribe("BugCaught", function(player, detail)
+		local s = ctx:Section(player)
+		if s and type(detail) == "table" and type(detail.bug) == "string" then
+			fill(player, s, "insects", detail.bug, true)
 		end
 	end)
 end

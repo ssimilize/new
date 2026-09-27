@@ -27,6 +27,7 @@ local StoreKit = require(UI.Components.StoreKit)
 local Tiles = require(UI.Components.Tiles)
 local Util = require(script.Parent.Parts.Util)
 local FishIcon = require(script.Parent.Parts.FishIcon)
+local BugIcon = require(script.Parent.Parts.BugIcon)
 
 local New = Create.New
 local C = Theme.Colors
@@ -41,6 +42,8 @@ end
 local function iconOf(setId: string, item, size: number, dim: boolean): GuiObject
 	if setId == "aquarium" then
 		return FishIcon.new(item.id, size, dim)
+	elseif setId == "insects" then
+		return BugIcon.new(item.id, size, dim)
 	end
 	local root = New("Frame", { Name = "Icon", BackgroundTransparency = 1, Size = UDim2.fromOffset(size, size) })
 	local c1 = if dim then Color3.fromHex("#3B3350") else hex(item.color, "#EDE3D3")
