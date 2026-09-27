@@ -265,6 +265,10 @@ function ClientHarness.new(testKernel, player, options)
 			end)
 		end
 	end
+	local folded = adapters.log.folded[player] -- a long Advance folds early messages (TestKernel)
+	if folded then
+		deliver("state", folded.snapshot)
+	end
 	for _, message in adapters.log.states[player] or {} do
 		deliver("state", message)
 	end
