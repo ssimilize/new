@@ -3,6 +3,153 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.12 · Honey & stars
+
+### Observatory & Star Charts
+
+**For players**
+- From Ranch Level 19 a small domed observatory stands in the north strip of every ranch, west of
+  the Apiary's spot. The "Stargaze" prompt on its telescope opens the Observatory.
+- The Observatory works at night only (the ranch's day/night cycle). By day the screen shows when
+  night falls.
+- Three sightings a night. A sighting deals 5 to 7 stars and a faint line pattern; tap the stars in
+  the traced order within 12 seconds. A good trace logs one observation on its chart; a miss still
+  uses the sighting.
+- 12 Star Charts: 8 all year and one for each season (only observed in its season). Three
+  observations chart it and grant its perk for good: faster eggs, more ranch income, better odds of
+  rare fish, more expedition loot, quicker Dojo training, extra hive hours or ranch appeal. Each
+  kind of perk has a cap.
+- New weekly goal: make 5 star sightings.
+
+**In the code**
+- `Config/Observatory` (charts, perks and caps, timing), `Logic/Observatory` (night clock, seeded sky,
+  tap check, perk sums), `Systems/Observatory` (actions `Observatory.Start` / `Observatory.Submit`,
+  one-shot sighting ids, a private seed secret, `Observatory:Perk` / `Observatory:Charted`), screen
+  `UI/Screens/Observatory`, the prompt in `Controllers/Interaction`, the building in
+  `World/Build.luau` (`Config.World.Observatory`, keep-out in `Config/Decor`).
+- Perks: an Eggs speed provider, a Ranch rate modifier, an Expeditions loot modifier and a Tourists
+  appeal bonus (all registered in Observatory's Start); Fishing adds `rare_fish` to the cast bonus
+  and the Dojo takes `dojo_time` off the training time (optional lookups in their Start).
+  `hive_hours` is for the Apiary. Topics: `StarSighted` (new, the weekly goal `stars_5`) and
+  `StarCharted`.
+
+### Museum Exhibits
+
+**For players**
+- From Ranch Level 18 a Curator wing stands beside the walk-in Codex Museum (east of it, south
+  of the Market Square). The Curator desk's "Exhibits" prompt, or the Exhibits button on the Codex
+  screen, opens the Museum Exhibits screen. No HUD button.
+- Five sets, each a row of pedestals in the wing and a tab on the screen:
+  - Fossil Hall: the 6 fossils. Filled by itself when a fossil is complete at the Dig Site (you keep
+    the skeleton display decor); fossils finished earlier appear on your next visit.
+  - Aquarium: every fish (20 with the seasonal ones). Donate one caught fish of that kind.
+  - Relic Room: the Dig Site relics, the Old Boot and Sunken Chest from fishing and the Travelling
+    Merchant's decor. Donate one copy from decor storage (a placed copy never counts).
+  - Honey Shelf: the four honeys and Royal Jelly from the Apiary. Donate one jar.
+  - Star Atlas: the Observatory's charts, filled by themselves when you chart them.
+- Each set pays at a third, two thirds and all of its exhibits (Claim on the screen, one step at a
+  time): 6 gems and 30 stardust per exhibit in the set over the three steps (25% / 25% / 50%,
+  rounded up) and a title for completing it (Bone Curator, Aquarist, Relic Keeper, Honey Curator,
+  Star Curator; worn from the Mastery screen).
+- Every exhibit on display adds Tourist appeal: up to +10 for a full museum.
+- New weekly goal: Fill 3 museum exhibits.
+
+**In the code**
+- `Config/Exhibits` (sets, steps, rewards, titles, the wing's LOD numbers), `Logic/Exhibits` (item
+  lists read from Config.DigSite / Fishing / Merchant / Decor / Apiary / Observatory, so new content
+  adds itself; a set whose config is missing is hidden; counts, steps, rewards, appeal, the wing's
+  layout), `Systems/Exhibits` (actions `Exhibits.Donate`, `Exhibits.Claim`; publishes
+  `ExhibitDonated`; `Tourists:RegisterAppealBonus("exhibits")`), screen `Screens/Exhibits`,
+  controller `Controllers/CuratorWing` (Parts, pedestal plates everywhere, at most 16 Part displays
+  near the camera via `Logic/Museum.Plan`).
+- Save `profile.Exhibits = { filled = { [set] = { [item] = true } }, paid = { [set] = step } }`.
+- Donations spend through `Fishing:SpendFish(player, 1, id)`, `Shop:TakeDecor` (storage only) and
+  `Apiary:SpendHoney(player, kind, 1)`; fossils fill from `FossilFound` (complete) and
+  `DigSite:Completed` (new, on join), charts from `StarCharted` and `Observatory:Charted` (on join).
+  Join back-fills do not publish `ExhibitDonated`.
+- World: `Config.World.CuratorWing` `{ center = { 200, -214 }, size = { 40, 64 } }`, listed in
+  `World.CodexGrounds` and the scenery keep-out.
+- Titles: `Config/Exhibits.Items`, appended to `Config/Mastery` Rewards like the Codex titles.
+- Tests: `Exhibits.spec`, `ExhibitsClient.spec`.
+
+### Apiary & Honey
+
+**For players**
+- From Ranch Level 14 three beehive stands sit in the north strip of every ranch, between the
+  pens and the Fishing Pond. Hive 1 opens at Level 14, hive 2 at 27 and hive 3 at 42 (a locked
+  hive is an empty stand). The "Tend" prompt at the sign opens the Apiary.
+- Each hive is tended by one Adult from the barn (busy while it tends; Unassign gives it back and
+  collects its honey). Honey an hour = 6 × √(SPD power), the Job Board's forager formula (about
+  6 an hour for an average worker, 35 for a maxed Mythic); Sprout monsters make 25% more.
+- A hive holds 8 hours of honey (more with the Observatory's hive perk), made online and offline,
+  then stops until collected. Honey takes the season it was made in: Blossom (spring), Clover
+  (summer), Heather (autumn), Frost (winter); a stretch across the Saturday turnover pays both.
+- Collect all takes every hive's honey. Each hive collect with honey has a 2% chance of a Royal
+  Jelly. Sell honey for 45 seconds of ranch income each, Royal Jelly for 20 minutes.
+- Five new Kitchen recipes: Blossom Honey Bun (3 growth meals), Clover Honey Tea (full Mood),
+  Heather Honey Roast (Job Board boost), Frost Honey Drops (expedition loot), all cooked in any
+  season, and the Royal Jelly Tart (new effect: +1 Bond heart and full Mood).
+- The Travelling Merchant takes honey (any kind but Royal Jelly, the most plentiful first) for two
+  new offers: a Golden Seed Jar (2 seeds, 8 honey) and an egg basket (20 honey). New weekly goal:
+  Collect 40 honey from your beehives.
+
+**In the code**
+- `Config/Apiary`, `Logic/Apiary` (rate, cap, season-split settle, Royal Jelly seed
+  `("apiary", userId, collect n)`), `Systems/Apiary` (actions `Apiary.Assign`, `Apiary.Unassign`,
+  `Apiary.Collect`, `Apiary.Sell`; API `Honey`, `Have`, `AddHoney`, `SpendHoney`, `HoneyCount`,
+  `SpendAnyHoney`; publishes `HoneyCollected` per kind with `honey = false` for Royal Jelly; busy
+  tag `apiary`; optional `Observatory:Perk(player, "hive_hours")`).
+- Client: `Controllers/Apiary` builds the hives from Parts in `Workspace.Apiary` on the own plot
+  (bees off on Low graphics or reduced motion), screen `Screens/Apiary`; honey icons drawn in code
+  (`Components/Icon` kinds `honey_<kind>`, `royal_jelly`); Rewards card text for kind `honey`.
+- Kitchen: recipe cost `honey = { [kind] = n }` (`Logic/Kitchen.Honey`, Missing -> "honey"),
+  effect `royal`; Merchant pay kind `honey`; weekly goal `honey_40` (filter `honey = true`,
+  `Config.Quests.CountField.HoneyCollected = "amount"`).
+- World: `Config.Apiary.World` (plot-local (-8, 0, -47), footprint 22 × 10), Decor keep-out
+  `{ -8, -47, 12, 6 }`, checked by the LevelSeventy plot-layout test.
+- Tests: `Apiary.spec`, `ApiaryClient.spec`.
+
+### Trial Tower
+
+**For players**
+- From Ranch Level 26 a tall stone tower stands just east of the Market Square, on the way to
+  plot 3 and clear of the Stampede Arena's ground. Its prompt opens the Trial Tower; the
+  Expeditions screen has a "Tower" button in its header too.
+- Climb floor after floor with your Expeditions squad (Dojo techniques fight here too). Every
+  floor is one fight, replayed on the battle stage. Enemies get stronger each floor and every
+  10th floor is a boss. Everyone meets the same enemies that week; the screen previews the next
+  floor (names, levels, BOSS badge).
+- 3 attempts a UTC day: a loss uses one, a win uses none. With none left, a loss spends a Retry
+  token. Tokens: +1 from every Expedition Bounty, and the Travelling Merchant sells a Retry Token
+  (30 gems or 20 min of ranch income, 2 a visit).
+- The climb starts over every Saturday at 15:00 UTC with the leaderboards. Milestones every 5
+  floors pay once a week: 10 min of ranch income and 3 Stardust per 5 floors (floor 20: 40 min,
+  12 Stardust), plus 60 gems at floor 25 and 150 gems at floor 50. The first time ever you reach
+  each 10th floor pays 40 gems.
+- New weekly board "Highest Floor" (this week's best floor) and weekly goal "Clear 10 Trial
+  Tower floors".
+
+**In the code**
+- `Config/TrialTower`, `Logic/TrialTower` (floor enemies, seeds, milestones), `Systems/TrialTower`
+  (action `TrialTower.Fight`; API `AddRetries`, `Best`, `Record`, `AttemptsLeft`; publishes
+  `TowerFloorCleared`), screen `Screens/TrialTower`, Expeditions header button `TowerButton`.
+- Enemies: floor f is fought in region `Regions.List[ceil(f / 10)]` (the last region after that)
+  on a stage seeded by ("tower", week, f), built by `BattleSim.BuildEnemies` (boss floors: one of
+  the region's bosses). Each enemy's `statMult` is set so its power is `190 × 1.07^(f − 1)` (a boss
+  × 1.8); levels and rarities are the stage's own. A fight's seed is (userId, week, floor, fights
+  so far). Balance (`TrialTowerBalance.spec`): three Lv 24-28 Common-Rare Adults stop around floors
+  11-16; five Lv 90 Mythic/Legendary Adults with techniques pass floor 40.
+- World: `Config.World.Hub` entry `trialTower` at { 106, 0, -44 }, size 16 × 44 × 16, `style =
+  "tower"` (`World/Build.luau`: slate body, battlement ledge, lit window slits, no gable roof);
+  scenery keeps off it like every hub building.
+- Rewards kind `tower_retry` (label "N Retry tokens", icon drawn in code in `Components/Icon`);
+  `Config.Bounties.Reward` gains 1 token; `Config.Merchant` offer `tower_retry` (kind
+  `tower_retry`, unlock `trial_tower`, `TrialTower` an optional Merchant dependency).
+- Leaderboards board `tower` (period week, count, unit floors) fed by `TrialTower:Best`; weekly
+  goal `tower_10` (family `tower`). No Calendar source: the existing weekly "reset" row already
+  marks the turnover.
+- Tests: `TrialTower.spec`, `TrialTowerClient.spec`, `TrialTowerBalance.spec`.
+
 ## 3.11 · Seasons & secrets
 
 ### Dig Site & Fossils

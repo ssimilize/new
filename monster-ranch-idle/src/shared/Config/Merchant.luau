@@ -9,11 +9,14 @@
 	  kind    scroll (Trait Scroll) · seeds (Kitchen:AddSeeds) · bait (Fishing:AddBait) ·
 	          shovels (DigSite:AddShovels) · decor (`decor` = index into Merchant.Decor, rotating
 	          by visit) · egg (`eggs` = weighted egg ids from Config.Eggs)
+	          · tower_retry (TrialTower:AddRetries, 3.12)
 	  unlock  the player needs this feature to buy it; an unlock key missing from Config.Unlocks
 	          keeps the offer out of the roll entirely (the Dig Site before it ships)
 	Pay: { kind, amount?, seconds? }  one way to pay, all or nothing:
 	  coins (`seconds` of ranch income, at least MinCoins) · gems · amber · fish (Fishing:SpendFish)
 	  · dishes (Kitchen pantry dishes, the most plentiful first)
+	  · honey (3.12: Apiary honey of any kind but Royal Jelly, the most plentiful kind first,
+	    Apiary:SpendAnyHoney; refused without the Apiary)
 ]]
 
 local Merchant = {}
@@ -103,6 +106,18 @@ Merchant.Offers = {
 		unlock = "dig_site",
 		pay = { { kind = "coins", seconds = 900 }, { kind = "fish", amount = 3 } },
 	},
+	-- 3.12: a Trial Tower Retry token (TrialTower:AddRetries).
+	{
+		id = "tower_retry",
+		kind = "tower_retry",
+		name = "Retry Token",
+		desc = "One more Trial Tower fight when today's attempts are out.",
+		amount = 1,
+		weight = 8,
+		limit = 2,
+		unlock = "trial_tower",
+		pay = { { kind = "gems", amount = 30 }, { kind = "coins", seconds = 1200 } },
+	},
 	{
 		id = "decor_a",
 		kind = "decor",
@@ -138,6 +153,28 @@ Merchant.Offers = {
 		weight = 3,
 		limit = 1,
 		pay = { { kind = "gems", amount = 150 }, { kind = "amber", amount = 20 } },
+	},
+	-- 3.12 · Apiary & Honey: honey barter (appended; never reorder)
+	{
+		id = "honey_seeds",
+		kind = "seeds",
+		name = "Golden Seed Jar",
+		desc = "Two Golden seeds for the Feed Garden.",
+		amount = 2,
+		weight = 8,
+		limit = 2,
+		unlock = "apiary",
+		pay = { { kind = "coins", seconds = 1500 }, { kind = "honey", amount = 8 } },
+	},
+	{
+		id = "honey_eggs",
+		kind = "egg",
+		eggs = { { id = "grove", weight = 3 }, { id = "crystal", weight = 2 } },
+		amount = 1,
+		weight = 6,
+		limit = 1,
+		unlock = "apiary",
+		pay = { { kind = "gems", amount = 60 }, { kind = "honey", amount = 20 } },
 	},
 }
 

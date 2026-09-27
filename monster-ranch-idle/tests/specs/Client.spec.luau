@@ -532,9 +532,9 @@ return function(t)
 			c:Click(screen:FindFirstChild("Rotate", true))
 			c:Advance(0.2)
 			expect(decor.Draft()[1].rot).toBe(1)
-			decor.MoveTo(-30, -25)
+			decor.MoveTo(-18, -25)
 			c:Advance(0.2)
-			expect(decor.Draft()[1].x).toBe(-30)
+			expect(decor.Draft()[1].x).toBe(-18)
 			expect(decor.Draft()[1].z).toBe(-25)
 			expect(decor.Problems()[1]).toBeNil()
 
@@ -588,14 +588,15 @@ return function(t)
 			local centre = t.Shared("Config").World.Plots[plotIndex].center
 			local target = t.Roblox.Vector3.new(centre[1], centre[2], centre[3])
 			c.world.workspace.CurrentCamera.CFrame = t.Roblox.CFrame.lookAt(target + t.Roblox.Vector3.new(0, 26, 30), target)
-			local layout = { { id = "wood_lamp", x = -30, z = -25, rot = 0 }, { id = "wood_lamp", x = -24, z = -25, rot = 0 } }
+			-- In the gap between the 3.12 Observatory and Apiary on the plot's back strip.
+			local layout = { { id = "wood_lamp", x = -19, z = -25, rot = 0 }, { id = "wood_lamp", x = -13, z = -25, rot = 0 } }
 			h:Call(player, "Decor.Save", { layout = layout })
 			c:Advance(Social.PlotRefreshSeconds + 3)
 			expect(decor.Count(plotIndex)).toBe(2)
 			expect(lit()).toBe(2)
 
 			-- Moving the lamps rebuilds both pieces, and their pooled lights go with them.
-			layout[1].x, layout[2].x = -36, -30
+			layout[1].x, layout[2].x = -17, -11
 			h:Call(player, "Decor.Save", { layout = layout })
 			c:Advance(Social.PlotRefreshSeconds + 3)
 			expect(lit()).toBe(2)

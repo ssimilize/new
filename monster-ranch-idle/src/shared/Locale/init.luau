@@ -26,6 +26,7 @@
 	  Locale.Catalog(id) -> { [source] = translation }
 	  Locale.Placeholders(text) -> { n }   sorted placeholder numbers (catalogue checks)
 	  Locale.Register(id, catalog)         tests: a catalogue under an id of their own
+	  Locale.Parts                         { [id] = { ModuleScript } } the modules each catalogue is split into
 ]]
 
 local Locale = {}
@@ -39,7 +40,11 @@ Locale.Languages = {
 -- "auto" follows the player's Roblox language.
 Locale.Choices = { "auto", "en", "es", "pt" }
 
-local CATALOGS = { es = script.es, pt = script.pt }
+-- Each catalogue is split into parts (Roblox refuses to set a script's Source past 200,000
+-- bytes); the parts are merged on first use. Locale.spec keeps every part under the limit and
+-- every key in one part only.
+local CATALOGS = { es = { script.es, script.es2 }, pt = { script.pt, script.pt2 } }
+Locale.Parts = CATALOGS
 local registered: { [string]: { [string]: string } } = {}
 
 -- Text with no entry of its own is split on the joints the UI builds text with: lines,
@@ -139,11 +144,17 @@ local function compile(id: string): Compiled?
 	end
 	local catalog = registered[id]
 	if not catalog then
-		local module = CATALOGS[id]
-		if not module then
+		local parts = CATALOGS[id]
+		if not parts then
 			return nil
 		end
-		catalog = require(module) :: { [string]: string }
+		local merged: { [string]: string } = {}
+		for _, module in parts do
+			for source, target in require(module) :: { [string]: string } do
+				merged[source] = target
+			end
+		end
+		catalog = merged
 	end
 	local c: Compiled = { catalog = catalog, exact = {}, byLead = {}, open = {}, cache = {}, cached = 0 }
 	for source, target in catalog do

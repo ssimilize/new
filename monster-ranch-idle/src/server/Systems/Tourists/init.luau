@@ -22,6 +22,9 @@
 	Public API:
 	  Tourists:Appeal(player) -> { score, stars, parts, tip }
 	  Tourists:Stars(player) -> number   0 while locked (the Visits snapshot shows it)
+	  Tourists:RegisterAppealBonus(key, fn(player) -> number)   3.12: flat appeal points from another
+	    system (Museum exhibits, an Observatory chart); all of them together are capped at
+	    Config.Tourists.BonusMax. Register in Start (Tourists is an optional dependency there).
 	Bus: publishes TouristVisited (player, { stars }) once per tourist; WelcomeItem on join.
 ]]
 
@@ -43,6 +46,8 @@ Tourists.Profile = {
 
 local TICK = 5
 
+local bonuses: { [string]: (any) -> number } = {} -- 3.12: RegisterAppealBonus
+
 local ctx
 local Config, Rules
 local Progression, Rewards, Monsters, Decor, Ranch
@@ -53,6 +58,17 @@ end
 
 local function unlocked(player): boolean
 	return Progression:IsUnlocked(player, Rules.Unlock)
+end
+
+local function bonusOf(player): number
+	local total = 0
+	for _, fn in bonuses do
+		local n = tonumber(fn(player))
+		if n and n == n and n > 0 then
+			total += n
+		end
+	end
+	return total
 end
 
 local function facts(player)
@@ -75,6 +91,7 @@ local function facts(player)
 		rarities = rarities,
 		codex = Monsters:CodexCount(player),
 		favored = (Seasons.Def(Seasons.At(ctx:Now()).id) :: any).appeal, -- 3.11
+		bonus = bonusOf(player), -- 3.12
 	}
 end
 
@@ -186,6 +203,10 @@ function Tourists:Appeal(player)
 	return appealOf(player)
 end
 
+function Tourists:RegisterAppealBonus(key: string, fn: (any) -> number)
+	bonuses[key] = fn
+end
+
 function Tourists:Stars(player): number
 	if not section(player) or not unlocked(player) then
 		return 0
@@ -197,6 +218,7 @@ end
 
 function Tourists.Init(context)
 	ctx = context
+	bonuses = {}
 	Config = ctx.Config
 	Rules = Config.Tourists
 	Progression = ctx:GetSystem("Progression")

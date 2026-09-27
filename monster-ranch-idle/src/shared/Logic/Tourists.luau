@@ -110,8 +110,9 @@ function Tourists.Appeal(facts)
 	for id, weight in Seasons.AppealWeights(Rules.Weights, facts.favored) do
 		score += weight * parts[id]
 	end
-	score = math.clamp(math.floor(score + 0.5), 0, 100)
-	return { score = score, stars = Tourists.Stars(score), parts = parts, tip = Tourists.Tip(parts, kinds) }
+	local bonus = math.clamp(tonumber(facts.bonus) or 0, 0, Rules.BonusMax)
+	score = math.clamp(math.floor(score + bonus + 0.5), 0, 100)
+	return { score = score, stars = Tourists.Stars(score), parts = parts, tip = Tourists.Tip(parts, kinds), bonus = bonus }
 end
 
 -- Slots --------------------------------------------------------------------------------------

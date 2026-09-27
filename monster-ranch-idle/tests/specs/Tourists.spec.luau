@@ -197,6 +197,30 @@ return function(t)
 			expect(granted[1]).toBe(Rules.SecondsPerStar * h:Session(p, "Tourists").stars)
 		end)
 
+		it("adds other systems' appeal bonus on top, capped in all (3.12)", function()
+			local empty = Logic.Appeal({ layout = {}, level = 11, pens = {}, rarities = {}, codex = 0 })
+			local plus = Logic.Appeal({ layout = {}, level = 11, pens = {}, rarities = {}, codex = 0, bonus = 5 })
+			expect(plus.score).toBe(empty.score + 5)
+			expect(plus.bonus).toBe(5)
+			local capped = Logic.Appeal({ layout = {}, level = 11, pens = {}, rarities = {}, codex = 0, bonus = 1000 })
+			expect(capped.score).toBe(empty.score + Rules.BonusMax)
+
+			local h, p = boot()
+			local T = h:System("Tourists")
+			local before = T:Appeal(p).score
+			T:RegisterAppealBonus("test_a", function()
+				return 4
+			end)
+			T:RegisterAppealBonus("test_b", function(player)
+				return if player == p then 3 else 0
+			end)
+			expect(T:Appeal(p).score).toBe(math.min(100, before + 7))
+			T:RegisterAppealBonus("test_b", function()
+				return Rules.BonusMax
+			end)
+			expect(T:Appeal(p).score).toBe(math.min(100, before + Rules.BonusMax))
+		end)
+
 		it("pays at most six tourists for time away, with one Welcome Back line", function()
 			local h, p = boot()
 			local count = h:Section(p, "Tourists").count

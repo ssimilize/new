@@ -10,6 +10,7 @@
 	milestone tracks with progress bars and Claim buttons (profile.Codex.claimed).
 	3.10: a Fish Log tab (Parts/FishLog): fish caught at the Fishing Pond and their milestones.
 	3.11: a Fossils tab (Parts/FossilLog): fossils completed at the Dig Site and their milestones.
+	3.12: an Exhibits header button opens the Museum Exhibits screen.
 	Open params: { tab = "milestones" | "fishlog" | "fossils" }.
 ]]
 
@@ -24,6 +25,7 @@ local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
 local Create = require(UI.Create)
 local Panel = require(UI.Components.Panel)
+local Button = require(UI.Components.Button)
 local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local StoreKit = require(UI.Components.StoreKit)
@@ -122,6 +124,19 @@ function Codex.Build(ctx)
 	})
 	tabs.Root.LayoutOrder = 2
 	tabs.Root.Parent = panel.HeaderRight
+	-- 3.12: Museum Exhibits (the Curator wing's screen) is reached from here too.
+	Button.new({
+		Name = "Exhibits",
+		Text = "Exhibits",
+		TextSize = Theme.TextSize.Small + 1,
+		Color = C.Purple,
+		Size = UDim2.fromOffset(104, 40),
+		LayoutOrder = 3,
+		Parent = panel.HeaderRight,
+		OnClick = function()
+			ctx.Router:Open("Exhibits")
+		end,
+	})
 	local detailBody = Widgets.List({ Position = UDim2.fromOffset(4, 4), Size = UDim2.new(1, -8, 1, -8), Padding = 6, Parent = detail })
 
 	local function codexOf(lineId: string)

@@ -32,7 +32,7 @@ local Logic = require(Shared.Logic.Dojo)
 local Dojo = {
 	Name = "Dojo",
 	Dependencies = { "Currency", "Progression", "Monsters" },
-	OptionalDependencies = { "Bond" },
+	OptionalDependencies = { "Bond", "Observatory" }, -- Observatory: 3.12, the dojo_time star perk
 }
 
 Dojo.Profile = {
@@ -49,6 +49,7 @@ local ctx
 local Config, Rules
 local Currency, Progression, Monsters
 local Bond
+local Observatory -- 3.12, optional (found in Start)
 
 local function section(player)
 	return ctx:Section(player)
@@ -102,6 +103,11 @@ local function train(player, payload)
 		ctx:Fail(whyNot or "That technique can't be trained")
 	end
 	local cost, seconds = Logic.Cost(lv)
+	-- 3.12: the Observatory's dojo_time perk takes a fraction off (unchanged at 0).
+	local cut = if Observatory then Observatory:Perk(player, "dojo_time") else 0
+	if type(cut) == "number" and cut > 0 then
+		seconds = math.max(1, math.floor(seconds * (1 - math.min(cut, 0.9)) + 0.5))
+	end
 	Currency:Charge(player, { stardust = cost }, "dojo")
 	local now = ctx:Now()
 	s.training = { id = m.id, tech = payload.tech, lv = lv, startedAt = now, readyAt = now + seconds }
@@ -178,6 +184,7 @@ end
 
 function Dojo.Start()
 	Bond = ctx:GetSystem("Bond")
+	Observatory = ctx:GetSystem("Observatory")
 end
 
 function Dojo.PlayerAdded(player, info)

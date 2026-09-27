@@ -57,6 +57,10 @@ World.Pond = { offset = { 30, 0, -47 }, size = { 20, 12 }, rim = 1, dock = { 9, 
 -- included); `pit` is the roped-off sand ({ x, z }) at the footprint's east end; the tool rack (its
 -- "Dig" prompt) stands at the west end, facing the pond's dock.
 World.DigSite = { offset = { 62, 0, -47 }, size = { 22, 12 }, pit = { 16, 10 } }
+-- Update 3.12: the Observatory in the north strip west of the Apiary's spot. `size` is the whole
+-- footprint ({ x, z }: the round base and the telescope's step); `dome` is the dome's diameter.
+-- The telescope (its "Stargaze" prompt) points out of the dome's slit, facing +z (the pens).
+World.Observatory = { offset = { -50, 0, -47 }, size = { 16, 14 }, dome = 12 }
 
 -- Hub buildings (Market Square), relative to the origin.
 World.Hub = {
@@ -135,6 +139,19 @@ table.insert(World.Hub, {
 	size = { 22, 14, 18 },
 	color = "#FF7AC8",
 	screen = "Workshop",
+})
+
+-- Update 3.12: the Trial Tower, east of the plaza on the way to plot 3, clear of the Stampede
+-- Arena's open ground (StampedeArena below, 40 round (150, 0)). A tall stone tower
+-- (Systems/World/Build: style "tower" = battlements, no roof).
+table.insert(World.Hub, {
+	id = "trialTower",
+	name = "Trial Tower",
+	position = { 106, 0, -44 },
+	size = { 16, 44, 16 },
+	color = "#8A8FA3",
+	screen = "TrialTower",
+	style = "tower",
 })
 
 -- Glow-up O: the Codex Museum and the Hall of Fame plaza (client-built, Config/Codex) south of the
@@ -237,5 +254,10 @@ table.insert(World.Scenery.keepOut, World.VisitGrounds[2])
 -- between the Workshop and the path to plot 1. Scenery keeps off it.
 World.MerchantCaravan = { center = { -104, -42 }, radius = 14 }
 table.insert(World.Scenery.keepOut, World.MerchantCaravan)
+-- 3.12: the Curator wing of Museum Exhibits (client-built, Config/Exhibits, Controllers/CuratorWing),
+-- east of the Codex Museum, clear of plots 3 and 5. Listed with the Codex grounds; scenery keeps off it.
+World.CuratorWing = { center = { 200, -214 }, size = { 40, 64 } }
+table.insert(World.CodexGrounds, World.CuratorWing)
+table.insert(World.Scenery.keepOut, World.CuratorWing)
 
 return World

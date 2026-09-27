@@ -37,10 +37,11 @@ local KIND_COLOR = {
 	seeds = "#F4C43A",
 	bait = "#4FB6F2",
 	shovels = "#A0703D",
+	tower_retry = "#8A8FA3",
 	decor = "#EF6FA8",
 	egg = "#43B649",
 }
-local PAY_COLOR = { coins = C.Green, gems = C.Pink, amber = C.Orange, fish = C.Blue, dishes = C.Purple }
+local PAY_COLOR = { coins = C.Green, gems = C.Pink, amber = C.Orange, fish = C.Blue, dishes = C.Purple, honey = C.Coin }
 
 return {
 	Name = "Merchant",

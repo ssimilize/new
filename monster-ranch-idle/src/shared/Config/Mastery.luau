@@ -207,6 +207,10 @@ end
 for _, item in require(script.Parent.Arena).SeasonItems do
 	table.insert(Mastery.Rewards, item)
 end
+-- 3.12: Museum Exhibits set titles (Config/Exhibits.Items), granted on completing a set.
+for _, item in require(script.Parent.Exhibits).Items do
+	table.insert(Mastery.Rewards, item)
+end
 
 Mastery.EquipKinds = { "aura", "flourish", "plinth", "title" }
 

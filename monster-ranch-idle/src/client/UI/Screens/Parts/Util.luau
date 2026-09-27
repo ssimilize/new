@@ -226,6 +226,12 @@ function Util.rewardText(item): string
 		return string.format("%s Amber", Format.short(amount))
 	elseif kind == "shovel" then
 		return string.format("%s Shovels", Format.short(amount))
+	elseif kind == "honey" then
+		-- 3.12 · Apiary: id = the honey kind (or royal_jelly)
+		local def = item.id and Config.Apiary.ById[item.id]
+		return string.format("%s %s", Format.short(amount), if def then def.name else "Honey")
+	elseif kind == "tower_retry" then
+		return string.format("%s Retry tokens", Format.short(amount))
 	end
 	return Format.short(amount)
 end
@@ -238,6 +244,9 @@ function Util.rewardIcon(item, size: number): GuiObject
 		if ok then
 			return MonsterIcon.new(ap, size)
 		end
+	end
+	if item.kind == "honey" and type(item.id) == "string" then
+		return Icon.new(if item.id == "royal_jelly" then item.id else "honey_" .. item.id, size)
 	end
 	return Icon.new(Icon.forReward(item.kind), size)
 end
@@ -373,6 +382,7 @@ function Util.card(props)
 		BackgroundColor3 = props.Color or C.Card,
 		Size = props.Size or UDim2.fromScale(1, 1),
 		Position = props.Position or UDim2.new(),
+		AnchorPoint = props.AnchorPoint or Vector2.zero,
 		LayoutOrder = props.LayoutOrder or 0,
 		Parent = props.Parent,
 	}, { Create.Corner(Theme.Radius.Card), Create.Stroke(Theme.Stroke.Card) })

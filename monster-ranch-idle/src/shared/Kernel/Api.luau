@@ -388,7 +388,7 @@ Api.Actions = {
 	["Kitchen.Serve"] = {
 		schema = T.struct({ id = id, dish = T.key(Config.Kitchen.ById) }),
 		rate = 4,
-		returns = "{ effect: 'meals'|'mood'|'bond'|'job'|'loot' }",
+		returns = "{ effect: 'meals'|'mood'|'bond'|'job'|'loot'|'royal' }",
 	},
 	["Kitchen.PlantGolden"] = { schema = T.struct({ plot = T.integer(1, 8) }), rate = 3, returns = "{ readyAt: number }" },
 	-- Fishing Pond (3.10) · see Config/Fishing and Logic/Fishing -------------------------
@@ -421,6 +421,42 @@ Api.Actions = {
 		schema = T.struct({ dig = T.integer(1), tile = T.integer(1, Config.DigSite.Tiles) }),
 		rate = 6,
 		returns = "{ tile, find: { kind, fossil?, piece?, duplicate?, complete?, id?, amount? }?, hint, left, done, rewards: { Reward }, missed: { number }? }",
+	},
+	-- Museum Exhibits (3.12) · see Config/Exhibits and Logic/Exhibits ------------------------
+	["Exhibits.Donate"] = {
+		schema = T.struct({ set = T.enum(Config.Exhibits.Ids), item = T.string(48, 1) }),
+		rate = 6,
+		returns = "{ set: string, item: string }",
+	},
+	["Exhibits.Claim"] = {
+		schema = T.struct({ set = T.enum(Config.Exhibits.Ids) }),
+		rate = 2,
+		returns = "{ set: string, step: number, rewards: { Reward }, title: itemId? }",
+	},
+
+	-- Observatory & Star Charts (3.12) · see Config/Observatory and Logic/Observatory ------
+	["Observatory.Start"] = {
+		schema = T.struct({ chart = T.key(Config.Observatory.ById) }),
+		rate = 2,
+		returns = "{ id: number, chart: string, stars: { { x: number, y: number } }, order: { number }, left: number, limit: number }",
+	},
+	["Observatory.Submit"] = {
+		schema = T.struct({
+			id = T.integer(1),
+			taps = T.array(
+				T.struct({ star = T.integer(1, Config.Observatory.MaxStars), t = T.number(0, 600) }),
+				Config.Observatory.MaxStars,
+				1
+			),
+		}),
+		rate = 2,
+		returns = "{ success: boolean, why: string?, chart: string, progress: number, charted: boolean, left: number }",
+	},
+	-- Trial Tower (3.12) · see Config/TrialTower and Logic/TrialTower ------------------------
+	["TrialTower.Fight"] = {
+		schema = T.none,
+		rate = 2,
+		returns = "{ win, floor, best, record, replay: BattleReplay, rewards: { Reward }, left, retries, spent: 'attempt' | 'retry' | nil }",
 	},
 
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
@@ -471,6 +507,24 @@ Api.Actions = {
 	},
 	-- Collect: the finished training lands on the monster's `tech`.
 	["Dojo.Collect"] = { schema = T.none, rate = 2, returns = "{ id: string, tech: string, lv: number }" },
+
+	-- Apiary & Honey (3.12) · see Config/Apiary and Logic/Apiary ----------------------------------
+	-- Assign: a free Adult from the barn tends an open, empty beehive (busy tag "apiary").
+	["Apiary.Assign"] = { schema = T.struct({ hive = T.integer(1, Config.Apiary.MaxHives), id = id }), rate = 2, returns = "nil" },
+	-- Unassign: collects that hive's honey and frees its keeper.
+	["Apiary.Unassign"] = {
+		schema = T.struct({ hive = T.integer(1, Config.Apiary.MaxHives) }),
+		rate = 2,
+		returns = "{ honey: { [kind]: number } }",
+	},
+	-- Collect: every hive's whole honey (and any Royal Jelly found) into the store.
+	["Apiary.Collect"] = { schema = T.none, rate = 1, returns = "{ honey: { [kind]: number } }" },
+	-- Sell: honey or Royal Jelly for coins (Config.Apiary.SellSeconds of ranch income each).
+	["Apiary.Sell"] = {
+		schema = T.struct({ kind = T.enum(Config.Apiary.AllIds), amount = T.integer(1, Config.Apiary.StoreCap) }),
+		rate = 4,
+		returns = "{ coins: number }",
+	},
 
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
@@ -811,6 +865,9 @@ Api.State = {
 		Dojo = "{ training = false | { id, tech, lv, startedAt, readyAt }, trained }  -- 3.11: the Dojo mat (Logic/Dojo)",
 		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
 		DigSite = "{ day, digs, shovels, n, open = false | { id, left, tiles = { { t, hint?, kind?, fossil?, piece?, id?, amount?, duplicate? } } }, pieces = { [fossilId]: { [pieceId]: true } }, total }  -- 3.11 (secret is private)",
+		Observatory = "{ night, used, n, charts = { [chartId]: observations }, seen }  -- 3.12 (secret is private)",
+		Exhibits = "{ filled = { [setId]: { [itemId]: true } }, paid = { [setId]: step } }  -- 3.12: Museum Exhibits",
+		TrialTower = "{ week, best, record, day, used, retries, paid = { [floor]: true }, fights, cleared }  -- 3.12, see Logic/TrialTower",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
@@ -845,6 +902,7 @@ Api.State = {
 		Tourists = "{ slot, count, book = { { at, stars, who, good, gi, bad, bi } } }  -- 3.10: Ranch Tourists (Logic/Tourists)",
 		Merchant = "{ visit, bought = { [offerId]: n }, scrolls, rerolls, trades }  -- 3.11: Travelling Merchant (Logic/Merchant)",
 		Seasons = "{ last }  -- 3.11: the last Ranch Season this player saw (Logic/Seasons)",
+		Apiary = "{ hives = { { monster, at, stored = { [kind]: n } } }, store = { [kind]: n }, collects, made }  -- 3.12: Apiary & Honey (Logic/Apiary)",
 		-- R2 Design Weeks: added to profile.Workshop (see Api.State.profile.Workshop above).
 		Workshop_DesignWeek = "profile.Workshop also has: designWeek = { week, entered: designId|false }, votesToday = { day, n }",
 	},
@@ -854,6 +912,7 @@ Api.State = {
 		Breeding = "{ podCount, breedsPerDay }",
 		Jobs = "{ slotCount }",
 		Kitchen = "{ slotCount, fish, fishing }  -- 3.10: fish = Fishing:FishCount (0 without Fishing); fishing = Fishing is plugged in",
+		Apiary = "{ hives, extra }  -- 3.12: open beehives; extra storage hours (Observatory perk hive_hours)",
 		Merchant = "{ shovels }  -- 3.11: the Dig Site is plugged in and unlocked (the merchant's shovel offers)",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
@@ -945,7 +1004,12 @@ Api.Topics = {
 	DishCooked = "(player, { dish: string, count: number })  -- 3.10: dishes collected from the Kitchen into the Pantry",
 	FossilFound = "(player, { fossil: string, piece: string, complete: boolean })  -- 3.11: a new fossil piece dug up at the Dig Site",
 	DigFinished = "(player, { finds: number })  -- 3.11: a dig at the Dig Site ended (taps used up or every find dug up)",
-	MerchantBought = "(player, { item: string, pay: string })  -- 3.11: a Travelling Merchant purchase (item = offer id, pay = coins|gems|amber|fish|dishes)",
+	HoneyCollected = "(player, { kind: string, amount: number })  -- 3.12: honey collected from the Apiary's hives (every kind collected in one tap)",
+	ExhibitDonated = "(player, { set: string, item: string })  -- 3.12: a Museum exhibit filled (donated or placed automatically)",
+	TowerFloorCleared = "(player, { floor: number, best: number })  -- 3.12: a Trial Tower floor won (best = this week's highest floor)",
+	StarCharted = "(player, { chart: string })  -- 3.12: an Observatory star chart finished",
+	StarSighted = "(player, { chart: string })  -- 3.12: a successful Observatory sighting (the weekly goal stars_5)",
+	MerchantBought = "(player, { item: string, pay: string })  -- 3.11: a Travelling Merchant purchase (item = offer id, pay = coins|gems|amber|fish|dishes|honey)",
 	FishCaught = "(player, { fish: string, rarity: string, weight: number, seasonal: boolean })  -- 3.10: a catch at the Fishing Pond (weight in kg; seasonal: 3.11)",
 	SeasonChanged = "(player, { season: string })  -- 3.11: on join when the last season seen differs, and at the turnover",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",

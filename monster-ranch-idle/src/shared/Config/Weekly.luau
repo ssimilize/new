@@ -142,6 +142,42 @@ Weekly.Pool = {
 		filter = { seasonal = true },
 		unlock = "fishing",
 	},
+	{
+		id = "stars_5",
+		family = "observatory",
+		text = "Make 5 star sightings",
+		topic = "StarSighted",
+		target = 5,
+		unlock = "observatory",
+	},
+	-- 3.12 · Museum Exhibits (donated or filled by themselves)
+	{
+		id = "exhibits_3",
+		family = "exhibits",
+		text = "Fill 3 museum exhibits",
+		topic = "ExhibitDonated",
+		target = 3,
+		unlock = "exhibits",
+	},
+	-- 3.12 · Apiary & Honey: honey only (Royal Jelly is published with honey = false)
+	{
+		id = "honey_40",
+		family = "apiary",
+		text = "Collect 40 honey from your beehives",
+		topic = "HoneyCollected",
+		target = 40,
+		filter = { honey = true },
+		unlock = "apiary",
+	},
+	-- 3.12 · Trial Tower: floors cleared (the climb starts over with the week)
+	{
+		id = "tower_10",
+		family = "tower",
+		text = "Clear 10 Trial Tower floors",
+		topic = "TowerFloorCleared",
+		target = 10,
+		unlock = "trial_tower",
+	},
 }
 
 Weekly.ById = {}

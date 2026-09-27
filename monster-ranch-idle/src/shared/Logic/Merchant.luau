@@ -132,6 +132,7 @@ local PAY_FORMAT = {
 	amber = "Pay %s Amber",
 	fish = "Pay %s Fish",
 	dishes = "Pay %s Dishes",
+	honey = "Pay %s Honey", -- 3.12
 }
 
 function Merchant.PayText(pay, amount: number): string

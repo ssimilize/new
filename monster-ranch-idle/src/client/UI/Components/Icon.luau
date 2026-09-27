@@ -2,7 +2,8 @@
 	Icon: small currency/resource icons. Each kind is drawn, in order of preference, from the icon
 	sheet (UI/Art/Icons, once uploaded), from Theme.Images (a single uploaded image), or with shapes.
 	Kinds: coin · gem · food · treat · stardust · friendship · token · ribbon · xp · egg · star · lock · trophy
-	       · amber · shovel (3.11, Dig Site)
+	       · amber · shovel (3.11, Dig Site) · honey · honey_<kind> · royal_jelly (3.12, Apiary)
+	       · amber · shovel (3.11, Dig Site) · tower_retry (3.12, a Trial Tower Retry token)
 	Any icon name from art/ui/ICONS.md also works as a kind ("food_sweet", "decor_hay_bale", ...).
 
 		Icon.new("coin", 28)       -- returns a Frame (size × size)
@@ -239,6 +240,64 @@ function Icon.new(kind: string, size: number?): Frame
 			Position = UDim2.fromScale(0.28, 0.58),
 			Parent = frame,
 		}, { Create.Corner(UDim.new(0.4, 0)), Create.Stroke(stroke) })
+	elseif kind == "honey" or kind == "royal_jelly" or string.sub(kind, 1, 6) == "honey_" then
+		-- 3.12 · Apiary: a honey jar in the kind's colour (a pale crown-topped jar for Royal
+		-- Jelly) with a wooden lid band and a drip over the rim.
+		local id = if kind == "royal_jelly" then kind elseif kind == "honey" then "clover" else string.sub(kind, 7)
+		local def = Config.Apiary and Config.Apiary.ById[id]
+		local stroke = math.max(1.5, px / 14)
+		local body = New("Frame", {
+			Name = "Jar",
+			BackgroundColor3 = Color3.fromHex(if def then def.color else "#F2C230"),
+			Size = UDim2.fromScale(0.76, 0.66),
+			Position = UDim2.fromScale(0.12, 0.3),
+			Parent = frame,
+		}, { Create.Corner(UDim.new(0.3, 0)), Create.Stroke(stroke) })
+		New("Frame", {
+			BackgroundColor3 = C.White,
+			BackgroundTransparency = 0.4,
+			Size = UDim2.fromScale(0.16, 0.5),
+			Position = UDim2.fromScale(0.16, 0.2),
+			Parent = body,
+		}, { Create.Round() })
+		New("Frame", {
+			Name = "Lid",
+			BackgroundColor3 = Color3.fromHex(if kind == "royal_jelly" then "#E8B830" else "#A0703D"),
+			Size = UDim2.fromScale(0.64, 0.2),
+			Position = UDim2.fromScale(0.18, 0.12),
+			Parent = frame,
+		}, { Create.Corner(px / 12), Create.Stroke(stroke) })
+		New("Frame", {
+			Name = "Drip",
+			BackgroundColor3 = Color3.fromHex(if def then def.color else "#F2C230"),
+			Size = UDim2.fromScale(0.16, 0.22),
+			Position = UDim2.fromScale(0.56, 0.26),
+			Parent = frame,
+		}, { Create.Round() })
+	elseif kind == "tower_retry" then
+		-- 3.12 · Trial Tower Retry token: a stone tower with battlements on a silver disc.
+		local d = disc(Color3.fromHex("#C9CED8"))
+		local stroke = math.max(1, px / 20)
+		New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#6F7486"),
+			Size = UDim2.fromScale(0.34, 0.46),
+			Position = UDim2.fromScale(0.33, 0.34),
+			Parent = d,
+		}, { Create.Stroke(stroke) })
+		for i = 0, 2 do
+			New("Frame", {
+				BackgroundColor3 = Color3.fromHex("#6F7486"),
+				Size = UDim2.fromScale(0.1, 0.12),
+				Position = UDim2.fromScale(0.3 + i * 0.15, 0.22),
+				Parent = d,
+			}, { Create.Stroke(stroke) })
+		end
+		New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#FFD98A"),
+			Size = UDim2.fromScale(0.08, 0.14),
+			Position = UDim2.fromScale(0.46, 0.46),
+			Parent = d,
+		})
 	elseif kind == "lock" then
 		local d = disc(C.Gray)
 		glyph(d, "🔒", C.White, 0.6)

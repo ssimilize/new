@@ -85,6 +85,10 @@ return {
 		"Tourists",
 		-- 3.11: the Travelling Merchant's caravan in the Market Square
 		"Merchant",
+		-- 3.12: the Curator wing of Museum Exhibits beside the Codex Museum
+		"CuratorWing",
+		-- 3.12: the beehives on the own plot's north strip and their "Tend" prompt
+		"Apiary",
 		-- R2-CLOCKWORK: Clockwork Canyon's gear landmark and walk-in area (appended, see RULES)
 		"ClockworkCanyon",
 		-- R2-ABYSS: the Sunken Abyss's descent and walk-in area (appended, see RULES)
@@ -108,8 +112,12 @@ return {
 		"GeneLab", -- 3.10 · Gene Lab (from Monster Detail and the Breeding Barn)
 		"Fishing", -- 3.10 · Fishing Pond (opened from the pond's prompt)
 		"DigSite", -- 3.11 · Dig Site (opened from the sand pit's prompt)
+		"Observatory", -- 3.12 · Observatory & Star Charts (opened from the telescope's prompt)
 		"Merchant", -- 3.11 · Travelling Merchant (the caravan's prompt, the Events screen)
+		"Exhibits", -- 3.12 · Museum Exhibits (the Curator desk's prompt, the Codex screen)
+		"Apiary", -- 3.12 · Apiary & Honey (the beehives' "Tend" prompt, the Kitchen header)
 		"Dojo", -- 3.11 · Dojo (from Monster Detail)
+		"TrialTower", -- 3.12 · Trial Tower (the tower's prompt, the Expeditions header)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",
