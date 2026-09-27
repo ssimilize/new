@@ -52,12 +52,12 @@ def published_forms() -> list:
     return forms
 
 
-def run(form: str, out: Path, target: int) -> None:
+def run(form: str, out: Path, target: int, fbx: bool = False) -> None:
     rig = RIGS / form / "rig.blend"
     if not rig.exists():
         raise SystemExit(f"{form}: no rig at {rig}")
     result = subprocess.run(
-        [str(BLENDER), "-b", str(rig), "--python", str(HERE / "lowpoly_export.py"), "--", form, str(out), str(target)],
+        [str(BLENDER), "-b", str(rig), "--python", str(HERE / "lowpoly_export.py"), "--", form, str(out), str(target)] + (["fbx"] if fbx else []),
         capture_output=True,
         text=True,
         cwd=ROOT,
@@ -76,8 +76,9 @@ def main() -> None:
     target = int(flags[flags.index("--tris") + 1]) if "--tris" in flags else TARGET_TRIS
     forms = published_forms() if sys.argv[1] == "--all" else [f for f in sys.argv[1].split(",") if f]
     out.mkdir(parents=True, exist_ok=True)
+    fbx = "--fbx" in flags  # also writes <form>/mesh.fbx for the burner's Open Cloud upload
     for form in forms:
-        run(form, out, target)
+        run(form, out, target, fbx)
 
 
 if __name__ == "__main__":
