@@ -352,7 +352,15 @@ return function(t)
 			local settings = c:Open("Settings")
 			c:Advance(0.5)
 			expect(count(c.world.log.sounds, idOf(c, "UIOpen"))).toBe(1)
-			c:Click(c:Buttons(settings)[1])
+			-- The first real button (the panel's ClickSink is silent by design).
+			local button
+			for _, b in c:Buttons(settings) do
+				if b.Name ~= "ClickSink" then
+					button = b
+					break
+				end
+			end
+			c:Click(button)
 			c:Advance(0.2)
 			expect(count(c.world.log.sounds, click)).toBe(1)
 
