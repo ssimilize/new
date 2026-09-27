@@ -14,7 +14,9 @@
 	      attackEvery }. No-ops (returns false) if the picked squad's key (quality level +
 	      userId:look-count list) is unchanged since the last Sync; returns true when it rebuilt
 	      (so the caller knows to re-read LeadColor). Own effects (particles) only on your own
-	      monsters, and never at Low quality.
+	      monsters, and never at Low quality. R2-LOWQ: every ring monster builds
+	      MonsterModel.Build's opts.crowded = true, so it draws its low-poly mesh when its form has
+	      one, whatever the viewer's own Quality is (a ring is the crowd that path exists for).
 	  squad:Step(clock)          plays "attack" on any monster whose turn has come
 	  squad:Clear()              destroys every model
 	  squad:Count() -> number
@@ -76,7 +78,9 @@ function FightSquad:LeadColor(squadsData, myUserId: number?, fallback: Color3): 
 end
 
 local function build(deps, live: Folder, appearance, effects: boolean): Model?
-	local ok, model = pcall(deps.MonsterModel.Build, appearance, { anchored = true, vfx = effects })
+	-- R2-LOWQ: a squad ring is exactly the crowd MonsterModel's low-poly path exists for, whatever
+	-- the viewer's own Quality is.
+	local ok, model = pcall(deps.MonsterModel.Build, appearance, { anchored = true, vfx = effects, crowded = true })
 	if not ok or not model then
 		return nil
 	end

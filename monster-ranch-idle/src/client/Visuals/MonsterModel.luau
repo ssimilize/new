@@ -28,12 +28,17 @@
 	plays its clips). A failed mesh build falls back to the placeholder. There the tap target is an
 	invisible "Hit" box instead of "Body", and Golden / Rainbow / Shadow are recoloured textures
 	(Visuals/MonsterLooks) instead of repainted parts.
+	R2-LOWQ: on Low graphics (Visuals/Quality.IsLow), or when opts.crowded is true (a fight that caps
+	its own monster count regardless of quality: Visuals/FightSquad), a 3D monster is built from its
+	low-poly mesh (MeshMonsterAssets.<form>.lowMesh) when the form has one; the same rig, clips and
+	texture drive it, just fewer triangles. A form without one is unaffected either way.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local MeshMonster = require(script.Parent.MeshMonster)
 local Vfx = require(script.Parent.Vfx)
+local Quality = require(script.Parent.Quality)
 local Titanic = require(ReplicatedStorage.Shared.Logic.Titanic)
 
 local MonsterModel = {}
@@ -363,11 +368,17 @@ local function attachVfx(model: Model, appearance, options)
 	end
 end
 
-function MonsterModel.Build(appearance, opts: { anchored: boolean?, scale: number?, vfx: boolean?, look: string?, inPen: boolean? }?)
+function MonsterModel.Build(
+	appearance,
+	opts: { anchored: boolean?, scale: number?, vfx: boolean?, look: string?, inPen: boolean?, crowded: boolean? }?
+)
 	local options = opts or {}
 	local s = BASE_SIZE * MonsterModel.ScaleFor(appearance, options.inPen) * (options.scale or 1)
 	if MeshMonster.Has(appearance.form) then
-		local ok, meshModel = pcall(MeshMonster.Build, appearance, s, options.anchored ~= false, options.look)
+		-- R2-LOWQ: Low graphics, or a fight that caps its crowd (options.crowded), draws the form's
+		-- low-poly mesh when it has one; MeshMonster.Build falls back to the full mesh otherwise.
+		local cheap = options.crowded == true or Quality.IsLow()
+		local ok, meshModel = pcall(MeshMonster.Build, appearance, s, options.anchored ~= false, options.look, cheap)
 		if ok then
 			local worn, err = pcall(addMeshAccessories, meshModel, appearance)
 			if not worn then
