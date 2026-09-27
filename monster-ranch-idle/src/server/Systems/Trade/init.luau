@@ -36,6 +36,7 @@ local Shared = game:GetService("ReplicatedStorage").Shared
 local Appearance = require(Shared.Logic.Appearance)
 local Formulas = require(Shared.Logic.Formulas)
 local Pedigree = require(Shared.Logic.Pedigree)
+local DojoLogic = require(Shared.Logic.Dojo)
 
 local Trade = {
 	Name = "Trade",
@@ -71,6 +72,7 @@ local VALUE_FIELDS = {
 	traits = true,
 	hidden = true,
 	genes = true,
+	tech = true, -- 3.11: Dojo techniques
 	weight = true,
 	lv = true,
 	stars = true,
@@ -127,11 +129,12 @@ local function itemView(owner, item)
 			appearance = Monsters:Appearance(owner, item.id) or false,
 			egg = false,
 			parents = if parentA and parentB then { parentA, parentB } else false, -- 3.9: names only
+			tech = if record then DojoLogic.Known(record) else {}, -- 3.11: { { id, lv } } learned techniques
 		}
 	end
 	local Eggs = eggsSystem()
 	local record = Eggs and Eggs:Get(owner, item.id)
-	return { kind = "egg", id = item.id, appearance = false, egg = record and record.type or false, parents = false }
+	return { kind = "egg", id = item.id, appearance = false, egg = record and record.type or false, parents = false, tech = {} }
 end
 
 local function sideView(owner, side)

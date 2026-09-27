@@ -104,6 +104,7 @@ return {
 		"Kitchen", -- 3.10 · Kitchen & Pantry
 		"GeneLab", -- 3.10 · Gene Lab (from Monster Detail and the Breeding Barn)
 		"Fishing", -- 3.10 · Fishing Pond (opened from the pond's prompt)
+		"Dojo", -- 3.11 · Dojo (from Monster Detail)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

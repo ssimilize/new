@@ -3,6 +3,33 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.11 · Seasons & secrets
+
+### Dojo
+
+**For players**
+- From Ranch Level 24, Adults train battle techniques at the Dojo. Open it from Monster Detail
+  (the Dojo button on the genes line). Each element has two techniques (16 in all), and a monster
+  learns techniques of its own element(s).
+- One technique slot; the 2nd opens at Bond heart 5. Learning or levelling up (up to Lv 3) costs
+  Stardust and a timer: Lv 1 300 Stardust · 20 min, Lv 2 900 · 1 h, Lv 3 2,000 · 3 h. The monster is
+  busy while it trains (one training at a time); collect it when the timer is done.
+- Forget a technique any time it is not training (nothing is refunded), then train another.
+- In battle a learned technique fires on every 4th action of that monster, on its own charge next
+  to the species Special (two techniques alternate). The battle view calls it by name.
+- Techniques travel with a traded monster and show in the trade window. The Arena still fights
+  with normalized monsters, so techniques do not count there.
+- Weekly goal: "Train 3 techniques at the Dojo".
+
+**In the code**
+- `Config/Techniques` (the 16 techniques, per-kind level numbers, costs), `Logic/Dojo` (rules),
+  `Systems/Dojo` (`Dojo.Train`, `Dojo.Forget`, `Dojo.Collect`; profile `Dojo`; busy tag "dojo";
+  publishes `SkillTrained`), `Screens/Dojo`, the Dojo button and technique chips on Monster Detail.
+- `Logic/BattleSim` reads `m.tech` (a fight without techniques replays byte-for-byte as before,
+  pinned in `DojoBattle.spec`). `Monsters:Insert` copies `tech`; Pedigree snapshots ignore it.
+- Balance gate `DojoBalance.spec`: 2000 seeded even-level mirror fights, a fully trained team
+  gains +4.5 points (limit +8); per technique +4.0 to +6.8 points around a +5.6 median (limit 2x).
+
 ## 3.10 · Ranch life
 
 ### Ranch Tourists

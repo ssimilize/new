@@ -51,6 +51,7 @@ local Mutation = require(Shared.Logic.Mutation)
 local Appearance = require(Shared.Logic.Appearance)
 local Genetics = require(Shared.Logic.Genetics)
 local Pedigree = require(Shared.Logic.Pedigree)
+local Dojo = require(Shared.Logic.Dojo)
 local Rng = require(Shared.Logic.Rng)
 
 local Monsters = {
@@ -280,6 +281,7 @@ function Monsters:Insert(player, record, source: string)
 	copy.traits = table.clone(record.traits or {})
 	copy.meals = table.clone(record.meals or {})
 	copy.ped = Pedigree.Copy(record.ped) -- 3.9: its own table, never shared with the giver
+	copy.tech = Dojo.Copy(record.tech) -- 3.11: learned techniques travel with the monster
 	-- A record escrowed before genetics (a Market listing) arrives without genes, or before 3.7
 	-- without a Luck pair: keep what it has, roll what it lacks.
 	copy.genes = Genetics.Fill(record.genes, ctx.Rng)
