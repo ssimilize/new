@@ -68,6 +68,8 @@ Tourists.KindTips = {
 }
 
 -- Review lines: praise for the strongest category, a gripe for the weakest (none at 100%).
+-- No praise unless the strongest category is at least PraiseMin full: a bare ranch gets only its gripe.
+Tourists.PraiseMin = 0.4
 Tourists.Praise = {
 	decor = { { text = "Such lovely decorations!" }, { text = "Every corner is beautifully decorated." } },
 	variety = { { text = "So many different things to see!" }, { text = "I loved all the different decor." } },

@@ -150,13 +150,13 @@ return {
 		end
 
 		local function drawReview(i: number, r)
-			local good = Rules.Praise[r.good]
+			local good = r.good and Rules.Praise[r.good]
 			local bad = r.bad and Rules.Gripes[r.bad]
 			local praise = good and good[r.gi] and good[r.gi].text
 			local gripe = bad and bad[r.bi] and bad[r.bi].text
 			local cardFrame = Util.card({
 				Name = "Review" .. i,
-				Size = UDim2.new(1, -8, 0, if gripe then 92 else 68),
+				Size = UDim2.new(1, -8, 0, if gripe and praise then 92 else 68),
 				LayoutOrder = i,
 				Parent = list,
 			})
@@ -198,7 +198,7 @@ return {
 					Text = gripe,
 					TextWrapped = true,
 					TextColor3 = C.TextMuted,
-					Position = UDim2.fromOffset(12, 58),
+					Position = UDim2.fromOffset(12, if praise then 58 else 32),
 					Size = UDim2.new(1, -24, 0, 26),
 					Parent = cardFrame,
 				})

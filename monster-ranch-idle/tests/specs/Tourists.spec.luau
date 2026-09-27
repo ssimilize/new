@@ -137,6 +137,12 @@ return function(t)
 				codex = 60,
 			})
 			expect(Logic.Review(77, 1, perfect, 5).bad).toBe(false)
+			-- A bare ranch: nothing is worth praising (the strongest part is under PraiseMin), only a gripe.
+			local bare = Logic.Appeal({ layout = {}, level = 30, pens = { { capacity = 6, count = 1 } }, rarities = { 1 }, codex = 2 })
+			local low = Logic.Review(77, 9, bare, 5)
+			expect(low.good).toBe(false)
+			expect(low.gi).toBe(0)
+			expect(Rules.Gripes[low.bad][low.bi].text ~= nil).toBe(true)
 		end)
 
 		it("pays more for more stars", function()

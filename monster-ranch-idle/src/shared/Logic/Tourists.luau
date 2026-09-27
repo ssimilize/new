@@ -142,13 +142,16 @@ function Tourists.Review(userId: number, slot: number, appeal, at: number)
 	if bad == good then
 		bad = nil
 	end
+	if hi < Rules.PraiseMin then
+		good = nil
+	end
 	local rng = Rng.new(Rng.seed("tourists", userId, slot))
 	return {
 		at = at,
 		stars = appeal.stars or 1,
 		who = rng:Int(1, #Rules.Visitors),
-		good = good,
-		gi = rng:Int(1, #Rules.Praise[good]),
+		good = good or false,
+		gi = if good then rng:Int(1, #Rules.Praise[good]) else 0,
 		bad = bad or false,
 		bi = if bad then rng:Int(1, #Rules.Gripes[bad]) else 0,
 	}

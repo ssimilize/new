@@ -83,7 +83,10 @@ return function(t)
 			local review = screen:FindFirstChild("Review1", true)
 			expect(review ~= nil).toBe(true)
 			local r = h:Section(p, "Tourists").book[1]
-			expect(c:HasText(Rules.Praise[r.good][r.gi].text, review)).toBe(true)
+			-- A bare Level 11 ranch: nothing is worth praising yet, so the card shows only the gripe.
+			expect(r.good).toBe(false)
+			expect(review:FindFirstChild("Praise", true)).toBe(nil)
+			expect(c:HasText(Rules.Gripes[r.bad][r.bi].text, review)).toBe(true)
 			expect(c:HasText(Rules.Visitors[r.who], review)).toBe(true)
 			expect(c:HasText("Next tourist in", screen)).toBe(true)
 			expectClean(c)
