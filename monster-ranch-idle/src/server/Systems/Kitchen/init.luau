@@ -14,7 +14,7 @@
 	  boosts   = { [monsterId] = { job = { { from, to } }, loot = boolean } }
 	  cooked   = number                            -- dishes collected, ever
 	Session (session.Kitchen): { slotCount, fish, fishing }   -- fish = Fishing:FishCount (0 without
-	                                                            Fishing); fishing = Fishing is plugged in
+	                                                            Fishing); fishing = Fishing is plugged in and unlocked
 
 	Actions:
 	  Kitchen.Cook { recipe, slot? }   charges every ingredient at once (all or nothing) and starts
@@ -91,7 +91,8 @@ local function refreshSession(player)
 	end
 	local count = Logic.SlotCount(isUnlocked(player))
 	local fish = fishCount(player)
-	local fishing = Fishing ~= nil
+	-- The fish recipes read "Needs fish from the Fishing Pond" until the Pond is open to this player.
+	local fishing = Fishing ~= nil and Progression:IsUnlocked(player, Config.Fishing.Unlock)
 	if sess.slotCount ~= count or sess.fish ~= fish or sess.fishing ~= fishing then
 		sess.slotCount = count
 		sess.fish = fish
@@ -339,6 +340,9 @@ function Kitchen.Init(context)
 	ctx.Net:Handle("Kitchen.Serve", serve)
 	ctx.Net:Handle("Kitchen.PlantGolden", plantGolden)
 
+	ctx.Bus:Subscribe("FishCaught", function(player)
+		refreshSession(player)
+	end)
 	ctx.Bus:Subscribe("LevelUp", function(player)
 		refreshSession(player)
 	end)

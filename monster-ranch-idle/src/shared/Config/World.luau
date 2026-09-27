@@ -48,6 +48,10 @@ World.BarnSize = { 14, 10, 12 } -- x, height, z (the door faces plot-local -z)
 World.GardenSize = { 10, 8 } -- reserved: the garden has no world model yet
 World.StatueRow = { count = 8, spacing = 7, pedestal = 4.4 } -- runs +x from StatueRowOffset
 World.KitchenSize = { 16, 9, 10 } -- x, height, z (3.10; the door faces plot-local -z)
+-- Update 3.10: the Fishing Pond in the free north strip (plot-local z -55..-38, clear of the pens'
+-- fences at z -38). `size` is the water ({ x, z }); a stone rim of `rim` studs rings it and a dock
+-- `dock` = { length, width } runs east from the water onto the grass (its end holds the "Go fishing" prompt).
+World.Pond = { offset = { 30, 0, -47 }, size = { 20, 12 }, rim = 1, dock = { 9, 3 } }
 
 -- Hub buildings (Market Square), relative to the origin.
 World.Hub = {

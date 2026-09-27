@@ -45,6 +45,15 @@ Leaderboards.Boards = {
 		unit = "bounties",
 		color = "#C8553D",
 	},
+	-- Update 3.10: the heaviest fish caught at the Fishing Pond this week (Fishing:WeekBest).
+	{
+		id = "fishing",
+		name = "Biggest Catch",
+		short = "Fishing",
+		title = "Master Angler",
+		format = "weight",
+		color = "#3FA7D6",
+	},
 	-- Update 3.8: arena rating this arena season (Arena:SeasonRating). Shown in the Arena screen.
 	{ id = "arena", name = "Arena Season", short = "Arena", format = "count", color = "#FF7AC8", period = "season" },
 }

@@ -338,6 +338,11 @@ add("rep_display_case", "Juno's Display Case", "fun", "rep_display_case", { 2, 2
 add("rep_lookout_sign", "Tam's Lookout Sign", "fun", "rep_lookout_sign", { 2, 1 }, nil, "#6B4424", "#3E7A2E", BUYER)
 add("rep_telescope", "Hale's Telescope", "statue", "rep_telescope", { 2, 2 }, nil, "#C9A227", "#3A2D55", BUYER)
 
+-- Update 3.10 · Fishing Pond: never sold, a rare extra on a catch (Config.Fishing.Decor).
+local FISHED = { reward = "fishing" }
+add("old_boot", "Old Boot", "fun", "old_boot", { 2, 2 }, nil, "#6B4424", "#5FAF4B", FISHED)
+add("sunken_chest", "Sunken Chest", "fun", "sunken_chest", { 3, 2 }, nil, "#8A5A2B", "#F5C630", FISHED)
+
 for _, d in Decor.List do
 	d.mesh = d.mesh or ""
 	d.kind = d.kind or "fun"
@@ -367,6 +372,7 @@ Decor.Layout = {
 		{ 42, 44, 6, 5 }, -- the Feed Garden
 		{ 68, 16, 3.5, 3.5 }, -- 3.10: the Guestbook stand beside the gate (Config.Tourists.World.stand)
 		{ 14, 43, 10, 8 }, -- the Kitchen and its door (3.10)
+		{ 31.5, -47, 13.5, 7.5 }, -- 3.10: the Fishing Pond and its dock (Config.World.Pond)
 	},
 	-- Legacy pen slots (pen-local fractions of the half extents) the migration puts old decor on.
 	legacySpots = { { -0.62, -0.55 }, { 0.62, -0.55 }, { 0, -0.62 } },

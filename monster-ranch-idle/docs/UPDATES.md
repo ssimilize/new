@@ -127,6 +127,60 @@ players get and where it lives in the code.
 - Tests: `GeneLab.spec`, `GeneLabClient.spec`; `GeneticsClient.spec` reads the gene line
   through its new row.
 
+### Fishing Pond
+
+**For players**
+- From Ranch Level 13 every ranch has a pond in the strip behind the pens, with a little dock.
+  Walk onto the dock and use the **Fish** prompt to open the Fishing Pond. There is no HUD button.
+- You get 10 free casts a day (UTC). After that each cast uses 1 Bait. Every Expedition Bounty
+  now also pays 3 Bait.
+- Fishing is a hold-and-release minigame. A fish swims up and down a bar:
+  - Hold **Hold to reel** (or Space, or pad A) and the green zone rises. Let go and it sinks.
+  - While the zone covers the fish, the catch meter fills. When it doesn't, the meter drains.
+  - Fill the meter to land the fish. If the meter empties, or 20 seconds pass, the fish gets away.
+  - Rarer fish move faster and further, and they are harder to hold.
+- There are 16 fish in 4 rarities (Common, Uncommon, Rare, Legendary), and each has a weight range.
+  Sell fish from your bucket for coins, or cook them in the Kitchen.
+- Choose an Adult as your **fishing buddy**. Its Luck (stat and gene) raises your chance of a rare
+  fish and of the extras a catch can bring: the **Old Boot** and **Sunken Chest** decor (never
+  sold) and sometimes a Pearl egg. The screen shows your buddy and the chances.
+- The Codex has a new **Fish Log** tab. It shows every fish you have caught, how many, and the
+  heaviest of each. Milestones at 4, 8 and 16 kinds pay 10, 25 and 60 gems.
+- New weekly board: **Biggest Catch** (the heaviest fish this week; its winner gets the title
+  Master Angler). New weekly goal: "Catch 20 fish".
+
+**In the code**
+- `Config.Fishing`: 16 fish (`Fish`, `ById`, `Ids`), 4 `Rarities` (weight, value in seconds of
+  ranch income, move speed/range/pause, meter fill/drain), and the minigame numbers (Duration 20 s,
+  Step 0.05, zone, lift/gravity, FishRange, MaxInputs, Grace/Late seconds). Also `FreeCasts`,
+  `BuddyShares`, `Decor` extras and `Egg`/`EggChance` (the Pearl egg, Coral Reef's region egg). Unlock key `fishing` (Level 13).
+- `Logic/Fishing`: `Course(seed, bonus)` rolls the fish (rarity weights, with every rarity above
+  Common ×(1 + bonus)), its seeded weight and its path. `Advance`/`Simulate` replay
+  `{ t, down }` moves in fixed steps; the client and the server share them. Also `BuddyBonus`
+  (Loot.LuckBonus with the buddy's Luck counted 5 times), `ExtraChance` (min(cap, chance ×
+  (1 + bonus)), the Bounties formula), `Extras`, `SpendOrder` and `Species`.
+- `Systems/Fishing`: `profile.Fishing` (day/casts, bait, fish, log, buddy, week/weekBest/weekFish,
+  total, best). Actions `Fishing.Start`, `Finish`, `Sell` and `SetBuddy`. It uses the Surf/Racing
+  anti-cheat: an in-memory open run, one-shot run ids, a replay, and the grace and late
+  wall-clock checks. Publishes `FishCaught (player, { fish, rarity, weight })`.
+  - Kitchen contract: `Fishing:FishCount(player)` and `Fishing:SpendFish(player, n)` (cheapest
+    first; it returns false and changes nothing when you are short).
+  - Also `AddBait`, `SpeciesCaught`, `WeekBest` and `Bonus`.
+- `Rewards` has a new kind `bait` (it goes to `Fishing:AddBait`). `Config.Bounties.Reward` gets
+  `{ kind = "bait", amount = 3 }`. Ranch Orders are unchanged.
+- Codex: `Config.Codex.FishSteps`/`Gems.fish`, `Logic/Codex.FishMilestones()`/`FishById()`
+  (ids `fish_<n>`, kept out of `Milestones()`). `Codex.Claim` checks them with
+  `Fishing:SpeciesCaught`. `CodexClaimed` now has the kind `fish`.
+- World: `Config.World.Pond` sets out the `FishingPond` model in `World/Build` (water, bed, rim,
+  dock). `Controllers/Interaction` adds the "Fish" prompt on the dock. Its Decor keep-out is in
+  `Config.Decor.Layout.keepOut`. The decor `old_boot` and `sunken_chest` are in `Config.Decor`
+  and `DecorArt`.
+- Board `fishing` (`Config.Leaderboards`, format weight, kg × 100) and the weekly goal
+  `fish_20` (family `fishing`).
+- Client: `Screens/Fishing`, plus `Parts/FishIcon` (a fish drawn from Frames with a UIGradient)
+  and `Parts/FishLog` (the Codex tab, `Codex` opens with `{ tab = "fishlog" }`).
+- Tests: `Fishing.spec` and `FishingClient.spec`.
+
 ## 3.9 · Family and fortune
 
 ### Buyer reputation

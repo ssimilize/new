@@ -11,6 +11,7 @@
 	  decor (id = decor id)                   → Shop
 	  monster (id = line id, rarity)          → Monsters
 	  accessory (id = accessory id)           → Accessories (1.5)
+	  bait                                    → Fishing:AddBait (3.10)
 
 	Public API:
 	  Rewards:Grant(player, items, source, options?) -> resolvedItems
@@ -21,7 +22,7 @@
 local Rewards = {
 	Name = "Rewards",
 	Dependencies = { "Currency", "Progression" },
-	OptionalDependencies = { "Eggs", "Shop", "Monsters", "Ranch", "Accessories" },
+	OptionalDependencies = { "Eggs", "Shop", "Monsters", "Ranch", "Accessories", "Fishing" },
 }
 
 local ctx
@@ -91,6 +92,13 @@ function Rewards:Grant(player, items, source: string, options: { silent: boolean
 			local Accessories = ctx:GetSystem("Accessories")
 			if Accessories and ctx.Config.Accessories.ById[item.id] then
 				Accessories:Add(player, item.id, item.amount)
+			else
+				ok = false
+			end
+		elseif item.kind == "bait" then
+			local Fishing = ctx:GetSystem("Fishing")
+			if Fishing then
+				Fishing:AddBait(player, item.amount)
 			else
 				ok = false
 			end

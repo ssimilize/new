@@ -94,6 +94,8 @@ return {
 		"Kitchen",
 		-- 3.10 · Gene Lab
 		"GeneLab",
+		-- 3.10 · Fishing Pond
+		"Fishing",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

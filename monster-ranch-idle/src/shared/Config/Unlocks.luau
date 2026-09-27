@@ -101,6 +101,8 @@ Unlocks.Features = {
 	kitchen_slot_3 = 30,
 	-- 3.10 · Gene Lab (Config/GeneLab)
 	gene_lab = 21,
+	-- 3.10 · Fishing Pond (Config/Fishing)
+	fishing = 13,
 }
 
 -- Player-facing names for the level-up popup.
@@ -158,6 +160,7 @@ Unlocks.Names = {
 	kitchen = "Kitchen",
 	kitchen_slot_3 = "Kitchen slot 3",
 	gene_lab = "Gene Lab",
+	fishing = "Fishing Pond",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).
