@@ -10,7 +10,7 @@ Status: ⬜ not started · 🟨 in progress · 🟩 built and tested · 🔌 plu
 | Currency | S1 | 🔌 | `Economy.spec` | |
 | Progression | S1 | 🔌 | `Economy.spec`, `LevelSeventy.spec` | 3.2: date-gated cap (`Unlocks.LevelCaps`: 60, then 70 from 11 Mar 2028); unlocks at 62 / 66 / 70 |
 | Rewards | S1 | 🔌 | `Economy.spec` | |
-| Settings | S1 | 🔌 | `Kernel.spec`, `LocaleClient.spec` | 3.2: `language` ("auto" / en / es / pt) through `Settings.SetLanguage` |
+| Settings | S1 | 🔌 | `Kernel.spec`, `LocaleClient.spec`, `Accessibility.spec` | 3.2: `language` ("auto" / en / es / pt) through `Settings.SetLanguage`. R2-A11Y: `colorBlind` (bool, `Settings.Set`), `textSize` ("normal"/"large", `Settings.SetTextSize`), `reducedMotion` (bool, `Settings.Set`) - client mirrors `Theme.ColorBlind` / `Theme.TextScale` (live, `Theme.RescaleText`) and feeds `CameraDirector`/`UI.Anim.enabled` |
 | Monsters | S2 | 🔌 | `Economy.spec`, `Genetics.spec` | growth, feeding, levels, stars, codex; 3.6: stat genes on every record (save v2 migration, `Logic/Genetics`) |
 | Eggs | S3 | 🔌 | `Eggs.spec`, `RanchLogic.spec`, `LevelSeventy.spec` | 3.2: 5 slots (incubator 4 at Lv 62 + the pass), save v2 adds the 5th slot. Starter egg, slots from unlocks + Extra Incubator pass, speed providers (cap 0.75, fixed at placement), Starlit pity / Royal lucky meter (`Logic/EggRoll`), Hatch Rush ad, offline-ready eggs → WelcomeItem; `Room()` for trade/shop caps |
 | Shop | S3 | 🔌 | `Shop.spec`, `RanchLogic.spec` | deterministic global restock (`Logic/Restock`), per-player allowance per window, unlocks, event eggs, paid-random gate (Monetization → Policy fallback), storage cap, food, decor, themes, daily free egg ad |

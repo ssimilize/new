@@ -1,4 +1,9 @@
 -- Rarity tiers. Index order matters: 1 = Common … 6 = Mythic.
+--
+-- `mark` (R2-A11Y): the letter shown on every rarity chip in colour-blind mode, next to the
+-- colour (never instead of it). `cbColor` (epic, R2-A11Y): used instead of `color` in colour-blind
+-- mode only - simulated protanopia/deuteranopia (Vienot/Brettel matrices) put stock epic too
+-- close to common's grey-green; the indigo clears every rarity pair by a wide margin under both.
 local Rarities = {}
 
 Rarities.List = {
@@ -6,6 +11,7 @@ Rarities.List = {
 		id = "common",
 		index = 1,
 		name = "Common",
+		mark = "C",
 		color = "#8E9990",
 		statMult = 1.00,
 		coinRate = 1,
@@ -19,6 +25,7 @@ Rarities.List = {
 		id = "uncommon",
 		index = 2,
 		name = "Uncommon",
+		mark = "U",
 		color = "#4FAF45",
 		statMult = 1.25,
 		coinRate = 3,
@@ -32,6 +39,7 @@ Rarities.List = {
 		id = "rare",
 		index = 3,
 		name = "Rare",
+		mark = "R",
 		color = "#3A8FE0",
 		statMult = 1.60,
 		coinRate = 8,
@@ -45,7 +53,9 @@ Rarities.List = {
 		id = "epic",
 		index = 4,
 		name = "Epic",
+		mark = "E",
 		color = "#A259E0",
+		cbColor = "#3211D4",
 		statMult = 2.10,
 		coinRate = 25,
 		maxStars = 4,
@@ -58,6 +68,7 @@ Rarities.List = {
 		id = "legendary",
 		index = 5,
 		name = "Legendary",
+		mark = "L",
 		color = "#E99A10",
 		statMult = 2.80,
 		coinRate = 80,
@@ -71,6 +82,7 @@ Rarities.List = {
 		id = "mythic",
 		index = 6,
 		name = "Mythic",
+		mark = "M",
 		color = "#E8436F",
 		statMult = 3.80,
 		coinRate = 250,

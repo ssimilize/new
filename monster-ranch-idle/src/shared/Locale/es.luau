@@ -2587,4 +2587,13 @@ return {
 	["The season board opens with Season 1."] = "La tabla de la temporada abre con la temporada 1.",
 	["You: #{1} · {2}"] = "Tú: #{1} · {2}",
 	["Your rating: {1} · {2} tier"] = "Tu puntuación: {1} · rango {2}",
+
+	-- R2-A11Y
+	["Colour-blind mode"] = "Modo daltónico",
+	["Add letters and symbols to rarity and element colours"] = "Añade letras y símbolos a los colores de rareza y elemento",
+	["Reduced motion"] = "Movimiento reducido",
+	["Turn off camera shake and camera swoops"] = "Desactiva el temblor y los giros bruscos de cámara",
+	["Text size"] = "Tamaño del texto",
+	["Make menu text bigger"] = "Agranda el texto de los menús",
+	["Large"] = "Grande",
 }
