@@ -6,8 +6,9 @@
 	profile.Settings.hideBroadcasts (hiding also clears the visible banners).
 
 	Also owns two other always-on server-event presentations for C3 features:
-	  · Boss.Result → the Stampede result popup (rank, share, rewards, egg), shown even when
-	    the Boss screen is closed. At the arena (StampedeArena:Fountain) the popup waits for the
+	  · Boss.Result / Titan.Result → the Stampede / titan result popup (rank or damage, rewards,
+	    egg), shown even when the Boss/Titan screen is closed. At the arena
+	    (StampedeArena:Fountain / TitanInvasion:Fountain, R2 titan squads) the popup waits for the
 	    loot fountain out of the fallen giant, which already flew the rewards.
 	  · profile.Settings.lowGraphics → UI/Anim.enabled (reduced motion).
 ]]
@@ -237,12 +238,8 @@ local function showBossResult(payload)
 	showResultPopup(payload, true)
 end
 
--- Glow-up TT: no in-world fountain for the titan (see Controllers/TitanInvasion); rewards
--- (including the Titan Egg) always show in the popup and fly to the HUD from there.
-local function showTitanResult(payload)
-	if type(payload) ~= "table" then
-		return
-	end
+-- reward = false: the rewards already flew (the arena's loot fountain, R2 titan squads).
+local function showTitanPopup(payload, reward: boolean)
 	Dialog.show(ctx.UI.Top, {
 		Title = if payload.won then "The titan falls!" else "The titan got away...",
 		Color = Color3.fromHex("#6A3FA0"),
@@ -287,9 +284,24 @@ local function showTitanResult(payload)
 	})
 	ctx:Sound("Victory")
 	local kit = ctx:GetController("Celebrate")
-	if kit and type(payload.rewards) == "table" then
+	if reward and kit and type(payload.rewards) == "table" then
 		kit:Reward(payload.rewards, { minSize = if payload.egg then "big" else nil })
 	end
+end
+
+-- R2 titan squads: at the arena the loot fountains out of the giant first (like Boss.Result);
+-- elsewhere (or behind a screen) the popup shows straight away.
+local function showTitanResult(payload)
+	if type(payload) ~= "table" then
+		return
+	end
+	local arena = ctx:GetController("TitanInvasion")
+	if arena and arena:Fountain(payload, function(rewarded: boolean)
+		showTitanPopup(payload, not rewarded)
+	end) then
+		return
+	end
+	showTitanPopup(payload, true)
 end
 
 function Broadcasts.Init(context)

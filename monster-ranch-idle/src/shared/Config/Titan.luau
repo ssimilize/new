@@ -52,17 +52,30 @@ Titan.Rewards = {
 	minDamageToHelp = 1, -- dealt any damage at all counts as "helped"
 }
 
--- Glow-up TT: the giant at the Stampede arena; no squads or cheer bolts are drawn for it
--- (Controllers/TitanInvasion keeps the client small - see the packet report for why).
+-- Glow-up TT / R2 titan squads: the giant at the Stampede arena, with the joined squads in rings
+-- round it and cheer bolts, drawn by the same shared choreography as the Stampede (Boss.Arena) -
+-- Visuals/FightSquad, FightBolts, FightLoot, driven by Controllers/TitanInvasion.
 Titan.Arena = {
 	bossScale = 16,
 	staggers = { 0.75, 0.5, 0.25 },
 	flinchGap = 1.5,
 	fallSeconds = 3,
+	fountainSeconds = 2.6,
 	leaveSeconds = 6,
 	roarPitch = 0.4,
 	storm = { tint = "#6A3FA0", brightness = -0.14, contrast = 0.18, saturation = -0.4, fade = 3 },
 	lightningEvery = { 5, 10 },
+	-- Squads: the same ring geometry as the Stampede, pushed out a little for the bigger giant.
+	squadPerPlayer = 3, -- squad looks per player in global.Titan.squads (server cap)
+	squadPlayers = 24, -- players listed there, in join order
+	maxMonsters = { 8, 16, 24 }, -- squad models drawn, by Visuals/Quality level (low, medium, high)
+	ringInner = 24,
+	ringGap = 7,
+	ringSpacing = 6,
+	attackEvery = 2.4,
+	boltsPerSecond = 6, -- cheer bolts drawn per second (taps beyond this still count)
+	boltSeconds = 0.4,
+	viewRange = 320, -- squads (not the giant, which is always shown) drawn while this close
 }
 
 Titan.ById = {}
