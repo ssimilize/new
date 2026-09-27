@@ -8,8 +8,9 @@ so no re-bake, no new upload: MeshMonsterAssets.<form>.lowMesh reuses .texture).
 
 --out defaults to a scratch directory outside the repo (see OUT below); this step never writes into
 art/ (read-only source) and never uploads anything. What is left, from Studio, once the lead is ready
-to publish a batch: publish_meshes.luau on OUT/<form>/mesh.json like a full mesh, then asset_ids.py
-<form> lowMesh=rbxassetid://... to record it (asset_ids.py's lowMesh support: this packet).
+to publish a batch: publish_meshes.luau on OUT/<form>/mesh.json like a full mesh, with suffix = "low"
+in its arguments, then asset_ids.py --json with lowMesh ids to record them (all 271 published this
+way 2026-09-27).
 
 Target triangles: 1,500. The full models this pipeline already ships run 6,000-10,600 triangles
 (art/rigs/*/mesh.json); 1,500 is roughly a 4-7x cut, the usual size for a background/crowd LOD, and
@@ -52,12 +53,12 @@ def published_forms() -> list:
     return forms
 
 
-def run(form: str, out: Path, target: int, fbx: bool = False) -> None:
+def run(form: str, out: Path, target: int) -> None:
     rig = RIGS / form / "rig.blend"
     if not rig.exists():
         raise SystemExit(f"{form}: no rig at {rig}")
     result = subprocess.run(
-        [str(BLENDER), "-b", str(rig), "--python", str(HERE / "lowpoly_export.py"), "--", form, str(out), str(target)] + (["fbx"] if fbx else []),
+        [str(BLENDER), "-b", str(rig), "--python", str(HERE / "lowpoly_export.py"), "--", form, str(out), str(target)],
         capture_output=True,
         text=True,
         cwd=ROOT,
@@ -76,9 +77,8 @@ def main() -> None:
     target = int(flags[flags.index("--tris") + 1]) if "--tris" in flags else TARGET_TRIS
     forms = published_forms() if sys.argv[1] == "--all" else [f for f in sys.argv[1].split(",") if f]
     out.mkdir(parents=True, exist_ok=True)
-    fbx = "--fbx" in flags  # also writes <form>/mesh.fbx for the burner's Open Cloud upload
     for form in forms:
-        run(form, out, target, fbx)
+        run(form, out, target)
 
 
 if __name__ == "__main__":

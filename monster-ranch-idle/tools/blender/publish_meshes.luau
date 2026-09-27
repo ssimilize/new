@@ -7,7 +7,8 @@
 
 	Run it with its arguments set in front of this file's text:
 		_G.MeshPublishArgs = { base = "http://127.0.0.1:38517/rigs/", forms = { "cindlet", "kindlefox" } }
-	(base serves <form>/mesh.json).
+	(base serves <form>/mesh.json). For tools/blender/lowpoly.py's low-poly meshes add suffix = "low",
+	so the assets are named "<form> low" and never mistaken for the full ones.
 	It returns JSON: { done, took, ids = { form = "rbxassetid://N" | "error: ..." } }. Record the ids
 	with tools/blender/asset_ids.py --json.
 
@@ -95,7 +96,8 @@ local function build(data): EditableMesh
 	return em
 end
 
-_G.MeshPublishRun = function(base: string, forms: { string }): string
+_G.MeshPublishRun = function(base: string, forms: { string }, suffix: string?): string
+	local label = if suffix and suffix ~= "" then " " .. suffix else ""
 	_G.MeshPublish = { done = false, ids = {}, started = os.clock() }
 	local state = _G.MeshPublish
 	task.spawn(function()
@@ -104,8 +106,8 @@ _G.MeshPublishRun = function(base: string, forms: { string }): string
 				local data = HttpService:JSONDecode(HttpService:GetAsync(base .. form .. "/mesh.json", true))
 				local em = build(data)
 				local status, assetId = AssetService:CreateAssetAsync(em, Enum.AssetType.Mesh, {
-					Name = form .. " (Monster Ranch Idle)",
-					Description = "Monster Ranch Idle monster mesh: " .. form,
+					Name = form .. label .. " (Monster Ranch Idle)",
+					Description = "Monster Ranch Idle" .. label .. " monster mesh: " .. form,
 				})
 				em:Destroy()
 				assert(status == Enum.CreateAssetResult.Success, tostring(status))
@@ -124,4 +126,4 @@ _G.MeshPublishRun = function(base: string, forms: { string }): string
 end
 
 local args = _G.MeshPublishArgs
-return _G.MeshPublishRun(args.base, args.forms)
+return _G.MeshPublishRun(args.base, args.forms, args.suffix)
