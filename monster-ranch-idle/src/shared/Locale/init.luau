@@ -47,7 +47,7 @@ local registered: { [string]: { [string]: string } } = {}
 -- matched may also be comma lists ("Grove Egg, Pearl Egg").
 local TEXT_SEPARATORS = { "\n", " · ", ": ", " → ", " ×" }
 local PIECE_SEPARATORS = { "\n", " · ", ": ", " → ", " ×", ", " }
-local MAX_DEPTH = 3
+local MAX_DEPTH = 4 -- lines, then · lists, then "A → B", then a template's pieces
 local CACHE_LIMIT = 4000
 -- Leading and trailing symbols and emoji ("✔ Normal", "🔒 Learn Trailblazer") are set aside
 -- like spaces: bytes from 0x80 up (English source letters are ASCII).

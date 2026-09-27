@@ -343,6 +343,22 @@ table.insert(Eggs.List, {
 	pattern = "spots",
 })
 
+-- 3.11 · Dig Site: a rare find at the Dig Site (Config/DigSite), never sold. Hatches the Stone,
+-- Sprout and Gloom lines of the common pool (pool "amber" on those lines) with better odds than
+-- the shop eggs that also hatch them.
+table.insert(Eggs.List, {
+	id = "amber",
+	name = "Amber Egg",
+	order = 23,
+	price = nil,
+	hatchSeconds = 1800,
+	unlock = "dig_site",
+	odds = { 0, 25, 42, 23, 8, 2 },
+	pool = "amber",
+	colors = { shell = "#F2A93B", spots = "#8A5A2B" },
+	pattern = "spots",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e

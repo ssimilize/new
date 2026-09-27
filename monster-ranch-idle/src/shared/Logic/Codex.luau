@@ -11,7 +11,8 @@
 	  Codex.Claimable(codex, claimed) -> number     done and not yet claimed
 	  Codex.FishMilestones() -> { FishMilestone }   3.10 Fish Log: { id = "fish_<n>", kind = "fish", key = "",
 	                                                order, need, gems, items = {}, badge = 0 }
-	  Codex.FishById() -> { [id]: FishMilestone }   (kept out of Milestones: no forms to count)
+	  Codex.FishById() -> { [id]: FishMilestone }
+	  Codex.FossilMilestones() / FossilById()       3.11 Fossils tab: same shape, id "fossil_<n>", kind "fossil"   (kept out of Milestones: no forms to count)
 
 	Milestone = { id, kind = "element"|"egg"|"region"|"total", key, order, forms = { formId },
 	              need, all: boolean, gems, items = { itemId }, badge: number (0 = none) }
@@ -272,6 +273,39 @@ end
 function Codex.FishById(): { [string]: any }
 	Codex.FishMilestones()
 	return fishById :: { [string]: any }
+end
+
+-- 3.11 · Fossils milestones (Config.Codex.FossilSteps; progress = fossils completed at the Dig Site).
+local fossilCache: { any }? = nil
+local fossilById: { [string]: any }? = nil
+
+function Codex.FossilMilestones(): { any }
+	if not fossilCache then
+		local C = Config.Codex
+		local list, map = {}, {}
+		for i, step in C.FossilSteps or {} do
+			local m = {
+				id = "fossil_" .. step,
+				kind = "fossil",
+				key = "",
+				order = i,
+				need = step,
+				all = false,
+				gems = (C.Gems.fossil or {})[i] or 0,
+				items = {},
+				badge = 0,
+			}
+			table.insert(list, m)
+			map[m.id] = m
+		end
+		fossilCache, fossilById = list, map
+	end
+	return fossilCache :: { any }
+end
+
+function Codex.FossilById(): { [string]: any }
+	Codex.FossilMilestones()
+	return fossilById :: { [string]: any }
 end
 
 return Codex

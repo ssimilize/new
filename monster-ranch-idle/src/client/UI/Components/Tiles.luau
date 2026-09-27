@@ -60,6 +60,16 @@ function Tiles.card(props: { [string]: any }): Frame
 end
 
 function Tiles.tap(gui: GuiObject, fn: () -> (), zIndex: number?): TextButton
+	-- A full-size button inside a self-sizing gui with a layout (a Widgets.Chip) would be laid out
+	-- as one more item, 100% of its parent's width, and the parent grows chasing it (a trait chip
+	-- reached ~680 px). A Folder keeps it out of the layout; it still sizes to the gui.
+	local parent: Instance = gui
+	if
+		gui.AutomaticSize ~= Enum.AutomaticSize.None
+		and (gui:FindFirstChildWhichIsA("UIListLayout") or gui:FindFirstChildWhichIsA("UIGridLayout"))
+	then
+		parent = New("Folder", { Name = "TapLayer", Parent = gui })
+	end
 	return New("TextButton", {
 		Name = "Tap",
 		Text = "",
@@ -67,7 +77,7 @@ function Tiles.tap(gui: GuiObject, fn: () -> (), zIndex: number?): TextButton
 		AutoButtonColor = false,
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = zIndex or 20,
-		Parent = gui,
+		Parent = parent,
 		Activated = function()
 			task.spawn(fn)
 		end,

@@ -8,6 +8,7 @@
 	  own barn         Barn -> Router:Open("Monsters")
 	  own kitchen      Kitchen.Door "Cook" -> Router:Open("Kitchen")   (3.10)
 	  own pond         FishingPond.Dock -> Router:Open("Fishing")   (3.10; the screen shows its own lock)
+	  own dig site     DigSite.Rack -> Router:Open("DigSite")        (3.11; the screen shows its own lock)
 
 	Ranch prompts exist only on the local player's own plot (found in global.Plots by UserId)
 	and are rebuilt when the plot or the number of owned pens changes. Prompts are created on
@@ -201,6 +202,14 @@ local function buildRanchPrompts(index: number?, penCount: number)
 			end
 		)
 		prompt.Name = "FishPrompt"
+	end
+	local digSite = plot:FindFirstChild("DigSite")
+	local rack = digSite and digSite:FindFirstChild("Rack")
+	if rack and rack:IsA("BasePart") then
+		local prompt = addPrompt(ranchPrompts, rack, rack.Position + Vector3.new(0, -1, 0), "Dig", "Dig Site", PROMPT_DISTANCE, function()
+			open("DigSite")
+		end)
+		prompt.Name = "DigPrompt"
 	end
 end
 

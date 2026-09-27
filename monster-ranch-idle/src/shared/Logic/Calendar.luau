@@ -22,13 +22,18 @@
 	Events.Active does), Ranch Pass seasons (Config.Quests), titan invasions (Config.Titan),
 	region and raid openings (opensAt), Club Wars (Clubs.War.startsAt), arena seasons
 	(Logic/Arena), the Saturday reset, the next Stampede (Logic/Titan.NextStampede: skips the
-	slots a titan holds, like the server) and Egg Hunt rounds while Spring Bloom runs.
+	slots a titan holds, like the server), Egg Hunt rounds while Spring Bloom runs, the
+	Travelling Merchant (3.11, Logic/Merchant: only the visit running now and the next one, so
+	the Events screen lists one or two rows, never a month of them), and (3.11) the current and
+	next Ranch Season (Logic/Seasons, kind "season", named after the season).
 ]]
 
 local Config = require(script.Parent.Parent.Config)
 local TitanLogic = require(script.Parent.Titan)
 local ArenaLogic = require(script.Parent.Arena)
 local EggHuntLogic = require(script.Parent.EggHunt)
+local MerchantLogic = require(script.Parent.Merchant)
+local SeasonsLogic = require(script.Parent.Seasons)
 
 local Calendar = {}
 
@@ -49,9 +54,11 @@ local KIND_ORDER = {
 	pass = 5,
 	clubwars = 6,
 	arena = 7,
+	season = 7.5, -- 3.11: a new season starts at the weekly reset, listed just before it
 	reset = 8,
 	egghunt = 9,
 	stampede = 10,
+	merchant = 11,
 }
 
 local BLURB = {
@@ -64,7 +71,9 @@ local BLURB = {
 	clubwars = "Clubs battle for war points every week.",
 	arena = "A new arena season: ratings move halfway back.",
 	reset = "Leaderboards and weekly goals start over.",
+	season = "Seasonal fish, recipes and decor.",
 	stampede = "Join the server boss for rewards.",
+	merchant = "Rare wares for coins, gems or a barter.",
 }
 
 local function entry(
@@ -225,12 +234,35 @@ local function reset(out, now: number, untilAt: number)
 	end
 end
 
+-- 3.11: the season running now and the next one (a season always lasts one week).
+local function seasons(out, now: number, untilAt: number)
+	for _, s in { SeasonsLogic.At(now), SeasonsLogic.Next(now) } do
+		local def = Config.Seasons.ById[s.id]
+		if s.endsAt > now and s.startsAt < untilAt then
+			table.insert(out, entry("season", "season:" .. s.startsAt, def.name, s.startsAt, s.endsAt, "food_" .. def.flavor))
+		end
+	end
+end
+
 local function stampede(out, now: number, untilAt: number)
 	local B = Config.Boss
 	-- The first slot that has not ended yet: running when it started at or before `now`.
 	local startsAt = TitanLogic.NextStampede(B, Config.Titan, now - B.Duration + 1)
 	if startsAt < untilAt then
 		table.insert(out, entry("stampede", "stampede:" .. startsAt, "Stampede", startsAt, startsAt + B.Duration, "trophy", "Boss"))
+	end
+end
+
+local function merchant(out, now: number, untilAt: number)
+	local at = MerchantLogic.At(now)
+	local Cfg = Config.Merchant
+	local name = "Travelling Merchant"
+	if at.present then
+		table.insert(out, entry("merchant", "merchant:" .. at.visit, name, at.startsAt, at.endsAt, "coin", "Merchant"))
+	end
+	local nextVisit = MerchantLogic.Visit(at.nextAt)
+	if not at.present and at.nextAt < untilAt then
+		table.insert(out, entry("merchant", "merchant:" .. nextVisit, name, at.nextAt, at.nextAt + Cfg.Stay, "coin", "Merchant"))
 	end
 end
 
@@ -246,7 +278,9 @@ function Calendar.Entries(now: number, horizonSeconds: number)
 	openings(out, now, untilAt)
 	arena(out, now, untilAt)
 	reset(out, now, untilAt)
+	seasons(out, now, untilAt)
 	stampede(out, now, untilAt)
+	merchant(out, now, untilAt)
 	table.sort(out, before)
 	return out
 end

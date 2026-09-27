@@ -5,6 +5,7 @@
 	shape: placeholder model in the pen: "block" (default), "ball", "disc" (flat, on the
 	ground) or "tall" (a post with a round top). The art team replaces these later.
 	set: a themed set shown together in the Store (e.g. "beach", update 1.1).
+	season (3.11): sold only in that Ranch Season (Logic/Seasons.At); pieces owned stay forever.
 ]]
 
 local Decor = {}
@@ -343,6 +344,49 @@ local FISHED = { reward = "fishing" }
 add("old_boot", "Old Boot", "fun", "old_boot", { 2, 2 }, nil, "#6B4424", "#5FAF4B", FISHED)
 add("sunken_chest", "Sunken Chest", "fun", "sunken_chest", { 3, 2 }, nil, "#8A5A2B", "#F5C630", FISHED)
 
+-- Update 3.11 · Dig Site: never sold. Relics are rare finds (Config.DigSite.Relics); a skeleton
+-- display is granted once when its fossil's four pieces are complete (Config.DigSite.Fossils).
+local DUG = { reward = "digsite" }
+add("ancient_urn", "Ancient Urn", "statue", "ancient_urn", { 2, 2 }, nil, "#B8643A", "#3A2A1C", DUG)
+add("stone_tablet", "Stone Tablet", "statue", "stone_tablet", { 3, 1 }, nil, "#8E8A83", "#5E5A54", DUG)
+local function skeleton(pose: string)
+	return { reward = "digsite", pose = pose }
+end
+add("fossil_raptor", "Raptor Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#EFE6D2", "#8A6A4A", skeleton("raptor"))
+add("fossil_trihorn", "Trihorn Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#E3D5B8", "#8A6A4A", skeleton("trihorn"))
+add("fossil_longneck", "Longneck Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#F2EBDD", "#8A6A4A", skeleton("longneck"))
+add("fossil_sabre_cat", "Sabre Cat Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#E8DCC4", "#8A6A4A", skeleton("sabre_cat"))
+add("fossil_woolly_tusk", "Woolly Tusk Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#DCCDB0", "#8A6A4A", skeleton("woolly_tusk"))
+add("fossil_sky_wing", "Sky Wing Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#F4EEE2", "#8A6A4A", skeleton("sky_wing"))
+-- Update 3.11 · Travelling Merchant: never in the shop, sold only by the merchant (Config.Merchant.Decor,
+-- two of them each visit, rotating).
+local MERCHANT = { reward = "merchant" }
+add("caravan_lantern", "Caravan Lantern", "light", "caravan_lantern", { 2, 2 }, nil, "#B5553C", "#FFD447", {
+	reward = "merchant",
+	light = true,
+})
+add("spice_crates", "Spice Crates", "fun", "spice_crates", { 3, 2 }, nil, "#A0703D", "#E5484D", MERCHANT)
+add("silk_canopy", "Silk Canopy", "seat", "silk_canopy", { 4, 4 }, nil, "#8B6AD8", "#F4C43A", MERCHANT)
+-- Update 3.11 · Ranch Seasons: two pieces per season, sold only in their season.
+add("spring_tulips", "Tulip Bed", "plant", "flowerbed", { 4, 3 }, { coins = 20000 }, "#FF7AB6", "#6B4424", { season = "spring" })
+add("spring_blossom", "Blossom Tree", "plant", "tree", { 5, 5 }, { gems = 120 }, "#FFD1E6", "#6B4424", { season = "spring" })
+add(
+	"summer_sunflowers",
+	"Giant Sunflowers",
+	"plant",
+	"sunflowers",
+	{ 4, 2 },
+	{ coins = 20000 },
+	"#FFB020",
+	"#4E9A3E",
+	{ season = "summer" }
+)
+add("summer_lemonade", "Lemonade Cart", "fun", "cart", { 5, 3 }, { gems = 120 }, "#FFE066", "#E5484D", { season = "summer" })
+add("autumn_leaves", "Leaf Pile", "fun", "haystack", { 3, 3 }, { coins = 20000 }, "#D9652B", "#B8452A", { season = "autumn" })
+add("autumn_maple", "Maple Tree", "plant", "tree", { 5, 5 }, { gems = 120 }, "#E8702A", "#6B4424", { season = "autumn" })
+add("winter_snowman", "Snow Buddy", "statue", "snowman", { 3, 3 }, { coins = 20000 }, "#FFFFFF", "#E5484D", { season = "winter" })
+add("winter_fir", "Frosted Fir", "plant", "pine", { 4, 4 }, { gems = 120 }, "#E8F6FF", "#6B4424", { season = "winter" })
+
 for _, d in Decor.List do
 	d.mesh = d.mesh or ""
 	d.kind = d.kind or "fun"
@@ -373,6 +417,7 @@ Decor.Layout = {
 		{ 68, 16, 3.5, 3.5 }, -- 3.10: the Guestbook stand beside the gate (Config.Tourists.World.stand)
 		{ 14, 43, 10, 8 }, -- the Kitchen and its door (3.10)
 		{ 31.5, -47, 13.5, 7.5 }, -- 3.10: the Fishing Pond and its dock (Config.World.Pond)
+		{ 62, -47, 12, 7 }, -- 3.11: the Dig Site's sand pit and tool rack (Config.World.DigSite)
 	},
 	-- Legacy pen slots (pen-local fractions of the half extents) the migration puts old decor on.
 	legacySpots = { { -0.62, -0.55 }, { 0.62, -0.55 }, { 0, -0.62 } },

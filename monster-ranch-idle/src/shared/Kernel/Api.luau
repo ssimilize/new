@@ -395,7 +395,7 @@ Api.Actions = {
 	["Fishing.Start"] = {
 		schema = T.none,
 		rate = 1,
-		returns = "{ run: number, seed: number, bonus: number, duration: number, casts: number, bait: number }",
+		returns = "{ run: number, seed: number, bonus: number, season: string, duration: number, casts: number, bait: number }",
 	},
 	["Fishing.Finish"] = {
 		schema = T.struct({
@@ -411,6 +411,17 @@ Api.Actions = {
 		returns = "{ coins: number }",
 	},
 	["Fishing.SetBuddy"] = { schema = T.struct({ id = id }), rate = 2, returns = "nil" },
+	-- Dig Site (3.11) · see Config/DigSite and Logic/DigSite ------------------------------
+	["DigSite.Start"] = {
+		schema = T.none,
+		rate = 2,
+		returns = "{ dig: number, left: number, tiles: { DugTile }, digs: number, shovels: number, resumed: boolean }",
+	},
+	["DigSite.Tap"] = {
+		schema = T.struct({ dig = T.integer(1), tile = T.integer(1, Config.DigSite.Tiles) }),
+		rate = 6,
+		returns = "{ tile, find: { kind, fossil?, piece?, duplicate?, complete?, id?, amount? }?, hint, left, done, rewards: { Reward }, missed: { number }? }",
+	},
 
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
 	["Weekly.Claim"] = {
@@ -431,6 +442,35 @@ Api.Actions = {
 		rate = 2,
 		returns = "{ stat: string, cost: number }",
 	},
+	-- Travelling Merchant (3.11) · see Config/Merchant and Logic/Merchant ----------------------
+	-- Buy: one of this visit's offers, paid the `pay`-th way (all or nothing), up to its limit.
+	["Merchant.Buy"] = {
+		schema = T.struct({ offer = T.enum(Config.Merchant.Ids), pay = T.integer(1, 2) }),
+		rate = 3,
+		returns = "{ offer: string, pay: string, amount: number, bought: number, left: number, total: number? }",
+	},
+	-- Reroll: a Trait Scroll rerolls one visible trait of an owned, free monster.
+	["Merchant.Reroll"] = {
+		schema = T.struct({ id = id, slot = T.integer(1, Config.Traits.VisibleSlots) }),
+		rate = 2,
+		returns = "{ trait: number, old: number, scrolls: number }",
+	},
+
+	-- Dojo (3.11) · see Config/Techniques and Logic/Dojo ------------------------------------------
+	-- Train: an owned, free Adult learns (lv 1) or levels up a technique of its element(s).
+	["Dojo.Train"] = {
+		schema = T.struct({ id = id, tech = T.enum(Config.Techniques.Ids) }),
+		rate = 2,
+		returns = "{ tech: string, lv: number, cost: number, readyAt: number }",
+	},
+	-- Forget: drops a learned technique (no refund).
+	["Dojo.Forget"] = {
+		schema = T.struct({ id = id, tech = T.enum(Config.Techniques.Ids) }),
+		rate = 2,
+		returns = "{ tech: string }",
+	},
+	-- Collect: the finished training lands on the monster's `tech`.
+	["Dojo.Collect"] = { schema = T.none, rate = 2, returns = "{ id: string, tech: string, lv: number }" },
 
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
@@ -768,7 +808,9 @@ Api.State = {
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true }, target = { stat, grade } | false, milestones = { [stat]: grade } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
 		GeneLab = "{ day, tunes, attempts }  -- 3.10: tunes used on UTC `day`, lifetime attempts (the roll seed)",
+		Dojo = "{ training = false | { id, tech, lv, startedAt, readyAt }, trained }  -- 3.11: the Dojo mat (Logic/Dojo)",
 		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
+		DigSite = "{ day, digs, shovels, n, open = false | { id, left, tiles = { { t, hint?, kind?, fossil?, piece?, id?, amount?, duplicate? } } }, pieces = { [fossilId]: { [pieceId]: true } }, total }  -- 3.11 (secret is private)",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
@@ -801,6 +843,8 @@ Api.State = {
 		Decor = "{ layout = { { id, x, z, rot } }, migrated, starter }  -- glow-up Z: plot-local grid units, rot × 45°",
 		RaceGear = "{ owned = { [gearId]: true }, equipped = { saddle, trail, banner }, races, live, podiums, wins, duels }  -- glow-up LR",
 		Tourists = "{ slot, count, book = { { at, stars, who, good, gi, bad, bi } } }  -- 3.10: Ranch Tourists (Logic/Tourists)",
+		Merchant = "{ visit, bought = { [offerId]: n }, scrolls, rerolls, trades }  -- 3.11: Travelling Merchant (Logic/Merchant)",
+		Seasons = "{ last }  -- 3.11: the last Ranch Season this player saw (Logic/Seasons)",
 		-- R2 Design Weeks: added to profile.Workshop (see Api.State.profile.Workshop above).
 		Workshop_DesignWeek = "profile.Workshop also has: designWeek = { week, entered: designId|false }, votesToday = { day, n }",
 	},
@@ -810,6 +854,7 @@ Api.State = {
 		Breeding = "{ podCount, breedsPerDay }",
 		Jobs = "{ slotCount }",
 		Kitchen = "{ slotCount, fish, fishing }  -- 3.10: fish = Fishing:FishCount (0 without Fishing); fishing = Fishing is plugged in",
+		Merchant = "{ shovels }  -- 3.11: the Dig Site is plugged in and unlocked (the merchant's shovel offers)",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
 		WelcomeBack = "{ pending: boolean, awaySeconds, coins, items = { { kind, text, icon? } } }",
@@ -894,10 +939,15 @@ Api.Topics = {
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
 	GeneTuned = "(player, { stat: string, success: boolean })  -- 3.10: every Gene Lab tune, success or not",
+	SkillTrained = "(player, { monsterId: string, skill: string, level: number })  -- 3.11: a Dojo training collected",
 	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
 	TouristVisited = "(player, { stars: number })  -- 3.10: one Ranch Tourist visited (online or while away)",
 	DishCooked = "(player, { dish: string, count: number })  -- 3.10: dishes collected from the Kitchen into the Pantry",
-	FishCaught = "(player, { fish: string, rarity: string, weight: number })  -- 3.10: a catch at the Fishing Pond (weight in kg)",
+	FossilFound = "(player, { fossil: string, piece: string, complete: boolean })  -- 3.11: a new fossil piece dug up at the Dig Site",
+	DigFinished = "(player, { finds: number })  -- 3.11: a dig at the Dig Site ended (taps used up or every find dug up)",
+	MerchantBought = "(player, { item: string, pay: string })  -- 3.11: a Travelling Merchant purchase (item = offer id, pay = coins|gems|amber|fish|dishes)",
+	FishCaught = "(player, { fish: string, rarity: string, weight: number, seasonal: boolean })  -- 3.10: a catch at the Fishing Pond (weight in kg; seasonal: 3.11)",
+	SeasonChanged = "(player, { season: string })  -- 3.11: on join when the last season seen differs, and at the turnover",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
@@ -937,7 +987,7 @@ Api.Topics = {
 	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
-	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish' })  -- glow-up O (fish: 3.10)",
+	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish'|'fossil' })  -- glow-up O (fish: 3.10, fossil: 3.11)",
 	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
 	-- R2-ONBOARDING · republished by Quests.Signal for a tutorial chapter two step with no
@@ -947,7 +997,7 @@ Api.Topics = {
 
 -- Shared shapes (documentation) -----------------------------------------------------
 Api.Shapes = {
-	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'ribbons'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster'|'accessory'|'bait', id: string?, amount: number, rarity: number? }",
+	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'ribbons'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster'|'accessory'|'bait'|'amber'|'shovel', id: string?, amount: number, rarity: number? }",
 	Monster = "see ARCHITECTURE.md → Monster record",
 	Listing = "see ARCHITECTURE.md §8 → Listing (client view)",
 	Appearance = "see Logic/Appearance.luau",

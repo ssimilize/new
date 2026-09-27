@@ -3,6 +3,129 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.11 · Seasons & secrets
+
+### Dig Site & Fossils
+
+**For players**
+- From Ranch Level 16 a roped-off sand pit with a tool rack sits in the north strip of every ranch,
+  east of the Fishing Pond. Its "Dig" prompt opens the Dig Site.
+- A dig is a 5 × 5 field of covered tiles and 5 taps. Each empty tile tells you how close the
+  nearest buried find is (Hot!, Warm, Cool, Cold). Every dig hides 1 find, or 2 (40%).
+- 6 free digs a UTC day, then one Shovel each. Expedition Bounties now pay 2 Shovels; the
+  Travelling Merchant can sell them too.
+- Finds: fossil pieces (6 fossils × skull, ribs, legs, tail; a piece you already have becomes
+  5 Amber), Amber (3-8), rare relic decor (Ancient Urn, Stone Tablet) and the rare Amber Egg (never
+  sold; hatches the Stone, Sprout and Gloom lines with better odds than the shop eggs).
+- All four pieces complete a fossil and give its skeleton display to place on the ranch (it adds
+  to decor and tourist Appeal like any decor).
+- The Codex has a Fossils tab: every fossil's pieces and milestones at 2 / 4 / 6 fossils
+  (20 / 40 / 100 gems). New weekly goal: Finish 10 digs.
+
+**In the code**
+- `Config/DigSite`, `Logic/DigSite` (seeded layout, distance hints), `Systems/DigSite` (actions
+  `DigSite.Start`, `DigSite.Tap`; API `AddShovels`, `FossilsComplete`; publishes `FossilFound` and
+  `DigFinished`), screen `Screens/DigSite`, Codex tab `Parts/FossilLog`.
+- The layout is seeded by (userId, dig number, a private per-player secret), never stored or sent;
+  the open dig's dug tiles live in `profile.DigSite.open`, so reopening resumes it (no reroll).
+- World: `Config.World.DigSite` (built in `World/Build.luau`, Decor keep-out `{ 62, -47, 12, 7 }`).
+- Rewards kind `shovel`; `amber` and `shovel` icons drawn in code (`Components/Icon`).
+- Amber Egg (`Config/Eggs`, order 23, pool `amber` on the 9 common Stone/Sprout/Gloom lines);
+  decor `ancient_urn`, `stone_tablet`, `fossil_<id>` (DecorArt `fossil_skeleton` posed per fossil).
+- Tests: `DigSite.spec`, `DigSiteClient.spec`.
+
+### Travelling Merchant
+
+**For players**
+- From Ranch Level 7, a merchant's caravan parks in the Market Square (west corner, between the
+  Workshop and the path to plot 1) for 2 hours out of every 6: 03:00, 09:00, 15:00 and 21:00 UTC.
+  Walk up and press "Trade". The HUD chip and the Events screen count down to the next visit, or
+  to the caravan leaving while it is here.
+- Each visit sells 6 wares, the same for everyone: Trait Scrolls, Golden seeds, bait, shovel
+  bundles (once the Dig Site is open), two of three merchant-only decor pieces (Caravan Lantern,
+  Spice Crates, Silk Canopy) and eggs (Grove, Crystal, Royal). Each has a per-visit limit.
+- Every ware has two prices: coins (minutes of ranch income) or gems, or a barter of fish, Pantry
+  dishes or amber. Paying is all or nothing.
+- A Trait Scroll rerolls one visible trait from Monster Detail ("Reroll trait"): the hatch roll,
+  never the hidden trait, never a trait the monster already has.
+- New weekly goal: "Shop 3 times at the Travelling Merchant".
+
+**In the code**
+- `Config/Merchant` (schedule, offers, prices, caravan spot), `Logic/Merchant` (pure schedule,
+  seeded stock per visit `("merchant", visit)`, coin prices, scroll seed `("merchant_scroll",
+  userId, monsterId, born, n)`), `Systems/Merchant` (`Merchant.Buy`, `Merchant.Reroll`, profile
+  `{ visit, bought, scrolls, rerolls, trades }`, session `{ shovels }`, `MerchantBought` topic).
+- `Controllers/Merchant` (the Part-built caravan and prompt), `Screens/Merchant`, Monster Detail's
+  "Reroll trait" popup, a `merchant` Calendar source and the HUD "Merchant leaves" chip.
+- `Kitchen:AddSeeds`, `Kitchen:DishCount`, `Kitchen:SpendDishes` (new); `Fishing:AddBait` and
+  `Fishing:SpendFish`; `DigSite:AddShovels` looked up optionally.
+- Merchant-only decor in `Config/Decor` (`reward = "merchant"`) with DecorArt models; scenery
+  keep-out `Config.World.MerchantCaravan`.
+
+### Ranch Seasons
+
+**For players**
+- The ranch now has seasons: spring, summer, autumn and winter, one per week, turning over with
+  the Saturday weekly reset (a 28-day cycle; the week of 27 Sep 2026 is autumn). Everyone,
+  everywhere, is in the same season.
+- The ranch looks the part: the grass changes colour, spring petals and autumn leaves drift by,
+  summer has pollen by day and fireflies at night, and winter snows (winter rain falls as snow).
+  Low graphics shows fewer particles; Reduced motion shows none.
+- The Events screen lists the season running now and the next one; in the last day of a season
+  a HUD chip counts down to the next ("Winter 2:59:12").
+- Fishing Pond: four seasonal fish (Blossom Trout, Sunburst Bass, Maple Carp, Frost Char) that
+  bite only in their season. The Fish Log now has 20 kinds; its milestones are 5 / 10 / 20 kinds.
+- Kitchen: four seasonal recipes, cooked only in their season with one of that season's fish
+  ("In season: Autumn" / "Back in Winter" on the card).
+- Feed Garden: the season's flavour grows 25% more (spring sweet, summer sour, autumn savory,
+  winter spicy).
+- Tourists: each season they love one Appeal category more (spring Decor, summer Pens, autumn
+  Variety, winter Rare monsters); the Guestbook says which.
+- Store: two seasonal decor pieces a season, sold only in their season (yours stay forever).
+- Weekly goal: "Catch 3 fish of the season".
+- A new season greets you: "Winter has come to the ranch" (a toast, or a Welcome Back line).
+
+**In the code**
+- `Config/Seasons` (seasons, flavours, favoured categories, particles, arrival lines, GardenBonus
+  0.25, AppealBoost 1.25), `Logic/Seasons` (`At(now)`, `Next`, `InSeason`, `GardenBonus`,
+  `AppealWeights`, `ArriveText`), `Systems/Seasons` (profile `{ last, carry }`, SeasonChanged,
+  WelcomeItem, the garden hook), `Controllers/Seasons` (ground tint, ambient emitters).
+- Seasonal fish (`Config/Fishing` `season`, `SeasonChance` 0.3): never in the rarity pool; an
+  in-season bite of their rarity swaps to them on a separate seeded stream (`fish_season`), so no
+  other fish's roll or course moves. `Fishing.Start` returns `season`; FishCaught has `seasonal`;
+  `Fishing:SpendFish(player, n, kind?)`, `Fishing:Have`; seasonal fish are spent last.
+- Seasonal recipes (`Config/Kitchen` `season`, `seasonFish`), `Logic/Kitchen.SeasonNote`.
+- `Ranch:RegisterHarvestHook` hooks may return bonus food (Seasons pays whole food, carrying the
+  fraction: +25% of 5 pays 1, 1, 1, 2).
+- `Logic/Tourists.Appeal` takes `facts.favored`; `Logic/Calendar` has a `season` source;
+  `Config/Decor` `season`; `Systems/Shop` refuses off-season decor; `Config/Weekly` `season_fish_3`.
+- Tests: `Seasons.spec`, `SeasonsClient.spec`.
+
+### Dojo
+
+**For players**
+- From Ranch Level 24, Adults train battle techniques at the Dojo. Open it from Monster Detail
+  (the Dojo button on the genes line). Each element has two techniques (16 in all), and a monster
+  learns techniques of its own element(s).
+- One technique slot; the 2nd opens at Bond heart 5. Learning or levelling up (up to Lv 3) costs
+  Stardust and a timer: Lv 1 300 Stardust · 20 min, Lv 2 900 · 1 h, Lv 3 2,000 · 3 h. The monster is
+  busy while it trains (one training at a time); collect it when the timer is done.
+- Forget a technique any time it is not training (nothing is refunded), then train another.
+- In battle a learned technique fires on every 4th action of that monster, on its own charge next
+  to the species Special (two techniques alternate). The battle view calls it by name.
+- Techniques travel with a traded monster and show in the trade window. The Arena still fights
+  with normalized monsters, so techniques do not count there.
+- Weekly goal: "Train 3 techniques at the Dojo".
+
+**In the code**
+- `Config/Techniques` (the 16 techniques, per-kind level numbers, costs), `Logic/Dojo` (rules),
+  `Systems/Dojo` (`Dojo.Train`, `Dojo.Forget`, `Dojo.Collect`; profile `Dojo`; busy tag "dojo";
+  publishes `SkillTrained`), `Screens/Dojo`, the Dojo button and technique chips on Monster Detail.
+- `Logic/BattleSim` reads `m.tech` (a fight without techniques replays byte-for-byte as before,
+  pinned in `DojoBattle.spec`). `Monsters:Insert` copies `tech`; Pedigree snapshots ignore it.
+- Balance gate `DojoBalance.spec`: 2000 seeded even-level mirror fights, a fully trained team
+  gains +4.5 points (limit +8); per technique +4.0 to +6.8 points around a +5.6 median (limit 2x).
+
 ## 3.10 · Ranch life
 
 ### Ranch Tourists

@@ -9,8 +9,12 @@
 	  Kitchen.EmptySlot() -> Slot
 	  Kitchen.SlotCount(isUnlocked: (key) -> boolean) -> number
 	  Kitchen.Split(recipe) -> (food: { [flavor]: n }, fish: number, golden: number)
-	  Kitchen.Missing(recipe, have: { food = { [flavor]: n }, fish, golden }) -> key?
-	                                        "fish", "golden" or a flavour id the player is short of
+	  Kitchen.Missing(recipe, have: { food = { [flavor]: n }, fish, golden, kinds? }) -> key?
+	                                        "fish", "golden" or a flavour id the player is short of;
+	                                        3.11: "seasonFish" when kinds = { [fishId]: n } lacks the
+	                                        recipe's seasonFish
+	  Kitchen.SeasonNote(recipe, seasonId) -> (text?, inSeason)
+	                                        3.11: "In season: Winter" / "Back in Spring" (nil text = all year)
 	  Kitchen.IsReady(slot, now) -> boolean
 	  Kitchen.AddWindow(windows, now, seconds) -> windows
 	                                        a new job boost window, merged with one still running;
@@ -31,6 +35,20 @@ local Rules = Config.Kitchen
 local Kitchen = {}
 
 Kitchen.MaxWindows = 4
+
+-- 3.11: one literal per season (translated whole).
+local IN_SEASON = {
+	spring = "In season: Spring",
+	summer = "In season: Summer",
+	autumn = "In season: Autumn",
+	winter = "In season: Winter",
+}
+local BACK_IN = {
+	spring = "Back in Spring",
+	summer = "Back in Summer",
+	autumn = "Back in Autumn",
+	winter = "Back in Winter",
+}
 
 function Kitchen.EmptySlot()
 	return { recipe = false, startedAt = 0, readyAt = 0 }
@@ -62,6 +80,9 @@ function Kitchen.Missing(recipe, have): string?
 	if fish > (have.fish or 0) then
 		return "fish"
 	end
+	if recipe.seasonFish and type(have.kinds) == "table" and (tonumber(have.kinds[recipe.seasonFish]) or 0) < 1 then
+		return "seasonFish"
+	end
 	if golden > (have.golden or 0) then
 		return "golden"
 	end
@@ -72,6 +93,16 @@ function Kitchen.Missing(recipe, have): string?
 		end
 	end
 	return nil
+end
+
+function Kitchen.SeasonNote(recipe, seasonId: string?): (string?, boolean)
+	if type(recipe) ~= "table" or recipe.season == nil then
+		return nil, true
+	end
+	if recipe.season == seasonId then
+		return IN_SEASON[recipe.season], true
+	end
+	return BACK_IN[recipe.season], false
 end
 
 function Kitchen.IsReady(slot, now: number): boolean

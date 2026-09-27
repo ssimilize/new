@@ -18,6 +18,7 @@
 	    Barn                         Model (attr PlotId) with Body, Roof*, Door
 	    Gate                         Model with PostL, PostR, Sign (client adds the owner name)
 	    FishingPond                  Model (attr PlotId, 3.10) with Water, Bed, Rim*, Dock, DockPost*
+	    DigSite                      Model (attr PlotId, 3.11) with Sand, Mound*, Post, RopeN/S/E, Rack, RackPost, Shovel*, Sign
 	  SpawnLocation
 	  Boundary/Wall<1-4>             low stone wall on the perimeter (Config.World.Boundary)
 	  Boundary/Barrier<1-4>          invisible, tall, collides: keeps players on the map
@@ -69,6 +70,10 @@ local COLORS = {
 	kitchen = hex("#F4E6C8"), -- 3.10
 	kitchenRoof = hex("#B8423A"),
 	kitchenGlass = hex("#9ED8F0"),
+	sand = hex("#E8CF96"), -- 3.11
+	sandDark = hex("#CDAE6E"),
+	rope = hex("#D9B77A"),
+	metal = hex("#8E949A"),
 }
 
 local PEN_FLOOR_HEIGHT = 0.8 -- floor top sits at GroundY + 0.4
@@ -466,6 +471,61 @@ local function buildPlot(World, plot, parent: Instance)
 		pond.PrimaryPart = dock
 		pond:SetAttribute("PlotId", plot.id)
 		pond.Parent = model
+	end
+
+	-- Update 3.11: the Dig Site (Config.World.DigSite); the client puts the "Dig" prompt on the rack.
+	local digDef = World.DigSite
+	if digDef then
+		local dig = Instance.new("Model")
+		dig.Name = "DigSite"
+		local o = digDef.offset
+		local fx = digDef.size[1]
+		local px, pz = digDef.pit[1], digDef.pit[2]
+		local siteCf = plotCf * CFrame.new(o[1], 0, o[3])
+		local pitCf = siteCf * CFrame.new(fx / 2 - 1 - px / 2, 0, 0)
+		block(
+			"Sand",
+			Vector3.new(px, 0.3, pz),
+			pitCf * CFrame.new(0, 0.35, 0),
+			COLORS.sand,
+			dig,
+			{ Material = Enum.Material.Sand, CastShadow = false }
+		)
+		for i, m in { { -4, -2, 3 }, { 3, 2.5, 2.4 }, { 5, -3, 1.8 } } do
+			disc("Mound" .. i, m[3], 0.5, (pitCf * CFrame.new(m[1], 0.6, m[2])).Position, COLORS.sandDark, dig, {
+				Material = Enum.Material.Sand,
+				CastShadow = false,
+			})
+		end
+		for _, c in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+			block(
+				"Post",
+				Vector3.new(0.5, 2.2, 0.5),
+				pitCf * CFrame.new(c[1] * (px / 2 + 0.25), 1.1, c[2] * (pz / 2 + 0.25)),
+				COLORS.fence,
+				dig
+			)
+		end
+		block("RopeN", Vector3.new(px + 0.5, 0.15, 0.15), pitCf * CFrame.new(0, 1.8, -pz / 2 - 0.25), COLORS.rope, dig)
+		block("RopeS", Vector3.new(px + 0.5, 0.15, 0.15), pitCf * CFrame.new(0, 1.8, pz / 2 + 0.25), COLORS.rope, dig)
+		block("RopeE", Vector3.new(0.15, 0.15, pz + 0.5), pitCf * CFrame.new(px / 2 + 0.25, 1.8, 0), COLORS.rope, dig)
+		-- The tool rack west of the pit (the open side, toward the pond's dock).
+		local rackCf = siteCf * CFrame.new(-fx / 2 + 2, 0, 0)
+		for _, side in { -1, 1 } do
+			block("RackPost", Vector3.new(0.4, 3.2, 0.4), rackCf * CFrame.new(0, 1.6, side * 1.8), COLORS.fenceDark, dig)
+		end
+		local rack = block("Rack", Vector3.new(0.5, 0.4, 4), rackCf * CFrame.new(0, 2.9, 0), COLORS.fence, dig)
+		rack:SetAttribute("DigSite", true)
+		for i, z in { -0.9, 0.9 } do
+			block("Shovel" .. i, Vector3.new(0.18, 2.4, 0.18), rackCf * CFrame.new(-0.4, 1.6, z), COLORS.fenceDark, dig)
+			block("ShovelHead" .. i, Vector3.new(0.12, 0.8, 0.6), rackCf * CFrame.new(-0.4, 0.5, z), COLORS.metal, dig, {
+				Material = Enum.Material.Metal,
+			})
+		end
+		block("Sign", Vector3.new(0.2, 1, 2.4), rackCf * CFrame.new(-0.3, 3.8, 0), COLORS.sign, dig)
+		dig.PrimaryPart = rack
+		dig:SetAttribute("PlotId", plot.id)
+		dig.Parent = model
 	end
 
 	-- Gate at the front edge (facing the hub); the client writes the owner's name above it.

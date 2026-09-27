@@ -18,6 +18,7 @@
 
 	Actions:
 	  Kitchen.Cook { recipe, slot? }   charges every ingredient at once (all or nothing) and starts
+	                                   (3.11: a seasonal recipe only in its season, one of its fish first)
 	                                   the slot (the first free one when `slot` is nil)
 	  Kitchen.Collect {}               moves finished dishes into the Pantry -> { dishes = { [id]: n } }
 	  Kitchen.Serve { id, dish }       one Pantry dish to one monster -> { effect }
@@ -26,6 +27,12 @@
 	Effects (Config.Kitchen.Effects): meals (Monsters:AddMeals + MonsterFed per meal + feed Mood),
 	mood (to the max), bond (Bond:AddHeart), job (Jobs:RegisterOutputBoost "kitchen"), loot
 	(Expeditions:RegisterLootModifier "kitchen", spent when a run with that monster is claimed).
+
+	Public API (3.11, for the Travelling Merchant):
+	  Kitchen:AddSeeds(player, n) -> number        Golden seeds after adding n
+	  Kitchen:DishCount(player) -> number          dishes in the Pantry
+	  Kitchen:SpendDishes(player, n) -> boolean    takes n Pantry dishes (the most plentiful first),
+	                                               all or nothing
 
 	Optional systems, looked up in Start: Fishing (FishCount / SpendFish; absent = 0 fish), Bond,
 	Jobs, Expeditions, Ranch (golden crop + harvest hook).
@@ -37,6 +44,7 @@
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Formulas = require(Shared.Logic.Formulas)
 local Logic = require(Shared.Logic.Kitchen)
+local Seasons = require(Shared.Logic.Seasons)
 
 local Kitchen = {
 	Name = "Kitchen",
@@ -112,6 +120,55 @@ function Kitchen:SlotCount(player): number
 	return Logic.SlotCount(isUnlocked(player))
 end
 
+function Kitchen:AddSeeds(player, n: number): number
+	local s = section(player)
+	if not s then
+		return 0
+	end
+	local add = if type(n) == "number" and n == n then math.max(0, math.floor(n)) else 0
+	s.seeds = (tonumber(s.seeds) or 0) + add
+	ctx:Dirty(player, "seeds")
+	return s.seeds
+end
+
+function Kitchen:DishCount(player): number
+	local s = section(player)
+	local n = 0
+	for _, count in (s and s.pantry) or {} do
+		n += count
+	end
+	return n
+end
+
+function Kitchen:SpendDishes(player, n: number): boolean
+	local s = section(player)
+	if not s or type(n) ~= "number" or n ~= n or n < 0 or n % 1 ~= 0 or Kitchen:DishCount(player) < n then
+		return false
+	end
+	local order = {}
+	for id in s.pantry do
+		table.insert(order, id)
+	end
+	table.sort(order, function(a, b)
+		local ca, cb = s.pantry[a], s.pantry[b]
+		if ca ~= cb then
+			return ca > cb
+		end
+		return a < b
+	end)
+	local left = n
+	for _, id in order do
+		if left <= 0 then
+			break
+		end
+		local take = math.min(s.pantry[id], left)
+		s.pantry[id] = if s.pantry[id] - take > 0 then s.pantry[id] - take else nil
+		left -= take
+	end
+	ctx:Dirty(player, "pantry")
+	return true
+end
+
 -- Actions ---------------------------------------------------------------------------------
 
 local function cook(player, payload)
@@ -139,12 +196,26 @@ local function cook(player, payload)
 	end
 	local recipe = Rules.ById[payload.recipe]
 	local food, fish, golden = Logic.Split(recipe)
+	-- 3.11: seasonal recipes cook only in their season, with that season's fish.
+	local _, inSeason = Logic.SeasonNote(recipe, Seasons.At(ctx:Now()).id)
+	if not inSeason then
+		local def = Seasons.Def(recipe.season)
+		ctx:Fail(string.format("Only cooked in %s", if def then def.name else tostring(recipe.season)))
+	end
 	-- Check everything first so nothing is spent unless all of it can be.
 	if fish > 0 then
 		if not Fishing then
 			ctx:Fail("Needs fish from the Fishing Pond")
 		elseif fishCount(player) < fish then
 			ctx:Fail("Not enough fish")
+		end
+	end
+	local kind = recipe.seasonFish
+	if kind then
+		local ok, n = pcall(Fishing.Have, Fishing, player, kind)
+		if not ok or type(n) ~= "number" or n < 1 then
+			local def = Config.Fishing.ById[kind]
+			ctx:Fail(string.format("Needs a %s from the Fishing Pond", if def then def.name else kind))
 		end
 	end
 	if golden > (s.golden or 0) then
@@ -159,7 +230,7 @@ local function cook(player, payload)
 		ctx:Fail(Currency:MissingText(missing :: string))
 	end
 	if fish > 0 then
-		local called, spent = pcall(Fishing.SpendFish, Fishing, player, fish)
+		local called, spent = pcall(Fishing.SpendFish, Fishing, player, fish, kind)
 		if not called or spent ~= true then
 			ctx:Fail("Not enough fish")
 		end

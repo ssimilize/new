@@ -24,6 +24,10 @@ local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Vip = require(Shared.Logic.Vip)
+local SeasonsLogic = require(Shared.Logic.Seasons)
+
+-- 3.11: the chip on a seasonal decor piece (only sold in its season).
+local SEASON_CHIP = { spring = "SPRING", summer = "SUMMER", autumn = "AUTUMN", winter = "WINTER" }
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -381,9 +385,13 @@ return {
 				return
 			end
 			local decorOwned = shop.decor or {}
+			local season = SeasonsLogic.At(ctx:Now()).id
 			for i, d in Config.Decor.List do
 				if d.price == nil then
 					continue -- 3.8: reward-only pieces (arena season cups) are never sold
+				end
+				if not SeasonsLogic.InSeason(d, season) then
+					continue -- 3.11: seasonal decor is sold only in its season
 				end
 				local cell = Util.card({ LayoutOrder = i, Parent = grid })
 				local art = Sheet.icon("decor_" .. d.id, {
@@ -425,6 +433,9 @@ return {
 					chip.Position = UDim2.fromOffset(8, 8)
 				elseif d.set == "beach" then
 					local chip = Widgets.Chip({ Text = "BEACH", Color = C.Blue, Parent = cell })
+					chip.Position = UDim2.fromOffset(8, 8)
+				elseif d.season and SEASON_CHIP[d.season] then
+					local chip = Widgets.Chip({ Text = SEASON_CHIP[d.season], Color = C.Orange, Parent = cell })
 					chip.Position = UDim2.fromOffset(8, 8)
 				end
 				buyButton(cell, d.price, d.event, false, function()

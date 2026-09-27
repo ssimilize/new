@@ -27,6 +27,7 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local KitchenLogic = require(Shared.Logic.Kitchen)
+local SeasonsLogic = require(Shared.Logic.Seasons)
 local BondLogic = require(Shared.Logic.Bond)
 
 local UI = script.Parent.Parent
@@ -146,7 +147,10 @@ return {
 			for _, flavor in Config.Food.Ids do
 				food[flavor] = if type(balances) == "table" then tonumber(balances[flavor]) or 0 else 0
 			end
-			return { food = food, fish = fishHave(), golden = tonumber(kitchen().golden) or 0 }
+			-- 3.11: the bucket by kind, for the seasonal recipes' own fish
+			local bucket = ctx.Store:Get("profile.Fishing.fish")
+			local kinds = if type(bucket) == "table" then bucket else {}
+			return { food = food, fish = fishHave(), golden = tonumber(kitchen().golden) or 0, kinds = kinds }
 		end
 		local function hearts(id: string): number
 			local list = ctx.Store:Get("profile.Bond.list")
@@ -353,9 +357,22 @@ return {
 					TextSize = Theme.TextSize.Small,
 					TextWrapped = true,
 					Position = UDim2.fromOffset(8, 82),
-					Size = UDim2.new(1, -16, 0, 40),
+					Size = UDim2.new(1, -16, 0, if recipe.season then 30 else 40),
 					Parent = card,
 				})
+				-- 3.11: seasonal recipes say when they can be cooked.
+				local seasonText, inSeason = KitchenLogic.SeasonNote(recipe, SeasonsLogic.At(ctx:Now()).id)
+				if seasonText then
+					Util.text({
+						Name = "SeasonHint",
+						Text = seasonText,
+						TextColor3 = if inSeason then C.Green else C.TextMuted,
+						TextSize = Theme.TextSize.Small,
+						Position = UDim2.fromOffset(8, 112),
+						Size = UDim2.new(1, -16, 0, 22),
+						Parent = card,
+					})
+				end
 				if fish > 0 and not fishing then
 					Util.text({
 						Name = "NeedsFish",
@@ -390,7 +407,7 @@ return {
 							Util.requestOnce(ctx, "Kitchen.Cook", { recipe = recipe.id })
 						end,
 					})
-					b:SetDisabled(KitchenLogic.Missing(recipe, stock) ~= nil)
+					b:SetDisabled(not inSeason or KitchenLogic.Missing(recipe, stock) ~= nil)
 				end
 			end
 		end

@@ -31,6 +31,7 @@
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Restock = require(Shared.Logic.Restock)
+local Seasons = require(Shared.Logic.Seasons)
 
 local Shop = {
 	Name = "Shop",
@@ -286,6 +287,9 @@ function Shop.Init(context)
 		end
 		if not eventActive(def.event) then
 			ctx:Fail("That event decor isn't available right now")
+		end
+		if not Seasons.InSeason(def, Seasons.At(ctx:Now()).id) then
+			ctx:Fail("That seasonal decor isn't available right now") -- 3.11
 		end
 		local cost = charge(player, def.price, "buyDecor")
 		Shop:AddDecor(player, payload.decor, 1)

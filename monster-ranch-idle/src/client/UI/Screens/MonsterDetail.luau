@@ -44,6 +44,7 @@ local GeneGrades = require(UI.Components.GeneGrades)
 local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local WalkToggle = require(script.Parent.Parts.WalkToggle) -- glow-up T
 local BondBadge = require(script.Parent.Parts.BondBadge)
+local DojoLogic = require(Shared.Logic.Dojo) -- 3.11
 local FamilyTree = require(script.Parent.Parts.FamilyTree) -- 3.9
 local Util = require(script.Parent.Parts.Util) -- 3.10: the Pantry button
 local ShowpieceChips = require(script.Parent.Parts.ShowpieceChips) -- glow-up W
@@ -64,6 +65,7 @@ local BUSY_TEXT = {
 	expedition = "Away on an expedition",
 	breeding = "In the Breeding Barn",
 	job = "Working on the Job Board",
+	dojo = "Training at the Dojo", -- 3.11
 	trade = "Offered in a trade",
 }
 
@@ -248,7 +250,7 @@ function MonsterDetail.Build(ctx)
 		TextColor3 = C.TextMuted,
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.fromScale(0, 0.5),
-		Size = UDim2.new(1, -112, 0, 20),
+		Size = UDim2.new(1, -206, 0, 20),
 		Parent = genesRow,
 	})
 	local geneLabButton = Button.new({
@@ -266,13 +268,51 @@ function MonsterDetail.Build(ctx)
 			end
 		end,
 	})
+	-- 3.11: the Dojo button sits beside it (shown once the Dojo unlocks, Adults only).
+	local dojoButton = Button.new({
+		Name = "Dojo",
+		Text = "Dojo",
+		Color = C.Orange,
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -112, 0.5, 0),
+		Size = UDim2.fromOffset(90, 26),
+		TextSize = Theme.TextSize.Small,
+		Parent = genesRow,
+		OnClick = function()
+			if currentId and ctx.Router:Has("Dojo") then
+				ctx.Router:Open("Dojo", { id = currentId })
+			end
+		end,
+	})
 	local openFamily -- set below, once the popup exists
+	local openReroll -- 3.11: the Trait Scroll picker, set below with the popup
 	Tiles.tap(genesLabel, function()
 		if openFamily then
 			openFamily()
 		end
 	end)
-	local traitsRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 10, Parent = middle }, 6)
+	-- Scrolls sideways: two traits, the hidden one, the Reroll button (3.11) and up to two Dojo
+	-- techniques (3.11) are wider than the column.
+	local traitsRow = New("ScrollingFrame", {
+		Name = "Traits",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, 0, 0, 30),
+		LayoutOrder = 10,
+		CanvasSize = UDim2.fromScale(0, 0),
+		AutomaticCanvasSize = Enum.AutomaticSize.X,
+		ScrollingDirection = Enum.ScrollingDirection.X,
+		ScrollBarThickness = 3,
+		Selectable = false,
+		Parent = middle,
+	}, {
+		New("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal,
+			Padding = UDim.new(0, 6),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			VerticalAlignment = Enum.VerticalAlignment.Top,
+		}),
+	})
 	local actionRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 54), LayoutOrder = 11, Parent = middle }, 8)
 	local feedButton = Button.new({
 		Text = "Feed",
@@ -483,6 +523,62 @@ function MonsterDetail.Build(ctx)
 			end
 		end
 		render()
+		popup:Show()
+	end
+
+	-- 3.11: a Trait Scroll (Travelling Merchant) rerolls one visible trait; never the hidden one.
+	openReroll = function()
+		local m = monster()
+		if not m then
+			return
+		end
+		popup:SetTitle("Reroll trait")
+		popup:SetSize(UDim2.fromOffset(560, 300))
+		Tiles.clear(popup.Body)
+		local list = Tiles.col({ Size = UDim2.fromScale(1, 1), Parent = popup.Body }, 8)
+		Tiles.label({
+			Name = "ScrollsLeft",
+			Text = string.format("Trait Scrolls: %d", tonumber(ctx.Store:Get("profile.Merchant.scrolls")) or 0),
+			TextSize = Theme.TextSize.Body,
+			Size = UDim2.new(1, 0, 0, 26),
+			LayoutOrder = 0,
+			Parent = list,
+		})
+		Tiles.label({
+			Text = "Pick a trait. It rolls a new one the way a hatch does, never a trait it already has.",
+			TextSize = Theme.TextSize.Small,
+			TextColor3 = C.TextMuted,
+			TextWrapped = true,
+			Size = UDim2.new(1, 0, 0, 40),
+			LayoutOrder = 1,
+			Parent = list,
+		})
+		for i, tid in StoreKit.asTable(m.traits) do
+			local t = Config.Traits.ById[tid]
+			local row = Tiles.frame({ Name = "TraitRow" .. i, Size = UDim2.new(1, 0, 0, 48), LayoutOrder = 1 + i, Parent = list })
+			Tiles.label({
+				Text = if t then t.name else "?",
+				TextSize = Theme.TextSize.Body,
+				Size = UDim2.new(1, -150, 1, 0),
+				Parent = row,
+			})
+			Button.new({
+				Name = "Reroll" .. i,
+				Text = "Reroll",
+				Color = C.Purple,
+				Size = UDim2.fromOffset(130, 44),
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, 0, 0.5, 0),
+				Parent = row,
+				OnClick = function()
+					local ok = StoreKit.request(ctx, "Merchant.Reroll", { id = currentId, slot = i })
+					if ok then
+						ctx:Sound("StarUp")
+						popup:Hide()
+					end
+				end,
+			})
+		end
 		popup:Show()
 	end
 
@@ -813,6 +909,10 @@ function MonsterDetail.Build(ctx)
 		geneLabButton:SetVisible(
 			stage >= 3 and (tonumber(store:Get("profile.Progression.level")) or 1) >= (Config.Unlocks.Features[Config.GeneLab.Unlock] or 1)
 		)
+		dojoButton:SetVisible(
+			stage >= 3
+				and (tonumber(store:Get("profile.Progression.level")) or 1) >= (Config.Unlocks.Features[Config.Techniques.Unlock] or 1)
+		)
 
 		-- Traits
 		Tiles.clear(traitsRow)
@@ -825,6 +925,21 @@ function MonsterDetail.Build(ctx)
 					ctx:Toast(t.name .. ": " .. t.desc, "info")
 				end)
 			end
+		end
+		-- 3.11: learned Dojo techniques (Logic/Dojo), after the traits.
+		for i, entry in DojoLogic.Known(m) do
+			local tech = Config.Techniques.ById[entry.id]
+			local chip = Widgets.Chip({
+				Text = string.format("%s · Lv %d", tech.name, entry.lv),
+				Color = C.Orange,
+				TextSize = Theme.TextSize.Small,
+				LayoutOrder = 20 + i,
+				Parent = traitsRow,
+			})
+			chip.Name = "Tech_" .. tech.id
+			Tiles.tap(chip, function()
+				ctx:Toast(string.format("%s: %s", tech.name, Config.Techniques.KindText[tech.kind] or ""), "info")
+			end)
 		end
 		local hidden = Config.Traits.ById[m.hidden or 0]
 		if stage >= 3 and hidden then
@@ -849,6 +964,23 @@ function MonsterDetail.Build(ctx)
 			Tiles.tap(chip, function()
 				ctx:Toast("The hidden trait shows when it grows into an Adult", "info")
 			end)
+		end
+		-- 3.11: spend a Trait Scroll from the Travelling Merchant.
+		if (tonumber(store:Get("profile.Merchant.scrolls")) or 0) > 0 and #StoreKit.asTable(m.traits) > 0 then
+			Button.new({
+				Name = "RerollTrait",
+				Text = "Reroll trait",
+				Color = C.Purple,
+				Size = UDim2.fromOffset(120, 28),
+				TextSize = Theme.TextSize.Small,
+				LayoutOrder = 10,
+				Parent = traitsRow,
+				OnClick = function()
+					if openReroll then
+						openReroll()
+					end
+				end,
+			})
 		end
 
 		-- Level up
@@ -1033,9 +1165,13 @@ function MonsterDetail.Build(ctx)
 		)
 	end)
 
-	local watch = StoreKit.watch(store, { "profile.Monsters", "profile.Currency", "session.Riding", "profile.Companions" }, function()
-		refresh()
-	end)
+	local watch = StoreKit.watch(
+		store,
+		{ "profile.Monsters", "profile.Currency", "session.Riding", "profile.Companions", "profile.Merchant" },
+		function()
+			refresh()
+		end
+	)
 
 	return {
 		Root = panel.Root,

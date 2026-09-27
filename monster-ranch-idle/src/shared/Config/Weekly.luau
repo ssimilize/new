@@ -87,6 +87,14 @@ Weekly.Pool = {
 		unlock = "gene_lab",
 	},
 	{
+		id = "dojo_3",
+		family = "dojo",
+		text = "Train 3 techniques at the Dojo",
+		topic = "SkillTrained",
+		target = 3,
+		unlock = "dojo",
+	},
+	{
 		id = "bounty_3",
 		family = "bounties",
 		text = "Defeat 3 bounties",
@@ -96,6 +104,7 @@ Weekly.Pool = {
 	},
 	{ id = "cook_10", family = "cooking", text = "Cook 10 dishes", topic = "DishCooked", target = 10, unlock = "kitchen" },
 	{ id = "fish_20", family = "fishing", text = "Catch 20 fish", topic = "FishCaught", target = 20, unlock = "fishing" },
+	{ id = "dig_10", family = "digsite", text = "Finish 10 digs", topic = "DigFinished", target = 10, unlock = "dig_site" },
 	{ id = "raids_5", family = "raids", text = "Finish 5 raids", topic = "RaidFinished", target = 5, unlock = "raids" },
 	{
 		id = "crystals_10",
@@ -113,6 +122,25 @@ Weekly.Pool = {
 		topic = "TouristVisited",
 		target = 15,
 		unlock = "tourists",
+	},
+	-- 3.11 · Travelling Merchant
+	{
+		id = "merchant_3",
+		family = "merchant",
+		text = "Shop 3 times at the Travelling Merchant",
+		topic = "MerchantBought",
+		target = 3,
+		unlock = "merchant",
+	},
+	-- 3.11 · Ranch Seasons: the season's own fish (they bite only in their season)
+	{
+		id = "season_fish_3",
+		family = "seasons",
+		text = "Catch 3 fish of the season",
+		topic = "FishCaught",
+		target = 3,
+		filter = { seasonal = true },
+		unlock = "fishing",
 	},
 }
 

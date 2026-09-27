@@ -51,8 +51,11 @@ return function(t)
 			expect(c:HasText("Now", screen)).toBe(true)
 			expect(c:HasText("This week", screen)).toBe(true)
 			expect(c:HasText("Coming up", screen)).toBe(true)
-			-- Nothing runs yet: a friendly line instead of an empty list.
-			expect(c:HasText("Nothing special is running right now.", screen)).toBe(true)
+			-- 3.11: the Ranch Season always runs (so the empty line never shows); the next one is listed.
+			local season = t.Shared("Logic.Seasons").At(SEPT)
+			expect(c:HasText(Config.Seasons.ById[season.id].name, screen)).toBe(true)
+			expect(c:HasText(Config.Seasons.ById[t.Shared("Logic.Seasons").Next(SEPT).id].name, screen)).toBe(true)
+			expect(c:HasText("Nothing special is running right now.", screen)).toBe(false)
 			expect(c:HasText("Weekly reset", screen)).toBe(true)
 			expect(c:HasText("Arena Season 1", screen)).toBe(true)
 			expect(c:HasText("Frostfall", screen)).toBe(true) -- months away, still listed

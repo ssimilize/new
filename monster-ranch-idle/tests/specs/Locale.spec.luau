@@ -69,6 +69,11 @@ return function(t)
 			expect(Locale.Translate("test", "Egg Shop\nSomething new")).toBe("Tienda de huevos\nSomething new")
 			expect(Locale.Translate("test", "Needs: Grove Egg")).toBe("Needs: Huevo del Bosque")
 			expect(Locale.Translate("test", "Grove Egg ×2 → Pearl Egg")).toBe("Huevo del Bosque ×2 → Huevo de Perla")
+			-- Monster Detail's branch line: the "{1}: {2}" template takes the whole text first, then its
+			-- first piece splits on lines, · lists and arrows (one level more than three).
+			local out, missing = Locale.Explain("es", "Savory → ??? · Sour → ???\nHeading for: ???")
+			expect(out).toBe("Salado → ??? · Ácido → ???\nRumbo a: ???")
+			expect(missing).toEqual({})
 		end)
 
 		it("sets symbols at either end aside", function()

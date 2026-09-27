@@ -745,7 +745,111 @@ Art.Models = {
 			P("ball", { 0.3, 0.3, 0.3 }, { 0.9, 0.3, 0.6 }, "Slate", "#E8E0CF", SMALL),
 		}
 	end,
+	-- 3.11 · Travelling Merchant pieces
+	caravan_lantern = function(a, b) -- a brass lantern hanging from a hooked post
+		return {
+			P("block", { 0.9, 0.2, 0.9 }, { 0, 0.1, 0 }, "Wood", WOOD_DARK),
+			P("cyl", { 0.35, 3.4, 0.35 }, { 0, 1.8, 0 }, "Wood", WOOD_DARK),
+			P("block", { 1, 0.2, 0.2 }, { 0.45, 3.4, 0 }, "Metal", "#3A3A44"),
+			P("block", { 0.7, 0.9, 0.7 }, { 0.85, 2.75, 0 }, "Metal", a),
+			P("block", { 0.5, 0.6, 0.5 }, { 0.85, 2.75, 0 }, "Neon", b, GLOW),
+			P("wedge", { 0.8, 0.3, 0.8 }, { 0.85, 3.35, 0 }, "Metal", a, SMALL),
+		}
+	end,
+	spice_crates = function(a, b) -- stacked crates with bright spice sacks
+		return {
+			P("block", { 1.4, 1.1, 1.4 }, { -0.7, 0.55, 0 }, "WoodPlanks", a),
+			P("block", { 1.3, 1, 1.3 }, { 0.75, 0.5, 0.1 }, "WoodPlanks", a),
+			P("block", { 1.1, 0.9, 1.1 }, { -0.6, 1.55, 0 }, "WoodPlanks", "#C08A4E"),
+			P("ball", { 0.8, 0.7, 0.8 }, { 0.7, 1.3, 0.1 }, "Fabric", b),
+			P("ball", { 0.6, 0.55, 0.6 }, { 1.05, 1.2, -0.35 }, "Fabric", "#F2A93B", SMALL),
+			P("ball", { 0.55, 0.5, 0.55 }, { -0.6, 2.2, 0 }, "Fabric", "#43B649", SMALL),
+		}
+	end,
+	silk_canopy = function(a, b) -- four poles under a draped silk roof and a cushion
+		return {
+			P("cyl", { 0.25, 3, 0.25 }, { -1.7, 1.5, -1.7 }, "Wood", WOOD_DARK),
+			P("cyl", { 0.25, 3, 0.25 }, { 1.7, 1.5, -1.7 }, "Wood", WOOD_DARK),
+			P("cyl", { 0.25, 3, 0.25 }, { -1.7, 1.5, 1.7 }, "Wood", WOOD_DARK),
+			P("cyl", { 0.25, 3, 0.25 }, { 1.7, 1.5, 1.7 }, "Wood", WOOD_DARK),
+			P("block", { 4, 0.2, 4 }, { 0, 3.1, 0 }, "Fabric", a),
+			P("wedge", { 4, 0.6, 2 }, { 0, 3.5, 1 }, "Fabric", b),
+			P("block", { 2.2, 0.5, 2.2 }, { 0, 0.25, 0 }, "Fabric", b),
+		}
+	end,
 }
+
+-- 3.11 · Dig Site skeleton displays: one model, shaped per fossil by the decor's `pose`.
+-- len/h: spine length and height; skull: size; tail: length and droop (degrees); leg: height;
+-- extra: one feature part (horns, a raised neck, fangs, tusks or a wing).
+local POSES = {
+	raptor = { len = 2.4, h = 1.8, skull = { 1, 0.55, 0.5 }, tail = { 2.2, 12 }, leg = 1.7, extra = "claw" },
+	trihorn = { len = 2.8, h = 1.4, skull = { 1.2, 0.9, 1 }, tail = { 1.4, 20 }, leg = 1.2, extra = "horns" },
+	longneck = { len = 2.6, h = 1.6, skull = { 0.6, 0.4, 0.4 }, tail = { 2.4, 16 }, leg = 1.4, extra = "neck" },
+	sabre_cat = { len = 2.2, h = 1.3, skull = { 0.8, 0.6, 0.6 }, tail = { 1, 30 }, leg = 1.2, extra = "fangs" },
+	woolly_tusk = { len = 2.6, h = 1.9, skull = { 1.1, 1, 1 }, tail = { 0.6, 40 }, leg = 1.7, extra = "tusks" },
+	sky_wing = { len = 1.8, h = 1.6, skull = { 1, 0.4, 0.35 }, tail = { 0.8, 10 }, leg = 1.4, extra = "wing" },
+}
+
+Art.Models.fossil_skeleton = function(a, b, def)
+	local pose = POSES[def and def.pose or ""] or POSES.raptor
+	local half = pose.len / 2
+	local h = pose.h
+	local sk = pose.skull
+	local parts = {
+		P("block", { 4, 0.4, 1.8 }, { 0, 0.2, 0 }, "WoodPlanks", b),
+		P("cyl", { 0.3, pose.len, 0.3 }, { 0, h, 0 }, "Limestone", a, { rot = { 0, 0, 90 } }),
+		P("block", sk, { half + sk[1] / 2, h + 0.15, 0 }, "Limestone", a),
+		P("block", { pose.len * 0.7, 0.7, 0.8 }, { 0, h - 0.4, 0 }, "Limestone", a, { alpha = 0.35 }),
+		P("block", { 0.2, h - 0.4, 0.7 }, { half * 0.6, (h - 0.4) / 2 + 0.4, 0 }, "Limestone", a),
+		P("block", { 0.2, h - 0.4, 0.7 }, { -half * 0.6, (h - 0.4) / 2 + 0.4, 0 }, "Limestone", a),
+		P("cyl", { 0.22, pose.tail[1], 0.22 }, {
+			-half - pose.tail[1] / 2 * math.cos(math.rad(pose.tail[2])),
+			h - pose.tail[1] / 2 * math.sin(math.rad(pose.tail[2])),
+			0,
+		}, "Limestone", a, { rot = { 0, 0, 90 - pose.tail[2] } }),
+	}
+	local x, y = half + sk[1] / 2, h + 0.15
+	if pose.extra == "horns" then
+		table.insert(parts, P("wedge", { 0.2, 0.7, 0.8 }, { x + 0.2, y + sk[2] / 2 + 0.3, 0 }, "Limestone", a, SMALL))
+	elseif pose.extra == "neck" then
+		table.insert(parts, P("cyl", { 0.25, 1.4, 0.25 }, { half + 0.2, h + 0.7, 0 }, "Limestone", a, { rot = { 0, 0, -20 } }))
+		parts[3].at = { half + 0.5, h + 1.45, 0 }
+	elseif pose.extra == "fangs" then
+		table.insert(parts, P("block", { 0.12, 0.5, 0.4 }, { x + 0.25, y - sk[2] / 2 - 0.2, 0 }, "Limestone", a, SMALL))
+	elseif pose.extra == "tusks" then
+		table.insert(parts, P("cyl", { 0.2, 1.2, 0.9 }, { x + 0.6, y - 0.3, 0 }, "Marble", a, { rot = { 0, 0, -60 }, small = true }))
+	elseif pose.extra == "wing" then
+		table.insert(parts, P("wedge", { 0.1, 1.2, 1.6 }, { 0, h + 0.6, 0 }, "Limestone", a, { rot = { 0, 90, 0 }, alpha = 0.2 }))
+	else
+		table.insert(parts, P("block", { 0.15, 0.4, 0.15 }, { half * 0.6 + 0.2, 0.55, 0 }, "Limestone", a, SMALL))
+	end
+	return parts
+end
+
+Art.Models.ancient_urn = function(a, b) -- a clay urn with a dark band, on a stone step
+	return {
+		P("block", { 1.8, 0.3, 1.8 }, { 0, 0.15, 0 }, "Slate", "#8E8A83"),
+		P("ball", { 1.4, 1.5, 1.4 }, { 0, 1.1, 0 }, "Sandstone", a),
+		P("cyl", { 1.42, 0.25, 1.42 }, { 0, 1.2, 0 }, "Sandstone", b),
+		P("cyl", { 0.6, 0.6, 0.6 }, { 0, 2, 0 }, "Sandstone", a),
+		P("cyl", { 0.85, 0.15, 0.85 }, { 0, 2.3, 0 }, "Sandstone", a),
+		P("block", { 0.15, 0.45, 0.15 }, { 0.62, 1.8, 0 }, "Sandstone", a, { rot = { 0, 0, 20 }, small = true }),
+		P("block", { 0.15, 0.45, 0.15 }, { -0.62, 1.8, 0 }, "Sandstone", a, { rot = { 0, 0, -20 }, small = true }),
+	}
+end
+
+Art.Models.stone_tablet = function(a, b) -- a carved slab standing in a plinth
+	return {
+		P("block", { 3, 0.4, 1.2 }, { 0, 0.2, 0 }, "Slate", b),
+		P("block", { 2.4, 2.8, 0.4 }, { 0, 1.8, 0 }, "Slate", a),
+		P("cyl", { 2.4, 0.4, 1.2 }, { 0, 3.2, 0 }, "Slate", a, { rot = { 90, 0, 0 } }),
+		P("block", { 1.8, 0.12, 0.05 }, { 0, 2.6, -0.22 }, "Slate", b, SMALL),
+		P("block", { 1.6, 0.12, 0.05 }, { 0, 2.1, -0.22 }, "Slate", b, SMALL),
+		P("block", { 1.8, 0.12, 0.05 }, { 0, 1.6, -0.22 }, "Slate", b, SMALL),
+		P("block", { 1.2, 0.12, 0.05 }, { 0, 1.1, -0.22 }, "Slate", b, SMALL),
+	}
+end
 
 -- The parts of one piece (a fresh table; callers may keep it).
 function Art.Pieces(def): { any }

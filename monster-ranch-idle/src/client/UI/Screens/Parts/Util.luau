@@ -222,6 +222,10 @@ function Util.rewardText(item): string
 		return Format.short(amount) .. " Ribbons"
 	elseif kind == "bait" then
 		return string.format("%s Bait", Format.short(amount))
+	elseif kind == "amber" then
+		return string.format("%s Amber", Format.short(amount))
+	elseif kind == "shovel" then
+		return string.format("%s Shovels", Format.short(amount))
 	end
 	return Format.short(amount)
 end

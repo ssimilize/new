@@ -147,7 +147,7 @@ Species.Lines = {
 		weight = 4.1,
 		special = "heal",
 		passive = "regen",
-		pools = { "common" },
+		pools = { "common", "amber" }, -- 3.11: also the Amber Egg
 	}),
 	line({
 		id = "petalpaw",
@@ -162,7 +162,7 @@ Species.Lines = {
 		weight = 2.9,
 		special = "strike",
 		passive = "crit",
-		pools = { "common" },
+		pools = { "common", "amber" }, -- 3.11: also the Amber Egg
 	}),
 	line({
 		id = "acornling",
@@ -177,7 +177,7 @@ Species.Lines = {
 		weight = 9.0,
 		special = "taunt",
 		passive = "thorns",
-		pools = { "common" },
+		pools = { "common", "amber" }, -- 3.11: also the Amber Egg
 	}),
 	-- ── Spark ─────────────────────────────────────────────────────────────
 	line({
@@ -245,7 +245,7 @@ Species.Lines = {
 		weight = 12.0,
 		special = "taunt",
 		passive = "guard",
-		pools = { "common" },
+		pools = { "common", "amber" }, -- 3.11: also the Amber Egg
 	}),
 	line({
 		id = "rumblet",
@@ -260,7 +260,7 @@ Species.Lines = {
 		weight = 4.8,
 		special = "stun",
 		passive = "lucky",
-		pools = { "common" },
+		pools = { "common", "amber" }, -- 3.11: also the Amber Egg
 	}),
 	line({
 		id = "crystomp",
@@ -275,7 +275,7 @@ Species.Lines = {
 		weight = 14.0,
 		special = "shield",
 		passive = "thorns",
-		pools = { "common" },
+		pools = { "common", "amber" }, -- 3.11: also the Amber Egg
 	}),
 	-- ── Gloom ─────────────────────────────────────────────────────────────
 	line({
@@ -294,7 +294,7 @@ Species.Lines = {
 		weight = 1.1,
 		special = "drain",
 		passive = "crit",
-		pools = { "common" },
+		pools = { "common", "amber" }, -- 3.11: also the Amber Egg
 	}),
 	line({
 		id = "wisplet",
@@ -309,7 +309,7 @@ Species.Lines = {
 		weight = 0.5,
 		special = "heal",
 		passive = "lucky",
-		pools = { "common" },
+		pools = { "common", "amber" }, -- 3.11: also the Amber Egg
 	}),
 	line({
 		id = "gloomcap",
@@ -324,7 +324,7 @@ Species.Lines = {
 		weight = 3.0,
 		special = "stun",
 		passive = "regen",
-		pools = { "common" },
+		pools = { "common", "amber" }, -- 3.11: also the Amber Egg
 	}),
 	-- ── Hybrids (breeding only; also rare Stampede drops) ─────────────────
 	line({

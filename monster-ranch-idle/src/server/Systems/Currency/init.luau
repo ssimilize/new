@@ -2,6 +2,7 @@
 	Currency (S1): every countable resource the player owns.
 
 	Keys: "coins", "gems", "stardust", "friendship", "treats", "ribbons" (Contest Ribbons, 1.5),
+	      "amber" (3.11: dug at the Dig Site, bartered at the Travelling Merchant),
 	      "food.<flavor>" (sweet/spicy/savory/sour), "token.<eventId>".
 	Config prices use { coins = n } / { gems = n } / { friendship = n } / { token = n } —
 	`token` means the running event's token (Config.Events).
@@ -20,9 +21,16 @@ local Currency = {
 	Dependencies = {},
 }
 
-local SIMPLE = { coins = true, gems = true, stardust = true, friendship = true, treats = true, ribbons = true }
-local DISPLAY =
-	{ coins = "coins", gems = "gems", stardust = "Stardust", friendship = "Friendship Points", treats = "Treats", ribbons = "Ribbons" }
+local SIMPLE = { coins = true, gems = true, stardust = true, friendship = true, treats = true, ribbons = true, amber = true }
+local DISPLAY = {
+	coins = "coins",
+	gems = "gems",
+	stardust = "Stardust",
+	friendship = "Friendship Points",
+	treats = "Treats",
+	ribbons = "Ribbons",
+	amber = "Amber",
+}
 
 Currency.Profile = {
 	Version = 1,
@@ -34,6 +42,7 @@ Currency.Profile = {
 			friendship = 0,
 			treats = 0,
 			ribbons = 0,
+			amber = 0, -- 3.11; older saves read a missing key as 0 (Balance)
 			tokens = {},
 			food = { sweet = 0, spicy = 0, savory = 0, sour = 0 },
 		}

@@ -96,6 +96,14 @@ return {
 		"GeneLab",
 		-- 3.10 · Fishing Pond
 		"Fishing",
+		-- 3.11 · Dig Site & Fossils
+		"DigSite",
+		-- 3.11 · Travelling Merchant
+		"Merchant",
+		-- 3.11 · Ranch Seasons
+		"Seasons",
+		-- 3.11 · Dojo
+		"Dojo",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

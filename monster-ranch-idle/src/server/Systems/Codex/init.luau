@@ -12,6 +12,8 @@
 	  Fails: unknown milestone, already claimed, not done yet ("Find N more forms first").
 	  3.10: Fish Log milestones (Logic/Codex.FishMilestones, "fish_<n>") count the kinds of fish
 	  caught (Fishing:SpeciesCaught; no Fishing system = none caught).
+	  3.11: Fossils milestones (Logic/Codex.FossilMilestones, "fossil_<n>") count fossils completed
+	  at the Dig Site (DigSite:FossilsComplete; no DigSite system = none).
 	  Gems arrive through Rewards:Grant (source "codex": the reward card); titles and the Codex
 	  Crown aura through Mastery:GrantItem (worn at once when that slot is empty).
 	Publishes CodexClaimed (player, { milestone, kind }).
@@ -29,7 +31,7 @@ local Logic = require(Shared.Logic.Codex)
 local Codex = {
 	Name = "Codex",
 	Dependencies = { "Monsters", "Rewards" },
-	OptionalDependencies = { "Mastery", "Fishing" },
+	OptionalDependencies = { "Mastery", "Fishing", "DigSite" },
 }
 
 -- Fills anything missing and drops what is not ours (a damaged or hand-edited section).
@@ -134,7 +136,7 @@ end
 
 local function claim(player, payload)
 	local s = mustSection(player)
-	local m = Logic.ById()[payload.milestone] or Logic.FishById()[payload.milestone]
+	local m = Logic.ById()[payload.milestone] or Logic.FishById()[payload.milestone] or Logic.FossilById()[payload.milestone]
 	if not m then
 		ctx:Fail("That milestone doesn't exist")
 	end
@@ -146,6 +148,12 @@ local function claim(player, payload)
 		local have = if Fishing then Fishing:SpeciesCaught(player) else 0
 		if have < m.need then
 			ctx:Fail(string.format("Catch %d more kinds of fish first", m.need - have))
+		end
+	elseif m.kind == "fossil" then
+		local DigSite = ctx:GetSystem("DigSite")
+		local have = if DigSite then DigSite:FossilsComplete(player) else 0
+		if have < m.need then
+			ctx:Fail(string.format("Complete %d more fossils first", m.need - have))
 		end
 	else
 		local have, need = Logic.Progress(m, Logic.Found(Monsters:Codex(player)))
