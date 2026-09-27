@@ -56,6 +56,9 @@ local MonsterModel = require(Client.Visuals.MonsterModel)
 local MonsterAnimator = require(Client.Visuals.MonsterAnimator)
 local Vfx = require(Client.Visuals.Vfx)
 local Quality = require(Client.Visuals.Quality)
+local FightSquad = require(Client.Visuals.FightSquad)
+local FightBolts = require(Client.Visuals.FightBolts)
+local FightLoot = require(Client.Visuals.FightLoot)
 local Audio = require(Client.Audio)
 local Voices = require(Client.Audio.Voices)
 local Theme = require(Client.UI.Theme)
@@ -96,8 +99,10 @@ local phase = "off" -- off | gather (lobby) | fight | fall | leave
 local phaseEnds = 0
 local phaseAt = 0
 local boss = nil -- { model, anim, def, height, bar, gui }
-local squad = {} -- { { model, anim, nextAttack } }
-local squadKey = ""
+local squadObj = FightSquad.new(
+	nil,
+	{ Logic = Logic, Appearance = Appearance, MonsterModel = MonsterModel, MonsterAnimator = MonsterAnimator, Vfx = Vfx, Config = Config }
+)
 local lastHp: number? = nil
 local lastFrac: number? = nil
 local lastFlinch = -math.huge
@@ -107,8 +112,14 @@ local storm = { weight = 0, target = 0, flash = 0, nextLightning = 0, written = 
 local stormEffect: ColorCorrectionEffect? = nil
 local stormTint = Color3.fromHex(A.storm.tint)
 
-local bolts = {} -- pool: { part, t, from, to, active, flashing }
-local numbers = {} -- pool: { part, gui, label, t, active }
+local boltsObj = FightBolts.new(nil, {
+	size = BOLT_SIZE,
+	boltSeconds = A.boltSeconds,
+	flashSeconds = FLASH_SECONDS,
+	numberSeconds = NUMBER_SECONDS,
+	numberPool = NUMBER_POOL,
+	poolCap = A.boltsPerSecond + 2,
+}, Create, Theme)
 local pacer = Logic.newPacer(A.boltsPerSecond)
 local boltColor = C.Gold
 local myDamage: number? = nil
@@ -262,6 +273,8 @@ local function buildArena()
 	f.Parent = workspace
 	folder = f
 	live = l
+	squadObj.live = l
+	boltsObj.live = l
 end
 
 -- ─── Models ────────────────────────────────────────────────────────────────────────
@@ -273,14 +286,6 @@ local function destroyModel(entry)
 	if entry.model then
 		entry.model:Destroy()
 	end
-end
-
-local function clearSquad()
-	for _, entry in squad do
-		destroyModel(entry)
-	end
-	table.clear(squad)
-	squadKey = ""
 end
 
 local function clearBoss()
@@ -303,52 +308,18 @@ local function build(appearance, scale: number?, effects: boolean): Model?
 	return model
 end
 
-local function keyOf(b): string
-	local parts = { tostring(Quality.Level()) }
-	for _, entry in (if type(b.squads) == "table" then b.squads else {}) do
-		if type(entry) == "table" then
-			table.insert(parts, tostring(entry.userId) .. ":" .. tostring(type(entry.looks) == "table" and #entry.looks or 0))
-		end
-	end
-	return table.concat(parts, ",")
-end
-
-local function leadColor(b)
-	local me = ctx.Player and ctx.Player.UserId
-	for _, entry in (if type(b.squads) == "table" then b.squads else {}) do
-		if type(entry) == "table" and entry.userId == me and type(entry.looks) == "table" and entry.looks[1] then
-			local def = Config.Species.ById[entry.looks[1].line]
-			local element = def and def.elements and Config.Elements.ById[def.elements[1]]
-			if element then
-				return Color3.fromHex(element.color)
-			end
-		end
-	end
-	return C.Gold
-end
-
 local function syncSquad(b)
-	local key = keyOf(b)
-	if key == squadKey then
-		return
-	end
-	clearSquad()
-	squadKey = key
-	boltColor = leadColor(b)
-	local picked = Logic.Pick(b.squads, ctx.Player and ctx.Player.UserId, A.squadPerPlayer, Logic.MaxMonsters(A, Quality.Level()))
-	local rings = Logic.Rings(#picked, A.ringInner, A.ringGap, A.ringSpacing)
-	local low = Quality.IsLow()
-	for i, pick in picked do
-		local look = pick.look
-		local ok, ap = pcall(Appearance.Preview, look.line, look.stage, look.form, look.rarity, look.variant)
-		local model = if ok and ap then build(ap, nil, pick.mine and not low) else nil
-		if model then
-			local anim = MonsterAnimator.new(model)
-			anim:SetOwn(pick.mine)
-			local at = centre + Vector3.new(rings[i].x, 0, rings[i].z)
-			anim:SetBase(CFrame.lookAt(at, Vector3.new(centre.X, at.Y, centre.Z)))
-			table.insert(squad, { model = model, anim = anim, nextAttack = clock + Logic.AttackOffset(i, #picked, A.attackEvery) })
-		end
+	local cfg = {
+		perPlayer = A.squadPerPlayer,
+		cap = Logic.MaxMonsters(A, Quality.Level()),
+		ringInner = A.ringInner,
+		ringGap = A.ringGap,
+		ringSpacing = A.ringSpacing,
+		attackEvery = A.attackEvery,
+	}
+	local changed = squadObj:Sync(b.squads, ctx.Player and ctx.Player.UserId, centre, cfg, Quality.Level(), Quality.IsLow(), clock)
+	if changed then
+		boltColor = squadObj:LeadColor(b.squads, ctx.Player and ctx.Player.UserId, C.Gold)
 	end
 end
 
@@ -424,7 +395,7 @@ end
 
 local function clearAll()
 	clearBoss()
-	clearSquad()
+	squadObj:Clear()
 	phase = "off"
 	if pendingFountain and not pendingFountain.closed then
 		pendingFountain.closed = true
@@ -435,101 +406,19 @@ end
 
 -- ─── Bolts and numbers ─────────────────────────────────────────────────────────────
 
-local function freeNumber()
-	for _, n in numbers do
-		if not n.active then
-			return n
-		end
-	end
-	if #numbers >= NUMBER_POOL or not live then
-		return nil
-	end
-	local anchor = part({ Name = "HitNumber", Size = Vector3.new(0.2, 0.2, 0.2), Transparency = 1, Parent = live })
-	local gui = New("BillboardGui", {
-		Size = UDim2.fromOffset(140, 50),
-		AlwaysOnTop = true,
-		LightInfluence = 0,
-		Enabled = false,
-		Parent = anchor,
-	})
-	local label = New("TextLabel", {
-		BackgroundTransparency = 1,
-		Font = Theme.Fonts.Display,
-		TextSize = Theme.TextSize.Title,
-		TextColor3 = C.White,
-		TextStrokeTransparency = 0.2,
-		Size = UDim2.fromScale(1, 1),
-		Text = "",
-		Parent = gui,
-	})
-	local n = { part = anchor, gui = gui, label = label, t = 0, active = false }
-	table.insert(numbers, n)
-	return n
-end
-
-local function showNumber(at: Vector3)
-	if myDelta <= 0 then
-		return
-	end
-	local n = freeNumber()
-	if not n then
-		return
-	end
-	n.active = true
-	n.t = 0
-	n.part.CFrame = CFrame.new(at + Vector3.new((math.random() - 0.5) * 6, 2, (math.random() - 0.5) * 6))
-	n.label.Text = "-" .. Format.short(math.floor(myDelta))
-	n.label.TextColor3 = boltColor
-	n.label.TextTransparency = 0
-	n.gui.StudsOffset = Vector3.zero
-	n.gui.Enabled = true
-end
-
-local function freeBolt()
-	for _, bolt in bolts do
-		if not bolt.active then
-			return bolt
-		end
-	end
-	if #bolts >= A.boltsPerSecond + 2 or not live then
-		return nil
-	end
-	local p = part({
-		Name = "Bolt",
-		Shape = Enum.PartType.Ball,
-		Size = Vector3.new(BOLT_SIZE, BOLT_SIZE, BOLT_SIZE),
-		Material = Enum.Material.Neon,
-		Transparency = 1,
-		Parent = live,
-	})
-	local bolt = { part = p, t = 0, from = centre, to = centre, active = false, flashing = false }
-	table.insert(bolts, bolt)
-	return bolt
-end
-
 local function launchBolt()
 	if not boss then
 		return
 	end
-	local bolt = freeBolt()
-	if not bolt then
-		return
-	end
 	local from = (viewer() or centre) + Vector3.new(0, 3, 0)
-	bolt.from = from
-	bolt.to = aimPoint()
-	bolt.t = 0
-	bolt.active = true
-	bolt.flashing = false
-	bolt.part.Color = boltColor
-	bolt.part.Size = Vector3.new(BOLT_SIZE, BOLT_SIZE, BOLT_SIZE)
-	bolt.part.Transparency = 0
-	bolt.part.CFrame = CFrame.new(from)
+	boltsObj:Launch(from, aimPoint(), boltColor)
 end
 
-local function hit(bolt)
-	Vfx.Burst("hatch", bolt.to, { color = boltColor, scale = 1 })
-	showNumber(bolt.to)
+local function onBoltHit(pos: Vector3)
+	Vfx.Burst("hatch", pos, { color = boltColor, scale = 1 })
+	if myDelta > 0 then
+		boltsObj:ShowNumber(pos, "-" .. Format.short(math.floor(myDelta)), boltColor)
+	end
 	if boss and clock - lastFlinch >= A.flinchGap and boss.anim:GetState() == "idle" and not boss.anim:IsMoving() then
 		lastFlinch = clock
 		boss.anim:Play("hurt")
@@ -537,54 +426,11 @@ local function hit(bolt)
 end
 
 local function stepBolts(dt: number)
-	for _, bolt in bolts do
-		if bolt.active then
-			bolt.t += dt
-			if not bolt.flashing then
-				local p = bolt.t / A.boltSeconds
-				if p >= 1 then
-					bolt.flashing = true
-					bolt.part.CFrame = CFrame.new(bolt.to)
-					hit(bolt)
-				else
-					bolt.part.CFrame = CFrame.new(bolt.from:Lerp(bolt.to, p) + Vector3.new(0, math.sin(p * math.pi) * 4, 0))
-				end
-			else
-				local f = (bolt.t - A.boltSeconds) / FLASH_SECONDS
-				if f >= 1 then
-					bolt.active = false
-					bolt.part.Transparency = 1
-				else
-					local s = BOLT_SIZE + f * 4
-					bolt.part.Size = Vector3.new(s, s, s)
-					bolt.part.Transparency = f
-				end
-			end
-		end
-	end
-	for _, n in numbers do
-		if n.active then
-			n.t += dt
-			local f = n.t / NUMBER_SECONDS
-			if f >= 1 then
-				n.active = false
-				n.gui.Enabled = false
-			else
-				n.gui.StudsOffset = Vector3.new(0, f * 4, 0)
-				n.label.TextTransparency = math.max(0, f * 1.4 - 0.4)
-			end
-		end
-	end
+	boltsObj:Step(dt, onBoltHit)
 end
 
 local function activeBolts(): number
-	local count = 0
-	for _, bolt in bolts do
-		if bolt.active then
-			count += 1
-		end
-	end
-	return count
+	return boltsObj:ActiveBolts()
 end
 
 -- ─── Storm ─────────────────────────────────────────────────────────────────────────
@@ -657,9 +503,7 @@ local function startEnd(fell: boolean)
 			boss.bar.Size = UDim2.fromScale(if fell then 0 else 1, 1)
 		end
 	end
-	for _, entry in squad do
-		entry.anim:Play(if fell then "happy" else "idle")
-	end
+	squadObj:PlayAll(if fell then "happy" else "idle")
 end
 
 local function stagger()
@@ -701,15 +545,7 @@ local function stepFight(b)
 		nextBossAttack = clock + A.bossAttackEvery
 		boss.anim:Play("attack")
 	end
-	for _, entry in squad do
-		if clock >= entry.nextAttack then
-			entry.nextAttack += A.attackEvery
-			if entry.nextAttack < clock then
-				entry.nextAttack = clock + A.attackEvery
-			end
-			entry.anim:Play("attack")
-		end
-	end
+	squadObj:Step(clock, A.attackEvery)
 end
 
 local function fireFountain(f)
@@ -717,15 +553,8 @@ local function fireFountain(f)
 	f.firedAt = clock
 	local payload = f.payload
 	local pos = aimPoint()
-	Vfx.Burst("coins", pos, { scale = 3 })
-	if payload.egg then
-		Vfx.Burst("hatch", pos, { scale = 2, color = C.Gold })
-	end
-	local k = kit()
-	if k and type(payload.rewards) == "table" then
-		local rank = tonumber(payload.rank) or 0
-		k:Reward(payload.rewards, { from = pos, minSize = if rank >= 1 and rank <= 3 then "big" else nil })
-	end
+	local rank = tonumber(payload.rank) or 0
+	FightLoot.Fire(Vfx, kit(), pos, { rewards = payload.rewards, egg = payload.egg, eggColor = C.Gold, big = rank >= 1 and rank <= 3 })
 end
 
 local function stepFountain()
@@ -925,7 +754,7 @@ function StampedeArena.Stats()
 	return {
 		phase = phase,
 		boss = boss ~= nil,
-		squad = #squad,
+		squad = squadObj:Count(),
 		bolts = activeBolts(),
 		storm = storm.weight,
 	}
@@ -973,8 +802,7 @@ function StampedeArena.Destroy()
 		folder:Destroy()
 		folder = nil
 	end
-	table.clear(bolts)
-	table.clear(numbers)
+	boltsObj:Clear()
 end
 
 return StampedeArena

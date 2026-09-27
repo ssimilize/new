@@ -36,6 +36,16 @@ return function(t)
 		return h:Rejoin(p)
 	end
 
+	local function models(f): number
+		local n = 0
+		for _, child in f:GetChildren() do
+			if child:IsA("Model") then
+				n += 1
+			end
+		end
+		return n
+	end
+
 	describe("Titan invasion client", function()
 		it("shows the banner then the shared bar, draws the giant, and cleans up after it falls", function()
 			local h = TestKernel.new({ systems = allSystems(), startTime = BOOT })
@@ -83,6 +93,9 @@ return function(t)
 			expect(T:State().state).toBe("active")
 			local p = fighter(h)
 			local c = ClientHarness.new(h, p) -- after Titan.Starting / Titan.Started went out
+			local Titan = c:require(c.clientFolder.Controllers.TitanInvasion)
+			local Workspace = c.world.game:GetService("Workspace")
+			local centre = Config.World.StampedeArena.center
 			c:Advance(0.5)
 			local feedback = c.kernel.UI.Feedback
 			expect(c:HasText("The Titan is here!", feedback)).toBe(true)
@@ -90,14 +103,25 @@ return function(t)
 			c:Advance(1)
 			expect(c:Store("session.Titan").joined).toBe(true)
 			expect(c:Button("Join", feedback)).toBe(nil)
+			-- R2 titan squads: your joined squad draws in a ring round the giant.
+			c.character:PivotTo(t.Roblox.CFrame.new(t.Roblox.Vector3.new(centre[1], 0, centre[2])))
+			c:Advance(1)
+			local folder = Workspace:FindFirstChild("TitanInvasion")
+			expect(folder ~= nil).toBe(true)
+			local gTitan = c:Store("global.Titan")
+			expect(#(gTitan.squads or {})).toBe(1)
+			expect(Titan:Stats().squad).toBe(3)
+			expect(models(folder)).toBe(4) -- 3 squad monsters + the giant
 
 			local cheer = c:Button("Cheer", feedback)
 			expect(cheer ~= nil).toBe(true)
-			for _ = 1, 5 do
+			for _ = 1, 20 do
 				c:Click(cheer)
 			end
+			expect(Titan:Stats().bolts).toBe(A.boltsPerSecond)
 			c:Advance(1)
 			expect((tonumber(c:Store("session.Titan").cheer) or 0) > 0).toBe(true)
+			expect(Titan:Stats().bolts).toBe(0) -- landed and back in the pool
 
 			-- Found in Studio 2026-09-26: the HP fill was the banner's own purple (a full bar read as
 			-- empty), the banner sat on top of open screens, and "1 servers" showed.
@@ -125,6 +149,46 @@ return function(t)
 			c:Advance(0.2)
 			expect(banner.Visible).toBe(true)
 			expect(c.world.errors).toEqual({})
+		end)
+
+		it("plays the fall and the loot fountain for a joined player, then cleans up after it", function()
+			local h = TestKernel.new({ systems = allSystems(), startTime = SLOT + 60 })
+			local T = h:System("Titan")
+			expect(T:State().state).toBe("active")
+			local p = fighter(h)
+			local c = ClientHarness.new(h, p)
+			local Titan = c:require(c.clientFolder.Controllers.TitanInvasion)
+			local Workspace = c.world.game:GetService("Workspace")
+			local centre = Config.World.StampedeArena.center
+
+			c:Advance(0.5)
+			c:Request("Titan.Join")
+			c:Advance(1)
+			expect(c:Store("session.Titan").joined).toBe(true)
+			c.character:PivotTo(t.Roblox.CFrame.new(t.Roblox.Vector3.new(centre[1], 0, centre[2])))
+			c:Advance(0.5)
+			local folder = Workspace:FindFirstChild("TitanInvasion")
+
+			-- Defeat: the shared pool reads empty, the giant falls, the loot fountain plays at the
+			-- arena before the result popup (Broadcasts hands Titan.Result to :Fountain first).
+			local network = h.adapters and h.adapters.network
+			if network then
+				network.titan[tostring(SLOT)] = { hp = 0, servers = {} }
+			end
+			c:Advance(Cfg.ReportSeconds + 1)
+			expect(T:State().state).toBe("fallen")
+			expect(c:HasText("The titan falls!", c.kernel.UI.Top)).toBe(false) -- waits for the fountain
+			c:Advance(A.fallSeconds + A.fountainSeconds + 0.5)
+			expect(c:HasText("The titan falls!", c.kernel.UI.Top)).toBe(true)
+			c:Click(c:Button("Nice!", c.kernel.UI.Top))
+
+			c:Advance(A.leaveSeconds + A.storm.fade + 1)
+			local stats = Titan:Stats()
+			expect(stats.phase).toBe("off")
+			expect(stats.giant).toBe(false)
+			expect(stats.squad).toBe(0)
+			expect(models(folder)).toBe(0)
+			expect(c:Problems()).toEqual({})
 		end)
 	end)
 end
