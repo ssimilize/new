@@ -44,7 +44,7 @@ players get and where it lives in the code.
 
 **For players**
 - **Ranch Orders** (Ranch Level 10): buyers post 3 orders every day (UTC) on the Job Board's new
-  **Orders** tab. The HUD button is now called **Board**.
+  **Orders** tab (the HUD's Jobs button).
 - **Monster orders** ask for a Teen or Adult with good genes:
   - **Easy**: one stat at grade C or better. **Medium**: one stat at grade B or better.
   - **Hard** (Ranch Level 20+): one stat at grade A, or two stats at grade B, or a gene total of

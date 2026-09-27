@@ -1,6 +1,6 @@
 --[[
 	OrdersClient (update 3.8): Ranch Orders through the real client (ClientHarness): the Orders
-	tab on the Job Board and its lock, the HUD's "Board" button, a monster picked by real clicks
+	tab on the Job Board and its lock, the HUD's Jobs button, a monster picked by real clicks
 	with the cheapest qualifying one first, the confirm that names it, the pay, the daily
 	reroll, and the orders in Spanish.
 ]]
@@ -84,13 +84,13 @@ return function(t)
 	end
 
 	describe("Ranch Orders", function()
-		it("sits on the Board's Orders tab and stays locked before Level 10", function()
+		it("sits on the Job Board's Orders tab and stays locked before Level 10", function()
 			local h = TestKernel.new({ systems = allSystems() })
 			local p = h:Join()
 			levelTo(h, p, 6)
 			local c = ClientHarness.new(h, p)
 			c:Advance(1)
-			expect(ClientHarness.buttonText(hudBoard(c))).toBe("Board")
+			expect(ClientHarness.buttonText(hudBoard(c))).toBe("Jobs")
 			local screen = c:Open("Jobs")
 			c:Advance(0.5)
 			expect(c:HasText("Pick a job", screen)).toBe(true)
@@ -153,7 +153,7 @@ return function(t)
 			expectClean(c)
 		end)
 
-		it("shows the orders and the Board in Spanish", function()
+		it("shows the orders and the Jobs button in Spanish", function()
 			local h = TestKernel.new({ systems = allSystems() })
 			local p = h:Join()
 			levelTo(h, p, 10)
@@ -161,7 +161,7 @@ return function(t)
 			p = knownOrders(h, p)
 			local c = ClientHarness.new(h, p, { localeId = "es-mx" })
 			c:Advance(1)
-			expect(ClientHarness.buttonText(hudBoard(c))).toBe("Tablón")
+			expect(ClientHarness.buttonText(hudBoard(c))).toBe("Trabajos")
 			local screen = c:Open("Jobs")
 			c:Advance(0.5)
 			ordersTab(c, screen, "Pedidos")

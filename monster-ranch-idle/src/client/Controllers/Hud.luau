@@ -777,7 +777,7 @@ local function build()
 	sideButton(left, "Daily", "Daily", C.Gold, Icon.new("star", 28), 6, function()
 		openScreen("LoginStreak")
 	end)
-	sideButton(left, "Jobs", "Board", C.Purple, previewIcon("pebblet", 30), 7, function()
+	sideButton(left, "Jobs", "Jobs", C.Purple, previewIcon("pebblet", 30), 7, function()
 		openScreen("Jobs")
 	end, Config.Jobs.Unlock)
 

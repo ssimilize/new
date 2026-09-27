@@ -146,7 +146,7 @@ return {
 	["Blossom"] = "Flor",
 	["Blossom Glade"] = "Claro florido",
 	["Blush"] = "Rubor",
-	["Board"] = "Tablón",
+	["Board"] = "Tabla",
 	["Boards"] = "Ranking",
 	["Boost"] = "Turbo",
 	["Boost!"] = "¡Turbo!",
