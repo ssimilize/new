@@ -163,6 +163,11 @@ function RanchShowcase.Build(snap, origin: CFrame, opts: { title: string?, now: 
 	local surface = New("SurfaceGui", { Face = Enum.NormalId.Front, CanvasSize = Vector2.new(360, 48), LightInfluence = 0, Parent = sign })
 	Create.Text({ Text = o.title or "Visiting Showcase", TextScaled = true, Size = UDim2.fromScale(1, 1), Parent = surface })
 	label(gate, sign, string.format("%s's ranch", tostring(snap.name or "")), 3, Theme.TextSize.Body, true)
+	local stars = math.clamp(math.floor(tonumber(snap.stars) or 0), 0, 5)
+	if stars > 0 then
+		-- 3.10: the ranch's Appeal (Ranch Tourists)
+		label(gate, sign, string.rep("★", stars) .. string.rep("☆", 5 - stars), 5.6, Theme.TextSize.Body).Name = "Appeal"
+	end
 
 	-- Best friends beside the gate, facing out.
 	for i, b in snap.best or {} do

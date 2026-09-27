@@ -95,6 +95,15 @@ Weekly.Pool = {
 		target = 10,
 		unlock = "region_sky",
 	},
+	-- 3.10 · Ranch Tourists
+	{
+		id = "tourists_15",
+		family = "tourists",
+		text = "Welcome 15 tourists",
+		topic = "TouristVisited",
+		target = 15,
+		unlock = "tourists",
+	},
 }
 
 Weekly.ById = {}

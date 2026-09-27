@@ -2,7 +2,7 @@
 	Logic/Visits (glow-up Y): pure rules for ranch snapshots and the crown. No Roblox APIs, so
 	everything here is unit-tested in Lune (Visits.spec).
 
-	  Visits.Build(Config, plot, best, now) -> Snapshot     from a public plot record (Plots:Public)
+	  Visits.Build(Config, plot, best, now, stars?) -> Snapshot   from a public plot record (Plots:Public)
 	  Visits.Sanitize(Config, raw) -> Snapshot?              repairs or rejects a loaded record
 	  Visits.Fit(Config, snap) -> (Snapshot, dropped)        trims monsters (then best, decor) to maxBytes
 	  Visits.Encode(value) -> string                         deterministic text (size estimate, change key)
@@ -11,7 +11,7 @@
 	  Visits.Monsters(snap, max) -> { Appearance }           the ranch's showiest monsters (the stage)
 
 	Snapshot (version 1; every field is always present):
-	  { v, userId, name, level, likes, at,
+	  { v, userId, name, level, likes, at, stars,      -- stars: Ranch Tourists appeal 1-5, 0 = none (3.10)
 	    pens   = { { theme = string|false, decor = { decorId }, capacity, jarTier, monsters = { Appearance } } },
 	    garden = { tier, plots = { { flavor = string|false, readyAt } } } | false,
 	    best   = { { hearts, appearance = Appearance } },   -- Bond best friends, the gate
@@ -208,6 +208,7 @@ function Visits.Sanitize(Config, raw)
 		level = int(raw.level, 0, 1000, 0),
 		likes = int(raw.likes, 0, 1e9, 0),
 		at = num(raw.at, 0, 1e10, 0),
+		stars = int(raw.stars, 0, 5, 0),
 		pens = pens,
 		garden = garden,
 		best = best,
@@ -216,7 +217,7 @@ function Visits.Sanitize(Config, raw)
 end
 
 -- best = { { hearts, appearance } } (Bond best friends, already looked up by the caller).
-function Visits.Build(Config, plot, best, now: number)
+function Visits.Build(Config, plot, best, now: number, stars: number?)
 	plot = if type(plot) == "table" then plot else {}
 	local snap = Visits.Sanitize(Config, {
 		userId = plot.userId,
@@ -224,6 +225,7 @@ function Visits.Build(Config, plot, best, now: number)
 		level = plot.level,
 		likes = plot.likes,
 		at = now,
+		stars = stars or 0,
 		pens = plot.pens,
 		garden = plot.garden,
 		best = best,

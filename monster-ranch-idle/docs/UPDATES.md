@@ -3,6 +3,45 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.10 · Ranch life
+
+### Ranch Tourists
+
+**For players**
+- From Ranch Level 11, tourists visit your ranch: one about every 10 minutes while you play.
+  Each one walks in through your gate, stops to look around, shows its stars and leaves.
+- Every tourist pays a few minutes of your ranch income: 40 seconds of income per star (so 5
+  stars pay 200 seconds). While you are away, up to 6 tourists still come, and the Welcome Back
+  summary tells you ("6 tourists visited while you were away").
+- Your ranch's **Appeal** (0-100, 1-5 stars) comes from five things: how much decor you placed,
+  how many kinds of decor, your pens (how many and how full), the rarest monsters in your pens and
+  your Codex. A tip names what would help most ("More lights would be nice", "Fill your pens").
+- The new **Guestbook** shows your stars, a bar for each part of your Appeal, the tip, the next
+  tourist's countdown and the last 20 reviews. Open it at the little stand beside your gate or
+  with the "Guestbook" button on the Decorate screen.
+- Friends visiting your ranch in the Visiting Showcase see your Appeal stars.
+- New weekly goal: "Welcome 15 tourists".
+
+**In the code**
+- `Config/Tourists`: cadence (`Interval` 600 s, `AwayMax` 6, `BookSize` 20, `SecondsPerStar` 40),
+  Appeal weights (decor 25, variety 20, pens 20, rarity 20, codex 15), `DecorFull` 40,
+  `VarietyFull` 8, `RarityTop` 3, `CodexFull` 60, `StarSteps` 20/40/60/80, category names, tips,
+  review lines, visitor names and the walk's plot-local spots.
+- `Logic/Tourists`: `Appeal(facts)`, `Stars`, `Tip`, `Offset`/`Slot`/`NextAt` (slots of the unix
+  clock offset by `Rng.seed("tourists", userId)`), `Review` (seeded by user and slot), `Pay`,
+  `Push`, `StarText`.
+- `Systems/Tourists` (unlock `tourists` 11): profile `{ slot, count, book }`, session
+  `{ score, stars, parts, tip, nextAt, unlocked }`, global `walk` (each player's last visit for the
+  clients to draw). A 5 s tick pays due slots; a join pays the missed ones (max 6) with a
+  WelcomeItem. Publishes `TouristVisited (player, { stars })`. Public `Tourists:Appeal(player)`,
+  `Tourists:Stars(player)`. No actions.
+- Visits: the snapshot carries `stars` (`Logic/Visits.Build(..., stars)`, sanitized 0-5); the
+  Visits bar and `Visuals/RanchShowcase` gate show them.
+- Client: `Controllers/Tourists` (stand + prompt, walking tourist built from Parts, no avatar
+  load) and `Screens/Guestbook`; Decorate's header has a "Guestbook" button.
+- `Config.Decor.Layout.keepOut` keeps decor off the stand at plot-local (68, 16).
+- Weekly goal `tourists_15` (family `tourists`, unlock `tourists`).
+
 ## 3.9 · Family and fortune
 
 ### Buyer reputation

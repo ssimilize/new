@@ -46,7 +46,7 @@ local connections = {}
 local crown = { model = nil :: Model?, plot = 0, angle = 0, base = nil :: CFrame? }
 local showcase = { model = nil :: Model?, owner = 0, monsters = 0 }
 local stage = { folder = nil :: Folder?, models = {}, key = "", near = false, entry = nil, plate = nil :: TextLabel? }
-local bar = { frame = nil :: Frame?, title = nil :: TextLabel? }
+local bar = { frame = nil :: Frame?, title = nil :: TextLabel?, stars = nil :: TextLabel? }
 local retry = nil -- { userId, at } a snapshot request waiting on a teleport that may not happen
 local elapsed = 0
 
@@ -179,10 +179,22 @@ local function buildBar()
 	bar.title = Create.Text({
 		Text = "",
 		TextSize = Theme.TextSize.Small + 1,
-		Size = UDim2.new(1, -12, 0, 30),
+		Size = UDim2.new(1, -92, 0, 30),
 		Position = UDim2.fromOffset(6, 2),
 		Parent = frame,
 	})
+	bar.stars = Create.Text({
+		Name = "Appeal",
+		Text = "",
+		TextSize = Theme.TextSize.Small,
+		TextColor3 = C.Gold,
+		Stroke = true,
+		AnchorPoint = Vector2.new(1, 0),
+		Size = UDim2.fromOffset(84, 30),
+		Position = UDim2.new(1, -6, 0, 2),
+		Parent = frame,
+	})
+	bar.stars:SetAttribute("Localize", false)
 	local row = New("Frame", {
 		Name = "Buttons",
 		BackgroundTransparency = 1,
@@ -255,6 +267,11 @@ local function syncShowcase()
 	end
 	if bar.title then
 		bar.title.Text = string.format("Visiting %s's ranch", tostring(snap.name or ""))
+	end
+	if bar.stars then
+		-- 3.10: the ranch's Appeal from Ranch Tourists (0 = none)
+		local n = math.clamp(math.floor(tonumber(snap.stars) or 0), 0, 5)
+		bar.stars.Text = if n > 0 then string.rep("★", n) .. string.rep("☆", 5 - n) else ""
 	end
 	if bar.frame then
 		bar.frame.Visible = true

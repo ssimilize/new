@@ -721,6 +721,7 @@ Api.State = {
 		Visits = "{ day, liked = { ['u'..userId]: true }, paidCount, got, week, weekLikes, received }  -- glow-up Y (paid private)",
 		Decor = "{ layout = { { id, x, z, rot } }, migrated, starter }  -- glow-up Z: plot-local grid units, rot × 45°",
 		RaceGear = "{ owned = { [gearId]: true }, equipped = { saddle, trail, banner }, races, live, podiums, wins, duels }  -- glow-up LR",
+		Tourists = "{ slot, count, book = { { at, stars, who, good, gi, bad, bi } } }  -- 3.10: Ranch Tourists (Logic/Tourists)",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -743,6 +744,7 @@ Api.State = {
 		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } }, moderator: boolean, queue = { view + reports, creatorId } }",
 		Arena = "{ rating, tier, attemptsLeft, season, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
 		Reminders = "{ available: boolean, prompt: boolean }  -- prompt = show Roblox's notification opt-in now",
+		Tourists = "{ score, stars, parts = { [categoryId]: 0..1 }, tip, nextAt, unlocked }  -- 3.10: the ranch's Appeal and the next tourist",
 		Visits = "{ showcase: RanchSnapshot | false }  -- glow-up Y: the friend's ranch in this player's Visiting Showcase (Logic/Visits)",
 		LiveRace = "{ heat: number|false, meter, lap, progress, strikes, finished, dq, result = { place, time, finished, field, rewards, cup, dq }|false }  -- glow-up LR",
 	},
@@ -770,6 +772,7 @@ Api.State = {
 		Visits = "{ crown = { userId, plot, likes, name } | false, stage = { week, userId, name, likes, monsters = { Appearance } } | false }  -- glow-up Y",
 		LiveRace = "{ state: 'idle'|'lobby'|'countdown'|'running'|'podium', heat, lobbyEndsAt, goAt, podiumEndsAt, laps, racers = { { userId, name, appearance, lane, progress, lateral, finished, dq } }, ghosts = { { name, time, lane } }, results = { { name, place, time|false, ghost, userId, dq, appearance? } }|false }  -- glow-up LR",
 		RaceGear = "{ here = { ['u'..userId]: { saddle, trail, banner } } }  -- glow-up LR: equipped racing gear in this server",
+		Tourists = "{ walk = { ['u'..userId]: { n, at, stars } } }  -- 3.10: each player's last tourist, walked onto their plot by every client",
 	},
 }
 
@@ -807,6 +810,7 @@ Api.Topics = {
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
 	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
+	TouristVisited = "(player, { stars: number })  -- 3.10: one Ranch Tourist visited (online or while away)",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",

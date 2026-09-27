@@ -119,6 +119,25 @@ return {
 				ctx.Router:Close("Decorate")
 			end,
 		})
+		-- 3.10: the Guestbook (Ranch Tourists): the ranch's Appeal and what tourists said.
+		Button.new({
+			Name = "Guestbook",
+			Text = "Guestbook",
+			Color = C.Blue,
+			Size = UDim2.fromOffset(124, 46),
+			TextSize = Theme.TextSize.Small,
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -170, 0, 8),
+			Parent = root,
+			OnClick = function()
+				if decor and decor.Dirty() then
+					ctx:Toast("Save your layout first", "info")
+					return
+				end
+				ctx.Router:Close("Decorate")
+				ctx.Router:Open("Guestbook")
+			end,
+		})
 
 		local tools = New("Frame", {
 			Name = "Tools",

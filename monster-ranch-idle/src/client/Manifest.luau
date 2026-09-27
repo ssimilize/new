@@ -80,6 +80,8 @@ return {
 		"Visits", -- glow-up Y: the crown, the Visiting Showcase, Ranch of the Week
 		-- Glow-up Z: every plot's placed decor, night lights, placement mode's world side
 		"Decor",
+		-- 3.10: Ranch Tourists walking onto plots, the Guestbook stand
+		"Tourists",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters
@@ -94,6 +96,7 @@ return {
 		"Expeditions",
 		"Breeding",
 		"Jobs", -- 3.7 · Ranch Jobs
+		"Guestbook", -- 3.10 · Ranch Tourists
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",
