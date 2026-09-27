@@ -1,7 +1,7 @@
 {
   "foundry": {
-    "commit": "2365180",
-    "syncedAt": "2026-09-27T23:18:48+00:00"
+    "commit": "85e5db5",
+    "syncedAt": "2026-09-27T23:26:15+00:00"
   },
   "game": "monster-ranch",
   "packages": {
@@ -69,6 +69,21 @@
         "EffectGraph.luau": "b871f59b305b71e54267ab3a24f97fbc827c08f5b2f466583e72e1b4e5eb0a65",
         "library/guildhall.luau": "93bf0187f24c2487ee746f02ddf3dd3b94e9c30313d8e1a81a3ccd7ab3848fb5",
         "library/monster-ranch.luau": "a7800450602bdacdb2e9e8685abf54d0af5b99f517d9b20c2b16012eb428fe40"
+      }
+    },
+    "Cinema": {
+      "version": "0.1.0",
+      "files": {
+        "Cinema.luau": "e59701c4123dd31f7f3b72829b705ca64c5edc3e029b13af82b6d3f5fa64afc2",
+        "Ease.luau": "8ff18434fd8d89e17f3723cf6bb3e466484addf921591b7cfcc9e4a4ddb18a41",
+        "Focus.luau": "4bf92ef38b2ff0005335de89535803b9f8bcec2efeec23e17b1d86193fdd6f98",
+        "Language.luau": "41b0d41ff64dbcc84d3952c54add38ccf61d78f43a4ec3df86882095e47190be",
+        "PhotoMode.luau": "ef20bc16f8fb8483c1d804705d30f8ad1c91afe2f57d789ec664c96dd23ceb39",
+        "profiles/guildhall.luau": "953732e2cfbb19897865e04f937f3c0892cc882277416f9770d71dbb13e0e036",
+        "profiles/monster-ranch.luau": "e82cf163568401b39804740a9a88055a669887a9994b6e4bf829dcd77500d634",
+        "Rails.luau": "f164028240907b2c8e91ed44a363c8b7f9475c98bee640de7939e64c96f2b32e",
+        "Recorder.luau": "53ac92ced6c66dee9b1b832297e7e4684a9b76b906a938c05e2b13353a1e5a74",
+        "Vec.luau": "6c759a8dc49a9b1391ff88a7efffc4cebdc83c296832fb58bc9b93fcca57f6e9"
       }
     }
   },
