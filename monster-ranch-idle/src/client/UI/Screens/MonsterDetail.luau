@@ -291,7 +291,28 @@ function MonsterDetail.Build(ctx)
 			openFamily()
 		end
 	end)
-	local traitsRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 10, Parent = middle }, 6)
+	-- Scrolls sideways: two traits, the hidden one, the Reroll button (3.11) and up to two Dojo
+	-- techniques (3.11) are wider than the column.
+	local traitsRow = New("ScrollingFrame", {
+		Name = "Traits",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, 0, 0, 30),
+		LayoutOrder = 10,
+		CanvasSize = UDim2.fromScale(0, 0),
+		AutomaticCanvasSize = Enum.AutomaticSize.X,
+		ScrollingDirection = Enum.ScrollingDirection.X,
+		ScrollBarThickness = 3,
+		Selectable = false,
+		Parent = middle,
+	}, {
+		New("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal,
+			Padding = UDim.new(0, 6),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			VerticalAlignment = Enum.VerticalAlignment.Top,
+		}),
+	})
 	local actionRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 54), LayoutOrder = 11, Parent = middle }, 8)
 	local feedButton = Button.new({
 		Text = "Feed",

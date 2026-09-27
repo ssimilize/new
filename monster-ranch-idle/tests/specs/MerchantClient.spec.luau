@@ -165,6 +165,19 @@ return function(t)
 			c:Advance(1)
 			local button = detail:FindFirstChild("RerollTrait", true)
 			expect(button ~= nil).toBe(true)
+			-- The trait chips beside it keep their tap button out of the row's layout; laid out, it
+			-- stretched each chip to ~680 px and pushed this button off-screen (found in Studio).
+			local chips = 0
+			for _, chip in button.Parent:GetChildren() do
+				if chip.Name == "Chip" then
+					chips += 1
+					expect(chip:FindFirstChild("Tap")).toBe(nil)
+					expect(chip:FindFirstChild("Tap", true) ~= nil).toBe(true)
+				end
+			end
+			expect(chips > 0).toBe(true)
+			-- Traits, the hidden trait, this button and Dojo techniques overflow the column: the row scrolls.
+			expect(button.Parent:IsA("ScrollingFrame")).toBe(true)
 			c:Click(clickable(button))
 			c:Advance(0.5)
 			expect(c:HasText("Trait Scrolls: 1", detail)).toBe(true)
