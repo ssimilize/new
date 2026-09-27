@@ -98,6 +98,8 @@ return {
 		"Fishing",
 		-- 3.11 · Dig Site & Fossils
 		"DigSite",
+		-- 3.11 · Travelling Merchant
+		"Merchant",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

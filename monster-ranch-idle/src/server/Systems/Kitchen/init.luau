@@ -27,6 +27,12 @@
 	mood (to the max), bond (Bond:AddHeart), job (Jobs:RegisterOutputBoost "kitchen"), loot
 	(Expeditions:RegisterLootModifier "kitchen", spent when a run with that monster is claimed).
 
+	Public API (3.11, for the Travelling Merchant):
+	  Kitchen:AddSeeds(player, n) -> number        Golden seeds after adding n
+	  Kitchen:DishCount(player) -> number          dishes in the Pantry
+	  Kitchen:SpendDishes(player, n) -> boolean    takes n Pantry dishes (the most plentiful first),
+	                                               all or nothing
+
 	Optional systems, looked up in Start: Fishing (FishCount / SpendFish; absent = 0 fish), Bond,
 	Jobs, Expeditions, Ranch (golden crop + harvest hook).
 
@@ -110,6 +116,55 @@ end
 
 function Kitchen:SlotCount(player): number
 	return Logic.SlotCount(isUnlocked(player))
+end
+
+function Kitchen:AddSeeds(player, n: number): number
+	local s = section(player)
+	if not s then
+		return 0
+	end
+	local add = if type(n) == "number" and n == n then math.max(0, math.floor(n)) else 0
+	s.seeds = (tonumber(s.seeds) or 0) + add
+	ctx:Dirty(player, "seeds")
+	return s.seeds
+end
+
+function Kitchen:DishCount(player): number
+	local s = section(player)
+	local n = 0
+	for _, count in (s and s.pantry) or {} do
+		n += count
+	end
+	return n
+end
+
+function Kitchen:SpendDishes(player, n: number): boolean
+	local s = section(player)
+	if not s or type(n) ~= "number" or n ~= n or n < 0 or n % 1 ~= 0 or Kitchen:DishCount(player) < n then
+		return false
+	end
+	local order = {}
+	for id in s.pantry do
+		table.insert(order, id)
+	end
+	table.sort(order, function(a, b)
+		local ca, cb = s.pantry[a], s.pantry[b]
+		if ca ~= cb then
+			return ca > cb
+		end
+		return a < b
+	end)
+	local left = n
+	for _, id in order do
+		if left <= 0 then
+			break
+		end
+		local take = math.min(s.pantry[id], left)
+		s.pantry[id] = if s.pantry[id] - take > 0 then s.pantry[id] - take else nil
+		left -= take
+	end
+	ctx:Dirty(player, "pantry")
+	return true
 end
 
 -- Actions ---------------------------------------------------------------------------------

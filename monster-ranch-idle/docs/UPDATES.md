@@ -34,6 +34,34 @@ players get and where it lives in the code.
   decor `ancient_urn`, `stone_tablet`, `fossil_<id>` (DecorArt `fossil_skeleton` posed per fossil).
 - Tests: `DigSite.spec`, `DigSiteClient.spec`.
 
+### Travelling Merchant
+
+**For players**
+- From Ranch Level 7, a merchant's caravan parks in the Market Square (west corner, between the
+  Workshop and the path to plot 1) for 2 hours out of every 6: 03:00, 09:00, 15:00 and 21:00 UTC.
+  Walk up and press "Trade". The HUD chip and the Events screen count down to the next visit, or
+  to the caravan leaving while it is here.
+- Each visit sells 6 wares, the same for everyone: Trait Scrolls, Golden seeds, bait, shovel
+  bundles (once the Dig Site is open), two of three merchant-only decor pieces (Caravan Lantern,
+  Spice Crates, Silk Canopy) and eggs (Grove, Crystal, Royal). Each has a per-visit limit.
+- Every ware has two prices: coins (minutes of ranch income) or gems, or a barter of fish, Pantry
+  dishes or amber. Paying is all or nothing.
+- A Trait Scroll rerolls one visible trait from Monster Detail ("Reroll trait"): the hatch roll,
+  never the hidden trait, never a trait the monster already has.
+- New weekly goal: "Shop 3 times at the Travelling Merchant".
+
+**In the code**
+- `Config/Merchant` (schedule, offers, prices, caravan spot), `Logic/Merchant` (pure schedule,
+  seeded stock per visit `("merchant", visit)`, coin prices, scroll seed `("merchant_scroll",
+  userId, monsterId, born, n)`), `Systems/Merchant` (`Merchant.Buy`, `Merchant.Reroll`, profile
+  `{ visit, bought, scrolls, rerolls, trades }`, session `{ shovels }`, `MerchantBought` topic).
+- `Controllers/Merchant` (the Part-built caravan and prompt), `Screens/Merchant`, Monster Detail's
+  "Reroll trait" popup, a `merchant` Calendar source and the HUD "Merchant leaves" chip.
+- `Kitchen:AddSeeds`, `Kitchen:DishCount`, `Kitchen:SpendDishes` (new); `Fishing:AddBait` and
+  `Fishing:SpendFish`; `DigSite:AddShovels` looked up optionally.
+- Merchant-only decor in `Config/Decor` (`reward = "merchant"`) with DecorArt models; scenery
+  keep-out `Config.World.MerchantCaravan`.
+
 ## 3.10 · Ranch life
 
 ### Ranch Tourists

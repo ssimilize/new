@@ -112,6 +112,8 @@ Unlocks.Features = {
 	fishing = 13,
 	-- 3.11 · Dig Site & Fossils (Config/DigSite)
 	dig_site = 16,
+	-- 3.11 · Travelling Merchant (Config/Merchant)
+	merchant = 7,
 }
 
 -- Player-facing names for the level-up popup.
@@ -178,6 +180,7 @@ Unlocks.Names = {
 	gene_lab = "Gene Lab",
 	fishing = "Fishing Pond",
 	dig_site = "Dig Site",
+	merchant = "Travelling Merchant",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

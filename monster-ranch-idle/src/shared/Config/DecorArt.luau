@@ -745,6 +745,38 @@ Art.Models = {
 			P("ball", { 0.3, 0.3, 0.3 }, { 0.9, 0.3, 0.6 }, "Slate", "#E8E0CF", SMALL),
 		}
 	end,
+	-- 3.11 · Travelling Merchant pieces
+	caravan_lantern = function(a, b) -- a brass lantern hanging from a hooked post
+		return {
+			P("block", { 0.9, 0.2, 0.9 }, { 0, 0.1, 0 }, "Wood", WOOD_DARK),
+			P("cyl", { 0.35, 3.4, 0.35 }, { 0, 1.8, 0 }, "Wood", WOOD_DARK),
+			P("block", { 1, 0.2, 0.2 }, { 0.45, 3.4, 0 }, "Metal", "#3A3A44"),
+			P("block", { 0.7, 0.9, 0.7 }, { 0.85, 2.75, 0 }, "Metal", a),
+			P("block", { 0.5, 0.6, 0.5 }, { 0.85, 2.75, 0 }, "Neon", b, GLOW),
+			P("wedge", { 0.8, 0.3, 0.8 }, { 0.85, 3.35, 0 }, "Metal", a, SMALL),
+		}
+	end,
+	spice_crates = function(a, b) -- stacked crates with bright spice sacks
+		return {
+			P("block", { 1.4, 1.1, 1.4 }, { -0.7, 0.55, 0 }, "WoodPlanks", a),
+			P("block", { 1.3, 1, 1.3 }, { 0.75, 0.5, 0.1 }, "WoodPlanks", a),
+			P("block", { 1.1, 0.9, 1.1 }, { -0.6, 1.55, 0 }, "WoodPlanks", "#C08A4E"),
+			P("ball", { 0.8, 0.7, 0.8 }, { 0.7, 1.3, 0.1 }, "Fabric", b),
+			P("ball", { 0.6, 0.55, 0.6 }, { 1.05, 1.2, -0.35 }, "Fabric", "#F2A93B", SMALL),
+			P("ball", { 0.55, 0.5, 0.55 }, { -0.6, 2.2, 0 }, "Fabric", "#43B649", SMALL),
+		}
+	end,
+	silk_canopy = function(a, b) -- four poles under a draped silk roof and a cushion
+		return {
+			P("cyl", { 0.25, 3, 0.25 }, { -1.7, 1.5, -1.7 }, "Wood", WOOD_DARK),
+			P("cyl", { 0.25, 3, 0.25 }, { 1.7, 1.5, -1.7 }, "Wood", WOOD_DARK),
+			P("cyl", { 0.25, 3, 0.25 }, { -1.7, 1.5, 1.7 }, "Wood", WOOD_DARK),
+			P("cyl", { 0.25, 3, 0.25 }, { 1.7, 1.5, 1.7 }, "Wood", WOOD_DARK),
+			P("block", { 4, 0.2, 4 }, { 0, 3.1, 0 }, "Fabric", a),
+			P("wedge", { 4, 0.6, 2 }, { 0, 3.5, 1 }, "Fabric", b),
+			P("block", { 2.2, 0.5, 2.2 }, { 0, 0.25, 0 }, "Fabric", b),
+		}
+	end,
 }
 
 -- 3.11 · Dig Site skeleton displays: one model, shaped per fossil by the decor's `pose`.

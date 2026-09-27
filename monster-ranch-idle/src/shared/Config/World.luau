@@ -233,5 +233,9 @@ World.VisitGrounds = {
 }
 table.insert(World.Scenery.keepOut, World.VisitGrounds[1])
 table.insert(World.Scenery.keepOut, World.VisitGrounds[2])
+-- 3.11: the Travelling Merchant's caravan (Config.Merchant.World), west of the Market Square
+-- between the Workshop and the path to plot 1. Scenery keeps off it.
+World.MerchantCaravan = { center = { -104, -42 }, radius = 14 }
+table.insert(World.Scenery.keepOut, World.MerchantCaravan)
 
 return World

@@ -115,6 +115,15 @@ Weekly.Pool = {
 		target = 15,
 		unlock = "tourists",
 	},
+	-- 3.11 · Travelling Merchant
+	{
+		id = "merchant_3",
+		family = "merchant",
+		text = "Shop 3 times at the Travelling Merchant",
+		topic = "MerchantBought",
+		target = 3,
+		unlock = "merchant",
+	},
 }
 
 Weekly.ById = {}

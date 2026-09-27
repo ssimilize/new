@@ -357,6 +357,15 @@ add("fossil_longneck", "Longneck Skeleton", "statue", "fossil_skeleton", { 4, 2 
 add("fossil_sabre_cat", "Sabre Cat Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#E8DCC4", "#8A6A4A", skeleton("sabre_cat"))
 add("fossil_woolly_tusk", "Woolly Tusk Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#DCCDB0", "#8A6A4A", skeleton("woolly_tusk"))
 add("fossil_sky_wing", "Sky Wing Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#F4EEE2", "#8A6A4A", skeleton("sky_wing"))
+-- Update 3.11 · Travelling Merchant: never in the shop, sold only by the merchant (Config.Merchant.Decor,
+-- two of them each visit, rotating).
+local MERCHANT = { reward = "merchant" }
+add("caravan_lantern", "Caravan Lantern", "light", "caravan_lantern", { 2, 2 }, nil, "#B5553C", "#FFD447", {
+	reward = "merchant",
+	light = true,
+})
+add("spice_crates", "Spice Crates", "fun", "spice_crates", { 3, 2 }, nil, "#A0703D", "#E5484D", MERCHANT)
+add("silk_canopy", "Silk Canopy", "seat", "silk_canopy", { 4, 4 }, nil, "#8B6AD8", "#F4C43A", MERCHANT)
 
 for _, d in Decor.List do
 	d.mesh = d.mesh or ""
