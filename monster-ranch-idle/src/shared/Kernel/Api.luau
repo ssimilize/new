@@ -650,6 +650,14 @@ Api.Actions = {
 		rate = 1,
 		returns = "nil",
 	},
+
+	-- R2-ONBOARDING · tutorial chapter two (Systems/Quests, Config/Quests Tutorial2/ScreenCards/WhatsNew)
+	["Quests.Signal"] = {
+		schema = T.struct({ id = T.enum({ "open:Care", "open:Decorate", "open:Codex", "open:Boss", "dive" }) }),
+		rate = 4,
+		returns = "{ first: boolean }  -- a client-observed action with no gameplay bus topic (screen opened, dive)",
+	},
+	["Quests.AckWhatsNew"] = { schema = T.none, rate = 1, returns = 'nil  -- the one-time "What\'s new" card was acked' },
 }
 
 --[[
@@ -863,6 +871,9 @@ Api.Topics = {
 	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total' })  -- glow-up O",
 	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
+	-- R2-ONBOARDING · republished by Quests.Signal for a tutorial chapter two step with no
+	-- gameplay topic of its own (a screen opened, the Deep Reef dive).
+	TutorialSignal = "(player, { id: string })",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------

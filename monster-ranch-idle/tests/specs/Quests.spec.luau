@@ -178,6 +178,102 @@ return function(t)
 		end)
 	end)
 
+	describe("Quests tutorial chapter two (R2-ONBOARDING)", function()
+		local function tutorial2(h, p)
+			return h:Section(p, "Quests").tutorial2
+		end
+		local function step2Id(h, p)
+			local step = Q.Tutorial2[tutorial2(h, p).step]
+			return step and step.id
+		end
+
+		it("waits for chapter one, then runs always-open steps from real topics and gated ones from Progression", function()
+			-- region_reef unlocks at level 64, past the level-60 cap before the level-70 step
+			-- (Config.Unlocks.LevelCaps): start after that date so level 64 is reachable.
+			local h = boot({ startTime = 1836399601 })
+			local p = h:Join()
+			expect(step2Id(h, p)).toBe("care_intro")
+
+			-- Chapter one still running: a matching topic makes no progress.
+			publish(h, "BondRaised", p, { id = "m1", hearts = 1, points = 1, kind = "pet", heartUp = true })
+			expect(tutorial2(h, p).step).toBe(1)
+
+			tutorial(h, p).step = 12 -- past #Tutorial: chapter one done
+			expect(h:System("Quests"):TutorialDone(p)).toBe(true)
+
+			publish(h, "BondRaised", p, { id = "m1", hearts = 1, points = 1, kind = "pet", heartUp = true })
+			expect(step2Id(h, p)).toBe("decor_intro")
+			local done = h:LastEvent(p, "Quests.StepDone").payload
+			expect(done.step).toBe("care_intro")
+			expect(done.rewards[1].kind).toBe("treats")
+
+			publish(h, "PlotChanged", p, {})
+			expect(step2Id(h, p)).toBe("codex_intro")
+
+			-- Codex has no gameplay topic: Quests.Signal reports it, and only once.
+			expect(h:Call(p, "Quests.Signal", { id = "open:Codex" }).first).toBe(true)
+			expect(step2Id(h, p)).toBe("mastery_intro")
+			expect(h:Section(p, "Quests").screensSeen.Codex).toBe(true)
+			expect(h:Call(p, "Quests.Signal", { id = "open:Codex" }).first).toBe(false)
+
+			publish(h, "MasteryGained", p, { xp = 10 })
+			expect(step2Id(h, p)).toBe("stampede_intro")
+
+			-- Gated on Progression ("boss" = level 4): the topic does nothing below it.
+			publish(h, "BossJoined", p, {})
+			expect(step2Id(h, p)).toBe("stampede_intro")
+			levelTo(h, p, 4)
+			publish(h, "BossJoined", p, {})
+			expect(step2Id(h, p)).toBe("racing_intro")
+
+			publish(h, "RaceFinished", p, { place = 3, time = 10, day = 1, cup = 1, live = false, riders = 4 })
+			expect(step2Id(h, p)).toBe("racing_intro") -- racing needs level 16
+			levelTo(h, p, 16)
+			publish(h, "RaceFinished", p, { place = 3, time = 10, day = 1, cup = 1, live = false, riders = 4 })
+			expect(step2Id(h, p)).toBe("reef_intro")
+
+			-- The Deep Reef dive is a Quests.Signal too, but not a screen card.
+			expect(h:Call(p, "Quests.Signal", { id = "dive" }).first).toBe(false)
+			expect(step2Id(h, p)).toBe("reef_intro") -- region_reef needs level 64
+			levelTo(h, p, 64)
+			h:Call(p, "Quests.Signal", { id = "dive" })
+			expect(step2Id(h, p)).toBeNil()
+		end)
+
+		it("migrates a pre-update save: fast-forwards already-unlocked steps with no reward", function()
+			local h = boot()
+			-- A save from before this update: only ever had `tutorial` (chapter one long done).
+			h.adapters.store["player_9001"] = {
+				v = 1,
+				data = { Quests = { tutorial = { step = 12, progress = 0 } }, Progression = { level = 10, xp = 0 } },
+			}
+			local p = h:Join(9001)
+
+			expect(h:Section(p, "Quests").veteran).toBe(true)
+			-- care/decor/codex/mastery (always open) and stampede (unlocked at 10 ≥ 4) are
+			-- skipped silently; racing (needs 16) is the first step not yet reached.
+			expect(step2Id(h, p)).toBe("racing_intro")
+			expect(h:Section(p, "Currency").treats).toBe(0)
+			expect(h:Section(p, "Currency").gems).toBe(0)
+			expect(h:LastEvent(p, "Quests.StepDone")).toBeNil() -- the fast-forward is silent
+			expect(h:Client(p).profile.Quests.whatsNewSeen).toBe(false)
+
+			-- Rejoining doesn't fast-forward a second time (nothing left to skip changed).
+			p = h:Rejoin(p)
+			expect(step2Id(h, p)).toBe("racing_intro")
+
+			h:Call(p, "Quests.AckWhatsNew")
+			expect(h:Section(p, "Quests").whatsNewSeen).toBe(true)
+		end)
+
+		it("does not migrate or fast-forward a fresh profile", function()
+			local h = boot()
+			local p = h:Join()
+			expect(h:Section(p, "Quests").veteran).toBe(false)
+			expect(tutorial2(h, p).step).toBe(1)
+		end)
+	end)
+
 	describe("Quests dailies", function()
 		local function dailyIds(h, p)
 			local ids = {}

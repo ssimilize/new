@@ -44,8 +44,13 @@ return function(t)
 		return h, p, c
 	end
 
-	-- A max-level player with currencies and one monster per species line.
+	-- A max-level player with currencies and one monster per species line. Already-seen
+	-- screen cards (R2-ONBOARDING) so they don't cover a screen's own controls mid-sweep.
 	local function veteran(h, p)
+		local seen = h:Section(p, "Quests").screensSeen
+		for name in Config.Quests.ScreenCards do
+			seen[name] = true
+		end
 		h:System("Progression"):AddXP(p, 1e9, "test")
 		local currency = h:System("Currency")
 		for key, amount in { coins = 1e9, gems = 1e5, stardust = 1e5, treats = 1e4, friendship = 1e4 } do
@@ -562,6 +567,8 @@ return function(t)
 		it("scopes Decorate's tray for its whole session; Ⓐ places, Ⓧ rotates, Ⓑ leaves", function()
 			local h = TestKernel.new({ systems = allSystems() })
 			local p = h:Join()
+			-- The first-time Decorate card (onboarding) is a Focus modal of its own; seen already here.
+			h:Section(p, "Quests").screensSeen.Decorate = true
 			local c = ClientHarness.new(h, p)
 			c:Advance(1)
 			c:UseGamepad(true)

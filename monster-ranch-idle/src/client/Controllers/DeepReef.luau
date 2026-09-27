@@ -298,6 +298,10 @@ local function dive()
 	if gamepad and scopeRoot then
 		gamepad.SetScope(scopeRoot, surface)
 	end
+
+	-- R2-ONBOARDING: completes the "reef_intro" chapter-two tutorial step (no gameplay bus
+	-- topic fits a dive; fire-and-forget, like other best-effort client signals).
+	ctx.Net:Request("Quests.Signal", { id = "dive" })
 end
 
 -- Ends a swim however it ends (Swim up, a lost or respawned character): the light always comes back.
