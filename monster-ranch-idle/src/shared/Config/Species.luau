@@ -1604,6 +1604,64 @@ Species.Lines = {
 		pools = { "clockwork" },
 	}),
 	-- ── end of R2-CLOCKWORK block ──
+	-- ── R2-ABYSS · Sunken Abyss (roadmap 4.1's idea, built as region 10): three Tide/Void lines,
+	-- all `swims = true` and `glows = true` (bioluminescent: the only thing that keeps The Trench
+	-- Sovereign's second phase lit, Config.Raids "abyss"). Hatched from the Abyss Egg. ──
+	line({
+		id = "gulperling",
+		elements = { "tide" },
+		archetype = "slug",
+		swims = true,
+		glows = true,
+		added = "4.2",
+		forms = {
+			{ id = "gulperling", name = "Gulperling" },
+			{ id = "lurefang", name = "Lurefang" },
+			{ { id = "trenchmaw", name = "Trenchmaw" } },
+		},
+		base = { hp = 160, atk = 45, def = 24, spd = 20, luck = 9 },
+		weight = 6.5,
+		special = "drain",
+		passive = "regen",
+		pools = { "abyss" },
+	}),
+	line({
+		id = "wisplure",
+		elements = { "void" },
+		archetype = "sprite",
+		swims = true,
+		glows = true,
+		added = "4.2",
+		forms = {
+			{ id = "wisplure", name = "Wisplure" },
+			{ id = "gloomlure", name = "Gloomlure" },
+			{ { id = "voidlantern", name = "Voidlantern" } },
+		},
+		base = { hp = 135, atk = 43, def = 18, spd = 26, luck = 14 },
+		weight = 0.6,
+		special = "stun",
+		passive = "crit",
+		pools = { "abyss" },
+	}),
+	line({
+		id = "pressurefin",
+		elements = { "tide", "void" },
+		archetype = "golem",
+		swims = true,
+		glows = true,
+		added = "4.2",
+		forms = {
+			{ id = "pressurefin", name = "Pressurefin" },
+			{ id = "carapacefin", name = "Carapacefin" },
+			{ { id = "trenchcrown", name = "Trenchcrown" } },
+		},
+		base = { hp = 235, atk = 38, def = 41, spd = 9, luck = 8 },
+		weight = 32.0,
+		special = "blast",
+		passive = "guard",
+		pools = { "abyss" },
+	}),
+	-- ── end of R2-ABYSS block ──
 }
 
 -- Lookups ---------------------------------------------------------------

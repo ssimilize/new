@@ -10,6 +10,10 @@
 	    hpMult = n     multiplies HP only (raid bosses: long fights that don't one-shot)
 	    boss = true    drawn as a boss by the client
 	    look = Appearance  drawn instead of the record's own look (Arena's normalized fighters)
+	    phase2 = { hpThreshold, accuracyPenalty }  (R2-ABYSS, Config.Raids "abyss") once this
+	      unit's HP falls to or below `hpThreshold` of its max, every ally attack gets an
+	      `accuracyPenalty` chance to miss (0 damage) unless a living ally is `glows = true`
+	      (Config.Species); stays flipped for the rest of the fight.
 	  opts = {
 	    night = boolean?,      -- Night Owl traits (nightAtkPct) add ATK
 	    boss = boolean?,       -- boss fight: Boss Brawler traits (bossDmgPct) add ally damage
@@ -106,6 +110,8 @@ local function buildUnit(m, side: string, slot: number, opts)
 		thorns = if passive == "thorns" then Passives.thorns.value else 0,
 		regen = if passive == "regen" then Passives.regen.value else 0,
 		dmgBonus = if side == "ally" and opts.boss then Traits.Sum(traits, "bossDmgPct") else 0,
+		glows = def.glows == true, -- R2-ABYSS: keeps the lights on past the boss's phase2 switch
+		phase2 = m.phase2, -- R2-ABYSS: only ever set on a raid boss record (Systems/Raids.raidRecord)
 		charge = 0,
 		shield = 0,
 		stunned = false,
@@ -163,6 +169,9 @@ function BattleSim.Simulate(allies, enemies, seed: number, options)
 	local events = {}
 	local truncated = false
 	local turn = 0
+	-- R2-ABYSS: the boss's phase2 switch, once flipped, stays flipped for the rest of the fight.
+	local phase2Active = false
+	local phase2Penalty = 0
 
 	local function log(actor, target, kind: string, amount: number, hp: number, mult: number?, skill: string?)
 		if #events >= BattleSim.MaxEvents then
@@ -195,6 +204,27 @@ function BattleSim.Simulate(allies, enemies, seed: number, options)
 		return if side == "ally" then "enemy" else "ally"
 	end
 
+	-- R2-ABYSS: flips phase2 once, the first time this unit's HP falls to or below its threshold.
+	local function checkPhase2(unit)
+		if phase2Active or not unit.phase2 then
+			return
+		end
+		if unit.hp <= unit.phase2.hpThreshold * unit.maxHp then
+			phase2Active = true
+			phase2Penalty = unit.phase2.accuracyPenalty or 0
+			log(unit, false, "phase2", 0, unit.hp)
+		end
+	end
+
+	local function anyAllyGlows(): boolean
+		for _, u in sides.ally do
+			if u.hp > 0 and u.glows then
+				return true
+			end
+		end
+		return false
+	end
+
 	local function pickTarget(attacker)
 		local list = living(opposite(attacker.side))
 		if #list == 0 then
@@ -222,6 +252,12 @@ function BattleSim.Simulate(allies, enemies, seed: number, options)
 		if target.hp <= 0 or attacker.hp <= 0 then
 			return 0
 		end
+		-- R2-ABYSS: once the boss's phase2 has flipped, an ally swings blind unless something in
+		-- the squad glows.
+		if attacker.side == "ally" and phase2Active and not anyAllyGlows() and rng:Chance(phase2Penalty) then
+			log(attacker, target, "miss", 0, target.hp)
+			return 0
+		end
 		local mult = Elements.MultiplierMulti(attacker.elements, target.elements)
 		local defense = target.def * (1 + (if target.taunt > 0 then target.defUp else 0))
 		local raw = attacker.atk * power * mult * 100 / (100 + defense) * rng:Float(0.9, 1.1)
@@ -234,6 +270,7 @@ function BattleSim.Simulate(allies, enemies, seed: number, options)
 		local absorbed = math.min(target.shield, amount)
 		target.shield -= absorbed
 		target.hp = math.max(0, target.hp - (amount - absorbed))
+		checkPhase2(target)
 		local kind = kindOverride or (if crit then "crit" else "hit")
 		log(attacker, target, kind, amount, target.hp, mult, skill)
 		if target.hp == 0 then

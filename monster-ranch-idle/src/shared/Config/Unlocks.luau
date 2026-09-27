@@ -95,6 +95,9 @@ Unlocks.Features = {
 	-- R2-CLOCKWORK · Clockwork Canyon (appended block, see RULES)
 	region_clockwork = 68,
 	raid_clockwork = 70,
+	-- R2-ABYSS · Sunken Abyss (appended block, see RULES)
+	region_abyss = 70,
+	raid_abyss = 70,
 }
 
 -- Player-facing names for the level-up popup.
@@ -150,6 +153,9 @@ Unlocks.Names = {
 	-- R2-CLOCKWORK · Clockwork Canyon (appended block, see RULES)
 	region_clockwork = "Clockwork Canyon",
 	raid_clockwork = "Clockwork Sovereign raid",
+	-- R2-ABYSS · Sunken Abyss (appended block, see RULES)
+	region_abyss = "Sunken Abyss",
+	raid_abyss = "Trench Sovereign raid",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

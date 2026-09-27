@@ -2624,6 +2624,21 @@ return {
 	["Clockwork Sovereign raid"] = "Incursión del Soberano de Relojería",
 	["Clockwork Egg"] = "Huevo de Relojería",
 	["Clockwork Gate"] = "Puerta de Relojería",
+	-- R2-ABYSS: Sunken Abyss (appended block, see RULES)
+	["Sunken Abyss"] = "Abismo Sumergido",
+	["Abyss"] = "Abismo",
+	["The Trench Maw"] = "Las Fauces de la Fosa",
+	["The Drowned Lantern"] = "El Farol Ahogado",
+	["The Trench Sovereign"] = "El Soberano de la Fosa",
+	["Trench Sovereign raid"] = "Incursión del Soberano de la Fosa",
+	["Abyss Egg"] = "Huevo del Abismo",
+	["Abyss Gate"] = "Puerta del Abismo",
+	["Dive Deeper"] = "Bucear más hondo",
+	["Ascent Bell"] = "Campana de Ascenso",
+	["Ascend"] = "Ascender",
+	["6 Jan"] = "6 ene",
+	["It doesn't need to see you. You need to see it."] = "No necesita verte a ti. Tú necesitas verlo a él.",
 	["Three gears guard its heart. Break them in order or it never stops shielding itself."] = "Tres engranajes protegen su corazón. Rómpelos en orden o nunca dejará de protegerse.",
 	["7 Oct"] = "7 oct",
+	["LIGHTS OUT!"] = "¡APAGÓN!", -- R2-ABYSS: BattleReplay phase2
 }

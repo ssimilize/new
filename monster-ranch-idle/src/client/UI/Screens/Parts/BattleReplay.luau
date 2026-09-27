@@ -367,6 +367,10 @@ function BattleReplay.play(ctx, opts)
 		elseif kind == "reflect" then
 			shake(target)
 			floater(target, "Thorns -" .. amount, C.Pink)
+		elseif kind == "phase2" then
+			-- R2-ABYSS: the raid boss's second phase (BattleSim phase2): the lights go out.
+			shake(ev.actor)
+			floater(ev.actor, "LIGHTS OUT!", C.Purple)
 		elseif kind == "miss" then
 			lunge(ev.actor)
 			floater(target, "MISS", C.Gray)

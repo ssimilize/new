@@ -82,6 +82,8 @@ return {
 		"Decor",
 		-- R2-CLOCKWORK: Clockwork Canyon's gear landmark and walk-in area (appended, see RULES)
 		"ClockworkCanyon",
+		-- R2-ABYSS: the Sunken Abyss's descent and walk-in area (appended, see RULES)
+		"Abyss",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

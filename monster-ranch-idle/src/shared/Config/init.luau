@@ -74,6 +74,8 @@ local Config = {
 	DeepReef = require(script.DeepReef),
 	-- R2-CLOCKWORK: Clockwork Canyon's landmark and walk-in area (appended block, see RULES)
 	Clockwork = require(script.Clockwork),
+	-- R2-ABYSS: Sunken Abyss's descent point and walk-in area (appended block, see RULES)
+	Abyss = require(script.Abyss),
 }
 
 return Config
