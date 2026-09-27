@@ -16,6 +16,7 @@
 
 local Players = game:GetService("Players")
 local Config = require(game:GetService("ReplicatedStorage").Shared.Config)
+local Streaming = require(script.Parent.Parent.Visuals.Streaming)
 
 local Interaction = {
 	Name = "Interaction",
@@ -34,6 +35,7 @@ local ranchKey = ""
 local likePrompts = {} -- "Like ranch" prompts on other players' plot gates
 local likeKey = ""
 local connections = {}
+local latestPlots = nil
 
 local function open(screen: string, params: any?)
 	if ctx.Router:Has(screen) then
@@ -231,6 +233,7 @@ local function buildLikePrompts(plots)
 end
 
 local function onPlots(plots)
+	latestPlots = plots
 	local parts = {}
 	for i, plot in (if type(plots) == "table" then plots else {}) do
 		if type(plot) == "table" then
@@ -264,6 +267,19 @@ function Interaction.Start()
 	end
 	buildHubPrompts()
 	table.insert(connections, ctx.Store:Observe("global.Plots", onPlots))
+	-- Streaming: global.Plots (data) and the world's geometry stream in independently. A rebuild
+	-- keyed only on data (ranchKey/likeKey above) can land before a plot's Pens/Barn/Gate parts
+	-- have streamed in and never retry once the geometry catches up, since the data did not
+	-- change. Any change under World's tree forces one (debounced; ranchKey/likeKey reset so the
+	-- unchanged-data guards do not skip it).
+	local rescan = Streaming.Debounce(0.5, function()
+		buildHubPrompts()
+		ranchKey = ""
+		likeKey = ""
+		onPlots(latestPlots or {})
+	end)
+	table.insert(connections, world.DescendantAdded:Connect(rescan))
+	table.insert(connections, world.DescendantRemoving:Connect(rescan))
 end
 
 -- Tears everything down (not called by the kernel today; kept so the controller can be unplugged).

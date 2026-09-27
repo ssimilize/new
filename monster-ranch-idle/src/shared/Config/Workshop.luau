@@ -54,4 +54,32 @@ Workshop.Palette = {
 	"#3A2D55",
 }
 
+--[[
+	Design Week (R2): a rotating theme, one week long (`Config.Leaderboards.Week` maths).
+	A player may enter one of their own published designs into the running theme; anyone
+	(but the designer) can vote for an entry, once per entry, within a daily vote budget.
+	When the week turns over the top `Winners` entries (by votes) become Featured for the
+	following week: buyable in the Gallery at `FeaturedPrice`, paying the usual `Royalty`.
+]]
+Workshop.Themes = {
+	{ id = "spooky", name = "Spooky" },
+	{ id = "ocean", name = "Ocean" },
+	{ id = "royal", name = "Royal" },
+	{ id = "candy", name = "Candy" },
+	{ id = "cosmic", name = "Cosmic" },
+	{ id = "garden", name = "Garden Party" },
+	{ id = "festival", name = "Festival" },
+	{ id = "arctic", name = "Arctic" },
+	{ id = "desert", name = "Desert Bazaar" },
+	{ id = "neon", name = "Neon Night" },
+}
+Workshop.VotesPerDay = 5
+Workshop.Winners = 5
+Workshop.FeaturedPrice = { ribbons = 25 }
+
+-- The theme running during `week` (Config.Leaderboards.Week(now)).
+function Workshop.ThemeForWeek(week: number)
+	return Workshop.Themes[(week % #Workshop.Themes) + 1]
+end
+
 return Workshop

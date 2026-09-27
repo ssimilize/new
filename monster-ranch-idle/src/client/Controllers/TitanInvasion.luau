@@ -1,18 +1,22 @@
 --[[
-	TitanInvasion (glow-up TT): the scheduled titan invasion, live in the world. Reads
-	global.Titan / session.Titan; the Titan system is unchanged apart from what it publishes.
-	Tuning: Config.Titan.Arena; place: Config.World.StampedeArena (the same arena as the
-	Stampede - Controllers/StampedeArena is untouched and keeps running its own fights there).
+	TitanInvasion (glow-up TT, R2 titan squads): the scheduled titan invasion, live in the world.
+	Reads global.Titan / session.Titan (now including .squads, the joined squads' looks - same
+	shape as Boss.squads). Tuning: Config.Titan.Arena; place: Config.World.StampedeArena (the
+	same arena as the Stampede - Controllers/StampedeArena is untouched and keeps running its own
+	fights there; the Stampede skips any period that overlaps an invasion, so the arena floor it
+	built is free for the titan to stand on meanwhile).
 
 	  banner    a bigger variant of the Stampede's call (Controllers/Stampede): "The Titan is
 	            coming!" with a countdown, then "The Titan is here!". Opened by Titan.Starting /
 	            Titan.Started, or from replicated state for a player who arrives mid-invasion;
 	            closing it sticks until the next phase. Its button is Join until you have joined
 	            (lobby or fight), then Cheer while the fight is on: taps batched into Titan.Cheer
-	            every 0.5 s, the button showing your cheer meter (session.Titan.cheer). Hidden
-	            while a screen or a battle is open, or you are in a live race (they share the
-	            top band).
-	  bar      once the fight is live, the banner also shows the SHARED hp (global.Titan.hp /
+	            every 0.5 s, the button showing your cheer meter (session.Titan.cheer) and, while
+	            near the arena, throwing a bolt in your lead monster's element at the giant
+	            (Visuals/FightBolts, at most Arena.boltsPerSecond, same pooled parts and hit flash
+	            as the Stampede's). Hidden while a screen or a battle is open, or you are in a live
+	            race (they share the top band).
+	  bar       once the fight is live, the banner also shows the SHARED hp (global.Titan.hp /
 	            maxHp - every server's damage drains the same pool) and
 	            "Fighting: {players} · Servers: {servers}" underneath, refreshed every
 	            frame from replicated state.
@@ -21,15 +25,23 @@
 	            (ColorCorrectionEffect "TitanStorm", stacked like the Stampede's, own tint).
 	            Staggers at the Arena.staggers HP fractions and falls (faint) when the pool
 	            empties, or roars and stands down if the clock runs out first.
-	  cleanup   the giant, its bar, the storm and the banner are all destroyed
-	            Arena.fallSeconds + Arena.leaveSeconds after the end.
+	  squads    while the invasion is live and the player is within Arena.viewRange: every joined
+	            squad on this server (Visuals/FightSquad: yours first, then round-robin, capped by
+	            the Quality level) stands in rings round the giant and attacks on a staggered
+	            rhythm - the same choreography as the Stampede's (Logic/StampedeArena), just a
+	            bigger ring for a bigger giant. Only your own squad keeps its particle effects.
+	  loot      when the giant falls, a loot fountain (Visuals/FightLoot) at the arena before the
+	            result popup (Broadcasts hands Titan.Result to :Fountain first, like Boss.Result);
+	            elsewhere the popup shows straight away.
+	  cleanup   the giant, squads, bolts, its bar, the storm and the banner are all destroyed
+	            Arena.fallSeconds + Arena.fountainSeconds + Arena.leaveSeconds after the end.
 
-	The giant and the storm are drawn in the main place only (the hub has no arena); the banner,
-	joining and cheering work in both. No squads or cheer bolts are drawn for the titan (the
-	Stampede's choreography reads global.Boss); the Stampede skips any period that overlaps an
-	invasion (Systems/Boss), so the arena is the titan's alone meanwhile.
+	The giant, squads and the storm are drawn in the main place only (the hub has no arena); the
+	banner, joining and cheering work in both.
 
-	Public: TitanInvasion:Stats() -> { phase, giant: boolean, storm: number }   (tests)
+	Public:
+	  TitanInvasion:Stats() -> { phase, giant: boolean, squad: number, bolts: number, storm: number }
+	  TitanInvasion:Fountain(payload, done) -> boolean   same contract as StampedeArena:Fountain
 ]]
 
 local Lighting = game:GetService("Lighting")
@@ -40,13 +52,16 @@ local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Appearance = require(Shared.Logic.Appearance)
-local Logic = require(Shared.Logic.StampedeArena) -- Crossed (staggers), Approach (storm fade)
+local Logic = require(Shared.Logic.StampedeArena) -- Crossed, Approach, Pick, Rings, AttackOffset, MaxMonsters, newPacer
 
 local Client = script.Parent.Parent
 local MonsterModel = require(Client.Visuals.MonsterModel)
 local MonsterAnimator = require(Client.Visuals.MonsterAnimator)
 local Vfx = require(Client.Visuals.Vfx)
 local Quality = require(Client.Visuals.Quality)
+local FightSquad = require(Client.Visuals.FightSquad)
+local FightBolts = require(Client.Visuals.FightBolts)
+local FightLoot = require(Client.Visuals.FightLoot)
 local Audio = require(Client.Audio)
 local Voices = require(Client.Audio.Voices)
 local Theme = require(Client.UI.Theme)
@@ -73,6 +88,10 @@ local HP_FILL = Color3.fromHex("#FF5A5F")
 -- 480 wide keeps the banner between the left stack and the photo / build buttons on a phone.
 local BANNER_WIDTH = 480
 local STEP = 0.1
+local FLASH_SECONDS = 0.2
+local NUMBER_SECONDS = 0.9
+local NUMBER_POOL = 6
+local BOLT_SIZE = 1.4
 
 local ctx
 local connections = {}
@@ -93,19 +112,45 @@ local pendingTaps = 0
 local requesting = false
 local flushAcc = 0
 local lastError = -math.huge
-local mainPlace: boolean? = nil -- the giant and the storm only in the main place (not the hub)
+local mainPlace: boolean? = nil -- the giant, squads and the storm only in the main place (not the hub)
 
 local phase = "off" -- off | gather | fight | ending
 local phaseAt = 0
-local giant = nil -- { model, anim, def, height, gui, bar }
+local phaseEnds = 0
+local giant = nil -- { model, anim, def, height, footprint, gui, bar }
+-- Building the giant waits on its mesh (CreateMeshPartAsync) the first time; the step runs every
+-- frame, so this marks a build in flight (one giant, not one per frame of the wait - Studio
+-- 2026-09-27 found eleven stacked), and a build that lands after the fight was cleared is dropped.
+local spawning = false
+local spawnToken = 0
 local lastFrac: number? = nil
 local lastFlinch = -math.huge
+local pendingFountain = nil -- { payload, done, fired, firedAt, since, closed }
 
 local storm = { weight = 0, target = 0, flash = 0, nextLightning = 0, written = -1 }
 local stormEffect: ColorCorrectionEffect? = nil
 local stormTint = Color3.fromHex(A.storm.tint)
 
 local centre = Vector3.new(Config.World.StampedeArena.center[1], Config.World.GroundY or 0, Config.World.StampedeArena.center[2])
+
+-- R2 titan squads: the same choreography as the Stampede (Visuals/FightSquad, FightBolts), fed by
+-- global.Titan.squads round this bigger giant.
+local squadObj = FightSquad.new(
+	nil,
+	{ Logic = Logic, Appearance = Appearance, MonsterModel = MonsterModel, MonsterAnimator = MonsterAnimator, Vfx = Vfx, Config = Config }
+)
+local boltsObj = FightBolts.new(nil, {
+	size = BOLT_SIZE,
+	boltSeconds = A.boltSeconds,
+	flashSeconds = FLASH_SECONDS,
+	numberSeconds = NUMBER_SECONDS,
+	numberPool = NUMBER_POOL,
+	poolCap = A.boltsPerSecond + 2,
+}, Create, Theme)
+local pacer = Logic.newPacer(A.boltsPerSecond)
+local boltColor = C.Gold
+local myDamage: number? = nil
+local myDelta = 0
 
 -- ─── Helpers ────────────────────────────────────────────────────────────────────────
 
@@ -124,8 +169,38 @@ local function ensureFolder(): Folder
 		f.Name = "TitanInvasion"
 		f.Parent = workspace
 		folder = f
+		squadObj.live = f
+		boltsObj.live = f
 	end
 	return folder :: Folder
+end
+
+local function viewer(): Vector3?
+	local character = ctx.Player and ctx.Player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") then
+		return root.Position
+	end
+	local camera = workspace.CurrentCamera
+	return if camera then camera.CFrame.Position else nil
+end
+
+local function flatDistance(p: Vector3?): number
+	if not p then
+		return math.huge
+	end
+	local dx, dz = p.X - centre.X, p.Z - centre.Z
+	return math.sqrt(dx * dx + dz * dz)
+end
+
+-- Where bolts land and bursts go off: the giant's chest.
+local function aimPoint(): Vector3
+	if not giant then
+		return centre + Vector3.new(0, 10, 0)
+	end
+	local root = giant.model.PrimaryPart
+	local base = if root then root.Position else centre
+	return Vector3.new(base.X, centre.Y + giant.height * 0.5, base.Z)
 end
 
 -- ─── Banner + shared bar ────────────────────────────────────────────────────────────
@@ -168,9 +243,36 @@ local function joinTitan()
 	end
 end
 
--- Taps are batched into Titan.Cheer every 0.5 s (the action's caps, like Boss.Cheer).
+local function launchBolt()
+	if not giant then
+		return
+	end
+	local from = (viewer() or centre) + Vector3.new(0, 3, 0)
+	boltsObj:Launch(from, aimPoint(), boltColor)
+end
+
+local function onBoltHit(pos: Vector3)
+	Vfx.Burst("hatch", pos, { color = boltColor, scale = 1 })
+	if myDelta > 0 then
+		boltsObj:ShowNumber(pos, "-" .. Format.short(math.floor(myDelta)), boltColor)
+	end
+	if giant and clock - lastFlinch >= A.flinchGap and giant.anim:GetState() == "idle" then
+		lastFlinch = clock
+		giant.anim:Play("hurt")
+	end
+end
+
+local function stepBolts(dt: number)
+	boltsObj:Step(dt, onBoltHit)
+end
+
+-- Taps are batched into Titan.Cheer every 0.5 s (the action's caps, like Boss.Cheer); each also
+-- throws a bolt (paced like the Stampede's) while the giant is drawn and near enough to aim at.
 local function cheer()
 	pendingTaps = math.min(pendingTaps + 1, Config.Titan.MaxTapsPerRequest * 2)
+	if flatDistance(viewer()) <= A.viewRange and pacer:Take(clock) then
+		launchBolt()
+	end
 	if cheerButton then
 		Anim.pulse(cheerButton.Root, 0.08)
 	end
@@ -380,6 +482,7 @@ local function roar()
 end
 
 local function destroyGiant()
+	spawnToken += 1
 	if giant then
 		if giant.anim then
 			giant.anim:Destroy()
@@ -394,6 +497,24 @@ local function destroyGiant()
 	end
 	lastFrac = nil
 	lastFlinch = -math.huge
+end
+
+-- ─── Squads ─────────────────────────────────────────────────────────────────────────
+
+local function syncSquad(g)
+	ensureFolder()
+	local cfg = {
+		perPlayer = A.squadPerPlayer,
+		cap = Logic.MaxMonsters(A, Quality.Level()),
+		ringInner = math.max(A.ringInner, if giant then giant.footprint + A.ringGap else 0),
+		ringGap = A.ringGap,
+		ringSpacing = A.ringSpacing,
+		attackEvery = A.attackEvery,
+	}
+	local changed = squadObj:Sync(g.squads, ctx.Player and ctx.Player.UserId, centre, cfg, Quality.Level(), Quality.IsLow(), clock)
+	if changed then
+		boltColor = squadObj:LeadColor(g.squads, ctx.Player and ctx.Player.UserId, C.Gold)
+	end
 end
 
 -- `above` = studs from the model's root up to where the bar floats (clear of its head).
@@ -440,8 +561,15 @@ local function spawnGiant(g)
 	if not ok or not ap then
 		return
 	end
+	spawning = true
+	local token = spawnToken
 	local ok2, model = pcall(MonsterModel.Build, ap, { anchored = true, scale = A.bossScale, vfx = not Quality.IsLow() })
+	spawning = false
 	if not ok2 or not model then
+		return
+	end
+	if token ~= spawnToken or giant then
+		model:Destroy() -- the fight ended (or another build won) while the mesh loaded
 		return
 	end
 	model.Parent = ensureFolder()
@@ -456,7 +584,9 @@ local function spawnGiant(g)
 	local anim = MonsterAnimator.new(model)
 	anim:SetOwn(false)
 	local gui, barFill = hpBar(model, top + 6, def)
-	giant = { model = model, anim = anim, def = def, height = height, gui = gui, bar = barFill }
+	-- Squads stand outside the giant's footprint (its long side), whatever the titan's shape.
+	local footprint = math.max(size.X, size.Z) / 2
+	giant = { model = model, anim = anim, def = def, height = height, footprint = footprint, gui = gui, bar = barFill }
 	lastFrac = nil
 	roar()
 end
@@ -494,11 +624,13 @@ local function stepGiant(g)
 		giant.bar.Size = UDim2.fromScale(frac, 1)
 	end
 	lastFrac = frac
+	squadObj:Step(clock, A.attackEvery)
 end
 
 local function startEnd(fell: boolean)
 	phase = "ending"
 	phaseAt = clock
+	phaseEnds = clock + A.fallSeconds + A.fountainSeconds + A.leaveSeconds
 	if giant then
 		if fell then
 			giant.anim:Play("faint")
@@ -513,6 +645,7 @@ local function startEnd(fell: boolean)
 			giant.bar.Size = UDim2.fromScale(if fell then 0 else 1, 1)
 		end
 	end
+	squadObj:PlayAll(if fell then "happy" else "idle")
 end
 
 -- ─── Storm ──────────────────────────────────────────────────────────────────────────
@@ -558,12 +691,59 @@ local function lightning(g)
 	ctx.Bus:Publish("Weather.Lightning", 0.8)
 end
 
+-- ─── Loot fountain ──────────────────────────────────────────────────────────────────
+
+local function kit()
+	return ctx:GetController("Celebrate")
+end
+
+local function fireFountain(f)
+	f.fired = true
+	f.firedAt = clock
+	local payload = f.payload
+	FightLoot.Fire(Vfx, kit(), aimPoint(), { rewards = payload.rewards, egg = payload.egg, eggColor = C.Gold, big = payload.won == true })
+end
+
+local function stepFountain()
+	local f = pendingFountain
+	if not f or f.closed then
+		return
+	end
+	local ended = phase == "ending"
+	if not f.fired then
+		-- Wait for the fall; if the end never shows up here, fly the loot anyway.
+		if (ended and clock >= phaseAt + A.fallSeconds) or clock >= f.since + A.fallSeconds + 3 then
+			fireFountain(f)
+		end
+	elseif clock >= f.firedAt + A.fountainSeconds then
+		f.closed = true
+		pendingFountain = nil
+		task.spawn(f.done, true)
+	end
+end
+
+local function onSession(s)
+	local damage = if type(s) == "table" then tonumber(s.damage) else nil
+	if damage and myDamage and damage > myDamage then
+		myDelta = damage - myDamage
+	elseif not damage or damage == 0 then
+		myDelta = 0
+	end
+	myDamage = damage
+end
+
 -- ─── Main loop ──────────────────────────────────────────────────────────────────────
 
 local function clearAll()
 	destroyGiant()
+	squadObj:Clear()
 	close()
 	phase = "off"
+	if pendingFountain and not pendingFountain.closed then
+		pendingFountain.closed = true
+		task.spawn(pendingFountain.done, pendingFountain.fired == true)
+	end
+	pendingFountain = nil
 end
 
 local function onStarting(payload)
@@ -616,9 +796,16 @@ local function step()
 	storm.target = if live and mainPlace then 1 else 0
 	lightning(g)
 
+	local inView = mainPlace == true and flatDistance(viewer()) <= A.viewRange
+	if live and inView then
+		syncSquad(g)
+	elseif squadObj:Count() > 0 then
+		squadObj:Clear()
+	end
+
 	if g.state == "active" then
 		phase = "fight"
-		if not giant and mainPlace then
+		if not giant and not spawning and mainPlace then
 			spawnGiant(g)
 		end
 		stepGiant(g)
@@ -626,7 +813,7 @@ local function step()
 	elseif phase == "fight" then
 		startEnd((tonumber(g.hp) or 1) <= 0 and (tonumber(g.maxHp) or 0) > 0)
 	elseif phase == "ending" then
-		if clock >= phaseAt + A.fallSeconds + A.leaveSeconds then
+		if clock >= phaseEnds and not pendingFountain then
 			clearAll()
 		end
 	elseif not live and phase ~= "off" and phase ~= "ending" then
@@ -634,12 +821,30 @@ local function step()
 	elseif live and phase == "off" then
 		phase = "gather"
 	end
+	stepFountain()
 end
 
 -- ─── Public ─────────────────────────────────────────────────────────────────────────
 
 function TitanInvasion:Stats()
-	return { phase = phase, giant = giant ~= nil, storm = storm.weight }
+	return { phase = phase, giant = giant ~= nil, squad = squadObj:Count(), bolts = boltsObj:ActiveBolts(), storm = storm.weight }
+end
+
+-- Same contract as StampedeArena:Fountain: true means the fountain will call done(rewarded) once
+-- (the caller shows the result itself only when this returns false).
+function TitanInvasion:Fountain(payload, done: (boolean) -> ()): boolean
+	if type(payload) ~= "table" or not giant or (phase ~= "fight" and phase ~= "ending") then
+		return false
+	end
+	if ctx.Router:Current() ~= nil or flatDistance(viewer()) > A.viewRange then
+		return false
+	end
+	if pendingFountain and not pendingFountain.closed then
+		pendingFountain.closed = true
+		task.spawn(pendingFountain.done, pendingFountain.fired == true)
+	end
+	pendingFountain = { payload = payload, done = done, fired = false, firedAt = 0, since = clock, closed = false }
+	return true
 end
 
 function TitanInvasion.Init(context)
@@ -649,10 +854,12 @@ function TitanInvasion.Init(context)
 end
 
 function TitanInvasion.Start()
+	table.insert(connections, ctx.Store:Observe("session.Titan", onSession))
 	table.insert(
 		connections,
 		RunService.Heartbeat:Connect(function(dt)
 			clock += dt
+			stepBolts(dt)
 			stepStorm(dt)
 			acc += dt
 			if acc >= STEP then
@@ -678,6 +885,7 @@ function TitanInvasion.Destroy()
 		folder:Destroy()
 		folder = nil
 	end
+	boltsObj:Clear()
 end
 
 return TitanInvasion

@@ -19,6 +19,7 @@ local Players = game:GetService("Players")
 local Config = require(ReplicatedStorage.Shared.Config)
 
 local StoreKit = require(script.Parent.Parent.UI.Components.StoreKit)
+local Streaming = require(script.Parent.Parent.Visuals.Streaming)
 
 local Cfg = Config.SkyIslands
 local Sky = Config.World.Sky
@@ -32,6 +33,7 @@ local ctx
 local folder: Instance? = nil
 local crystals = {} -- [index] = Part
 local shownKey = ""
+local connections = {}
 
 local function unlocked(): boolean
 	return StoreKit.level(ctx.Store) >= (Config.Unlocks.Features[Cfg.Unlock] or math.huge)
@@ -51,8 +53,17 @@ local function prompt(parent: Instance, action: string, object: string, distance
 	return p
 end
 
+-- R2-STREAMING: Sky Islands is far from (and high above) the hub, so ask the server to pre-stream
+-- the destination before the local pivot; the reply is awaited so the player never lands in the
+-- void. World.StreamAround never fails the request itself (best-effort), so the teleport always
+-- happens even if streaming is off or the request times out.
 local function teleport(at: { number }, lift: number)
 	local character = Players.LocalPlayer.Character
+	if not (character and character.PrimaryPart) then
+		return
+	end
+	ctx.Net:Request("World.StreamAround", { x = at[1], y = at[2] + lift, z = at[3] + 6 })
+	character = Players.LocalPlayer.Character
 	if character and character.PrimaryPart then
 		ctx:Sound("Teleport")
 		character:PivotTo(CFrame.new(at[1], at[2] + lift, at[3] + 6))
@@ -128,33 +139,42 @@ local function refreshCrystals()
 end
 
 -- Pads and gate ----------------------------------------------------------------------------
+-- LaunchPad, ReturnPad and the Gate's Portal each stream in on their own (and can stream out and
+-- back in later as fresh instances): wire each with Streaming.OnChild rather than a one-time scan.
+
+local function wireLaunch(launch: Instance)
+	prompt(launch, "Fly up", "Sky Islands", 12, function()
+		if not unlocked() then
+			ctx:Toast(string.format("The Sky Islands open at Ranch Level %d", Config.Unlocks.Features[Cfg.Unlock]), "info")
+			return
+		end
+		teleport(Sky.returnPad, 4)
+	end)
+end
+
+local function wireReturn(back: Instance)
+	prompt(back, "Fly home", "Market Square", 12, function()
+		teleport(Sky.launchPad, 4)
+	end)
+end
+
+local function wireGate(gate: Instance)
+	table.insert(
+		connections,
+		Streaming.OnChild(gate, "Portal", function(portal)
+			prompt(portal, "Enter", "Sky Gate", 14, function()
+				if ctx.Router:Has("Expeditions") then
+					ctx.Router:Open("Expeditions", { region = "sky" })
+				end
+			end)
+		end)
+	)
+end
 
 local function wire(skyFolder: Instance)
-	local launch = skyFolder:FindFirstChild("LaunchPad")
-	if launch then
-		prompt(launch, "Fly up", "Sky Islands", 12, function()
-			if not unlocked() then
-				ctx:Toast(string.format("The Sky Islands open at Ranch Level %d", Config.Unlocks.Features[Cfg.Unlock]), "info")
-				return
-			end
-			teleport(Sky.returnPad, 4)
-		end)
-	end
-	local back = skyFolder:FindFirstChild("ReturnPad")
-	if back then
-		prompt(back, "Fly home", "Market Square", 12, function()
-			teleport(Sky.launchPad, 4)
-		end)
-	end
-	local gate = skyFolder:FindFirstChild("Gate")
-	local portal = gate and gate:FindFirstChild("Portal")
-	if portal then
-		prompt(portal, "Enter", "Sky Gate", 14, function()
-			if ctx.Router:Has("Expeditions") then
-				ctx.Router:Open("Expeditions", { region = "sky" })
-			end
-		end)
-	end
+	table.insert(connections, Streaming.OnChild(skyFolder, "LaunchPad", wireLaunch))
+	table.insert(connections, Streaming.OnChild(skyFolder, "ReturnPad", wireReturn))
+	table.insert(connections, Streaming.OnChild(skyFolder, "Gate", wireGate))
 end
 
 -- Every island sits well above the ground map; anything within ISLAND_MARGIN studs under the lowest
@@ -194,11 +214,24 @@ function SkyIslands.Start()
 	end)
 	task.spawn(function()
 		local world = workspace:WaitForChild("World", 60)
-		local skyFolder = world and world:WaitForChild("Sky", 30)
-		if skyFolder then
-			wire(skyFolder)
+		if not world then
+			return
 		end
+		table.insert(connections, Streaming.OnChild(world, "Sky", wire))
 	end)
+end
+
+-- Not called by the kernel today; kept so the controller can be unplugged.
+function SkyIslands.Destroy()
+	for _, connection in connections do
+		connection:Disconnect()
+	end
+	table.clear(connections)
+	if folder then
+		folder:Destroy()
+		folder = nil
+	end
+	table.clear(crystals)
 end
 
 return SkyIslands

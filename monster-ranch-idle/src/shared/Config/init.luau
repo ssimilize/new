@@ -77,6 +77,10 @@ local Config = {
 	Visits = require(script.Visits),
 	-- Glow-up DR: the Deep Reef you dive into, swimming and swimming mounts
 	DeepReef = require(script.DeepReef),
+	-- R2-CLOCKWORK: Clockwork Canyon's landmark and walk-in area (appended block, see RULES)
+	Clockwork = require(script.Clockwork),
+	-- R2-ABYSS: Sunken Abyss's descent point and walk-in area (appended block, see RULES)
+	Abyss = require(script.Abyss),
 }
 
 return Config

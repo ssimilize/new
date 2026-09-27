@@ -82,6 +82,10 @@ return {
 		"Decor",
 		-- 3.10: Ranch Tourists walking onto plots, the Guestbook stand
 		"Tourists",
+		-- R2-CLOCKWORK: Clockwork Canyon's gear landmark and walk-in area (appended, see RULES)
+		"ClockworkCanyon",
+		-- R2-ABYSS: the Sunken Abyss's descent and walk-in area (appended, see RULES)
+		"Abyss",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

@@ -2,6 +2,11 @@
 	MeshMonsterAssets: the uploaded assets of each MeshMonsters form. Written by
 	tools/blender/asset_ids.py; the mesh is published by tools/blender/publish_meshes.luau and the
 	texture uploaded with the Studio MCP. MeshMonster builds a form only when both are set.
+
+	R2-LOWQ: an entry may also carry `lowMesh` (a decimated mesh on the same rig, published from
+	tools/blender/lowpoly.py's output the same way; empty/absent until a form has one). It reuses
+	`texture` (the low mesh's UVs survive the decimate, so no separate upload). MeshMonster builds it
+	instead of `mesh` on Low graphics or in a crowd-capped fight; a form without one is unaffected.
 ]]
 
 return {

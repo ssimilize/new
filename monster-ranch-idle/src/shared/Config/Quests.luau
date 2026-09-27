@@ -56,6 +56,107 @@ Quests.Tutorial = {
 	},
 }
 
+-- Tutorial, chapter two (R2-ONBOARDING) ------------------------------------------
+-- Introduces round one's features, one at a time, after chapter one (Quests.Tutorial) is
+-- done. Same step shape as Tutorial; `unlock` gates a step on Progression:IsUnlocked(player,
+-- unlock) (nil = always available, so the step starts as soon as chapter one finishes).
+-- A step with topic = "TutorialSignal" completes when the client calls Quests.Signal with a
+-- matching `id` (a screen opened, or the Deep Reef dive): there is no gameplay bus topic for
+-- those two, unlike the others which complete from real play (a Care gesture, decor placed,
+-- Mastery XP, a Stampede join, a race finish).
+Quests.Tutorial2 = {
+	{
+		id = "care_intro",
+		text = "Give one of your monsters some Care. Pet, brush or play to raise its bond.",
+		topic = "BondRaised",
+		arrow = "monster",
+		reward = { { kind = "treats", amount = 5 } },
+	},
+	{
+		id = "decor_intro",
+		text = "Build your ranch! Open Decorate and place some scenery.",
+		topic = "PlotChanged",
+		arrow = "Build",
+		reward = { { kind = "gems", amount = 10 } },
+	},
+	{
+		id = "codex_intro",
+		text = "Check the Codex. It tracks every monster line, form and variant you've found.",
+		topic = "TutorialSignal",
+		filter = { id = "open:Codex" },
+		arrow = "Codex",
+		reward = { { kind = "gems", amount = 10 } },
+	},
+	{
+		id = "mastery_intro",
+		text = "Earn Ranch Mastery from battles and levels. It unlocks perks for your whole ranch.",
+		topic = "MasteryGained",
+		arrow = "level",
+		reward = { { kind = "gems", amount = 15 } },
+	},
+	{
+		id = "stampede_intro",
+		text = "A Stampede is here! Join the fight for big rewards.",
+		topic = "BossJoined",
+		arrow = "stampede",
+		unlock = "boss",
+		reward = { { kind = "gems", amount = 15 } },
+	},
+	{
+		id = "racing_intro",
+		text = "Race your monster at the Race Track and finish a lap.",
+		topic = "RaceFinished",
+		unlock = "racing",
+		reward = { { kind = "gems", amount = 20 } },
+	},
+	{
+		id = "reef_intro",
+		text = "Dive into the Deep Reef at the Dive Dock and explore underwater.",
+		topic = "TutorialSignal",
+		filter = { id = "dive" },
+		unlock = "region_reef",
+		reward = { { kind = "gems", amount = 25 } },
+	},
+}
+
+-- First-time cards (R2-ONBOARDING): a short explanation the first time a player opens one of
+-- these screens (Router screen name keys), saved per player (Quests.screensSeen).
+Quests.ScreenCards = {
+	Care = {
+		title = "Care",
+		text = "Pet, brush or play with a monster to raise its bond. A closer bond earns more coins and can teach it tricks.",
+	},
+	Decorate = {
+		title = "Decorate",
+		text = "Place paths, plants and props around your ranch. Decor is just for looks, so have fun with it.",
+	},
+	Codex = {
+		title = "Codex",
+		text = "Every monster line, form and variant you've found is tracked here. Claim milestones for rewards.",
+	},
+	Boss = {
+		title = "Stampede",
+		text = "When a Stampede boss appears, everyone on the ranch can join the fight. Deal damage for a share of the loot.",
+	},
+}
+
+-- What's new (R2-ONBOARDING): shown once to a player whose profile predates this update
+-- (Systems/Quests Migrate sets `veteran`), listing round one's features with buttons that
+-- open each screen. `screen` is the Router screen name; the Deep Reef has no screen of its
+-- own (it's a dive from the Dock), so it's mentioned in the text only.
+Quests.WhatsNew = {
+	title = "What's new",
+	text = "Your ranch grew while you were away! Care for your monsters, decorate your ranch, browse the Codex, earn Ranch Mastery, fight Stampedes, race at the track and dive into the Deep Reef.",
+	buttons = {
+		{ text = "Care", screen = "Care" },
+		{ text = "Decorate", screen = "Decorate" },
+		{ text = "Codex", screen = "Codex" },
+		{ text = "Mastery", screen = "Mastery" },
+		{ text = "Stampede", screen = "Boss" },
+		{ text = "Racing", screen = "Racing" },
+	},
+}
+
 -- Dailies ------------------------------------------------------------------------
 Quests.DailyCount = 3
 Quests.DailyPool = {

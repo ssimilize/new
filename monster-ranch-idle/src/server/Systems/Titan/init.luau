@@ -23,7 +23,10 @@
 	    servers, players,     -- servers/players fighting across the whole game (from the pool)
 	    participants,         -- players joined on THIS server
 	    poolOk,                -- false while the last report to the shared pool failed
-	    board = { { userId, name, damage } } }  -- this server's top 10 by damage
+	    board = { { userId, name, damage } },  -- this server's top 10 by damage
+	    squads = { { userId, looks = { { line, form, stage, rarity, variant } } } } }
+	    -- squads (R2 titan squads): what each joined squad looks like, for the arena drawn in the
+	    -- world (Controllers/TitanInvasion) - same shape as Boss.squads, capped by Cfg.Arena.
 	Session (session.Titan): { joined, damage, cheer }
 
 	Actions:
@@ -144,6 +147,7 @@ local function refreshPreview(now: number)
 	G.servers = G.servers or 0
 	G.players = G.players or 0
 	G.board = G.board or {}
+	G.squads = G.squads or {}
 	G.poolOk = if G.poolOk == nil then true else G.poolOk
 	ctx:DirtyGlobal()
 end
@@ -276,9 +280,30 @@ local function openLobby(entry)
 	G.servers = 0
 	G.players = 0
 	G.board = {}
+	G.squads = {}
 	G.poolOk = true
 	ctx:DirtyGlobal()
 	ctx.Net:FireAll("Titan.Starting", { titanId = G.titanId, startsAt = G.startsAt })
+end
+
+-- R2 titan squads: the squad's looks for the arena in the world, capped (render-only, no ids) -
+-- same shape and rule as Boss's addSquadLooks.
+local function addSquadLooks(player, ids: { string })
+	local arena = Cfg.Arena
+	local G = global()
+	if not arena or #G.squads >= arena.squadPlayers then
+		return
+	end
+	local looks = {}
+	for _, id in ids do
+		local m = Monsters:Get(player, id)
+		if m and #looks < arena.squadPerPlayer then
+			table.insert(looks, { line = m.line, form = m.form, stage = m.stage, rarity = m.rarity, variant = m.variant or 0 })
+		end
+	end
+	if #looks > 0 then
+		table.insert(G.squads, { userId = player.UserId, looks = looks })
+	end
 end
 
 local function activate(now: number)
@@ -466,6 +491,7 @@ function Titan.Init(context)
 		}
 		table.insert(participants, entryRow)
 		byUser[player.UserId] = entryRow
+		addSquadLooks(player, ids)
 		refreshBoard()
 		ctx:DirtyGlobal()
 		setSession(player, true, 0, 0)

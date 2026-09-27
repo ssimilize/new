@@ -96,7 +96,9 @@ return function(t)
 		it("lists incubator 4, pen 6 and squad size 5 at 62 / 66 / 70 with names", function()
 			expect(Unlocks.At(62)).toEqual({ "incubator_4" })
 			expect(Unlocks.At(66)).toEqual({ "pen_6" })
-			expect(Unlocks.At(70)).toEqual({ "squad_5" })
+			-- R2-CLOCKWORK / R2-ABYSS: the Clockwork Sovereign raid, the Sunken Abyss and its raid open
+			-- at the cap too.
+			expect(Unlocks.At(70)).toEqual({ "raid_abyss", "raid_clockwork", "region_abyss", "squad_5" })
 			expect(Unlocks.Names.incubator_4).toBe("Incubator 4")
 			expect(Unlocks.Names.pen_6).toBe("Pen 6")
 			expect(Unlocks.Names.squad_5).toBe("Squad size 5")

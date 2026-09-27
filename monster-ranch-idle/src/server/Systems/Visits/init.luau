@@ -345,7 +345,15 @@ local function visit(player, payload)
 	end
 	local here = ctx:PlayerByUserId(userId)
 	if here then
-		return { mode = "here", plot = plotOf(here), name = displayName(here) }
+		local index = plotOf(here)
+		-- R2-STREAMING: their plot may be far across the map and streamed out for us; pre-stream it
+		-- before the client walks/teleports the camera over so it is not empty when we arrive.
+		local plotDef = index > 0 and Config.World.Plots[index]
+		if plotDef and ctx.Services.Players.RequestStreamAround then
+			local c = plotDef.center
+			ctx.Services.Players.RequestStreamAround(player, { x = c[1], y = Config.World.GroundY, z = c[3] }, 5)
+		end
+		return { mode = "here", plot = index, name = displayName(here) }
 	end
 	if ctx.Services.Players.IsFriendsWith(player, userId) ~= true then
 		ctx:Fail("You can only visit your Roblox friends' ranches")

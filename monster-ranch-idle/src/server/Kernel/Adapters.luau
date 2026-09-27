@@ -114,6 +114,13 @@ function Adapters.Roblox()
 	adapters.JobId = if game.JobId ~= "" then game.JobId else "studio-" .. tostring(math.random(1, 1e9))
 	adapters.PlaceId = game.PlaceId
 	adapters.IsStudio = isStudio
+	-- True in a private server owned by the experience's own creator (an owner testing on a
+	-- live server, e.g. from the developer console). Used to gate QABridge's `livechecks`
+	-- (Kernel/QABridge, docs/GO_LIVE.md §6): a public server or another player's private
+	-- server never passes this.
+	adapters.IsOwnerServer = game.PrivateServerOwnerId ~= 0
+		and game.CreatorType == Enum.CreatorType.User
+		and game.PrivateServerOwnerId == game.CreatorId
 	adapters.OfflineMaxSeconds = 7 * 24 * 3600
 
 	adapters.Clock = {
@@ -181,6 +188,18 @@ function Adapters.Roblox()
 				return player:GetRankInGroup(groupId)
 			end)
 			return if ok and type(result) == "number" then result else 0
+		end,
+		-- Streaming (R2-STREAMING): pre-streams the region around `position` ({ x, y, z }, plain
+		-- numbers so every caller stays testable in the headless Lune kernel, which has no CFrame)
+		-- for `player` before a long teleport (Sky Islands, the Stampede Arena, a same-server ranch
+		-- visit), so they never land in the void. Yields up to `timeout` seconds; false when it
+		-- fails or isn't available (StreamingEnabled off, or the method is missing on older engine
+		-- builds). The one CFrame.new call belongs here, in the Roblox-only adapter.
+		RequestStreamAround = function(player, position: { x: number, y: number, z: number }, timeout: number?): boolean
+			local ok = pcall(function()
+				(player :: any):RequestStreamAroundAsync(CFrame.new(position.x, position.y, position.z), timeout or 5)
+			end)
+			return ok
 		end,
 		-- Display name for any user id (players who are not on this server). Cached.
 		NameOf = function(userId: number): string?
@@ -272,7 +291,7 @@ function Adapters.Roblox()
 	-- keyed by listing id; open listings are also indexed in MemoryStore sorted maps for
 	-- browsing (one map per scope and kind, sorted by price, expiring with the listing).
 	-- Mailboxes (sale proceeds, returned items) are one DataStore key per user.
-	-- VERIFY in a live server: MemoryStore quotas and GetRangeAsync paging.
+	-- Live check: Kernel/LiveChecks (MemoryStore quotas and GetRangeAsync paging, docs/GO_LIVE.md §6).
 	local MemoryStoreService = game:GetService("MemoryStoreService")
 	local function storeOf(name: string)
 		local ok, store = pcall(function()
@@ -455,7 +474,7 @@ function Adapters.Roblox()
 	-- Config.Leaderboards.Key). Values are whole numbers; failures return false / nil.
 	-- Arena (update 2.1): one record per player { userId, name, rating, team, wins, losses,
 	-- updatedAt } in a DataStore (atomic Update), and ratings in an OrderedDataStore for
-	-- matchmaking. VERIFY in a live server: GetSortedAsync min/max paging.
+	-- matchmaking. Live check: Kernel/LiveChecks (GetSortedAsync min/max paging, docs/GO_LIVE.md §6).
 	-- 3.8: one ratings index per arena season (IndexName), so matchmaking only sees ratings from
 	-- the current season; season 0 (before season 1) keeps the original index.
 	local arenaStore = storeOf("MonsterRanch_Arena_v1")
@@ -582,8 +601,22 @@ function Adapters.Roblox()
 
 	-- Rewarded video ads. The AdService API surface is checked at runtime; in Studio (or when
 	-- the API is unavailable) ads are simulated as watched so flows can be tested.
-	-- VERIFY in Studio against the current AdService documentation before launch.
+	-- Live check: Kernel/LiveChecks (docs/GO_LIVE.md §6).
 	adapters.Ads = {
+		-- Read-only: asks AdService for availability without showing anything. Used by
+		-- Kernel/LiveChecks so the AdService surface can be probed on a real server without
+		-- putting an ad in front of a player.
+		CheckAvailable = function(): (boolean, string)
+			if isStudio then
+				return true, "studio (simulated available)"
+			end
+			local ok, result = pcall(function()
+				local AdService = game:GetService("AdService")
+				local availability = AdService:GetAdAvailabilityNowAsync(Enum.AdFormat.RewardedVideo)
+				return tostring(availability.AdAvailabilityResult)
+			end)
+			return ok, if ok then result else tostring(result)
+		end,
 		ShowRewarded = function(player, placement: string): boolean
 			if isStudio then
 				return true
@@ -743,7 +776,7 @@ function Adapters.Roblox()
 		end,
 	}
 	-- The Trade Board: one MemoryStore sorted map, ad id -> ad, sorted by post time.
-	-- VERIFY in a live server: MemoryStore quotas with many hub servers.
+	-- Live check: Kernel/LiveChecks (MemoryStore quotas with many hub servers, docs/GO_LIVE.md §6).
 	local boardOk, board = pcall(function()
 		return MemoryStoreService:GetSortedMap("MonsterRanch_HubBoard_v1")
 	end)
@@ -928,6 +961,43 @@ function Adapters.Roblox()
 			end
 			return true, ids
 		end,
+		-- Design Week (R2): which design ids entered a given week (feedStore key "dw_<week>").
+		EnterWeek = function(week: number, id: string): boolean
+			return (
+				atomic(feedStore, "dw_" .. tostring(week), function(current)
+					local list = if type(current) == "table" then current else {}
+					if table.find(list, id) then
+						return nil
+					end
+					table.insert(list, id)
+					return list
+				end)
+			)
+		end,
+		WeekEntries = function(week: number): (boolean, { string })
+			if not feedStore then
+				return false, {}
+			end
+			local ok, list = pcall(function()
+				return feedStore:GetAsync("dw_" .. tostring(week))
+			end)
+			return ok, if ok and type(list) == "table" then list else {}
+		end,
+		-- Design Week rollover: an atomic write to feedStore key "dwr_<week>" so two servers
+		-- finalizing the same week at once only apply the side effects once (the transform
+		-- returns nil, meaning "no change", once a result already exists).
+		Rollover = function(week: number, transform): (boolean, any)
+			return atomic(feedStore, "dwr_" .. tostring(week), transform)
+		end,
+		Results = function(week: number): (boolean, any)
+			if not feedStore then
+				return false, nil
+			end
+			local ok, record = pcall(function()
+				return feedStore:GetAsync("dwr_" .. tostring(week))
+			end)
+			return ok, if ok then record else nil
+		end,
 	}
 
 	-- Titan invasions (glow-up TT): one MemoryStore hash map entry per scheduled invasion (key =
@@ -935,7 +1005,7 @@ function Adapters.Roblox()
 	-- Every server folds its own damage in with an atomic Update every Config.Titan.ReportSeconds,
 	-- so this is MemoryStore, not a DataStore key (which throttles writes to one key); the entry
 	-- expires a day after its last write. Get never writes. Both yield: the Titan system calls
-	-- them through Services.Spawn. VERIFY in a live server: request units with many servers.
+	-- them through Services.Spawn. Live check: Kernel/LiveChecks (request units with many servers, docs/GO_LIVE.md §6).
 	local TITAN_TTL = 24 * 3600
 	local titanOk, titanMap = pcall(function()
 		return MemoryStoreService:GetHashMap("MonsterRanch_Titan_v1")
@@ -957,6 +1027,12 @@ function Adapters.Roblox()
 					end, TITAN_TTL)
 				end)
 				return ok, if ok then result else nil
+			end,
+			-- Used by LiveChecks (Kernel/LiveChecks) to erase its throwaway probe key.
+			Remove = function(key: string): boolean
+				return (pcall(function()
+					titanMap:RemoveAsync(key)
+				end))
 			end,
 		}
 		else nil

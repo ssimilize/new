@@ -279,15 +279,37 @@ end
 
 -- A square card with rarity border, icon, and optional footer text. Used in grids.
 function MonsterIcon.card(appearance, size: number, footer: string?): Frame
+	local rarity = appearance.rarity or 1
 	local card = New("Frame", {
 		Name = "MonsterCard",
 		BackgroundColor3 = Theme.Colors.Card,
 		Size = UDim2.fromOffset(size, size + (if footer then 22 else 0)),
-	}, { Create.Corner(Theme.Radius.Card), Create.Stroke(3, Theme.Rarity(appearance.rarity or 1)) })
+	}, { Create.Corner(Theme.Radius.Card), Create.Stroke(3, Theme.Rarity(rarity)) })
 	local icon = MonsterIcon.new(appearance, size - 14)
 	icon.Position = UDim2.fromOffset(7, 5)
 	icon.Parent = card
 	Shine.attach(card, appearance.rarity, Theme.Radius.Card)
+	-- R2-A11Y: the card's rarity border is colour-only; colour-blind mode adds the letter too.
+	if Theme.ColorBlind then
+		local badge = New("Frame", {
+			Name = "RarityMark",
+			BackgroundColor3 = Theme.Rarity(rarity),
+			AnchorPoint = Vector2.new(0, 0),
+			Position = UDim2.fromOffset(2, 2),
+			Size = UDim2.fromOffset(18, 18),
+			ZIndex = 9,
+			Parent = card,
+		}, { Create.Corner(4), Create.Stroke(1.5) })
+		local mark = Create.Text({
+			Text = Theme.RarityMark(rarity),
+			TextColor3 = Theme.OnColor(Theme.Rarity(rarity)),
+			TextSize = Theme.TextSize.Tiny,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 10,
+			Parent = badge,
+		})
+		mark:SetAttribute("Localize", false) -- a rarity letter, never an English word
+	end
 	if footer then
 		Create.Text({
 			Text = footer,

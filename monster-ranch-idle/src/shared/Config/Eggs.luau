@@ -313,6 +313,36 @@ table.insert(Eggs.List, {
 	pattern = "spots",
 })
 
+-- R2-CLOCKWORK · Clockwork Canyon: dropped in Clockwork Canyon; hatches the Cogling, Gritcog
+-- and Brassling lines. Odds match the Reef Egg (same rarity band, 5-6).
+table.insert(Eggs.List, {
+	id = "clockwork",
+	name = "Clockwork Egg",
+	order = 21,
+	price = nil,
+	hatchSeconds = 2700,
+	unlock = "region_clockwork",
+	odds = { 0, 15, 40, 30, 12, 3 },
+	pool = "clockwork",
+	colors = { shell = "#B8860B", spots = "#3E5F66" },
+	pattern = "cracks",
+})
+
+-- R2-ABYSS · Sunken Abyss: dropped in the Sunken Abyss; hatches the Gulperling, Wisplure and
+-- Pressurefin lines. Odds match the Clockwork/Reef Egg (same rarity band, 5-6).
+table.insert(Eggs.List, {
+	id = "abyss",
+	name = "Abyss Egg",
+	order = 22,
+	price = nil,
+	hatchSeconds = 2700,
+	unlock = "region_abyss",
+	odds = { 0, 15, 40, 30, 12, 3 },
+	pool = "abyss",
+	colors = { shell = "#2A1E4A", spots = "#5CE1E6" },
+	pattern = "spots",
+})
+
 Eggs.ById = {}
 for _, e in Eggs.List do
 	Eggs.ById[e.id] = e

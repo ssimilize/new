@@ -733,11 +733,32 @@ function Build.world(Config, mode: string?): (Folder, number)
 	buildSpawn(World, root)
 	buildBoundary(World, root)
 	buildSky(World, root)
-	-- Glow-up P: ready for StreamingEnabled (off today): every model arrives whole, so the client
-	-- never sees a building without its Door or a gate without its Body.
+	-- Glow-up P: ready for StreamingEnabled (off before R2-STREAMING): every model arrives whole,
+	-- so the client never sees a building without its Door or a gate without its Body.
 	for _, d in root:GetDescendants() do
 		if d:IsA("Model") then
 			d.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+		end
+	end
+	-- R2-STREAMING: the Hub is small, central and shared (prompts, the leaderboard, VIP balcony)
+	-- so every model in it stays loaded for every client; nothing there ever streams out.
+	local hub = root:FindFirstChild("Hub")
+	if hub then
+		for _, d in hub:GetDescendants() do
+			if d:IsA("Model") then
+				d.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
+			end
+		end
+	end
+	-- R2-STREAMING: a plot model stays loaded for its owner alone (Plots.assign adds them as a
+	-- persistent player) wherever they wander (Sky Islands, the arena); it streams normally,
+	-- Atomic-whole, for everyone else walking or visiting past it.
+	local plotModels = root:FindFirstChild("Plots")
+	if plotModels then
+		for _, d in plotModels:GetChildren() do
+			if d:IsA("Model") then
+				d.ModelStreamingMode = Enum.ModelStreamingMode.PersistentPerPlayer
+			end
 		end
 	end
 	root:SetAttribute("PartCount", count)

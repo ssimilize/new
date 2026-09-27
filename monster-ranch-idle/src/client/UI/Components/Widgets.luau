@@ -3,7 +3,7 @@
 
 	  Widgets.Pill({ Icon = "coin", Text = "1.28M", Parent })       -> { Root, Label, SetText }
 	  Widgets.Bar({ Color, Value = 0..1, Size, Parent, Text? })     -> { Root, SetValue(v, animate?), SetText }
-	  Widgets.Chip({ Text, Color, Parent, TextSize? })               -> Frame
+	  Widgets.Chip({ Text, Color, Parent, TextSize?, Mark? })         -> Frame
 	  Widgets.Scroll({ Size, Position, Parent, Cell = Vector2, Padding }) -> ScrollingFrame (grid)
 	  Widgets.List({ Size, Position, Parent, Padding })             -> ScrollingFrame (vertical list)
 	  Widgets.Tabs({ Tabs = { { id, text } }, Selected, OnChanged, Parent, Size }) -> { Root, Select(id), Step(delta) }
@@ -111,6 +111,8 @@ function Widgets.Bar(props)
 	return api
 end
 
+-- `props.Mark` (R2-A11Y): an optional glyph/letter drawn before the text, its own TextLabel
+-- opted out of translation (Localize = false attribute - it is never an English word).
 function Widgets.Chip(props)
 	local color = props.Color or C.Gray
 	local root = New("Frame", {
@@ -120,12 +122,31 @@ function Widgets.Chip(props)
 		Size = UDim2.fromOffset(0, props.Height or 26),
 		LayoutOrder = props.LayoutOrder or 0,
 		Parent = props.Parent,
-	}, { Create.Round(), Create.Stroke(2), Create.Padding(0, 10, 0, 10) })
+	}, {
+		Create.Round(),
+		Create.Stroke(2),
+		Create.Padding(0, 10, 0, 10),
+		Create.List("x", 4, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center),
+	})
+	local textColor = Theme.OnColor(color)
+	if props.Mark then
+		local mark = Create.Text({
+			Text = props.Mark,
+			TextSize = props.TextSize or Theme.TextSize.Tiny + 1,
+			TextColor3 = textColor,
+			Stroke = textColor == C.White,
+			AutomaticSize = Enum.AutomaticSize.X,
+			Size = UDim2.fromScale(0, 1),
+			TextWrapped = false,
+			Parent = root,
+		})
+		mark:SetAttribute("Localize", false)
+	end
 	Create.Text({
 		Text = props.Text or "",
 		TextSize = props.TextSize or Theme.TextSize.Tiny + 1,
-		TextColor3 = Theme.OnColor(color),
-		Stroke = Theme.OnColor(color) == C.White,
+		TextColor3 = textColor,
+		Stroke = textColor == C.White,
 		AutomaticSize = Enum.AutomaticSize.X,
 		Size = UDim2.fromScale(0, 1),
 		TextWrapped = false,
@@ -134,13 +155,27 @@ function Widgets.Chip(props)
 	return root
 end
 
+-- R2-A11Y: colour-blind mode also puts the rarity letter / element glyph next to the chip's
+-- text, so identity never rests on colour alone (Theme.ColorBlind, from profile.Settings.colorBlind).
 function Widgets.RarityChip(index: number, parent: Instance?)
-	return Widgets.Chip({ Text = string.upper(Theme.RarityName(index)), Color = Theme.Rarity(index), Parent = parent })
+	local name = string.upper(Theme.RarityName(index))
+	return Widgets.Chip({
+		Text = name,
+		Mark = if Theme.ColorBlind then Theme.RarityMark(index) else nil,
+		Color = Theme.Rarity(index),
+		Parent = parent,
+	})
 end
 
 function Widgets.ElementChip(id: string, parent: Instance?)
 	local e = Config.Elements.ById[id]
-	return Widgets.Chip({ Text = if e then e.name else id, Color = Theme.Element(id), Parent = parent })
+	local name = if e then e.name else id
+	return Widgets.Chip({
+		Text = name,
+		Mark = if Theme.ColorBlind then Theme.ElementGlyph(id) else nil,
+		Color = Theme.Element(id),
+		Parent = parent,
+	})
 end
 
 function Widgets.MutationChip(id: string, parent: Instance?)

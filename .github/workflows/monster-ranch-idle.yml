@@ -39,8 +39,9 @@ jobs:
           # StyLua needs the luau feature; build it from source to be sure it's enabled.
           command -v stylua || cargo install --locked stylua@2.5.2 --features luau
 
-      - name: Unit, system and integration tests
-        run: lune run tests
+      - name: Unit, system and integration tests (one process per spec file)
+        # The one-process `lune run tests` outgrew the runner's memory (killed, exit 143).
+        run: bash tools/ci/perfile.sh
 
       - name: Syntax check (client code included)
         run: lune run tests/lint
