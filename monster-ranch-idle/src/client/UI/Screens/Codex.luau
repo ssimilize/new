@@ -497,7 +497,13 @@ function Codex.Build(ctx)
 			local want = "species"
 			if
 				type(params) == "table"
-				and (params.tab == "milestones" or params.tab == "fishlog" or params.tab == "fossils" or params.tab == "strays" or params.tab == "buglog")
+				and (
+					params.tab == "milestones"
+					or params.tab == "fishlog"
+					or params.tab == "fossils"
+					or params.tab == "strays"
+					or params.tab == "buglog"
+				)
 			then
 				want = params.tab
 			end
