@@ -459,6 +459,13 @@ Api.Actions = {
 		returns = "{ win, floor, best, record, replay: BattleReplay, rewards: { Reward }, left, retries, spent: 'attempt' | 'retry' | nil }",
 	},
 
+	-- Treasure Maps (3.13) · see Config/TreasureMaps and Logic/TreasureMaps ----------------
+	["TreasureMaps.Dig"] = {
+		schema = T.struct({ map = T.integer(1) }),
+		rate = 2,
+		returns = "{ win, map, region, replay: BattleReplay, rewards: { Reward }, maps }",
+	},
+
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
 	["Weekly.Claim"] = {
 		schema = T.struct({ step = T.integer(1, #Config.Weekly.Chest) }),
@@ -868,6 +875,7 @@ Api.State = {
 		Observatory = "{ night, used, n, charts = { [chartId]: observations }, seen }  -- 3.12 (secret is private)",
 		Exhibits = "{ filled = { [setId]: { [itemId]: true } }, paid = { [setId]: step } }  -- 3.12: Museum Exhibits",
 		TrialTower = "{ week, best, record, day, used, retries, paid = { [floor]: true }, fights, cleared }  -- 3.12, see Logic/TrialTower",
+		TreasureMaps = "{ pieces, maps = { { id, region, stage, seed } }, made, rolls, digs, opened }  -- 3.13, see Logic/TreasureMaps",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",

@@ -3,6 +3,37 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.13 · Wild things
+
+### Treasure Maps
+
+**For players**
+- From Ranch Level 23 map pieces turn up on adventures: 3% per claimed expedition, 2% per fish
+  caught, 5% per Dig Site find, and one for sure on every Expedition Bounty's first win. The reward
+  card shows the piece.
+- Four pieces join into a Treasure Map by themselves. A map marks an X in one of your open
+  expedition regions (a region with a cleared stage). Hold up to 3 maps; extra pieces wait (up to 12).
+- The "Maps" button in the Expeditions header opens the Treasure Maps screen: four quarter tiles
+  for the next map, then each held map as a parchment card with its region, the X, the guardian's
+  power and the chest's rewards.
+- "Dig" fights the map's guardian (that region's monsters at 1.3x the stage's recommended power,
+  fought as a boss) with your Expeditions squad; Dojo techniques apply. Win and the chest opens:
+  coins, gems, the region's egg and a 25% chance of a map-only decor piece (Pirate Chest, Old
+  Anchor, Explorer's Globe). Lose and the map stays; try again any time for free.
+- New weekly goal: open 2 treasure chests.
+
+**In the code**
+- `Config/TreasureMaps` (drop rates, caps, guardian and chest numbers), `Logic/TreasureMaps` (seeded
+  drops, the X roll, the guardian wave, the chest), `Systems/TreasureMaps` (action
+  `TreasureMaps.Dig`, API `AddPieces` / `Drop` / `Pieces` / `Maps`, publishes `TreasureOpened`),
+  screen `UI/Screens/TreasureMaps` (the Expeditions header's "Maps" button).
+- Drops: Expeditions (claims and the bounty payout), Fishing and DigSite call `TreasureMaps:Drop`
+  (an optional dependency) and grant the piece with their own rewards. Each roll is seeded from
+  ("treasure_drop", userId, source, n), never `ctx.Rng`, so existing seeded outcomes do not move.
+- Rewards kind `map_piece` (label and a drawn parchment icon), decor `pirate_chest`, `old_anchor`,
+  `treasure_globe` (Config/Decor + DecorArt, `reward = "treasure"`), weekly goal `treasure_2`.
+- Tests: `TreasureMaps.spec`, `TreasureMapsClient.spec`.
+
 ## 3.12 · Honey & stars
 
 ### Observatory & Star Charts

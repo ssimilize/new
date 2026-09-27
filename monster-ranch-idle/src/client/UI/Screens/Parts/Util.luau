@@ -232,6 +232,9 @@ function Util.rewardText(item): string
 		return string.format("%s %s", Format.short(amount), if def then def.name else "Honey")
 	elseif kind == "tower_retry" then
 		return string.format("%s Retry tokens", Format.short(amount))
+	elseif kind == "map_piece" then
+		-- 3.13 · Treasure Maps: four pieces make a map
+		return string.format("%s Map pieces", Format.short(amount))
 	end
 	return Format.short(amount)
 end

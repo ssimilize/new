@@ -112,6 +112,8 @@ return {
 		"Dojo",
 		-- 3.12 · Trial Tower
 		"TrialTower",
+		-- 3.13 · Treasure Maps
+		"TreasureMaps",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

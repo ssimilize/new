@@ -851,6 +851,40 @@ Art.Models.stone_tablet = function(a, b) -- a carved slab standing in a plinth
 	}
 end
 
+-- 3.13 · Treasure Maps chest pieces
+Art.Models.pirate_chest = function(a, b) -- a banded chest, lid open, gold heaped inside
+	return {
+		P("block", { 2.4, 1.1, 1.5 }, { 0, 0.55, 0 }, "WoodPlanks", a),
+		P("block", { 2.4, 0.4, 1.5 }, { 0, 1.5, -0.55 }, "WoodPlanks", a, { rot = { -60, 0, 0 } }),
+		P("block", { 0.2, 1.15, 1.55 }, { -0.8, 0.56, 0 }, "Metal", "#3A2D22"),
+		P("block", { 0.2, 1.15, 1.55 }, { 0.8, 0.56, 0 }, "Metal", "#3A2D22"),
+		P("ball", { 2, 0.6, 1.2 }, { 0, 1.1, 0.05 }, "Foil", b),
+		P("block", { 0.3, 0.4, 0.1 }, { 0, 0.8, 0.78 }, "Foil", b, SMALL),
+		P("cyl", { 0.5, 0.12, 0.5 }, { 1.4, 0.06, 0.5 }, "Foil", b, SMALL),
+	}
+end
+
+Art.Models.old_anchor = function(a, b) -- a rusty anchor standing on a coil of rope
+	return {
+		P("cyl", { 1.8, 0.3, 1.8 }, { 0, 0.15, 0 }, "Fabric", b),
+		P("block", { 0.3, 2.6, 0.3 }, { 0, 1.6, 0 }, "Metal", a),
+		P("block", { 1.4, 0.25, 0.3 }, { 0, 2.5, 0 }, "Metal", a),
+		P("cyl", { 0.7, 0.2, 0.7 }, { 0, 3.05, 0 }, "Metal", a, { rot = { 90, 0, 0 } }),
+		P("block", { 1.1, 0.3, 0.3 }, { -0.5, 0.55, 0 }, "Metal", a, { rot = { 0, 0, 35 } }),
+		P("block", { 1.1, 0.3, 0.3 }, { 0.5, 0.55, 0 }, "Metal", a, { rot = { 0, 0, -35 } }),
+	}
+end
+
+Art.Models.treasure_globe = function(a, b) -- a world globe in a wooden stand
+	return {
+		P("cyl", { 1.4, 0.25, 1.4 }, { 0, 0.12, 0 }, "Wood", b),
+		P("cyl", { 0.25, 1.2, 0.25 }, { 0, 0.8, 0 }, "Wood", b),
+		P("ball", { 1.6, 1.6, 1.6 }, { 0, 2.1, 0 }, "SmoothPlastic", a),
+		P("block", { 0.6, 0.5, 0.2 }, { 0.3, 2.3, -0.72 }, "SmoothPlastic", "#6FBF4B", SMALL),
+		P("cyl", { 1.9, 0.12, 1.9 }, { 0, 2.1, 0 }, "Wood", b, { rot = { 90, 0, 20 } }),
+	}
+end
+
 -- The parts of one piece (a fresh table; callers may keep it).
 function Art.Pieces(def): { any }
 	local build = Art.Models[def.model] or Art.Models.crate
