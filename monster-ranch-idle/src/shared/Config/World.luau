@@ -241,5 +241,10 @@ table.insert(World.Scenery.keepOut, World.VisitGrounds[2])
 -- between the Workshop and the path to plot 1. Scenery keeps off it.
 World.MerchantCaravan = { center = { -104, -42 }, radius = 14 }
 table.insert(World.Scenery.keepOut, World.MerchantCaravan)
+-- 3.12: the Curator wing of Museum Exhibits (client-built, Config/Exhibits, Controllers/CuratorWing),
+-- east of the Codex Museum, clear of plots 3 and 5. Listed with the Codex grounds; scenery keeps off it.
+World.CuratorWing = { center = { 200, -214 }, size = { 40, 64 } }
+table.insert(World.CodexGrounds, World.CuratorWing)
+table.insert(World.Scenery.keepOut, World.CuratorWing)
 
 return World

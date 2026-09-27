@@ -33,6 +33,45 @@ players get and where it lives in the code.
   `hive_hours` is for the Apiary. Topics: `StarSighted` (new, the weekly goal `stars_5`) and
   `StarCharted`.
 
+### Museum Exhibits
+
+**For players**
+- From Ranch Level 18 a Curator wing stands beside the walk-in Codex Museum (east of it, south
+  of the Market Square). The Curator desk's "Exhibits" prompt, or the Exhibits button on the Codex
+  screen, opens the Museum Exhibits screen. No HUD button.
+- Five sets, each a row of pedestals in the wing and a tab on the screen:
+  - Fossil Hall: the 6 fossils. Filled by itself when a fossil is complete at the Dig Site (you keep
+    the skeleton display decor); fossils finished earlier appear on your next visit.
+  - Aquarium: every fish (20 with the seasonal ones). Donate one caught fish of that kind.
+  - Relic Room: the Dig Site relics, the Old Boot and Sunken Chest from fishing and the Travelling
+    Merchant's decor. Donate one copy from decor storage (a placed copy never counts).
+  - Honey Shelf: the four honeys and Royal Jelly from the Apiary. Donate one jar.
+  - Star Atlas: the Observatory's charts, filled by themselves when you chart them.
+- Each set pays at a third, two thirds and all of its exhibits (Claim on the screen, one step at a
+  time): 6 gems and 30 stardust per exhibit in the set over the three steps (25% / 25% / 50%,
+  rounded up) and a title for completing it (Bone Curator, Aquarist, Relic Keeper, Honey Curator,
+  Star Curator; worn from the Mastery screen).
+- Every exhibit on display adds Tourist appeal: up to +10 for a full museum.
+- New weekly goal: Fill 3 museum exhibits.
+
+**In the code**
+- `Config/Exhibits` (sets, steps, rewards, titles, the wing's LOD numbers), `Logic/Exhibits` (item
+  lists read from Config.DigSite / Fishing / Merchant / Decor / Apiary / Observatory, so new content
+  adds itself; a set whose config is missing is hidden; counts, steps, rewards, appeal, the wing's
+  layout), `Systems/Exhibits` (actions `Exhibits.Donate`, `Exhibits.Claim`; publishes
+  `ExhibitDonated`; `Tourists:RegisterAppealBonus("exhibits")`), screen `Screens/Exhibits`,
+  controller `Controllers/CuratorWing` (Parts, pedestal plates everywhere, at most 16 Part displays
+  near the camera via `Logic/Museum.Plan`).
+- Save `profile.Exhibits = { filled = { [set] = { [item] = true } }, paid = { [set] = step } }`.
+- Donations spend through `Fishing:SpendFish(player, 1, id)`, `Shop:TakeDecor` (storage only) and
+  `Apiary:SpendHoney(player, kind, 1)`; fossils fill from `FossilFound` (complete) and
+  `DigSite:Completed` (new, on join), charts from `StarCharted` and `Observatory:Charted` (on join).
+  Join back-fills do not publish `ExhibitDonated`.
+- World: `Config.World.CuratorWing` `{ center = { 200, -214 }, size = { 40, 64 } }`, listed in
+  `World.CodexGrounds` and the scenery keep-out.
+- Titles: `Config/Exhibits.Items`, appended to `Config/Mastery` Rewards like the Codex titles.
+- Tests: `Exhibits.spec`, `ExhibitsClient.spec`.
+
 ## 3.11 · Seasons & secrets
 
 ### Dig Site & Fossils

@@ -150,6 +150,15 @@ Weekly.Pool = {
 		target = 5,
 		unlock = "observatory",
 	},
+	-- 3.12 · Museum Exhibits (donated or filled by themselves)
+	{
+		id = "exhibits_3",
+		family = "exhibits",
+		text = "Fill 3 museum exhibits",
+		topic = "ExhibitDonated",
+		target = 3,
+		unlock = "exhibits",
+	},
 }
 
 Weekly.ById = {}
