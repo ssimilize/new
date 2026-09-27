@@ -77,6 +77,11 @@ return function(t)
 
 			local chasm = reefArea:FindFirstChild("Chasm")
 			expect(chasm ~= nil).toBe(true)
+			-- On the reef's sand, under its surface, where a swimmer can reach it (Studio 2026-09-27:
+			-- it sat 158 studs up, above the water, measured off the Floor cylinder's diameter).
+			local R = Config.DeepReef.Area
+			local padY = chasm.DivePad.Position.Y
+			expect(padY >= R.floorY - 2 and padY < R.surfaceY).toBe(true)
 			c:Trigger(chasm.DivePad:FindFirstChildOfClass("ProximityPrompt"))
 			c:Advance(0.5)
 
