@@ -315,5 +315,55 @@ return function(t)
 				`AmbienceCompat: {#old} frames x 3 runs equal; most lights on {oldStats.lit}, lit frames {oldStats.litFrames}, critter frames {oldStats.critterFrames}, critter parts {oldStats.minParts}..{oldStats.maxParts}`
 			)
 		end)
+
+		-- A camera at NaN or inf (the infinite-height shot passes through one): the package refuses
+		-- such a position, so Lamplight lights nothing then, as Logic.Nearest found nothing.
+		it("a non-finite camera draws what the old controllers drew, and nothing errors", function()
+			local nan, inf = 0 / 0, math.huge
+			local cams = {
+				CFrame.new(0, 20, 30),
+				CFrame.new(nan, 20, 30),
+				CFrame.new(0, 20, 30),
+				CFrame.new(10, 20, inf),
+				CFrame.new(0, nan, 30),
+				CFrame.new(0, -inf, 30),
+				CFrame.new(-inf, 20, 30),
+				CFrame.new(nan, nan, nan),
+				CFrame.new(5, 20, 25),
+			}
+			local function run(mode: string): ({ string }, any, any)
+				math.randomseed(20260927)
+				local h = TestKernel.new({ systems = allSystems() })
+				local c = ClientHarness.new(h, h:Join(), { noBoot = true })
+				if mode == "old" then
+					local controllers = c.clientFolder.Controllers
+					c:Substitute(controllers.Lamplight, "tests/runtime/OldLamplight.luau")
+					c:Substitute(controllers.Critters, "tests/runtime/OldCritters.luau")
+				end
+				c:Boot()
+				c:Advance(1)
+				plant(c)
+				c.world.game:GetService("Lighting").ClockTime = 22
+				local camera = c.world.workspace.CurrentCamera
+				local frames = {}
+				local stats = { lit = 0, litFrames = 0, critterFrames = 0, minParts = math.huge, maxParts = 0 }
+				for _, cf in cams do
+					camera.CFrame = cf
+					for _ = 1, 30 do -- 1 s: two light picks at Lights.update 0.5
+						c:Advance(DT, DT)
+						table.insert(frames, snapshot(c, stats))
+					end
+				end
+				return frames, stats, c
+			end
+			local old, oldStats, oc = run("old")
+			local new, newStats, nc = run("new")
+			expect(oldStats.litFrames > 0).toBe(true) -- the finite frames light lamps
+			expect(oldStats.litFrames < #old).toBe(true) -- and the non-finite ones do not
+			compare(old, new, "non-finite camera")
+			expect(newStats).toEqual(oldStats)
+			expect(#oc:Problems()).toBe(0)
+			expect(#nc:Problems()).toBe(0)
+		end)
 	end)
 end

@@ -300,6 +300,10 @@ local function switch(s: Source, on: boolean)
 	end
 end
 
+local function finite(v: number): boolean
+	return v == v and v ~= math.huge and v ~= -math.huge
+end
+
 -- Package path: the solver picks the lit sources and their brightness (cap by the adapter's
 -- quality, nearest first within the radius); between picks the flicker scales `base`.
 local function pickPackage(P: any)
@@ -309,8 +313,14 @@ local function pickPackage(P: any)
 		if camera then
 			hourNow = tonumber(Lighting.ClockTime) or 14
 			local p = camera.CFrame.Position
-			for _, e in lamps:solve(clock, { pos = { x = p.X, y = p.Y, z = p.Z } }).lights do
-				want[sources[tonumber(string.sub(e.id, 2)) :: number]] = e
+			-- The package refuses a non-finite camera. Logic.Nearest finds nothing at a non-finite
+			-- x or z (every comparison with NaN or inf is false), so no source is lit; the rules
+			-- are flat, so y never reaches a pick and a non-finite y goes in as 0.
+			if finite(p.X) and finite(p.Z) then
+				local pos = { x = p.X, y = if finite(p.Y) then p.Y else 0, z = p.Z }
+				for _, e in lamps:solve(clock, { pos = pos }).lights do
+					want[sources[tonumber(string.sub(e.id, 2)) :: number]] = e
+				end
 			end
 		end
 	end

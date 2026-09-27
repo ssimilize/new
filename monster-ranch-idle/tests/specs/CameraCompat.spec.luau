@@ -27,18 +27,9 @@ return function(t)
 	local CAM = Tuning.Camera
 	local DT = 1 / 30
 	-- The infinite-height shot leaves the camera at NaN for a few frames (in every run, old and
-	-- new alike); Lamplight's package path (wave 1b) refuses a non-finite camera position then.
-	-- That is Lamplight's, not this controller's, so it is filtered here.
-	local NAN_CAMERA = "Lamplighter.solve: camera.pos must be"
-
+	-- new alike): no controller may error then (Lamplight lights nothing, as Logic.Nearest did).
 	local function problems(c, allow: { string }): { string }
-		local out = {}
-		for _, p in c:Problems(allow) do
-			if not string.find(p, NAN_CAMERA, 1, true) then
-				table.insert(out, p)
-			end
-		end
-		return out
+		return c:Problems(allow)
 	end
 
 	local function allSystems()
