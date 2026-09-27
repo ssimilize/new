@@ -96,6 +96,8 @@ return {
 		"GeneLab",
 		-- 3.10 · Fishing Pond
 		"Fishing",
+		-- 3.11 · Ranch Seasons
+		"Seasons",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

@@ -12,7 +12,8 @@
 	  total, best           -- fish caught ever, heaviest ever (kg)
 
 	Actions:
-	  Fishing.Start {} -> { run, seed, bonus, duration, casts, bait }
+	  Fishing.Start {} -> { run, seed, bonus, season, duration, casts, bait }
+	    season (3.11) = Logic/Seasons.At(now).id, fixed for the run: that season's fish can bite.
 	    Spends a free cast, else a bait. One open run per player (a new cast replaces it).
 	  Fishing.Finish { run, inputs = { { t, down } } } -> { caught, fish, rarity, weight, time, rewards, best, first }
 	    Replays the moves (Logic/Fishing.Simulate with the bonus fixed at Start); the run must have
@@ -23,18 +24,21 @@
 
 	Public API:
 	  Fishing:FishCount(player) -> number           every fish in the bucket (Kitchen)
-	  Fishing:SpendFish(player, n) -> boolean       cheapest fish first; false and no change if short
+	  Fishing:SpendFish(player, n, kind?) -> boolean  cheapest fish first (one `kind` first when given,
+	                                                3.11 seasonal recipes); false and no change if short
+	  Fishing:Have(player, fishId) -> number        that kind in the bucket
 	  Fishing:AddBait(player, n) -> number          new bait count (Rewards kind "bait")
 	  Fishing:SpeciesCaught(player) -> number       kinds in the Fish Log (Codex Fish Log milestones)
 	  Fishing:WeekBest(player) -> (number, string?) biggest catch this week in kg × WeightScale, fish name
 	  Fishing:Bonus(player) -> number               the buddy's Luck bonus right now
 
-	Publishes FishCaught (player, { fish, rarity, weight }).
+	Publishes FishCaught (player, { fish, rarity, weight, seasonal }) (seasonal: 3.11, a season's fish).
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Logic = require(Shared.Logic.Fishing)
 local Formulas = require(Shared.Logic.Formulas)
+local Seasons = require(Shared.Logic.Seasons)
 
 local Fishing = {
 	Name = "Fishing",
@@ -64,7 +68,7 @@ local ctx
 local Cfg -- Config.Fishing
 local Progression, Monsters, Rewards
 
-local runs = {} -- [player] = { id, seed, bonus, startedAt }
+local runs = {} -- [player] = { id, seed, bonus, season, startedAt }
 local nextRun = 0
 
 local function mustSection(player)
@@ -122,7 +126,13 @@ function Fishing:FishCount(player): number
 	return n
 end
 
-function Fishing:SpendFish(player, n: number): boolean
+function Fishing:Have(player, fishId: string): number
+	local s = ctx:Section(player)
+	local n = s and s.fish[fishId]
+	return if type(n) == "number" then n else 0
+end
+
+function Fishing:SpendFish(player, n: number, kind: string?): boolean
 	local s = ctx:Section(player)
 	if not s or type(n) ~= "number" or n ~= n or n < 0 or n % 1 ~= 0 then
 		return false
@@ -131,6 +141,13 @@ function Fishing:SpendFish(player, n: number): boolean
 		return false
 	end
 	local left = n
+	if kind ~= nil then
+		if n < 1 or Fishing:Have(player, kind) < 1 then
+			return false
+		end
+		s.fish[kind] = if s.fish[kind] > 1 then s.fish[kind] - 1 else nil
+		left -= 1
+	end
 	for _, id in Logic.SpendOrder() do
 		if left <= 0 then
 			break
@@ -187,8 +204,17 @@ local function start(player)
 	nextRun += 1
 	local seed = ctx.Rng:Int(1, 2 ^ 30)
 	local bonus = Fishing:Bonus(player)
-	runs[player] = { id = nextRun, seed = seed, bonus = bonus, startedAt = ctx.Clock.Precise() }
-	return { run = nextRun, seed = seed, bonus = bonus, duration = Cfg.Duration, casts = Cfg.FreeCasts - s.casts, bait = s.bait }
+	local season = Seasons.At(ctx:Now()).id
+	runs[player] = { id = nextRun, seed = seed, bonus = bonus, season = season, startedAt = ctx.Clock.Precise() }
+	return {
+		run = nextRun,
+		seed = seed,
+		bonus = bonus,
+		season = season,
+		duration = Cfg.Duration,
+		casts = Cfg.FreeCasts - s.casts,
+		bait = s.bait,
+	}
 end
 
 local function finish(player, runId: number, inputs)
@@ -202,7 +228,7 @@ local function finish(player, runId: number, inputs)
 	if not ok then
 		ctx:Fail(string.format("That catch didn't add up (%s)", tostring(why)))
 	end
-	local result = Logic.Simulate(run.seed, inputs, run.bonus)
+	local result = Logic.Simulate(run.seed, inputs, run.bonus, run.season)
 	local elapsed = ctx.Clock.Precise() - run.startedAt
 	if elapsed + Cfg.GraceSeconds < result.time then
 		ctx:Fail("That catch was too quick")
@@ -243,7 +269,8 @@ local function finish(player, runId: number, inputs)
 	ctx:Dirty(player)
 	local extras = Logic.Extras(run.seed, run.bonus)
 	local granted = if #extras > 0 then Rewards:Grant(player, extras, Cfg.Source) else {}
-	ctx.Bus:Publish("FishCaught", player, { fish = id, rarity = result.rarity, weight = weight })
+	local seasonal = Cfg.ById[id].season ~= nil
+	ctx.Bus:Publish("FishCaught", player, { fish = id, rarity = result.rarity, weight = weight, seasonal = seasonal })
 	return {
 		caught = true,
 		fish = id,

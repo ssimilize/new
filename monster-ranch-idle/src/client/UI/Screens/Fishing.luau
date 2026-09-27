@@ -250,7 +250,7 @@ return {
 				id = res.run,
 				seed = res.seed,
 				bonus = bonus,
-				course = FishLogic.Course(res.seed, bonus),
+				course = FishLogic.Course(res.seed, bonus, if type(res.season) == "string" then res.season else nil),
 				state = FishLogic.NewState(),
 				inputs = {},
 				down = false,

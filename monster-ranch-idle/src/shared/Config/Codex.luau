@@ -35,12 +35,12 @@ Codex.Gems = {
 	region = 25,
 	total = { 10, 20, 40, 60 }, -- per TotalSteps entry
 	complete = 100,
-	fish = { 10, 25, 60 }, -- 3.10: per FishSteps entry
+	fish = { 10, 30, 75 }, -- 3.10: per FishSteps entry (3.11: 20 kinds)
 }
 
 -- Update 3.10 · Fish Log (the Codex screen's Fish Log tab): kinds of fish caught at the Fishing
 -- Pond (Config/Fishing). Claimed through Codex.Claim like every milestone (Logic/Codex.FishMilestones).
-Codex.FishSteps = { 4, 8, 16 }
+Codex.FishSteps = { 5, 10, 20 } -- 3.11: 20 kinds with the four seasonal fish
 
 -- Titles per element completed (Codex.Items) and for the overall steps.
 Codex.ElementTitles = {

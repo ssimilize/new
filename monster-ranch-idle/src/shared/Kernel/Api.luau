@@ -395,7 +395,7 @@ Api.Actions = {
 	["Fishing.Start"] = {
 		schema = T.none,
 		rate = 1,
-		returns = "{ run: number, seed: number, bonus: number, duration: number, casts: number, bait: number }",
+		returns = "{ run: number, seed: number, bonus: number, season: string, duration: number, casts: number, bait: number }",
 	},
 	["Fishing.Finish"] = {
 		schema = T.struct({
@@ -801,6 +801,7 @@ Api.State = {
 		Decor = "{ layout = { { id, x, z, rot } }, migrated, starter }  -- glow-up Z: plot-local grid units, rot × 45°",
 		RaceGear = "{ owned = { [gearId]: true }, equipped = { saddle, trail, banner }, races, live, podiums, wins, duels }  -- glow-up LR",
 		Tourists = "{ slot, count, book = { { at, stars, who, good, gi, bad, bi } } }  -- 3.10: Ranch Tourists (Logic/Tourists)",
+		Seasons = "{ last }  -- 3.11: the last Ranch Season this player saw (Logic/Seasons)",
 		-- R2 Design Weeks: added to profile.Workshop (see Api.State.profile.Workshop above).
 		Workshop_DesignWeek = "profile.Workshop also has: designWeek = { week, entered: designId|false }, votesToday = { day, n }",
 	},
@@ -897,7 +898,8 @@ Api.Topics = {
 	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
 	TouristVisited = "(player, { stars: number })  -- 3.10: one Ranch Tourist visited (online or while away)",
 	DishCooked = "(player, { dish: string, count: number })  -- 3.10: dishes collected from the Kitchen into the Pantry",
-	FishCaught = "(player, { fish: string, rarity: string, weight: number })  -- 3.10: a catch at the Fishing Pond (weight in kg)",
+	FishCaught = "(player, { fish: string, rarity: string, weight: number, seasonal: boolean })  -- 3.10: a catch at the Fishing Pond (weight in kg; seasonal: 3.11)",
+	SeasonChanged = "(player, { season: string })  -- 3.11: on join when the last season seen differs, and at the turnover",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",

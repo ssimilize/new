@@ -11,6 +11,7 @@
 	  particles   one invisible anchored part follows the camera with rain, snow and star
 	              streak emitters (rates only, never re-created). lowGraphics scales rates down.
 	              They use the Vfx sprites (droplet, snowflake, petal, star; applySprites).
+	              3.11: in winter (Logic/Seasons) the rain falls as snow instead.
 	  extras      thunderstorm lightning flashes (Lighting.Brightness + ColorCorrection pulses; each one
 	              publishes client bus "Weather.Lightning" (strength 0..1) so Soundscape times thunder),
 	              aurora animated tint over ColorCorrection and the Atmosphere sky colour.
@@ -24,6 +25,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared").Config)
 local Quality = require(script.Parent.Parent.Visuals.Quality)
+local SeasonsLogic = require(ReplicatedStorage:WaitForChild("Shared").Logic.Seasons)
 local WeatherConfig = Config.Weather
 
 local Weather = {
@@ -37,6 +39,8 @@ local TRANSITION_HALF = 20 -- seconds either side of a phase change
 local BLEND_TIME = 1.6 -- exponential blend time constant (≈ 5 s to settle)
 local LOW_PARTICLES = 0.35
 local EMITTER_HEIGHT = 32
+local RAIN_TO_SNOW = 0.35 -- 3.11: winter rain as snowflakes (450 rain -> ~160 snow, the snow profile's rate)
+local SEASON_CHECK = 5
 
 local hex = Color3.fromHex
 
@@ -234,6 +238,8 @@ local baseLightingBrightness = 2.5
 local clock = 0
 local nextFlashAt = 0
 local flashAt = -10
+local winter = false -- 3.11: Logic/Seasons says winter (rain shows as snow)
+local seasonCheckIn = 0
 local held = false -- glow-up DR: Weather.Hold (the Deep Reef has the light while you swim)
 
 -- Target -------------------------------------------------------------------------------------
@@ -258,6 +264,11 @@ local function computeTarget()
 	target.skyR, target.skyG, target.skyB = sky.R, sky.G, sky.B
 	for _, key in SCALAR_FIELDS do
 		target[key] = field(profile, key)
+	end
+	-- 3.11 · Ranch Seasons: in winter the rain falls as snow. Only the look: the server's roll is unchanged.
+	if winter and target.rain > 0 then
+		target.snow = math.max(target.snow, target.rain * RAIN_TO_SNOW)
+		target.rain = 0
 	end
 	if isNight then
 		target.brightness -= 0.03
@@ -475,6 +486,15 @@ end
 
 local function step(dt: number)
 	clock += dt
+	seasonCheckIn -= dt
+	if seasonCheckIn <= 0 then
+		seasonCheckIn = SEASON_CHECK
+		local isWinter = SeasonsLogic.At(ctx:Now()).id == "winter"
+		if isWinter ~= winter then
+			winter = isWinter
+			computeTarget()
+		end
+	end
 	if held then
 		return
 	end

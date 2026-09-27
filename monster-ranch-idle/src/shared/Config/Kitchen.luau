@@ -13,6 +13,9 @@
 	              bond   +1 Bond heart
 	              job    +JobBoost.pct Job Board output for JobBoost.hours hours (that monster)
 	              loot   +LootPct loot on that monster's next expedition
+	  Seasonal  (3.11 · Ranch Seasons) a recipe with `season` cooks only in that season
+	            (Logic/Seasons.At) and needs at least one `seasonFish` (that season's fish, Config.Fishing)
+	            among its `fish`. Dishes already cooked keep working all year.
 	  Golden    each harvested Feed Garden food plot has GoldenSeedChance of a Golden seed
 	            (seeded per harvest, kitchen unlocked only). A seed planted in a garden plot grows
 	            GoldenYield golden produce in GoldenGrowMinutes.
@@ -112,6 +115,48 @@ Kitchen.Recipes = {
 		makes = 2,
 		effect = "bond",
 		icon = { shape = "wide", color = "#F2C230", top = "#E5484D" },
+	},
+	-- 3.11 · Ranch Seasons: one per season (appended; never reorder)
+	{
+		id = "blossom_bento",
+		name = "Blossom Bento",
+		cost = { fish = 2, sweet = 4 },
+		minutes = 20,
+		effect = "mood",
+		season = "spring",
+		seasonFish = "blossom_trout",
+		icon = { shape = "stack", color = "#F7A8C8", top = "#FFFFFF" },
+	},
+	{
+		id = "sunny_ceviche",
+		name = "Sunny Ceviche",
+		cost = { fish = 2, sour = 4 },
+		minutes = 20,
+		effect = "job",
+		season = "summer",
+		seasonFish = "sunburst_bass",
+		icon = { shape = "bowl", color = "#F2B233", top = "#C3D93B" },
+	},
+	{
+		id = "maple_glazed_carp",
+		name = "Maple Glazed Carp",
+		cost = { fish = 2, savory = 4 },
+		minutes = 20,
+		effect = "loot",
+		season = "autumn",
+		seasonFish = "maple_carp",
+		icon = { shape = "wide", color = "#D9652B", top = "#8A5A2B" },
+	},
+	{
+		id = "frost_chowder",
+		name = "Frost Chowder",
+		cost = { fish = 2, spicy = 4 },
+		minutes = 20,
+		effect = "meals",
+		flavor = "spicy",
+		season = "winter",
+		seasonFish = "frost_char",
+		icon = { shape = "bowl", color = "#DCEBF2", top = "#E5484D" },
 	},
 }
 

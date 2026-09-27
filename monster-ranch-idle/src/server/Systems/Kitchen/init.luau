@@ -18,6 +18,7 @@
 
 	Actions:
 	  Kitchen.Cook { recipe, slot? }   charges every ingredient at once (all or nothing) and starts
+	                                   (3.11: a seasonal recipe only in its season, one of its fish first)
 	                                   the slot (the first free one when `slot` is nil)
 	  Kitchen.Collect {}               moves finished dishes into the Pantry -> { dishes = { [id]: n } }
 	  Kitchen.Serve { id, dish }       one Pantry dish to one monster -> { effect }
@@ -37,6 +38,7 @@
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Formulas = require(Shared.Logic.Formulas)
 local Logic = require(Shared.Logic.Kitchen)
+local Seasons = require(Shared.Logic.Seasons)
 
 local Kitchen = {
 	Name = "Kitchen",
@@ -139,12 +141,26 @@ local function cook(player, payload)
 	end
 	local recipe = Rules.ById[payload.recipe]
 	local food, fish, golden = Logic.Split(recipe)
+	-- 3.11: seasonal recipes cook only in their season, with that season's fish.
+	local _, inSeason = Logic.SeasonNote(recipe, Seasons.At(ctx:Now()).id)
+	if not inSeason then
+		local def = Seasons.Def(recipe.season)
+		ctx:Fail(string.format("Only cooked in %s", if def then def.name else tostring(recipe.season)))
+	end
 	-- Check everything first so nothing is spent unless all of it can be.
 	if fish > 0 then
 		if not Fishing then
 			ctx:Fail("Needs fish from the Fishing Pond")
 		elseif fishCount(player) < fish then
 			ctx:Fail("Not enough fish")
+		end
+	end
+	local kind = recipe.seasonFish
+	if kind then
+		local ok, n = pcall(Fishing.Have, Fishing, player, kind)
+		if not ok or type(n) ~= "number" or n < 1 then
+			local def = Config.Fishing.ById[kind]
+			ctx:Fail(string.format("Needs a %s from the Fishing Pond", if def then def.name else kind))
 		end
 	end
 	if golden > (s.golden or 0) then
@@ -159,7 +175,7 @@ local function cook(player, payload)
 		ctx:Fail(Currency:MissingText(missing :: string))
 	end
 	if fish > 0 then
-		local called, spent = pcall(Fishing.SpendFish, Fishing, player, fish)
+		local called, spent = pcall(Fishing.SpendFish, Fishing, player, fish, kind)
 		if not called or spent ~= true then
 			ctx:Fail("Not enough fish")
 		end

@@ -186,7 +186,12 @@ return function(t)
 		it("splits the screen's sections at the Saturday reset and keeps far big dates", function()
 			local at = 1790000000 -- a Thursday in Sept 2026, before arena season 1
 			local s = Calendar.Sections(at)
-			expect(#s.now).toBe(0)
+			-- 3.11: the Ranch Season is always running (the week of `at` is summer); the next one
+			-- starts at the reset.
+			expect(#s.now).toBe(1)
+			expect(s.now[1].kind).toBe("season")
+			expect(s.now[1].name).toBe("Summer")
+			expect(#byKind(s.week, "season")).toBe(1)
 			local resetAt = Config.Leaderboards.WeekEndsAt(Config.Leaderboards.Week(at))
 			expect(keys(s.week)["reset:1"] ~= nil).toBe(true)
 			expect(#byKind(s.week, "stampede")).toBe(1)

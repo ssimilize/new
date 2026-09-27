@@ -96,8 +96,8 @@ return function(t)
 	end
 
 	describe("Kitchen rules", function()
-		it("has 8 recipes with one known effect each, cook times of 5-60 minutes and fish and golden recipes", function()
-			expect(#Rules.Recipes).toBe(8)
+		it("has 12 recipes with one known effect each, cook times of 5-60 minutes and fish and golden recipes", function()
+			expect(#Rules.Recipes).toBe(12) -- 3.11: + four seasonal recipes
 			local fish, golden, effects = 0, 0, {}
 			for _, r in Rules.Recipes do
 				expect(Rules.Effects[r.effect] ~= nil).toBe(true)
@@ -110,7 +110,7 @@ return function(t)
 					expect(Config.Food.ById[r.flavor] ~= nil).toBe(true)
 				end
 			end
-			expect(fish).toBe(2)
+			expect(fish).toBe(6) -- 3.11: the seasonal recipes need fish too
 			expect(golden).toBe(2)
 			for id in Rules.Effects do
 				expect(effects[id]).toBe(true)

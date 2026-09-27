@@ -5,6 +5,7 @@
 	shape: placeholder model in the pen: "block" (default), "ball", "disc" (flat, on the
 	ground) or "tall" (a post with a round top). The art team replaces these later.
 	set: a themed set shown together in the Store (e.g. "beach", update 1.1).
+	season (3.11): sold only in that Ranch Season (Logic/Seasons.At); pieces owned stay forever.
 ]]
 
 local Decor = {}
@@ -342,6 +343,26 @@ add("rep_telescope", "Hale's Telescope", "statue", "rep_telescope", { 2, 2 }, ni
 local FISHED = { reward = "fishing" }
 add("old_boot", "Old Boot", "fun", "old_boot", { 2, 2 }, nil, "#6B4424", "#5FAF4B", FISHED)
 add("sunken_chest", "Sunken Chest", "fun", "sunken_chest", { 3, 2 }, nil, "#8A5A2B", "#F5C630", FISHED)
+
+-- Update 3.11 · Ranch Seasons: two pieces per season, sold only in their season.
+add("spring_tulips", "Tulip Bed", "plant", "flowerbed", { 4, 3 }, { coins = 20000 }, "#FF7AB6", "#6B4424", { season = "spring" })
+add("spring_blossom", "Blossom Tree", "plant", "tree", { 5, 5 }, { gems = 120 }, "#FFD1E6", "#6B4424", { season = "spring" })
+add(
+	"summer_sunflowers",
+	"Giant Sunflowers",
+	"plant",
+	"sunflowers",
+	{ 4, 2 },
+	{ coins = 20000 },
+	"#FFB020",
+	"#4E9A3E",
+	{ season = "summer" }
+)
+add("summer_lemonade", "Lemonade Cart", "fun", "cart", { 5, 3 }, { gems = 120 }, "#FFE066", "#E5484D", { season = "summer" })
+add("autumn_leaves", "Leaf Pile", "fun", "haystack", { 3, 3 }, { coins = 20000 }, "#D9652B", "#B8452A", { season = "autumn" })
+add("autumn_maple", "Maple Tree", "plant", "tree", { 5, 5 }, { gems = 120 }, "#E8702A", "#6B4424", { season = "autumn" })
+add("winter_snowman", "Snow Buddy", "statue", "snowman", { 3, 3 }, { coins = 20000 }, "#FFFFFF", "#E5484D", { season = "winter" })
+add("winter_fir", "Frosted Fir", "plant", "pine", { 4, 4 }, { gems = 120 }, "#E8F6FF", "#6B4424", { season = "winter" })
 
 for _, d in Decor.List do
 	d.mesh = d.mesh or ""
