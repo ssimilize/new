@@ -26,6 +26,8 @@
 	} }
 	Public: Bond:Hearts(player, id) -> number, Bond:Points(player, id) -> number,
 	        Bond:AddHeart(player, id, kind) -> hearts?   -- 3.10 Kitchen dishes: up to the next heart
+	        Bond:AddPoints(player, id, n, kind) -> hearts?   -- 3.13 Spa herbal soak: n points (nil: no
+	                                                            such monster or all hearts)
 	                                                        (nil: no such monster or all hearts)
 	Bus: publishes BondRaised (player, { id, hearts, points, kind, heartUp }).
 ]]
@@ -266,6 +268,34 @@ function Bond:AddHeart(player, id: string, kind: string): number?
 	end
 	publish(player)
 	ctx.Bus:Publish("BondRaised", player, { id = id, hearts = hearts, points = entry.pts, kind = kind, heartUp = true })
+	return hearts
+end
+
+function Bond:AddPoints(player, id: string, n: number, kind: string): number?
+	local s = ctx:Section(player)
+	if not s or not Monsters:Get(player, id) or type(n) ~= "number" or n ~= n or n <= 0 then
+		return nil
+	end
+	local entry = s.list[id]
+	local top = Cfg.HeartAt[#Cfg.HeartAt]
+	if entry and entry.pts >= top then
+		return nil
+	end
+	if not entry then
+		entry = { pts = 0 }
+		s.list[id] = entry
+	end
+	local before = Logic.Hearts(entry.pts, Cfg)
+	entry.pts = math.min(entry.pts + math.floor(n), top)
+	local hearts = Logic.Hearts(entry.pts, Cfg)
+	ctx:Dirty(player, "list", id)
+	if hearts > before then
+		if Logic.IncomePct(hearts, Cfg) ~= Logic.IncomePct(before, Cfg) then
+			refreshIncome(player)
+		end
+		publish(player)
+	end
+	ctx.Bus:Publish("BondRaised", player, { id = id, hearts = hearts, points = entry.pts, kind = kind, heartUp = hearts > before })
 	return hearts
 end
 

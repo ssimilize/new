@@ -526,6 +526,23 @@ Api.Actions = {
 		returns = "{ coins: number }",
 	},
 
+	-- Hot Springs & Spa (3.13) · see Config/Spa and Logic/Spa ----------------------------------
+	-- Soak: a free Teen/Adult from the barn soaks in an open, empty pool (busy tag "spa"); the bath
+	-- salt (honey through the Apiary + food) is paid now.
+	["Spa.Soak"] = {
+		schema = T.struct({ pool = T.integer(1, Config.Spa.MaxPools), id = id, soak = T.enum(Config.Spa.Ids) }),
+		rate = 2,
+		returns = "{ endsAt: number }",
+	},
+	-- Collect: a finished soak frees the monster and starts its buff (Config.Spa.BuffHours).
+	["Spa.Collect"] = {
+		schema = T.struct({ pool = T.integer(1, Config.Spa.MaxPools) }),
+		rate = 2,
+		returns = "{ soak: string, endsAt: number }",
+	},
+	-- Cancel: ends a soak early; the salt is lost.
+	["Spa.Cancel"] = { schema = T.struct({ pool = T.integer(1, Config.Spa.MaxPools) }), rate = 2, returns = "nil" },
+
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
 		schema = T.struct({ index = T.integer(1, Config.Orders.PerDay + 1), id = T.optional(id) }), -- 3.9: PerDay + 1 is the favourite buyer order
@@ -903,6 +920,7 @@ Api.State = {
 		Merchant = "{ visit, bought = { [offerId]: n }, scrolls, rerolls, trades }  -- 3.11: Travelling Merchant (Logic/Merchant)",
 		Seasons = "{ last }  -- 3.11: the last Ranch Season this player saw (Logic/Seasons)",
 		Apiary = "{ hives = { { monster, at, stored = { [kind]: n } } }, store = { [kind]: n }, collects, made }  -- 3.12: Apiary & Honey (Logic/Apiary)",
+		Spa = "{ pools = { { monster, soak, at, endsAt } }, buffs = { [monsterId]: { soak, from, endsAt } }, soaks }  -- 3.13: Hot Springs & Spa (Logic/Spa)",
 		-- R2 Design Weeks: added to profile.Workshop (see Api.State.profile.Workshop above).
 		Workshop_DesignWeek = "profile.Workshop also has: designWeek = { week, entered: designId|false }, votesToday = { day, n }",
 	},
@@ -913,6 +931,7 @@ Api.State = {
 		Jobs = "{ slotCount }",
 		Kitchen = "{ slotCount, fish, fishing }  -- 3.10: fish = Fishing:FishCount (0 without Fishing); fishing = Fishing is plugged in",
 		Apiary = "{ hives, extra }  -- 3.12: open beehives; extra storage hours (Observatory perk hive_hours)",
+		Spa = "{ pools, apiary }  -- 3.13: open spa pools; the Apiary is plugged in (bath salts need honey)",
 		Merchant = "{ shovels }  -- 3.11: the Dig Site is plugged in and unlocked (the merchant's shovel offers)",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
