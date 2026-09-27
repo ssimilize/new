@@ -463,18 +463,26 @@ function Adapters.Roblox()
 	-- Arena (update 2.1): one record per player { userId, name, rating, team, wins, losses,
 	-- updatedAt } in a DataStore (atomic Update), and ratings in an OrderedDataStore for
 	-- matchmaking. Live check: Kernel/LiveChecks (GetSortedAsync min/max paging, docs/GO_LIVE.md §6).
+	-- 3.8: one ratings index per arena season (IndexName), so matchmaking only sees ratings from
+	-- the current season; season 0 (before season 1) keeps the original index.
 	local arenaStore = storeOf("MonsterRanch_Arena_v1")
-	local arenaIndex = nil
-	local function ratings()
-		if arenaIndex == nil then
+	local arenaIndexes = {} -- [name] = OrderedDataStore | false
+	local function indexName(season: number?): string
+		local n = tonumber(season) or 0
+		return if n > 0 then "MonsterRanch_ArenaRatings_s" .. tostring(n) else "MonsterRanch_ArenaRatings_v1"
+	end
+	local function ratings(season: number?)
+		local name = indexName(season)
+		if arenaIndexes[name] == nil then
 			local ok, store = pcall(function()
-				return DataStoreService:GetOrderedDataStore("MonsterRanch_ArenaRatings_v1")
+				return DataStoreService:GetOrderedDataStore(name)
 			end)
-			arenaIndex = if ok then store else false
+			arenaIndexes[name] = if ok then store else false
 		end
-		return arenaIndex or nil
+		return arenaIndexes[name] or nil
 	end
 	adapters.Arena = {
+		IndexName = indexName,
 		Get = function(userId: number): (boolean, any)
 			if not arenaStore then
 				return false, nil
@@ -487,8 +495,8 @@ function Adapters.Roblox()
 		Update = function(userId: number, transform): (boolean, any)
 			return atomic(arenaStore, tostring(userId), transform)
 		end,
-		Index = function(userId: number, rating: number): boolean
-			local store = ratings()
+		Index = function(userId: number, rating: number, season: number?): boolean
+			local store = ratings(season)
 			if not store then
 				return false
 			end
@@ -498,8 +506,8 @@ function Adapters.Roblox()
 			return ok
 		end,
 		-- Players rated within `window` of `rating` (closest first is up to the caller).
-		Near = function(rating: number, window: number, count: number): (boolean, { { userId: number, rating: number } })
-			local store = ratings()
+		Near = function(rating: number, window: number, count: number, season: number?): (boolean, { { userId: number, rating: number } })
+			local store = ratings(season)
 			if not store then
 				return false, {}
 			end

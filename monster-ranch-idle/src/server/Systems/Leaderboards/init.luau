@@ -11,11 +11,13 @@
 	  racing      Racing Cup points this week (Racing:CupPoints, 3.0)
 	  mastery     Mythic Ladder points earned this week (Mastery:WeekPoints, 3.3)
 	  ranchlikes  counted likes received this week (Visits:WeekLikes, glow-up Y)
+	  arena       arena rating this arena season (Arena:SeasonRating, 3.8; a season board keyed
+	              per arena season instead of per week, with no weekly champion)
 
 	Save section (profile.Leaderboards): { week, stampede }  -- stampede resets each week
 
 	Global state (global.Leaderboards):
-	  week, endsAt
+	  week, endsAt, season                                           -- season: the arena season
 	  server    = { [boardId] = { { userId, name, value, label? } } }  -- everyone here, live
 	  global    = { [boardId] = { { userId, name, value } } }          -- this week, all servers
 	  champions = { [boardId] = { userId, name } | false }             -- last week's #1
@@ -32,11 +34,12 @@
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Formulas = require(Shared.Logic.Formulas)
+local ArenaLogic = require(Shared.Logic.Arena)
 
 local Leaderboards = {
 	Name = "Leaderboards",
 	Dependencies = {},
-	OptionalDependencies = { "Monsters", "Boss", "HallOfFame", "Expeditions", "Racing", "Mastery", "Visits" },
+	OptionalDependencies = { "Monsters", "Boss", "HallOfFame", "Expeditions", "Racing", "Mastery", "Visits", "Arena" },
 }
 
 Leaderboards.Profile = {
@@ -61,6 +64,15 @@ end
 
 local function currentWeek(): number
 	return Boards.Week(ctx:Now())
+end
+
+-- The period a board's values belong to now: the week, or the arena season for season boards
+-- (season 0 = no season running yet: nothing is submitted or read).
+local function periodOf(board): number
+	if board.period == "season" then
+		return ArenaLogic.SeasonAt(ctx:Now())
+	end
+	return currentWeek()
 end
 
 local function section(player)
@@ -132,6 +144,11 @@ local VALUES = {
 		local Visits = ctx:GetSystem("Visits")
 		return if Visits then Visits:WeekLikes(player) else 0
 	end,
+	-- 3.8: this arena season's rating.
+	arena = function(player)
+		local Arena = ctx:GetSystem("Arena")
+		return if Arena then Arena:SeasonRating(player) else 0
+	end,
 }
 
 local function global()
@@ -160,9 +177,14 @@ local function checkWeek(): boolean
 	end
 	G.week = week
 	G.endsAt = Boards.WeekEndsAt(week)
+	local season = ArenaLogic.SeasonAt(ctx:Now())
 	for _, board in Boards.Boards do
-		G.global[board.id] = {}
+		-- Season boards only start over when the arena season does.
+		if board.period ~= "season" or G.season ~= season then
+			G.global[board.id] = {}
+		end
 	end
+	G.season = season
 	G.globalAt = 0
 	table.clear(submitted)
 	ctx:DirtyGlobal()
@@ -193,13 +215,12 @@ local function submit(player)
 	if not service then
 		return
 	end
-	local week = currentWeek()
 	submitted[player] = submitted[player] or {}
 	local sent = submitted[player]
 	for _, board in Boards.Boards do
 		local value = Leaderboards:Value(player, board.id)
 		if value > 0 and sent[board.id] ~= value then
-			if service.Submit(Boards.Key(board.id, week), player.UserId, value) then
+			if service.Submit(Boards.Key(board.id, periodOf(board)), player.UserId, value) then
 				sent[board.id] = value
 			end
 		end
@@ -240,7 +261,8 @@ local function refreshGlobal()
 		local G = global()
 		local okAll = true
 		for _, board in Boards.Boards do
-			local rows = readTop(Boards.Key(board.id, week), Boards.Rows)
+			local period = periodOf(board)
+			local rows = if board.period == "season" and period <= 0 then {} else readTop(Boards.Key(board.id, period), Boards.Rows)
 			if rows and G.week == week then
 				G.global[board.id] = rows
 			else
@@ -264,7 +286,7 @@ local function refreshChampions()
 	ctx.Services.Spawn(function()
 		local last = currentWeek() - 1
 		local G = global()
-		for _, board in Boards.Boards do
+		for _, board in Boards.Weekly do -- season boards have no weekly champion
 			local rows = readTop(Boards.Key(board.id, last), 1)
 			if rows then
 				local top = rows[1]
@@ -289,7 +311,7 @@ end
 
 function Leaderboards:Titles(userId: number): { string }
 	local list = {}
-	for _, board in Boards.Boards do
+	for _, board in Boards.Weekly do
 		local champ = global().champions[board.id]
 		if type(champ) == "table" and champ.userId == userId then
 			table.insert(list, board.id)
@@ -315,6 +337,7 @@ function Leaderboards.Init(context)
 		G.champions[board.id] = false
 	end
 	G.globalAt = 0
+	G.season = -1
 	checkWeek()
 
 	ctx.Bus:Subscribe("BossDamage", function(player, detail)
@@ -348,9 +371,10 @@ end
 
 function Leaderboards.PlayerRemoving(player)
 	-- Read the values now, while every section is still loaded; the writes can yield.
-	local values = {}
+	local values, keys = {}, {}
 	for _, board in Boards.Boards do
 		values[board.id] = Leaderboards:Value(player, board.id)
+		keys[board.id] = Boards.Key(board.id, periodOf(board))
 	end
 	local sent = submitted[player] or {}
 	submitted[player] = nil
@@ -358,11 +382,10 @@ function Leaderboards.PlayerRemoving(player)
 	if not service then
 		return
 	end
-	local week = currentWeek()
 	ctx.Services.Spawn(function()
 		for boardId, value in values do
 			if value > 0 and sent[boardId] ~= value then
-				service.Submit(Boards.Key(boardId, week), player.UserId, value)
+				service.Submit(keys[boardId], player.UserId, value)
 			end
 		end
 	end)
