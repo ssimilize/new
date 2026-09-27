@@ -425,6 +425,7 @@ Decor.Layout = {
 		{ 62, -47, 12, 7 }, -- 3.11: the Dig Site's sand pit and tool rack (Config.World.DigSite)
 		{ -50, -47, 8, 7 }, -- 3.12: the Observatory (Config.World.Observatory)
 		{ -8, -47, 12, 6 }, -- 3.12: the Apiary's three beehive stands (Config.Apiary.World)
+		{ -66, 23, 7, 8 }, -- 3.13: the Hot Springs deck, pools and roof (Config.Spa.World)
 	},
 	-- Legacy pen slots (pen-local fractions of the half extents) the migration puts old decor on.
 	legacySpots = { { -0.62, -0.55 }, { 0.62, -0.55 }, { 0, -0.62 } },

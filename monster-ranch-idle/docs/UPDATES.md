@@ -65,6 +65,41 @@ players get and where it lives in the code.
 - The gene bonus: one random stat's pair is raised to the next grade's points (the lower gene
   first, each capped at 10); an S-grade stat gets +1 on its lower gene when it can.
 
+### Hot Springs & Spa
+
+**For players**
+- From Ranch Level 29 a steaming spa sits on the west strip of every ranch, beside the incubator
+  pad: a wooden deck with three round pools and a small roof. Pools 1 and 2 open at Level 29,
+  pool 3 at Level 45 (a locked pool wears a wooden cover). The "Soak" prompt at the sign opens
+  the Hot Springs screen.
+- A pool holds one Teen or Adult from the barn (busy while it soaks). Pick a soak, then the
+  monster. Each soak is paid with a bath salt made on the spot from honey (any kind, from the
+  Apiary) and food:
+  - Warm Soak, 30 minutes, 2 honey + 5 Fire Peppers: +20% growth from meals for 4 hours
+    (growing monsters only).
+  - Mineral Soak, 1 hour, 2 honey + 5 Hearty Roots: +15% Job Board output (miners, foragers,
+    scouts) and Apiary honey from that monster for 4 hours.
+  - Herbal Soak, 2 hours, 3 honey + 5 Sweet Berries: full Mood and 3 bond points when collected.
+- Soaks run on the server clock, online and offline. A finished soak waits in its pool until
+  the player collects it; the buff lasts 4 hours from the collect (a new soak replaces it).
+  "Stop soak" frees the monster early; the salt is lost. Without the Apiary no soak is offered.
+- The screen lists every pool, the salts with their costs and what the player has, and the
+  active buffs with their time left. Weekly goal: give 5 spa soaks.
+
+**In the code**
+- `Config/Spa`, `Logic/Spa`, `Systems/Spa` (Profile v1 `{ pools, buffs, soaks }`, session
+  `{ pools, apiary }`), actions `Spa.Soak`, `Spa.Collect`, `Spa.Cancel`; public
+  `Spa:Buff(player, monsterId) -> { soak, endsAt }?`; publishes `SpaSoaked` on collect.
+- Buffs reach their consumers through registries set up in `Spa.Start`:
+  `Monsters:RegisterMealModifier` (new, × meals in Feed and AddMeals, exactly 1 with no
+  modifier), `Jobs:RegisterOutputBoost` (existing) and `Apiary:RegisterRateBoost` (new;
+  `Logic/Apiary.Settle` takes optional boost windows). Herbal uses `Monsters:AddMood` and the
+  new `Bond:AddPoints(player, id, n, kind)`.
+- The pools are built on the client (`Controllers/Spa`, `Workspace.Spa`) at plot-local
+  (-66, 0, 23); keep-out `{ -66, 23, 7, 8 }` in `Config/Decor`; steam puffs are skipped on Low
+  graphics or with reduced motion. A soaking pool shows a ring of bubbles.
+- Specs: `Spa.spec`, `SpaClient.spec`; `LevelSeventy.spec` checks the spa's footprint.
+
 ## 3.12 · Honey & stars
 
 ### Observatory & Star Charts

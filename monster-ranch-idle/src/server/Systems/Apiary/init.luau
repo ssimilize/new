@@ -24,6 +24,9 @@
 	  Apiary:AddHoney(player, kind, n) -> number     the kind's count after adding (Rewards kind honey)
 	  Apiary:SpendHoney(player, kind, n) -> boolean  all or nothing
 	  Apiary:HoneyCount(player) -> number            the four honey kinds together (not Royal Jelly)
+	  Apiary:RegisterRateBoost(key, fn(player, monsterId) -> { { from, to, pct } }?)
+	                                                 3.13 (Spa mineral soak): extra honey for one
+	                                                 keeper over a time window
 	  Apiary:SpendAnyHoney(player, n) -> boolean     n honey of any kind, the most plentiful kind
 	                                                 first (Merchant pay kind `honey`), all or nothing
 
@@ -51,6 +54,7 @@ local Progression, Rewards, Monsters
 local Observatory
 
 local notified = {} -- [player] = { [hive] = true } full hives already toasted
+local rateBoosts = {} -- [key] = fn(player, monsterId) -> { { from, to, pct } }?
 
 Apiary.Profile = {
 	Version = 1,
@@ -114,7 +118,22 @@ local function settle(player, index: number)
 	local s = section(player)
 	local hive = s.hives[index]
 	local now = ctx:Now()
-	hive.stored = Logic.Settle(hive, keeperOf(player, hive), now, extraHours(player))
+	local m = keeperOf(player, hive)
+	local boosts = nil
+	if m then
+		for key, fn in rateBoosts do
+			local ok, list = pcall(fn, player, m.id)
+			if ok and type(list) == "table" then
+				boosts = boosts or {}
+				for _, b in list do
+					table.insert(boosts, b)
+				end
+			elseif not ok then
+				warn(string.format("[Apiary] rate boost %s failed: %s", key, tostring(list)))
+			end
+		end
+	end
+	hive.stored = Logic.Settle(hive, m, now, extraHours(player), boosts)
 	hive.at = now
 	ctx:Dirty(player, "hives")
 end
@@ -171,6 +190,10 @@ local function mustHive(player, index: number)
 end
 
 -- Public API ------------------------------------------------------------------------------
+
+function Apiary:RegisterRateBoost(key: string, fn)
+	rateBoosts[key] = fn
+end
 
 function Apiary:HiveCount(player): number
 	return Logic.HiveCount(isUnlocked(player))
@@ -363,6 +386,7 @@ function Apiary.Init(context)
 	Rewards = ctx:GetSystem("Rewards")
 	Monsters = ctx:GetSystem("Monsters")
 	table.clear(notified)
+	table.clear(rateBoosts)
 
 	ctx.Net:Handle("Apiary.Assign", assign)
 	ctx.Net:Handle("Apiary.Unassign", unassign)

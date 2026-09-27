@@ -15,7 +15,9 @@
 	  Apiary.Cap(m, extraHours?) -> number      honey a hive holds: PerHour × (CapHours + extra)
 	  Apiary.Total(stored) -> number            the honey in a stored table (fractions included)
 	  Apiary.KindAt(t) -> kindId                the honey of the season at t (Logic/Seasons.At)
-	  Apiary.Settle(hive, m, now, extraHours?) -> stored
+	  Apiary.Settle(hive, m, now, extraHours?, boosts?) -> stored
+	                                            (3.13: boosts = { { from, to, pct } } add pct of
+	                                            the rate over their windows, like Logic/Jobs)
 	                                            a new stored table: what the hive made from `at`
 	                                            to `now`, split at every season turnover, stopping
 	                                            at the cap (the hive itself is not changed)
@@ -110,7 +112,20 @@ function Apiary.KindAt(t: number): string
 	return if kind then kind.id else Rules.Ids[1]
 end
 
-function Apiary.Settle(hive, m, now: number, extraHours: number?)
+-- Extra seconds of making from boost windows inside [since, since + seconds] (Logic/Jobs.BoostedSeconds).
+local function boostedSeconds(since: number, seconds: number, boosts): number
+	local extra = 0
+	for _, b in boosts or {} do
+		local a = math.max(since, tonumber(b.from) or 0)
+		local z = math.min(since + seconds, tonumber(b.to) or 0)
+		if z > a then
+			extra += (tonumber(b.pct) or 0) * (z - a)
+		end
+	end
+	return extra
+end
+
+function Apiary.Settle(hive, m, now: number, extraHours: number?, boosts: { any }?)
 	local stored = {}
 	for k, v in (if type(hive) == "table" and type(hive.stored) == "table" then hive.stored else {}) do
 		if type(v) == "number" and v == v and v > 0 then
@@ -131,7 +146,9 @@ function Apiary.Settle(hive, m, now: number, extraHours: number?)
 			stop = now
 		end
 		local kind = Apiary.KindAt(t)
-		local made = math.min(room, rate * (stop - t))
+		local made = if boosts
+			then math.min(room, rate * ((stop - t) + boostedSeconds(t, stop - t, boosts)))
+			else math.min(room, rate * (stop - t))
 		stored[kind] = (stored[kind] or 0) + made
 		room -= made
 		t = stop

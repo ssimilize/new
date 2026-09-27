@@ -196,6 +196,15 @@ Weekly.Pool = {
 		target = 3,
 		unlock = "strays",
 	},
+	-- 3.13 · Hot Springs & Spa: soaks collected
+	{
+		id = "spa_5",
+		family = "spa",
+		text = "Give your monsters 5 spa soaks",
+		topic = "SpaSoaked",
+		target = 5,
+		unlock = "spa",
+	},
 }
 
 Weekly.ById = {}

@@ -25,6 +25,7 @@ local Config = {
 	Merchant = require(script.Merchant), -- 3.11: the Travelling Merchant
 	Exhibits = require(script.Exhibits), -- 3.12: Museum Exhibits
 	Apiary = require(script.Apiary), -- 3.12: Apiary & Honey
+	Spa = require(script.Spa), -- 3.13: Hot Springs & Spa
 	Seasons = require(script.Seasons), -- 3.11: Ranch Seasons
 	Techniques = require(script.Techniques), -- 3.11: Dojo techniques
 	TrialTower = require(script.TrialTower), -- 3.12: the Trial Tower
