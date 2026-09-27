@@ -17,13 +17,6 @@
 	              aurora animated tint over ColorCorrection and the Atmosphere sky colour.
 
 	One RenderStepped connection; properties are written only when their value changes.
-
-	Foundry (wave 1c): each weather's settled particle rates (SkyWeather.kindRate), the quality
-	multiplier (SkyWeather.qualityScale) and the emitter height come from the SkyWeather package
-	and its Ranch rules (ctx.Foundry.rules.SkyWeather["monster-ranch"]). The blend, the roll and
-	everything in NotAdopted stay here. Without the package it warns once and uses the rates in
-	PROFILES and LOW_PARTICLES. tests/specs/WeatherCompat.spec proves both paths equal the old
-	controller (tests/runtime/OldWeather.luau): dense samples and frame by frame.
 ]]
 
 local Lighting = game:GetService("Lighting")
@@ -38,18 +31,6 @@ local WeatherConfig = Config.Weather
 local Weather = {
 	Name = "Weather",
 	Dependencies = {},
-	-- What stays this controller's own, and why (WeatherCompat.spec checks the reasons).
-	NotAdopted = {
-		roll = "which weather runs and when is the server Weather system's ctx.Rng roll (wave 2, owner question 1)",
-		blend = "every field blends exponentially (BLEND_TIME 1.6 s); the package's fronts smoothstep over blendSeconds",
-		look = "ColorCorrection, Bloom, Atmosphere and sky tints per weather have no package counterpart",
-		lightning = "flashes use math.random gaps (4 + U*9 s) and publish Weather.Lightning; the package's seeded strikes differ",
-		winter = "3.11 winter rain-as-snow (x RAIN_TO_SNOW on Logic/Seasons) is a Ranch look rule the package does not model",
-		placement = "one 140-stud part right over the camera; the package plan shifts emitters upwind by the fall time",
-		writes = "each emitter's floor (stars round) and the 0.5 write threshold are Instance writes kept here",
-		emitterLooks = "emitter colours, sizes, speeds, lifetimes and the Vfx sprites are Instance looks with no package field",
-		dayNight = "the ClockTime sweep around phaseEndsAt is the Ranch day/night, not the package's sun path",
-	},
 }
 
 local DAY_CLOCK = 14
@@ -243,8 +224,6 @@ local target = {}
 local written = {}
 local settled = false
 local lowGraphics = Quality.IsLow() -- Visuals/Quality (glow-up P)
-local qualityLevel = Quality.Level() -- read with lowGraphics: the package's qualityScale index
-local pkg: any = nil -- { lib, rules } with the SkyWeather package, false without
 local weatherState = nil
 local weatherId = "clear"
 local isNight = false
@@ -264,39 +243,6 @@ local seasonCheckIn = 0
 local held = false -- glow-up DR: Weather.Hold (the Deep Reef has the light while you swim)
 
 -- Target -------------------------------------------------------------------------------------
-
-local PARTICLES = { rain = true, snow = true, stars = true, pollen = true }
-
--- The package, or nil (warned once) when it is not vendored: PROFILES and LOW_PARTICLES run instead.
-local function skyWeather(): any
-	if pkg == nil then
-		local f = ctx and ctx.Foundry
-		local lib = f and f.packages and f.packages.SkyWeather
-		local set = f and f.rules and f.rules.SkyWeather
-		local rules = set and set["monster-ranch"]
-		if lib and rules then
-			pkg = { lib = lib, rules = rules }
-		else
-			pkg = false
-			warn("[Weather] the Foundry SkyWeather package is not vendored; the built-in PROFILES particle rates run")
-		end
-	end
-	return pkg or nil
-end
-
--- Particles per second multiplier for the current quality.
-local function particleScale(): number
-	local P = skyWeather()
-	if P then
-		return P.lib.qualityScale(P.rules, qualityLevel)
-	end
-	return if lowGraphics then LOW_PARTICLES else 1
-end
-
-local function emitterHeight(): number
-	local P = skyWeather()
-	return if P then P.rules.emitters.height else EMITTER_HEIGHT
-end
 
 local function field(profile, key: string)
 	local value = profile[key]
@@ -318,17 +264,6 @@ local function computeTarget()
 	target.skyR, target.skyG, target.skyB = sky.R, sky.G, sky.B
 	for _, key in SCALAR_FIELDS do
 		target[key] = field(profile, key)
-	end
-	-- Foundry: the settled particle rate at full quality is the package's (PROFILES' are the fallback).
-	local P = skyWeather()
-	if P then
-		for key in PARTICLES do
-			target[key] = 0
-		end
-		local precip, rate = P.lib.kindRate(P.rules, weatherId)
-		if PARTICLES[precip] then
-			target[precip] = rate
-		end
 	end
 	-- 3.11 · Ranch Seasons: in winter the rain falls as snow. Only the look: the server's roll is unchanged.
 	if winter and target.rain > 0 then
@@ -635,7 +570,7 @@ local function step(dt: number)
 	setIfChanged(Lighting, "ClockTime", "clockTime", clockTime(now), 0.002)
 
 	-- Particles
-	local quality = particleScale()
+	local quality = if lowGraphics then LOW_PARTICLES else 1
 	local total = current.rain + current.snow + current.stars + current.pollen
 	setIfChanged(emitters.rain, "Rate", "rain", math.floor(current.rain * quality), 0.5)
 	setIfChanged(emitters.snow, "Rate", "snow", math.floor(current.snow * quality), 0.5)
@@ -645,7 +580,7 @@ local function step(dt: number)
 		local camera = workspace.CurrentCamera
 		if camera then
 			local p = camera.CFrame.Position
-			emitterPart.CFrame = CFrame.new(p.X, p.Y + emitterHeight(), p.Z)
+			emitterPart.CFrame = CFrame.new(p.X, p.Y + EMITTER_HEIGHT, p.Z)
 		end
 	end
 end
@@ -677,7 +612,6 @@ function Weather.Start()
 		connections,
 		Quality.Changed:Connect(function()
 			lowGraphics = Quality.IsLow()
-			qualityLevel = Quality.Level()
 		end)
 	)
 	table.insert(connections, RunService.RenderStepped:Connect(step))
