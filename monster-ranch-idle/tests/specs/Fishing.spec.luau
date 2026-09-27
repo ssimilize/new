@@ -310,15 +310,21 @@ return function(t)
 			local h = boot()
 			local p = angler(h)
 			local s = h:Section(p, "Fishing")
-			s.log = { minnow = { n = 2, best = 0.1 }, perch = { n = 1, best = 0.5 }, trout = { n = 1, best = 1 } }
-			expect(h:Reject(p, "Codex.Claim", { milestone = "fish_4" })).toBe("Catch 1 more kinds of fish first")
+			-- 3.11: steps 5 / 10 / 20 (20 kinds with the four seasonal fish).
+			s.log = {
+				minnow = { n = 2, best = 0.1 },
+				perch = { n = 1, best = 0.5 },
+				trout = { n = 1, best = 1 },
+				frost_char = { n = 1, best = 1 },
+			}
+			expect(h:Reject(p, "Codex.Claim", { milestone = "fish_5" })).toBe("Catch 1 more kinds of fish first")
 			s.log.koi = { n = 1, best = 3 }
 			local gems = h:Section(p, "Currency").gems
-			local res = h:Call(p, "Codex.Claim", { milestone = "fish_4" })
+			local res = h:Call(p, "Codex.Claim", { milestone = "fish_5" })
 			expect(res.gems).toBe(Config.Codex.Gems.fish[1])
 			expect(h:Section(p, "Currency").gems).toBe(gems + res.gems)
-			expect(h:Reject(p, "Codex.Claim", { milestone = "fish_4" })).toBe("Already claimed")
-			expect(h:Reject(p, "Codex.Claim", { milestone = "fish_8" })).toBe("Catch 4 more kinds of fish first")
+			expect(h:Reject(p, "Codex.Claim", { milestone = "fish_5" })).toBe("Already claimed")
+			expect(h:Reject(p, "Codex.Claim", { milestone = "fish_10" })).toBe("Catch 5 more kinds of fish first")
 		end)
 
 		it("puts the week's biggest catch on the Biggest Catch board and clears it next week", function()

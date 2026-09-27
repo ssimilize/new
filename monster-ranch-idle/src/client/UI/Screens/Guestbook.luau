@@ -18,6 +18,16 @@ local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Logic = require(Shared.Logic.Tourists)
+local SeasonsLogic = require(Shared.Logic.Seasons)
+
+-- 3.11: the season's favourite Appeal category (Config.Seasons appeal), one literal each.
+local LOVES = {
+	decor = "This season tourists love: Decor",
+	variety = "This season tourists love: Variety",
+	pens = "This season tourists love: Pens",
+	rarity = "This season tourists love: Rare monsters",
+	codex = "This season tourists love: Codex",
+}
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -123,6 +133,16 @@ return {
 			Size = UDim2.new(1, -20, 0, 24),
 			Parent = card,
 		})
+		local seasonLine = Util.text({
+			Name = "SeasonLove",
+			Text = "",
+			TextColor3 = C.Orange,
+			TextWrapped = true,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			Position = UDim2.fromOffset(10, 360),
+			Size = UDim2.new(1, -20, 0, 24),
+			Parent = card,
+		})
 
 		-- Right: the reviews ------------------------------------------------------------------
 		local right = New("Frame", {
@@ -221,6 +241,8 @@ return {
 			local profile = ctx.Store:Get("profile.Tourists")
 			profile = if type(profile) == "table" then profile else {}
 			total.Text = string.format("Tourists welcomed: %d", tonumber(profile.count) or 0)
+			local season = Config.Seasons.ById[SeasonsLogic.At(ctx:Now()).id]
+			seasonLine.Text = if season then LOVES[season.appeal] or "" else ""
 			nextLabel.Visible = open
 
 			Util.clear(list)

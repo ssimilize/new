@@ -100,6 +100,8 @@ return {
 		"DigSite",
 		-- 3.11 · Travelling Merchant
 		"Merchant",
+		-- 3.11 · Ranch Seasons
+		"Seasons",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

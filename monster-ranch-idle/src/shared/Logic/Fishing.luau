@@ -6,18 +6,21 @@
 	  Fishing.BuddyBonus(luck) -> pct                   Loot.LuckBonus with the buddy counted BuddyShares times
 	  Fishing.RarityChances(bonus) -> { [rarityId]: p } what bites (sums to 1)
 	  Fishing.ExtraChance(chance, cap, bonus) -> p      min(cap, chance × (1 + bonus)), as Bounties
-	  Fishing.Roll(seed, bonus?) -> fishDef             which fish is on the line
+	  Fishing.Roll(seed, bonus?, season?) -> fishDef    which fish is on the line (season: 3.11, the
+	                                                   Logic/Seasons id at the cast; nil = none bite)
 	  Fishing.Weight(seed, fishDef) -> kg                seeded, two decimals
-	  Fishing.Course(seed, bonus?) -> Course             { fish, rarity, weight, points = { { t, y } } }
+	  Fishing.Course(seed, bonus?, season?) -> Course             { fish, rarity, weight, points = { { t, y } } }
 	  Fishing.FishAt(course, t) -> y                     0..1, eased between the points
 	  Fishing.Valid(inputs) -> ok, why?                  { { t, down } }, t ascending, in range
 	  Fishing.DownAt(inputs, t) -> boolean               held at t (an input at exactly t applies)
 	  Fishing.NewState() -> State                        { i, zone, vel, meter, done, caught, time }
 	  Fishing.Advance(state, course, inputs)             one Step: uses DownAt(inputs, i × Step)
-	  Fishing.Simulate(seed, inputs, bonus?) -> { caught, time, fish, rarity, weight, meter }
+	  Fishing.Simulate(seed, inputs, bonus?, season?) -> { caught, time, fish, rarity, weight, meter }
 	  Fishing.Extras(seed, bonus) -> { Reward }          rare decor (one at most) and the region egg
 	  Fishing.Egg() -> eggId?
-	  Fishing.SpendOrder() -> { fishId }                 cheapest first (the Kitchen's SpendFish)
+	  Fishing.SpendOrder() -> { fishId }                 cheapest first (the Kitchen's SpendFish);
+	                                                   seasonal fish last (kept for seasonal recipes)
+	  Fishing.SeasonFish(season) -> fishDef?            3.11: the season's own fish
 	  Fishing.Species(log) -> number                     kinds caught (profile.Fishing.log)
 
 	Step i (1-based) runs from (i - 1) × Step to i × Step with the hold state at its start, so an
@@ -71,16 +74,34 @@ function Fishing.ExtraChance(chance: number, cap: number, bonus: number?): numbe
 	return math.min(cap, chance * (1 + math.max(0, bonus or 0)))
 end
 
-function Fishing.Roll(seed: number, bonus: number?)
+function Fishing.SeasonFish(season: string?)
+	if type(season) ~= "string" then
+		return nil
+	end
+	for _, f in Cfg.Fish do
+		if f.season == season then
+			return f
+		end
+	end
+	return nil
+end
+
+function Fishing.Roll(seed: number, bonus: number?, season: string?)
 	local rng = Rng.new(Rng.seed("fish", seed))
 	local rarity = Cfg.Rarities[rng:Weighted(weights(bonus))]
 	local pool = {}
 	for _, f in Cfg.Fish do
-		if f.rarity == rarity.id then
+		if f.rarity == rarity.id and f.season == nil then
 			table.insert(pool, f)
 		end
 	end
-	return rng:Pick(pool)
+	local def = rng:Pick(pool)
+	-- 3.11: the season's fish swaps in on its own stream, so the draws above never move.
+	local seasonal = Fishing.SeasonFish(season)
+	if seasonal and seasonal.rarity == rarity.id and Rng.new(Rng.seed("fish_season", seed)):Chance(Cfg.SeasonChance) then
+		return seasonal
+	end
+	return def
 end
 
 function Fishing.Weight(seed: number, def): number
@@ -90,8 +111,8 @@ function Fishing.Weight(seed: number, def): number
 	return math.max(0.01, round(def.weight[1] + (def.weight[2] - def.weight[1]) * x * x, 2))
 end
 
-function Fishing.Course(seed: number, bonus: number?)
-	local def = Fishing.Roll(seed, bonus)
+function Fishing.Course(seed: number, bonus: number?, season: string?)
+	local def = Fishing.Roll(seed, bonus, season)
 	local rarity = Cfg.RarityById[def.rarity]
 	local rng = Rng.new(Rng.seed("fish_course", seed))
 	local points = { { t = 0, y = Cfg.StartFish } }
@@ -189,8 +210,8 @@ function Fishing.Advance(state, course, inputs)
 	return state
 end
 
-function Fishing.Simulate(seed: number, inputs, bonus: number?)
-	local course = Fishing.Course(seed, bonus)
+function Fishing.Simulate(seed: number, inputs, bonus: number?, season: string?)
+	local course = Fishing.Course(seed, bonus, season)
 	local state = Fishing.NewState()
 	while not state.done do
 		Fishing.Advance(state, course, inputs)
@@ -236,6 +257,10 @@ end
 function Fishing.SpendOrder(): { string }
 	local list = table.clone(Cfg.Ids)
 	table.sort(list, function(a, b)
+		local sa, sb = Cfg.ById[a].season ~= nil, Cfg.ById[b].season ~= nil
+		if sa ~= sb then
+			return sb
+		end
 		local va, vb = Fishing.Value(a), Fishing.Value(b)
 		if va ~= vb then
 			return va < vb

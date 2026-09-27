@@ -17,6 +17,7 @@ return {
 		-- C1 · World
 		"World",
 		"Weather",
+		"Seasons", -- 3.11 · Ranch Seasons: the season's ground tint and ambient particles
 		"Interaction",
 		-- C3 · Adventure & social
 		"Tutorial",

@@ -124,6 +124,16 @@ Weekly.Pool = {
 		target = 3,
 		unlock = "merchant",
 	},
+	-- 3.11 · Ranch Seasons: the season's own fish (they bite only in their season)
+	{
+		id = "season_fish_3",
+		family = "seasons",
+		text = "Catch 3 fish of the season",
+		topic = "FishCaught",
+		target = 3,
+		filter = { seasonal = true },
+		unlock = "fishing",
+	},
 }
 
 Weekly.ById = {}

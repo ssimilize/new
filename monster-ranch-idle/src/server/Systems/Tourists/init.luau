@@ -27,6 +27,7 @@
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Logic = require(Shared.Logic.Tourists)
+local Seasons = require(Shared.Logic.Seasons)
 
 local Tourists = {
 	Name = "Tourists",
@@ -73,6 +74,7 @@ local function facts(player)
 		pens = pens,
 		rarities = rarities,
 		codex = Monsters:CodexCount(player),
+		favored = (Seasons.Def(Seasons.At(ctx:Now()).id) :: any).appeal, -- 3.11
 	}
 end
 

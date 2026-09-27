@@ -17,7 +17,12 @@
 	BuddyShares times (a buddy fishes like a whole squad, so it reaches Loot.LuckLootMax).
 	Extras on a catch use the Bounties formula: min(cap, chance × (1 + bonus)).
 
-	Fish: { id, name, rarity, color, weight = { min, max } kg }. Rarity: { id, name, weight,
+	Seasonal fish (3.11 · Ranch Seasons): a fish with `season` bites only in that season
+	(Logic/Seasons.At). It never joins the rarity pool: when the roll lands on its rarity in its
+	season, a separate seeded draw (SeasonChance) swaps the bite for it, so every other fish's
+	roll and every course stay exactly as they were.
+
+	Fish: { id, name, rarity, color, weight = { min, max } kg, season? }. Rarity: { id, name, weight,
 	value (seconds of ranch income one fish sells for), speed = { min, max } (seconds a move
 	takes), range (furthest move, bar = 0..1), pause (chance a move stays put), fill, drain
 	(meter per second) }.
@@ -31,6 +36,7 @@ Fishing.Source = "fishing" -- Rewards source (reward card "Rewards · Fishing")
 Fishing.FreeCasts = 10 -- a UTC day
 Fishing.MaxBait = 999
 Fishing.BuddyShares = 5
+Fishing.SeasonChance = 0.3 -- 3.11: an in-season bite of the seasonal fish's rarity becomes it
 
 -- The minigame. Positions run 0 (bottom) .. 1 (top).
 Fishing.Duration = 20 -- seconds before the fish gets away
@@ -90,6 +96,11 @@ Fishing.Fish = {
 	{ id = "ember_bass", name = "Ember Bass", rarity = "legendary", color = "#E5484D", weight = { 4, 15 } },
 	{ id = "crystal_ray", name = "Crystal Ray", rarity = "legendary", color = "#A9DEFF", weight = { 6, 25 } },
 	{ id = "pond_king", name = "Pond King", rarity = "legendary", color = "#F5C630", weight = { 15, 60 } },
+	-- 3.11 · Ranch Seasons: one per season, appended (never reorder: ids and order are saved)
+	{ id = "blossom_trout", name = "Blossom Trout", rarity = "uncommon", color = "#F7A8C8", weight = { 0.5, 3 }, season = "spring" },
+	{ id = "sunburst_bass", name = "Sunburst Bass", rarity = "uncommon", color = "#F2B233", weight = { 1, 4 }, season = "summer" },
+	{ id = "maple_carp", name = "Maple Carp", rarity = "uncommon", color = "#D9652B", weight = { 1, 6 }, season = "autumn" },
+	{ id = "frost_char", name = "Frost Char", rarity = "uncommon", color = "#BFE9FF", weight = { 0.5, 4 }, season = "winter" },
 }
 
 -- Extras on a catch: one decor piece at most (first that rolls), then a region egg.
@@ -111,6 +122,7 @@ Fishing.Ids = {}
 for i, f in Fishing.Fish do
 	assert(Fishing.RarityById[f.rarity], "[Config.Fishing] unknown rarity " .. tostring(f.rarity))
 	assert(Fishing.ById[f.id] == nil, "[Config.Fishing] duplicate fish " .. f.id)
+	assert(f.season == nil or f.rarity ~= "common", "[Config.Fishing] a seasonal fish can't be common: " .. f.id)
 	f.order = i
 	Fishing.ById[f.id] = f
 	table.insert(Fishing.Ids, f.id)

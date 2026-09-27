@@ -62,6 +62,45 @@ players get and where it lives in the code.
 - Merchant-only decor in `Config/Decor` (`reward = "merchant"`) with DecorArt models; scenery
   keep-out `Config.World.MerchantCaravan`.
 
+### Ranch Seasons
+
+**For players**
+- The ranch now has seasons: spring, summer, autumn and winter, one per week, turning over with
+  the Saturday weekly reset (a 28-day cycle; the week of 27 Sep 2026 is autumn). Everyone,
+  everywhere, is in the same season.
+- The ranch looks the part: the grass changes colour, spring petals and autumn leaves drift by,
+  summer has pollen by day and fireflies at night, and winter snows (winter rain falls as snow).
+  Low graphics shows fewer particles; Reduced motion shows none.
+- The Events screen lists the season running now and the next one; in the last day of a season
+  a HUD chip counts down to the next ("Winter 2:59:12").
+- Fishing Pond: four seasonal fish (Blossom Trout, Sunburst Bass, Maple Carp, Frost Char) that
+  bite only in their season. The Fish Log now has 20 kinds; its milestones are 5 / 10 / 20 kinds.
+- Kitchen: four seasonal recipes, cooked only in their season with one of that season's fish
+  ("In season: Autumn" / "Back in Winter" on the card).
+- Feed Garden: the season's flavour grows 25% more (spring sweet, summer sour, autumn savory,
+  winter spicy).
+- Tourists: each season they love one Appeal category more (spring Decor, summer Pens, autumn
+  Variety, winter Rare monsters); the Guestbook says which.
+- Store: two seasonal decor pieces a season, sold only in their season (yours stay forever).
+- Weekly goal: "Catch 3 fish of the season".
+- A new season greets you: "Winter has come to the ranch" (a toast, or a Welcome Back line).
+
+**In the code**
+- `Config/Seasons` (seasons, flavours, favoured categories, particles, arrival lines, GardenBonus
+  0.25, AppealBoost 1.25), `Logic/Seasons` (`At(now)`, `Next`, `InSeason`, `GardenBonus`,
+  `AppealWeights`, `ArriveText`), `Systems/Seasons` (profile `{ last, carry }`, SeasonChanged,
+  WelcomeItem, the garden hook), `Controllers/Seasons` (ground tint, ambient emitters).
+- Seasonal fish (`Config/Fishing` `season`, `SeasonChance` 0.3): never in the rarity pool; an
+  in-season bite of their rarity swaps to them on a separate seeded stream (`fish_season`), so no
+  other fish's roll or course moves. `Fishing.Start` returns `season`; FishCaught has `seasonal`;
+  `Fishing:SpendFish(player, n, kind?)`, `Fishing:Have`; seasonal fish are spent last.
+- Seasonal recipes (`Config/Kitchen` `season`, `seasonFish`), `Logic/Kitchen.SeasonNote`.
+- `Ranch:RegisterHarvestHook` hooks may return bonus food (Seasons pays whole food, carrying the
+  fraction: +25% of 5 pays 1, 1, 1, 2).
+- `Logic/Tourists.Appeal` takes `facts.favored`; `Logic/Calendar` has a `season` source;
+  `Config/Decor` `season`; `Systems/Shop` refuses off-season decor; `Config/Weekly` `season_fish_3`.
+- Tests: `Seasons.spec`, `SeasonsClient.spec`.
+
 ## 3.10 · Ranch life
 
 ### Ranch Tourists

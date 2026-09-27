@@ -40,6 +40,7 @@
 	                                                             produce); its harvest calls fn instead
 	                                                             of paying food
 	  Ranch:RegisterHarvestHook(key, fn(player, flavor, plotIndex))  -- 3.10: after each food plot harvest
+	                                  (3.11: fn may return a number = bonus food of that flavour, Seasons)
 	  Ranch:PlantCrop(player, plotIndex, flavor, seconds) -> readyAt?, err?  -- 3.10: plants a registered crop
 	  Ranch:TakePenDecor(player) -> { [pen] = { decorId } }  -- glow-up Z: empties the old pen slots
 	                                                          (Decor moves them onto the plot layout)
@@ -672,9 +673,14 @@ local function harvest(player, s, index: number, food: { [string]: number }): bo
 	Currency:Add(player, "food." .. flavor, yield, "garden")
 	food[flavor] = (food[flavor] or 0) + yield
 	for key, fn in harvestHooks do
-		local ok, err = pcall(fn, player, flavor, index)
+		local ok, extra = pcall(fn, player, flavor, index)
 		if not ok then
-			warn(string.format("[Ranch] harvest hook %s failed: %s", key, tostring(err)))
+			warn(string.format("[Ranch] harvest hook %s failed: %s", key, tostring(extra)))
+		elseif type(extra) == "number" and extra >= 1 then
+			-- 3.11: bonus food from a hook (Seasons: the season's flavour grows 25% more).
+			local bonus = math.floor(extra)
+			Currency:Add(player, "food." .. flavor, bonus, "garden")
+			food[flavor] = (food[flavor] or 0) + bonus
 		end
 	end
 	return true

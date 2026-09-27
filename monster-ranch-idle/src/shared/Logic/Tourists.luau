@@ -3,7 +3,9 @@
 	appeal formula in Config/Tourists). No Roblox APIs; Tourists.spec tests all of it.
 
 	  Tourists.Appeal(facts) -> Appeal
-	      facts = { layout = { { id } }, level, pens = { { capacity, count } }, rarities = { n }, codex }
+	      facts = { layout = { { id } }, level, pens = { { capacity, count } }, rarities = { n }, codex, favored? }
+	      favored (3.11): the season's favourite category (Config.Seasons appeal), weighted by
+	      Logic/Seasons.AppealWeights (a perfect ranch still scores 100)
 	      Appeal = { score = 0..100, stars = 1..5, parts = { [categoryId] = 0..1 }, tip = string }
 	  Tourists.Stars(score) -> 1..5
 	  Tourists.Tip(parts, kinds) -> string              kinds = { [kind] = pieces placed }
@@ -20,6 +22,7 @@
 local Config = require(script.Parent.Parent.Config)
 local Rng = require(script.Parent.Rng)
 local DecorLayout = require(script.Parent.DecorLayout)
+local Seasons = require(script.Parent.Seasons)
 
 local Rules = Config.Tourists
 
@@ -104,7 +107,7 @@ function Tourists.Appeal(facts)
 		codex = clamp01((tonumber(facts.codex) or 0) / Rules.CodexFull),
 	}
 	local score = 0
-	for id, weight in Rules.Weights do
+	for id, weight in Seasons.AppealWeights(Rules.Weights, facts.favored) do
 		score += weight * parts[id]
 	end
 	score = math.clamp(math.floor(score + 0.5), 0, 100)
