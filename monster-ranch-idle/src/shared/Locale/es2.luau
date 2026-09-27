@@ -734,4 +734,10 @@ return {
 	["Catch another"] = "Atrapar otro",
 	["Ⓐ Swing · Ⓑ Close"] = "Ⓐ Red · Ⓑ Cerrar",
 	["Caught {1} · {2}"] = "Atrapados {1} · {2}",
+	-- Rarity names upper-cased on rarity chips (Widgets.RarityChip)
+	["COMMON"] = "COMÚN",
+	["RARE"] = "RARO",
+	["EPIC"] = "ÉPICO",
+	["LEGENDARY"] = "LEGENDARIO",
+	["MYTHIC"] = "MÍTICO",
 }
