@@ -221,6 +221,9 @@ return {
 					TextWrapped = true,
 					TextColor3 = C.Ink,
 					AutoButtonColor = open ~= nil and entry == nil,
+					-- Only a tile that can still be tapped takes the controller cursor.
+					Selectable = open ~= nil and entry == nil,
+					Active = open ~= nil and entry == nil,
 					BackgroundColor3 = color,
 					BackgroundTransparency = if entry or missed[n] then 0 else 0.1,
 					Position = UDim2.fromOffset(GAP + col * (TILE + GAP), GAP + row * (TILE + GAP)),
