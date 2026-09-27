@@ -22,6 +22,7 @@
 	Public API:
 	  DigSite:AddShovels(player, n) -> number        new shovel count (Rewards kind "shovel", the Merchant)
 	  DigSite:FossilsComplete(player) -> number      fossils with all four pieces (Codex Fossils milestones)
+  DigSite:Completed(player) -> { [fossilId]: true }  3.12: which fossils are complete (Museum Exhibits)
 
 	Publishes FossilFound (player, { fossil, piece, complete }) for every new piece and
 	DigFinished (player, { finds }) when a dig ends (the weekly goal dig_10).
@@ -104,6 +105,19 @@ end
 function DigSite:FossilsComplete(player): number
 	local s = ctx:Section(player)
 	return if s then Logic.Fossils(s.pieces) else 0
+end
+
+function DigSite:Completed(player): { [string]: boolean }
+	local s = ctx:Section(player)
+	local out = {}
+	if s and type(s.pieces) == "table" then
+		for _, f in Cfg.Fossils do
+			if Logic.Complete(s.pieces[f.id]) then
+				out[f.id] = true
+			end
+		end
+	end
+	return out
 end
 
 -- Actions ------------------------------------------------------------------------------

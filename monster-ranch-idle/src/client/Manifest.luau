@@ -85,6 +85,8 @@ return {
 		"Tourists",
 		-- 3.11: the Travelling Merchant's caravan in the Market Square
 		"Merchant",
+		-- 3.12: the Curator wing of Museum Exhibits beside the Codex Museum
+		"CuratorWing",
 		-- R2-CLOCKWORK: Clockwork Canyon's gear landmark and walk-in area (appended, see RULES)
 		"ClockworkCanyon",
 		-- R2-ABYSS: the Sunken Abyss's descent and walk-in area (appended, see RULES)
@@ -109,6 +111,7 @@ return {
 		"Fishing", -- 3.10 · Fishing Pond (opened from the pond's prompt)
 		"DigSite", -- 3.11 · Dig Site (opened from the sand pit's prompt)
 		"Merchant", -- 3.11 · Travelling Merchant (the caravan's prompt, the Events screen)
+		"Exhibits", -- 3.12 · Museum Exhibits (the Curator desk's prompt, the Codex screen)
 		"Dojo", -- 3.11 · Dojo (from Monster Detail)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
