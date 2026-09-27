@@ -343,6 +343,16 @@ local FISHED = { reward = "fishing" }
 add("old_boot", "Old Boot", "fun", "old_boot", { 2, 2 }, nil, "#6B4424", "#5FAF4B", FISHED)
 add("sunken_chest", "Sunken Chest", "fun", "sunken_chest", { 3, 2 }, nil, "#8A5A2B", "#F5C630", FISHED)
 
+-- Update 3.11 · Travelling Merchant: never in the shop, sold only by the merchant (Config.Merchant.Decor,
+-- two of them each visit, rotating).
+local MERCHANT = { reward = "merchant" }
+add("caravan_lantern", "Caravan Lantern", "light", "caravan_lantern", { 2, 2 }, nil, "#B5553C", "#FFD447", {
+	reward = "merchant",
+	light = true,
+})
+add("spice_crates", "Spice Crates", "fun", "spice_crates", { 3, 2 }, nil, "#A0703D", "#E5484D", MERCHANT)
+add("silk_canopy", "Silk Canopy", "seat", "silk_canopy", { 4, 4 }, nil, "#8B6AD8", "#F4C43A", MERCHANT)
+
 for _, d in Decor.List do
 	d.mesh = d.mesh or ""
 	d.kind = d.kind or "fun"

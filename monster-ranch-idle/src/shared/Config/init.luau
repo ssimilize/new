@@ -20,6 +20,7 @@ local Config = {
 	Kitchen = require(script.Kitchen), -- 3.10: Kitchen & Pantry
 	GeneLab = require(script.GeneLab), -- 3.10: the Gene Lab
 	Fishing = require(script.Fishing), -- 3.10: Fishing Pond
+	Merchant = require(script.Merchant), -- 3.11: the Travelling Merchant
 	Mutations = require(script.Mutations),
 	Weather = require(script.Weather),
 	Eggs = require(script.Eggs),

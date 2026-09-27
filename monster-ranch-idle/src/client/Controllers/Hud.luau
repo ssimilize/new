@@ -447,8 +447,32 @@ local CHIP_LABEL = {
 	clubwars = "Club Wars",
 	arena = "Arena",
 	reset = "Weekly reset",
+	merchant = "Merchant",
+	merchant_live = "Merchant leaves",
 }
 local chips = { list = {}, keys = {} }
+
+-- 3.11: the Travelling Merchant's chips only show once it is unlocked; while the caravan is
+-- parked, a "Merchant leaves" chip counts down to its departure (Calendar.Soon skips running
+-- entries, so it is added here).
+local function merchantChips(soon, now: number)
+	local level = tonumber(ctx.Store:Get("profile.Progression.level")) or 1
+	local open = level >= (Config.Unlocks.Features[Config.Merchant.Unlock] or math.huge)
+	local out = {}
+	if open then
+		for _, e in Calendar.Now(now) do
+			if e.kind == "merchant" and e.endsAt then
+				table.insert(out, { key = e.key .. ":live", kind = "merchant_live", icon = e.icon, startsAt = e.endsAt })
+			end
+		end
+	end
+	for _, e in soon do
+		if e.kind ~= "merchant" or open then
+			table.insert(out, e)
+		end
+	end
+	return out
+end
 
 local function refreshChips(now: number)
 	-- Polled like the weather banner: hidden while any screen is open.
@@ -457,7 +481,7 @@ local function refreshChips(now: number)
 	if not free then
 		return
 	end
-	local soon = Calendar.Soon(now, CHIP_WINDOW)
+	local soon = merchantChips(Calendar.Soon(now, CHIP_WINDOW), now)
 	for i, chip in chips.list do
 		local e = soon[i]
 		chip.root.Visible = e ~= nil

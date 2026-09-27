@@ -22,13 +22,16 @@
 	Events.Active does), Ranch Pass seasons (Config.Quests), titan invasions (Config.Titan),
 	region and raid openings (opensAt), Club Wars (Clubs.War.startsAt), arena seasons
 	(Logic/Arena), the Saturday reset, the next Stampede (Logic/Titan.NextStampede: skips the
-	slots a titan holds, like the server) and Egg Hunt rounds while Spring Bloom runs.
+	slots a titan holds, like the server), Egg Hunt rounds while Spring Bloom runs, and the
+	Travelling Merchant (3.11, Logic/Merchant: only the visit running now and the next one, so
+	the Events screen lists one or two rows, never a month of them).
 ]]
 
 local Config = require(script.Parent.Parent.Config)
 local TitanLogic = require(script.Parent.Titan)
 local ArenaLogic = require(script.Parent.Arena)
 local EggHuntLogic = require(script.Parent.EggHunt)
+local MerchantLogic = require(script.Parent.Merchant)
 
 local Calendar = {}
 
@@ -52,6 +55,7 @@ local KIND_ORDER = {
 	reset = 8,
 	egghunt = 9,
 	stampede = 10,
+	merchant = 11,
 }
 
 local BLURB = {
@@ -65,6 +69,7 @@ local BLURB = {
 	arena = "A new arena season: ratings move halfway back.",
 	reset = "Leaderboards and weekly goals start over.",
 	stampede = "Join the server boss for rewards.",
+	merchant = "Rare wares for coins, gems or a barter.",
 }
 
 local function entry(
@@ -234,6 +239,19 @@ local function stampede(out, now: number, untilAt: number)
 	end
 end
 
+local function merchant(out, now: number, untilAt: number)
+	local at = MerchantLogic.At(now)
+	local Cfg = Config.Merchant
+	local name = "Travelling Merchant"
+	if at.present then
+		table.insert(out, entry("merchant", "merchant:" .. at.visit, name, at.startsAt, at.endsAt, "coin", "Merchant"))
+	end
+	local nextVisit = MerchantLogic.Visit(at.nextAt)
+	if not at.present and at.nextAt < untilAt then
+		table.insert(out, entry("merchant", "merchant:" .. nextVisit, name, at.nextAt, at.nextAt + Cfg.Stay, "coin", "Merchant"))
+	end
+end
+
 -- API -----------------------------------------------------------------------------------
 
 function Calendar.Entries(now: number, horizonSeconds: number)
@@ -247,6 +265,7 @@ function Calendar.Entries(now: number, horizonSeconds: number)
 	arena(out, now, untilAt)
 	reset(out, now, untilAt)
 	stampede(out, now, untilAt)
+	merchant(out, now, untilAt)
 	table.sort(out, before)
 	return out
 end

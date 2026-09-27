@@ -267,6 +267,7 @@ function MonsterDetail.Build(ctx)
 		end,
 	})
 	local openFamily -- set below, once the popup exists
+	local openReroll -- 3.11: the Trait Scroll picker, set below with the popup
 	Tiles.tap(genesLabel, function()
 		if openFamily then
 			openFamily()
@@ -483,6 +484,62 @@ function MonsterDetail.Build(ctx)
 			end
 		end
 		render()
+		popup:Show()
+	end
+
+	-- 3.11: a Trait Scroll (Travelling Merchant) rerolls one visible trait; never the hidden one.
+	openReroll = function()
+		local m = monster()
+		if not m then
+			return
+		end
+		popup:SetTitle("Reroll trait")
+		popup:SetSize(UDim2.fromOffset(560, 300))
+		Tiles.clear(popup.Body)
+		local list = Tiles.col({ Size = UDim2.fromScale(1, 1), Parent = popup.Body }, 8)
+		Tiles.label({
+			Name = "ScrollsLeft",
+			Text = string.format("Trait Scrolls: %d", tonumber(ctx.Store:Get("profile.Merchant.scrolls")) or 0),
+			TextSize = Theme.TextSize.Body,
+			Size = UDim2.new(1, 0, 0, 26),
+			LayoutOrder = 0,
+			Parent = list,
+		})
+		Tiles.label({
+			Text = "Pick a trait. It rolls a new one the way a hatch does, never a trait it already has.",
+			TextSize = Theme.TextSize.Small,
+			TextColor3 = C.TextMuted,
+			TextWrapped = true,
+			Size = UDim2.new(1, 0, 0, 40),
+			LayoutOrder = 1,
+			Parent = list,
+		})
+		for i, tid in StoreKit.asTable(m.traits) do
+			local t = Config.Traits.ById[tid]
+			local row = Tiles.frame({ Name = "TraitRow" .. i, Size = UDim2.new(1, 0, 0, 48), LayoutOrder = 1 + i, Parent = list })
+			Tiles.label({
+				Text = if t then t.name else "?",
+				TextSize = Theme.TextSize.Body,
+				Size = UDim2.new(1, -150, 1, 0),
+				Parent = row,
+			})
+			Button.new({
+				Name = "Reroll" .. i,
+				Text = "Reroll",
+				Color = C.Purple,
+				Size = UDim2.fromOffset(130, 44),
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, 0, 0.5, 0),
+				Parent = row,
+				OnClick = function()
+					local ok = StoreKit.request(ctx, "Merchant.Reroll", { id = currentId, slot = i })
+					if ok then
+						ctx:Sound("StarUp")
+						popup:Hide()
+					end
+				end,
+			})
+		end
 		popup:Show()
 	end
 
@@ -850,6 +907,23 @@ function MonsterDetail.Build(ctx)
 				ctx:Toast("The hidden trait shows when it grows into an Adult", "info")
 			end)
 		end
+		-- 3.11: spend a Trait Scroll from the Travelling Merchant.
+		if (tonumber(store:Get("profile.Merchant.scrolls")) or 0) > 0 and #StoreKit.asTable(m.traits) > 0 then
+			Button.new({
+				Name = "RerollTrait",
+				Text = "Reroll trait",
+				Color = C.Purple,
+				Size = UDim2.fromOffset(120, 28),
+				TextSize = Theme.TextSize.Small,
+				LayoutOrder = 10,
+				Parent = traitsRow,
+				OnClick = function()
+					if openReroll then
+						openReroll()
+					end
+				end,
+			})
+		end
 
 		-- Level up
 		local oneCost, oneN = levelCost(m, 1)
@@ -1033,9 +1107,13 @@ function MonsterDetail.Build(ctx)
 		)
 	end)
 
-	local watch = StoreKit.watch(store, { "profile.Monsters", "profile.Currency", "session.Riding", "profile.Companions" }, function()
-		refresh()
-	end)
+	local watch = StoreKit.watch(
+		store,
+		{ "profile.Monsters", "profile.Currency", "session.Riding", "profile.Companions", "profile.Merchant" },
+		function()
+			refresh()
+		end
+	)
 
 	return {
 		Root = panel.Root,

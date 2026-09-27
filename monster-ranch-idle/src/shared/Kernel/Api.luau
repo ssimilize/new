@@ -431,6 +431,19 @@ Api.Actions = {
 		rate = 2,
 		returns = "{ stat: string, cost: number }",
 	},
+	-- Travelling Merchant (3.11) · see Config/Merchant and Logic/Merchant ----------------------
+	-- Buy: one of this visit's offers, paid the `pay`-th way (all or nothing), up to its limit.
+	["Merchant.Buy"] = {
+		schema = T.struct({ offer = T.enum(Config.Merchant.Ids), pay = T.integer(1, 2) }),
+		rate = 3,
+		returns = "{ offer: string, pay: string, amount: number, bought: number, left: number, total: number? }",
+	},
+	-- Reroll: a Trait Scroll rerolls one visible trait of an owned, free monster.
+	["Merchant.Reroll"] = {
+		schema = T.struct({ id = id, slot = T.integer(1, Config.Traits.VisibleSlots) }),
+		rate = 2,
+		returns = "{ trait: number, old: number, scrolls: number }",
+	},
 
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
@@ -801,6 +814,7 @@ Api.State = {
 		Decor = "{ layout = { { id, x, z, rot } }, migrated, starter }  -- glow-up Z: plot-local grid units, rot × 45°",
 		RaceGear = "{ owned = { [gearId]: true }, equipped = { saddle, trail, banner }, races, live, podiums, wins, duels }  -- glow-up LR",
 		Tourists = "{ slot, count, book = { { at, stars, who, good, gi, bad, bi } } }  -- 3.10: Ranch Tourists (Logic/Tourists)",
+		Merchant = "{ visit, bought = { [offerId]: n }, scrolls, rerolls, trades }  -- 3.11: Travelling Merchant (Logic/Merchant)",
 		-- R2 Design Weeks: added to profile.Workshop (see Api.State.profile.Workshop above).
 		Workshop_DesignWeek = "profile.Workshop also has: designWeek = { week, entered: designId|false }, votesToday = { day, n }",
 	},
@@ -810,6 +824,7 @@ Api.State = {
 		Breeding = "{ podCount, breedsPerDay }",
 		Jobs = "{ slotCount }",
 		Kitchen = "{ slotCount, fish, fishing }  -- 3.10: fish = Fishing:FishCount (0 without Fishing); fishing = Fishing is plugged in",
+		Merchant = "{ shovels }  -- 3.11: the Dig Site is plugged in and unlocked (the merchant's shovel offers)",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
 		WelcomeBack = "{ pending: boolean, awaySeconds, coins, items = { { kind, text, icon? } } }",
@@ -898,6 +913,7 @@ Api.Topics = {
 	TouristVisited = "(player, { stars: number })  -- 3.10: one Ranch Tourist visited (online or while away)",
 	DishCooked = "(player, { dish: string, count: number })  -- 3.10: dishes collected from the Kitchen into the Pantry",
 	FishCaught = "(player, { fish: string, rarity: string, weight: number })  -- 3.10: a catch at the Fishing Pond (weight in kg)",
+	MerchantBought = "(player, { item: string, pay: string })  -- 3.11: a Travelling Merchant purchase (item = offer id, pay = coins|gems|amber|fish|dishes)",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
