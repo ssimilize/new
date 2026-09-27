@@ -9,6 +9,8 @@
 	Arena.Delta(a, b, won) -> points      -- rating change for `a`
 	Arena.Tier(rating) -> tier def
 	Arena.Bot(rating, seed) -> { key, name, rating, team = { Fighter }, bot = true }
+	Arena.SeasonAt(now) -> number        -- 3.8: the season running at `now` (0 before season 1)
+	Arena.SeasonStartsAt(season), Arena.SeasonEndsAt(season) -> unix time
 ]]
 
 local Config = require(script.Parent.Parent.Config)
@@ -113,6 +115,25 @@ function Arena.Bot(rating: number, seed: number)
 		team = team,
 		bot = true,
 	}
+end
+
+-- Seasons (3.8) ---------------------------------------------------------------------------
+
+function Arena.SeasonAt(now: number): number
+	local week = Config.Leaderboards.Week(now) - Cfg.Season.AnchorWeek
+	if week < 0 then
+		return 0
+	end
+	return week // Cfg.Season.Weeks + 1
+end
+
+function Arena.SeasonStartsAt(season: number): number
+	local week = Cfg.Season.AnchorWeek + (season - 1) * Cfg.Season.Weeks
+	return Config.Leaderboards.WeekEndsAt(week - 1)
+end
+
+function Arena.SeasonEndsAt(season: number): number
+	return Arena.SeasonStartsAt(season + 1)
 end
 
 return Arena

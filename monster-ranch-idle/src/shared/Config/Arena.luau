@@ -41,6 +41,18 @@ Arena.WeeklyRewards = {
 	champion = { { kind = "gems", amount = 160 }, { kind = "egg", id = "royal", amount = 1 } },
 }
 
+-- Seasons (update 3.8): 8 Saturday-reset weeks each, counted from `AnchorWeek` of
+-- Config.Leaderboards.Week (week 2 = Saturday 3 Oct 2026, 15:00 UTC, is season 1). At a season
+-- change a rating moves `ResetFraction` of the way back to StartRating. `Featured` lines per
+-- season fight with statMult 1 + FeaturedBoost. Logic/Arena has the date helpers.
+Arena.Season = {
+	AnchorWeek = 2,
+	Weeks = 8,
+	ResetFraction = 0.5,
+	Featured = 3,
+	FeaturedBoost = 0.1,
+}
+
 Arena.BotNames = { "Coach Pip", "Ranger Moss", "Captain Ember", "Tide Tamer", "Sparky Sam", "Stone Sage", "Gloom Gale", "Sky Skipper" }
 
 return Arena
