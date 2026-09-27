@@ -3,6 +3,60 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.9 · Family and fortune
+
+### Expedition Bounties
+
+**For players**
+- **Bounties** (Ranch Level 6): every week up to 3 wanted monsters hide in stages you have already
+  cleared, like "Grumbletooth the Fierce". Find them on the new **Bounties** tab of the Expeditions
+  screen.
+  - Each wanted poster shows the monster, its region and stage, and the reward. **Hunt** takes you
+    to that stage and starts the fight.
+  - The bounty leads its wave: 50% stronger than the enemies around it, a little bigger, and
+    wrapped in a red-gold sparkle.
+  - Bounties sit in different regions when you can reach several, on one of the last 10 stages you
+    cleared there, and never on a boss stage.
+  - A stage with a bounty has a red "!" marker on the stage map.
+- **The reward**, once per bounty: 30 minutes of coins + 20 gems, plus a chance at the region's
+  first egg (a Meadow egg in the Whispering Meadow). The chance is 25%, raised by your squad's
+  loot bonus (Lucky Paw, Treasure Nose, Luck and the rest), up to 50%.
+  - Lose the fight and nothing changes: try again. A defeated bounty's stage is a normal replay.
+- New bounties arrive every Saturday at 15:00 UTC with the weekly leaderboards.
+  - No stage cleared yet? The tab says so, and your first clear that week brings bounties.
+  - A rebirth keeps the week's bounties. One whose stage you haven't cleared again waits for you
+    to get back there, or ends with the week.
+- **Bounty Hunter**, a new weekly leaderboard: bounties defeated this week (title: *Bounty Hunter*).
+- A new weekly goal: "Defeat 3 bounties".
+
+**In the code**
+- `Config.Bounties`: `Unlock` ("bounties", Ranch Level 6 in `Config.Unlocks`, named "Bounties"),
+  `Count` 3, `Window` 10, `StatMult` 1.5, `Aura` "bounty", `Reward`, `EggChance` 0.25,
+  `EggChanceMax` 0.5, `Source` "bounty", and the `Names` × `Titles` the wanted names are made of.
+- `Logic/Bounties`: `Draw` (seeded by `Rng.seed("bounty", userId, week)`; eligible regions,
+  distinct regions first, a region repeats only when fewer than 3 are eligible), `Stages`, `Find`,
+  `Monster`, `Inject`, `Egg`, `EggChance`, `RollEgg` (from the bounty's own seed), `Rewards`.
+- `Systems/Expeditions`:
+  - Save section Version 2 adds `bounty = { week, list = { { region, stage, name, line, seed, done } }, count }`;
+    `Migrate` gives older saves an empty one.
+  - The draw is lazy (join, every Expeditions action, LevelUp, a first clear and a 30 s sweep) and
+    stays fixed for the week once it isn't empty.
+  - `Expeditions.Fight` puts the bounty in the front slot of its stage's wave. A win marks it done
+    and pays through `Rewards:Grant` (source "bounty", silent: the battle viewer shows it with the
+    fight's rewards). It also returns `bounty = name` and publishes the new `BountyDefeated`
+    topic `{ region, stage }`.
+  - Public: `Expeditions:Bounties(player)`, `Expeditions:BountyCount(player)`.
+- `Logic/BattleSim`: records may carry `bounty = true` (passed on to the unit views);
+  `BattleSim.EnemyRecord` builds a regular wave enemy. `Logic/BattleStage` and
+  `Visuals/BattleArena` draw a bounty `Config.BattleStage.scale.bounty` (1.35) times bigger in its
+  row spot; the 2D viewer uses a 100 px icon.
+- `Config.Vfx.Mastery.bounty`: the aura, drawn through the bounty's `look.aura`.
+- `Config.Leaderboards`: the weekly board "bounties", valued by `Expeditions:BountyCount`.
+  `Config.Weekly`: the goal `bounty_3` (family "bounties").
+- UI: a third **Bounties** mode tab on `Screens/Expeditions` (`Open({ tab = "bounties" })`),
+  poster cards `Bounty1..3` with a `Hunt` button, the reset countdown, the empty and locked states,
+  and a `Bounty` marker on stage map nodes.
+
 ## 3.8 · Reasons to come back
 
 ### Weekly goals

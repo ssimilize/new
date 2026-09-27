@@ -302,7 +302,7 @@ Api.Actions = {
 	["Expeditions.Fight"] = {
 		schema = T.struct({ region = regionId, stage = stage, retry = T.optional(T.boolean) }),
 		rate = 1,
-		returns = "{ win: boolean, replay: BattleReplay, rewards: { Reward } }",
+		returns = "{ win: boolean, replay: BattleReplay, rewards: { Reward }, bounty: string? }",
 	},
 	["Expeditions.Start"] = {
 		schema = T.struct({ slot = T.integer(1, 4), region = regionId, stage = stage, duration = duration, squad = squad }),
@@ -679,7 +679,7 @@ Api.State = {
 		Eggs = "{ list = { [id]: { type, source, t } }, slots = { { egg: id|false, type: string|false, startedAt, endsAt } }, nextId, pity = { starlit, royal } }",
 		Shop = "{ window, bought = { [eggType]: n }, decor = { [decorId]: n owned }, themes = { [themeId]: true } }",
 		Ranch = "{ pens = { Pen }, incubatorTier, barnTier, garden = { tier, plots = { { flavor|false, readyAt } } } }",
-		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id } }",
+		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id }, bounty = { week, list = { { region, stage, name, line, seed, done } }, count } }",
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
@@ -797,6 +797,7 @@ Api.Topics = {
 	TitanDamage = "(player, { damage: number, won: boolean })  -- per participant when a titan invasion ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
+	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
