@@ -36,11 +36,22 @@ Cinema.Recorder = Recorder
 Cinema.PROFILES = table.freeze({ "guildhall", "monster-ranch" })
 
 -- The shipped profile for a game id (string requires must be literals, hence the branches).
+-- Required lazily: a game synced with vendor.ownDataOnly carries only its own profile, so
+-- asking for another game's errors here, and only when asked.
+local function loadProfile(game: string, load: () -> any): any
+	local ok, profile = pcall(load)
+	if not ok then
+		error(`Cinema.profile: the {game} camera profile is not vendored in this game (a sync with `
+			.. `vendor.ownDataOnly keeps only the game's own profile): {profile}`, 3)
+	end
+	return profile
+end
+
 function Cinema.profile(game: string): any
 	if game == "guildhall" then
-		return require("./profiles/guildhall")
+		return loadProfile(game, function() return require("./profiles/guildhall") end)
 	elseif game == "monster-ranch" then
-		return require("./profiles/monster-ranch")
+		return loadProfile(game, function() return require("./profiles/monster-ranch") end)
 	end
 	error(`Cinema.profile: no camera language for {game} (have {table.concat(Cinema.PROFILES, ", ")})`, 2)
 end
