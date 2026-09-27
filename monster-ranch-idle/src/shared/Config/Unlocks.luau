@@ -116,6 +116,14 @@ Unlocks.Features = {
 	merchant = 7,
 	-- 3.11 · Dojo (Config/Techniques)
 	dojo = 24,
+	-- 3.12 · Honey & stars: the Apiary (Config/Apiary), Museum Exhibits (Config/Exhibits), the
+	-- Observatory (Config/Observatory) and the Trial Tower (Config/TrialTower)
+	apiary = 14,
+	apiary_hive_2 = 27,
+	apiary_hive_3 = 42,
+	exhibits = 18,
+	observatory = 19,
+	trial_tower = 26,
 }
 
 -- Player-facing names for the level-up popup.
@@ -184,6 +192,12 @@ Unlocks.Names = {
 	dig_site = "Dig Site",
 	merchant = "Travelling Merchant",
 	dojo = "Dojo",
+	apiary = "Apiary",
+	apiary_hive_2 = "Beehive 2",
+	apiary_hive_3 = "Beehive 3",
+	exhibits = "Museum Exhibits",
+	observatory = "Observatory",
+	trial_tower = "Trial Tower",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

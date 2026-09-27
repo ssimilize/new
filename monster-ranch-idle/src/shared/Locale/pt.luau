@@ -3126,4 +3126,11 @@ return {
 	["Learned {1} · Lv {2}"] = "Aprendida: {1} · Nv {2}",
 	["Technique: {1} · Lv {2}"] = "Técnica: {1} · Nv {2}",
 	["{1}: {2}"] = "{1}: {2}",
+	-- 3.12 · Honey & stars: unlock names
+	["Apiary"] = "Apiário",
+	["Beehive 2"] = "Colmeia 2",
+	["Beehive 3"] = "Colmeia 3",
+	["Museum Exhibits"] = "Exposições do museu",
+	["Observatory"] = "Observatório",
+	["Trial Tower"] = "Torre de provas",
 }

@@ -10,6 +10,8 @@
 	  pens     half pens owned ÷ Economy.Pens.max, half pen places filled ÷ pen capacity
 	  rarity   mean rarity of the RarityTop rarest pen monsters ÷ the top rarity (Mythic)
 	  codex    Codex forms found ÷ CodexFull
+	Bonus (3.12): other systems add flat points on top (Tourists:RegisterAppealBonus: Museum
+	exhibits, an Observatory chart), BonusMax at most in all. The score still stops at 100.
 	Stars: 1, then one more at each StarSteps score.
 
 	Visits: one tourist every Interval seconds while the owner is online, on slots aligned to the
@@ -33,6 +35,7 @@ Tourists.DecorFull = 40
 Tourists.VarietyFull = 8
 Tourists.RarityTop = 3
 Tourists.CodexFull = 60
+Tourists.BonusMax = 12 -- 3.12: flat appeal points other systems may add, in all
 
 -- Decor kinds (Config/Decor `kind`), in the order the tips suggest missing ones.
 Tourists.Kinds = { "light", "water", "plant", "seat", "path", "fence", "arch", "statue", "toy", "fun" }
