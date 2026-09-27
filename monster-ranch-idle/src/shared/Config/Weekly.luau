@@ -86,6 +86,7 @@ Weekly.Pool = {
 		target = 3,
 		unlock = "bounties",
 	},
+	{ id = "fish_20", family = "fishing", text = "Catch 20 fish", topic = "FishCaught", target = 20, unlock = "fishing" },
 	{ id = "raids_5", family = "raids", text = "Finish 5 raids", topic = "RaidFinished", target = 5, unlock = "raids" },
 	{
 		id = "crystals_10",

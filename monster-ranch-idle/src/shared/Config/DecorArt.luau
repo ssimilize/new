@@ -723,6 +723,28 @@ Art.Models = {
 			P("cyl", { 0.35, 0.3, 0.35 }, { 0, 2.35, -0.85 }, "Metal", b, { rot = { 60, 0, 0 }, small = true }),
 		}
 	end,
+	-- 3.10 · Fishing Pond catches
+	old_boot = function(a, b) -- a soggy boot with pond weed
+		return {
+			P("block", { 0.8, 1.4, 0.9 }, { -0.35, 0.7, 0 }, "Fabric", a),
+			P("block", { 1.6, 0.6, 0.9 }, { 0.15, 0.3, 0 }, "Fabric", a),
+			P("block", { 1.7, 0.15, 1 }, { 0.15, 0.07, 0 }, "Slate", "#3A2A1C"),
+			P("cyl", { 0.85, 0.12, 0.95 }, { -0.35, 1.42, 0 }, "Fabric", "#4A3526"),
+			P("block", { 0.12, 0.9, 0.12 }, { -0.1, 1.5, 0.3 }, "LeafyGrass", b, { rot = { 0, 0, -25 }, small = true }),
+			P("block", { 0.12, 0.7, 0.12 }, { -0.6, 1.4, -0.3 }, "LeafyGrass", b, { rot = { 0, 0, 20 }, small = true }),
+		}
+	end,
+	sunken_chest = function(a, b) -- a barnacled chest spilling coins
+		return {
+			P("block", { 2.2, 1, 1.4 }, { 0, 0.5, 0 }, "WoodPlanks", a),
+			P("block", { 2.2, 0.5, 1.4 }, { 0, 1.35, -0.2 }, "WoodPlanks", a, { rot = { -25, 0, 0 } }),
+			P("block", { 2.3, 0.15, 0.2 }, { 0, 0.6, -0.72 }, "Metal", b),
+			P("block", { 0.3, 0.35, 0.1 }, { 0, 0.85, -0.74 }, "Foil", b),
+			P("cyl", { 0.9, 0.2, 0.9 }, { 0.2, 1.05, 0.1 }, "Foil", b),
+			P("ball", { 0.35, 0.35, 0.35 }, { -0.9, 0.9, 0.5 }, "Slate", "#E8E0CF", SMALL),
+			P("ball", { 0.3, 0.3, 0.3 }, { 0.9, 0.3, 0.6 }, "Slate", "#E8E0CF", SMALL),
+		}
+	end,
 }
 
 -- The parts of one piece (a fresh table; callers may keep it).

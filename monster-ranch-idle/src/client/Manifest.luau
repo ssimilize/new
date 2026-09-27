@@ -94,6 +94,7 @@ return {
 		"Expeditions",
 		"Breeding",
 		"Jobs", -- 3.7 · Ranch Jobs
+		"Fishing", -- 3.10 · Fishing Pond (opened from the pond's prompt)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

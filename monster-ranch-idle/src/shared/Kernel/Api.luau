@@ -373,6 +373,27 @@ Api.Actions = {
 		returns = "{ rewards: { Reward } }  -- the forager's stored food, paid before the change",
 	},
 
+	-- Fishing Pond (3.10) · see Config/Fishing and Logic/Fishing -------------------------
+	["Fishing.Start"] = {
+		schema = T.none,
+		rate = 1,
+		returns = "{ run: number, seed: number, bonus: number, duration: number, casts: number, bait: number }",
+	},
+	["Fishing.Finish"] = {
+		schema = T.struct({
+			run = T.integer(1),
+			inputs = T.array(T.struct({ t = T.number(0, Config.Fishing.Duration), down = T.boolean }), Config.Fishing.MaxInputs),
+		}),
+		rate = 1,
+		returns = "{ caught, fish, rarity, weight, time, rewards: { Reward }, best, first }",
+	},
+	["Fishing.Sell"] = {
+		schema = T.struct({ fish = T.key(Config.Fishing.ById), amount = T.integer(1, 9999) }),
+		rate = 4,
+		returns = "{ coins: number }",
+	},
+	["Fishing.SetBuddy"] = { schema = T.struct({ id = id }), rate = 2, returns = "nil" },
+
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
 	["Weekly.Claim"] = {
 		schema = T.struct({ step = T.integer(1, #Config.Weekly.Chest) }),
@@ -691,6 +712,7 @@ Api.State = {
 		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id }, bounty = { week, list = { { region, stage, name, line, seed, done } }, count } }",
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true }, target = { stat, grade } | false, milestones = { [stat]: grade } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
+		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
@@ -807,6 +829,7 @@ Api.Topics = {
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
 	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
+	FishCaught = "(player, { fish: string, rarity: string, weight: number })  -- 3.10: a catch at the Fishing Pond (weight in kg)",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
@@ -846,14 +869,14 @@ Api.Topics = {
 	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
-	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total' })  -- glow-up O",
+	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish' })  -- glow-up O (fish: 3.10)",
 	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------
 Api.Shapes = {
-	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'ribbons'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster'|'accessory', id: string?, amount: number, rarity: number? }",
+	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'ribbons'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster'|'accessory'|'bait', id: string?, amount: number, rarity: number? }",
 	Monster = "see ARCHITECTURE.md → Monster record",
 	Listing = "see ARCHITECTURE.md §8 → Listing (client view)",
 	Appearance = "see Logic/Appearance.luau",

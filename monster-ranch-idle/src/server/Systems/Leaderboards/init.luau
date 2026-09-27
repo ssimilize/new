@@ -39,7 +39,7 @@ local ArenaLogic = require(Shared.Logic.Arena)
 local Leaderboards = {
 	Name = "Leaderboards",
 	Dependencies = {},
-	OptionalDependencies = { "Monsters", "Boss", "HallOfFame", "Expeditions", "Racing", "Mastery", "Visits", "Arena" },
+	OptionalDependencies = { "Monsters", "Boss", "HallOfFame", "Expeditions", "Racing", "Mastery", "Visits", "Arena", "Fishing" },
 }
 
 Leaderboards.Profile = {
@@ -148,6 +148,14 @@ local VALUES = {
 	bounties = function(player)
 		local Expeditions = ctx:GetSystem("Expeditions")
 		return if Expeditions then Expeditions:BountyCount(player) else 0
+	end,
+	-- 3.10: the heaviest fish caught this week (kg × WeightScale, labelled with the fish).
+	fishing = function(player)
+		local Fishing = ctx:GetSystem("Fishing")
+		if not Fishing then
+			return 0
+		end
+		return Fishing:WeekBest(player)
 	end,
 	-- 3.8: this arena season's rating.
 	arena = function(player)

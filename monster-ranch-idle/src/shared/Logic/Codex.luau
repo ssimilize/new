@@ -9,6 +9,9 @@
 	  Codex.Progress(milestone, found) -> have, need
 	  Codex.IsDone(milestone, found) -> boolean
 	  Codex.Claimable(codex, claimed) -> number     done and not yet claimed
+	  Codex.FishMilestones() -> { FishMilestone }   3.10 Fish Log: { id = "fish_<n>", kind = "fish", key = "",
+	                                                order, need, gems, items = {}, badge = 0 }
+	  Codex.FishById() -> { [id]: FishMilestone }   (kept out of Milestones: no forms to count)
 
 	Milestone = { id, kind = "element"|"egg"|"region"|"total", key, order, forms = { formId },
 	              need, all: boolean, gems, items = { itemId }, badge: number (0 = none) }
@@ -236,6 +239,39 @@ function Codex.Claimable(codex, claimed): number
 		end
 	end
 	return n
+end
+
+-- 3.10 · Fish Log milestones (Config.Codex.FishSteps; progress = kinds of fish caught).
+local fishCache: { any }? = nil
+local fishById: { [string]: any }? = nil
+
+function Codex.FishMilestones(): { any }
+	if not fishCache then
+		local C = Config.Codex
+		local list, map = {}, {}
+		for i, step in C.FishSteps or {} do
+			local m = {
+				id = "fish_" .. step,
+				kind = "fish",
+				key = "",
+				order = i,
+				need = step,
+				all = false,
+				gems = (C.Gems.fish or {})[i] or 0,
+				items = {},
+				badge = 0,
+			}
+			table.insert(list, m)
+			map[m.id] = m
+		end
+		fishCache, fishById = list, map
+	end
+	return fishCache :: { any }
+end
+
+function Codex.FishById(): { [string]: any }
+	Codex.FishMilestones()
+	return fishById :: { [string]: any }
 end
 
 return Codex

@@ -28,6 +28,7 @@ Bounties.Source = "bounty" -- Rewards source (reward card title "Rewards · Boun
 Bounties.Reward = {
 	{ kind = "coins", seconds = 1800, amount = 0 },
 	{ kind = "gems", amount = 20 },
+	{ kind = "bait", amount = 3 }, -- 3.10: casts at the Fishing Pond
 }
 
 -- Harvested by Locale.spec (a table named *Names): each one is translated like a boss name.

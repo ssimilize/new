@@ -8,6 +8,8 @@
 	      profile.Breeding.discovered[lineId].
 	Glow-up O: a Species / Milestones tab pair; Milestones (Parts/CodexMilestones) shows the
 	milestone tracks with progress bars and Claim buttons (profile.Codex.claimed).
+	3.10: a Fish Log tab (Parts/FishLog): fish caught at the Fishing Pond and their milestones.
+	Open params: { tab = "milestones" | "fishlog" }.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -27,6 +29,7 @@ local StoreKit = require(UI.Components.StoreKit)
 local Tiles = require(UI.Components.Tiles)
 local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local CodexMilestones = require(script.Parent.Parts.CodexMilestones)
+local FishLog = require(script.Parent.Parts.FishLog)
 
 local New = Create.New
 local C = Theme.Colors
@@ -86,17 +89,26 @@ function Codex.Build(ctx)
 	-- Glow-up O: the Milestones tab shares the body with the species list and detail card.
 	local milestones = CodexMilestones.new(ctx, panel.Body, UDim2.fromOffset(944, 400))
 	milestones.Root.Visible = false
+	local fishLog = FishLog.new(ctx, panel.Body, UDim2.fromOffset(944, 400))
+	fishLog.Root.Visible = false
 	local tab = "species"
 	local tabs = Widgets.Tabs({
-		Tabs = { { id = "species", text = "Species", width = 120 }, { id = "milestones", text = "Milestones", width = 140 } },
-		Size = UDim2.fromOffset(268, 44),
+		Tabs = {
+			{ id = "species", text = "Species", width = 120 },
+			{ id = "milestones", text = "Milestones", width = 140 },
+			{ id = "fishlog", text = "Fish Log", width = 120 },
+		},
+		Size = UDim2.fromOffset(396, 44),
 		OnChanged = function(id)
 			tab = id
 			list.Visible = id == "species"
 			detail.Visible = id == "species"
 			milestones.Root.Visible = id == "milestones"
+			fishLog.Root.Visible = id == "fishlog"
 			if id == "milestones" then
 				milestones.Refresh()
+			elseif id == "fishlog" then
+				fishLog.Refresh()
 			end
 		end,
 	})
@@ -417,21 +429,33 @@ function Codex.Build(ctx)
 		renderDetail()
 	end
 
-	local watch = StoreKit.watch(store, { "profile.Monsters.codex", "profile.Breeding.discovered", "profile.Codex" }, function()
-		refresh()
-		if tab == "milestones" then
-			milestones.Refresh()
+	local watch = StoreKit.watch(
+		store,
+		{ "profile.Monsters.codex", "profile.Breeding.discovered", "profile.Codex", "profile.Fishing.log" },
+		function()
+			refresh()
+			if tab == "milestones" then
+				milestones.Refresh()
+			elseif tab == "fishlog" then
+				fishLog.Refresh()
+			end
 		end
-	end)
+	)
 
 	return {
 		Root = panel.Root,
 		Open = function(params)
-			local want = if type(params) == "table" and params.tab == "milestones" then "milestones" else "species"
+			local want = "species"
+			if type(params) == "table" and (params.tab == "milestones" or params.tab == "fishlog") then
+				want = params.tab
+			end
 			if want ~= tab then
 				tabs:Select(want)
 			end
 			watch.Start()
+			if tab == "fishlog" then
+				fishLog.Refresh()
+			end
 		end,
 		Close = function()
 			watch.Stop()
