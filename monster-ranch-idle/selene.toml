@@ -1,4 +1,7 @@
 std = "roblox_min"
+# The vendored Foundry packages (foundry sync, sha256-pinned in foundry.lock.json) follow the
+# Foundry's own lint; never reformat them here.
+exclude = ["src/shared/Foundry/**"]
 
 [lints]
 shadowing = "allow"
