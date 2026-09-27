@@ -26,6 +26,16 @@
 	                                 riders read Logic/Swim.Inside directly, no call here needed).
 	DeepReef.Dive() / DeepReef.Surface()   what the Dive and Swim up prompts do (the level check
 	                                 included); for QA (Kernel/QABridge) and future UI entry points.
+
+	R2-ABYSS: Controllers/Abyss reuses this swim loop for the second, deeper dive rather than
+	running one of its own (two Heartbeat writers to the same HumanoidRootPart.CFrame would fight
+	each other). `activeArea` is the Area config `stepSwim` / `IsInside` currently swim against —
+	Config.DeepReef.Area unless a descent has swapped it. DeepReef.Descend / .Ascend swap it and
+	move the swim's own position state to the new arrival point without stopping the swim (so the
+	humanoid stays PlatformStand and the input binding stays live); they do nothing if not
+	currently swimming. Deep Reef's own Dive / Surface / IsInside default `activeArea` back to
+	Config.DeepReef.Area, so this is purely additive: nothing here changes for a dive that never
+	goes near the Abyss.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -68,6 +78,7 @@ local built = false
 
 local scopeRoot: Frame? = nil -- parented under ctx.UI; scopes the pad while swimming (no screen)
 local swimming = false
+local activeArea = Cfg.Area -- R2-ABYSS: Descend/Ascend swap this; stepSwim/IsInside read it
 local state = { x = 0, y = 0, z = 0, vx = 0, vy = 0, vz = 0 }
 local heading = 0
 local held = { up = false, down = false }
@@ -283,6 +294,7 @@ local function dive()
 		return
 	end
 	swimming = true
+	activeArea = Cfg.Area
 	takeLight()
 	humanoid.PlatformStand = true
 	humanoid.AutoRotate = false
@@ -345,7 +357,7 @@ local function stepSwim(dt: number)
 	local lookY = if camera then camera.CFrame.LookVector.Y else 0
 	local speed = swimSpeed()
 	local tx, ty, tz = Swim.Target(move.X, move.Z, vertical(), lookY, speed, Cfg.Swim)
-	Swim.Step(state, tx, ty, tz, dt, Cfg.Swim, Cfg.Area)
+	Swim.Step(state, tx, ty, tz, dt, Cfg.Swim, activeArea)
 	heading = Swim.Heading(state.vx, state.vz, heading)
 	local speedNow = math.sqrt(state.vx ^ 2 + state.vy ^ 2 + state.vz ^ 2)
 	local tilt = Swim.Tilt(state.vx, state.vy, state.vz, speed, Cfg.Swim.tilt)
@@ -412,12 +424,58 @@ function DeepReef.IsInside(): boolean
 		return false
 	end
 	local _, root = humanoidAndRoot()
-	return root ~= nil and Swim.Inside(root.Position.X, root.Position.Y, root.Position.Z, Cfg.Area, 2)
+	return root ~= nil and Swim.Inside(root.Position.X, root.Position.Y, root.Position.Z, activeArea, 2)
 end
 
 -- Tests: the dock and area models, and whether the local swim loop is running.
 function DeepReef.Stats(): (Model?, Folder?, boolean)
 	return dock, area, swimming
+end
+
+-- R2-ABYSS: hands the running swim loop a different Area to swim against and teleports its
+-- position state to `arrivePos` (world position), without stopping the swim. Does nothing if not
+-- currently swimming (Controllers/Abyss only calls this from its own "Dive Deeper" prompt, which
+-- only exists while inside the Deep Reef).
+function DeepReef.Descend(areaCfg, arrivePos: Vector3, sound: string?)
+	if not swimming then
+		return false
+	end
+	activeArea = areaCfg
+	state.x, state.y, state.z = arrivePos.X, arrivePos.Y, arrivePos.Z
+	state.vx, state.vy, state.vz = 0, 0, 0
+	local _, root = humanoidAndRoot()
+	if root then
+		root.CFrame = CFrame.new(arrivePos)
+	end
+	if sound then
+		ctx:Sound(sound, { at = arrivePos })
+	end
+	return true
+end
+
+-- R2-ABYSS: the safe way back up — hands the swim back to the Deep Reef's own Area, at
+-- `arrivePos` (defaults to the Reef's own arrival point).
+function DeepReef.Ascend(arrivePos: Vector3?, sound: string?)
+	if not swimming then
+		return
+	end
+	activeArea = Cfg.Area
+	local at = arrivePos or (v3(Cfg.Area.center) + v3(Cfg.Area.arrive))
+	state.x, state.y, state.z = at.X, at.Y, at.Z
+	state.vx, state.vy, state.vz = 0, 0, 0
+	local _, root = humanoidAndRoot()
+	if root then
+		root.CFrame = CFrame.new(at)
+	end
+	if sound then
+		ctx:Sound(sound, { at = at })
+	end
+end
+
+-- R2-ABYSS: whether the swim loop is running at all (Controllers/Abyss gates "Dive Deeper" on
+-- this; DeepReef.IsInside() is bounds-checked against whichever Area is currently active instead).
+function DeepReef.IsSwimming(): boolean
+	return swimming
 end
 
 function DeepReef.Init(context)

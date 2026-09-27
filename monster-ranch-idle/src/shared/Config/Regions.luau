@@ -259,6 +259,35 @@ Regions.List = {
 		colors = { sky = "#C9A45C", ground = "#6E5A46" },
 		added = "4.1",
 	},
+	-- R2-ABYSS (roadmap 4.1's own idea, "Region 9: Sunken Abyss, reached through the Deep Reef" -
+	-- Clockwork Canyon took that slot's code name and its region-9 order, so this is region 10 and
+	-- opens one quarter after it): the deepest place, reached by diving further from the Deep Reef
+	-- itself (Config.Abyss), not walked to like Clockwork Canyon.
+	{
+		id = "abyss",
+		short = "Abyss", -- region tab label
+		name = "Sunken Abyss",
+		order = 10,
+		unlock = "region_abyss",
+		opensAt = 1862406000, -- Sat 6 Jan 2029, 15:00 UTC (one quarter after Clockwork Canyon)
+		elements = { "tide", "void" },
+		enemyLines = { "gulperling", "wisplure", "pressurefin", "anglit", "shellkin" },
+		levels = { 80, 94 },
+		rarity = { 5, 6 },
+		bosses = {
+			[10] = { name = "The Trench Maw", line = "gulperling", form = "trenchmaw" },
+			[20] = {
+				name = "The Drowned Lantern",
+				line = "wisplure",
+				form = "voidlantern",
+				firstClear = { { kind = "egg", id = "abyss", amount = 2 } },
+			},
+		},
+		food = "sour",
+		eggs = { { egg = "abyss", perMinute = 0.003, fromStage = 1 }, { egg = "royal", perMinute = 0.0005, fromStage = 10 } },
+		colors = { sky = "#0B0F2E", ground = "#1A2340" },
+		added = "4.2",
+	},
 }
 
 Regions.ById = {}

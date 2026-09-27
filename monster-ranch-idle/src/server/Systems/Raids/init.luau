@@ -146,6 +146,8 @@ local function raidRecord(spec, isBoss: boolean)
 		statMult = spec.statMult,
 		hpMult = spec.hpMult,
 		boss = if isBoss then true else nil,
+		-- R2-ABYSS: the boss's phase2 switch (Config.Raids "abyss", BattleSim.Simulate).
+		phase2 = if isBoss then spec.phase2 else nil,
 	}
 end
 

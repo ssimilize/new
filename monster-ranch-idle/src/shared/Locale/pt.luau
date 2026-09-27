@@ -2624,8 +2624,23 @@ return {
 	["Clockwork Sovereign raid"] = "Incursão do Soberano da Relojoaria",
 	["Clockwork Egg"] = "Ovo da Relojoaria",
 	["Clockwork Gate"] = "Portão da Relojoaria",
+	-- R2-ABYSS: Sunken Abyss (appended block, see RULES)
+	["Sunken Abyss"] = "Abismo Submerso",
+	["Abyss"] = "Abismo",
+	["The Trench Maw"] = "As Fauces da Fossa",
+	["The Drowned Lantern"] = "A Lanterna Afogada",
+	["The Trench Sovereign"] = "O Soberano da Fossa",
+	["Trench Sovereign raid"] = "Incursão do Soberano da Fossa",
+	["Abyss Egg"] = "Ovo do Abismo",
+	["Abyss Gate"] = "Portão do Abismo",
+	["Dive Deeper"] = "Mergulhar Mais Fundo",
+	["Ascent Bell"] = "Sino de Ascensão",
+	["Ascend"] = "Ascender",
+	["6 Jan"] = "6 jan",
+	["It doesn't need to see you. You need to see it."] = "Ele não precisa ver você. Você precisa vê-lo.",
 	["Three gears guard its heart. Break them in order or it never stops shielding itself."] = "Três engrenagens protegem seu coração. Quebre-as em ordem ou ele nunca vai parar de se proteger.",
 	["7 Oct"] = "7 out",
+	["LIGHTS OUT!"] = "LUZES APAGADAS!", -- R2-ABYSS: BattleReplay phase2
 
 	-- 3.9 · Buyer reputation
 	["Rosa's Scarecrow"] = "Espantalho da Rosa",

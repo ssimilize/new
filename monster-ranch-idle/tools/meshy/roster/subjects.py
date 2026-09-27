@@ -755,6 +755,28 @@ SUBJECTS = {
     "hips, a longer tail with two small cogs, brighter spark-blue eye glow.",
     "brassrunner": "Brassrunner: an elegant fully-armoured brass fox with etched clockwork patterns over every "
     "plate, a tail like an ornate pocket-watch chain ending in a large glowing cog, piercing spark-blue eyes.",
+    # R2-ABYSS: Sunken Abyss, three Tide/Void lines, all bioluminescent (appended block, see RULES).
+    # 91 gulperling (slug, tide)
+    "gulperling": "Gulperling, a baby deep-sea gulper eel: a long slender dark navy body, a huge hinged jaw, "
+    "one tiny glowing teal lure dangling from its head, faint bioluminescent spots along its sides.",
+    "lurefang": "Lurefang: a longer body with rows of thin needle fangs visible even closed, a bigger brighter "
+    "teal lure, more glowing spots tracing its flanks.",
+    "trenchmaw": "Trenchmaw: a massive gulper eel with an enormous unhinging jaw, a large pulsing teal-green "
+    "lure, glowing veins pulsing faintly under near-black skin, a long whip-like tapering tail.",
+    # 92 wisplure (sprite, void)
+    "wisplure": "Wisplure, a baby ghostly anglerfish spirit: a small translucent inky-purple body that fades "
+    "at the edges, one soft glowing violet orb floating just above its head on a thin filament.",
+    "gloomlure": "Gloomlure: a larger wispy translucent body trailing faint smoky tendrils, a bigger brighter "
+    "violet orb, two dim glowing eye-spots.",
+    "voidlantern": "Voidlantern: a tall drifting ghost-light with a swirling void-black translucent body, a "
+    "large radiant violet-white lantern orb overhead, faint glowing runic markings across its form.",
+    # 93 pressurefin (golem, tide + void)
+    "pressurefin": "Pressurefin, a baby armoured deep-sea crab: a small squat dark-purple shelled body with "
+    "thick plated claws, a fringe of tiny teal glowing spots along its shell's edge.",
+    "carapacefin": "Carapacefin: a bigger heavily plated shell with ridged pressure-vents along its back, "
+    "larger crushing claws, a brighter line of glowing teal-violet spots.",
+    "trenchcrown": "Trenchcrown: a towering deep-trench crab titan in thick black-purple armour plating, "
+    "glowing teal-violet cracks of light across every joint and vent, immense crushing claws.",
 }
 
 

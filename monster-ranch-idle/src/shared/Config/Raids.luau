@@ -101,6 +101,39 @@ Raids.List = {
 		-- pool only hatches Titanling/Wyrmlet, not these lines) plus gems in line with Leviathan's.
 		reward = { { kind = "egg", id = "clockwork", amount = 3 }, { kind = "gems", amount = 50 } },
 	},
+	-- R2-ABYSS · Sunken Abyss: a two-phase boss, "the lights go out" partway through the fight
+	-- instead of a Clockwork/Leviathan-style "ordinary field" trick — BattleSim.Simulate now
+	-- tracks a boss's `phase2` (set from here, passed through by Systems/Raids.raidRecord) and
+	-- flips it once, the first time that unit's HP falls to or below `hpThreshold` of its max: from
+	-- then on, every ally attack has an `accuracyPenalty` chance to miss outright (0 damage, no
+	-- crit/thorns/lifesteal), UNLESS at least one living ally is `glows = true` (Config.Species;
+	-- every R2-ABYSS line is). A squad with no bioluminescent monster goes dark and starts missing
+	-- half its swings once the Sovereign is below half HP; one Gulperling, Wisplure or Pressurefin
+	-- in the party keeps the fight lit and the miss chance at zero throughout. Measured in
+	-- Abyss.spec as a miss-rate before/after the switch, like Clockwork.spec's hit-rate.
+	{
+		id = "abyss",
+		name = "The Trench Sovereign",
+		order = 5,
+		desc = "It doesn't need to see you. You need to see it.",
+		opensAt = 1862406000, -- Sat 6 Jan 2029 15:00 UTC, with the Sunken Abyss
+		unlock = "raid_abyss",
+		boss = {
+			line = "pressurefin",
+			form = "trenchcrown",
+			level = 64,
+			rarity = 6,
+			stars = 5,
+			statMult = 1,
+			hpMult = 4,
+			phase2 = { hpThreshold = 0.5, accuracyPenalty = 0.4 },
+		},
+		adds = {
+			{ line = "gulperling", form = "trenchmaw", level = 58, rarity = 5, stars = 4, statMult = 1 },
+			{ line = "wisplure", form = "voidlantern", level = 58, rarity = 5, stars = 4, statMult = 1 },
+		},
+		reward = { { kind = "egg", id = "abyss", amount = 3 }, { kind = "gems", amount = 55 } },
+	},
 }
 
 Raids.ById = {}

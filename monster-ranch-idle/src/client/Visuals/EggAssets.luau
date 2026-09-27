@@ -43,6 +43,7 @@ return {
 		titan = "rbxassetid://96978102499663",
 		reef = "rbxassetid://108889858128500",
 		clockwork = "", -- R2-CLOCKWORK: no painted texture yet (art on hold); the egg draws from its colours
+		abyss = "", -- R2-ABYSS: no painted texture yet (art on hold); the egg draws from its colours
 	},
 	ornaments = {
 		royal = { mesh = "rbxassetid://96045268961641", texture = "rbxassetid://107952246798424", offset = { 0.0225, 0.5944, -0.0393 } },
