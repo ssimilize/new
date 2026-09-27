@@ -129,6 +129,31 @@ return function(t)
 	end)
 
 	describe("Locale catalogues", function()
+		it("keep every part under Roblox's 200,000-byte Source limit, each key in one part", function()
+			-- Studio refused to set es.luau's Source once 3.12 took it past 200,000 bytes; Rojo live
+			-- sync sets Source the same way. Split a part again before it grows past the limit.
+			local fs = require("@lune/fs")
+			local problems = {}
+			for _, lang in LANGS do
+				local seen = {}
+				for _, module in Locale.Parts[lang] do
+					local bytes = #fs.readFile(t.Root .. "/src/shared/Locale/" .. module.Name .. ".luau")
+					if bytes >= 200000 then
+						table.insert(problems, string.format("%s.luau is %d bytes", module.Name, bytes))
+					end
+					for key in t.Shared("Locale." .. module.Name) do
+						if seen[key] then
+							table.insert(problems, string.format("%q is in both %s and %s", key, seen[key], module.Name))
+						end
+						seen[key] = module.Name
+					end
+				end
+			end
+			if #problems > 0 then
+				error(table.concat(problems, "\n  "))
+			end
+		end)
+
 		it("have the same keys in Spanish and Portuguese", function()
 			local es, pt = Locale.Catalog("es"), Locale.Catalog("pt")
 			local problems = {}

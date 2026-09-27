@@ -7,7 +7,10 @@ Since update 3.2 the game is in English, Spanish (Latin America) and Portuguese 
 - **English stays the source language in code.** Screens, toasts and server messages are
   written in English as before.
 - **`src/shared/Locale/es.luau` and `pt.luau`** map every English string the game shows to its
-  translation. This works like the Source column of a Roblox LocalizationTable.
+  translation. This works like the Source column of a Roblox LocalizationTable. Each catalogue
+  is split into parts (`es.luau` + `es2.luau`, `pt.luau` + `pt2.luau`; update 3.10 onwards is in
+  part 2) because Roblox refuses to set a script's Source past 200,000 bytes. Add new text to the
+  last part; `Locale.spec` fails when a part reaches the limit or a key is in two parts.
 - **The client's `Localize` controller** watches every text in the PlayerGui and the Workspace
   and shows the translation. Screens and systems never call it.
 - **Language:** a player picks it in Settings (Auto, English, Español, Português).
