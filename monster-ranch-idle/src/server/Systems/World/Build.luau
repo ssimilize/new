@@ -64,6 +64,9 @@ local COLORS = {
 	padRim = hex("#F2A93B"),
 	sign = hex("#FFF7E3"),
 	ink = hex("#2A2419"),
+	kitchen = hex("#F4E6C8"), -- 3.10
+	kitchenRoof = hex("#B8423A"),
+	kitchenGlass = hex("#9ED8F0"),
 }
 
 local PEN_FLOOR_HEIGHT = 0.8 -- floor top sits at GroundY + 0.4
@@ -394,6 +397,24 @@ local function buildPlot(World, plot, parent: Instance)
 	barn.PrimaryPart = barnBody
 	barn:SetAttribute("PlotId", plot.id)
 	barn.Parent = model
+
+	-- Kitchen (3.10, Config/Kitchen): cream walls, a red roof and a chimney; the door faces the
+	-- pens (plot-local -Z). The client puts the "Cook" prompt on Door.
+	local ko = World.KitchenOffset
+	local kitchen = Instance.new("Model")
+	kitchen.Name = "Kitchen"
+	local kSize = Vector3.new(World.KitchenSize[1], World.KitchenSize[2], World.KitchenSize[3])
+	local kCf = plotCf * CFrame.new(ko[1], 0.3 + kSize.Y / 2, ko[3])
+	local kBody = block("Body", kSize, kCf, COLORS.kitchen, kitchen)
+	gableRoof(kitchen, kCf, kSize, COLORS.kitchenRoof, 0.4)
+	local front = -kSize.Z / 2 - 0.2
+	block("Door", Vector3.new(4, 6, 0.4), kCf * CFrame.new(-3, -kSize.Y / 2 + 3, front), COLORS.door, kitchen)
+	block("Window", Vector3.new(5, 3, 0.4), kCf * CFrame.new(3.5, 0.5, front), COLORS.kitchenGlass, kitchen)
+	block("Awning", Vector3.new(6.5, 0.4, 1.6), kCf * CFrame.new(3.5, 2.4, front - 0.6), COLORS.kitchenRoof, kitchen)
+	block("Chimney", Vector3.new(1.6, 4, 1.6), kCf * CFrame.new(kSize.X / 2 - 3, kSize.Y / 2 + 2.4, 1.5), COLORS.stone, kitchen)
+	kitchen.PrimaryPart = kBody
+	kitchen:SetAttribute("PlotId", plot.id)
+	kitchen.Parent = model
 
 	-- Gate at the front edge (facing the hub); the client writes the owner's name above it.
 	local gate = Instance.new("Model")

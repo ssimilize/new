@@ -96,6 +96,9 @@ Unlocks.Features = {
 	bounties = 6,
 	-- 3.10 · Ranch Tourists (Config/Tourists)
 	tourists = 11,
+	-- 3.10 · Kitchen & Pantry (Config/Kitchen)
+	kitchen = 9,
+	kitchen_slot_3 = 30,
 }
 
 -- Player-facing names for the level-up popup.
@@ -150,6 +153,8 @@ Unlocks.Names = {
 	orders = "Ranch Orders",
 	bounties = "Bounties",
 	tourists = "Ranch Tourists",
+	kitchen = "Kitchen",
+	kitchen_slot_3 = "Kitchen slot 3",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

@@ -44,6 +44,7 @@ local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local WalkToggle = require(script.Parent.Parts.WalkToggle) -- glow-up T
 local BondBadge = require(script.Parent.Parts.BondBadge)
 local FamilyTree = require(script.Parent.Parts.FamilyTree) -- 3.9
+local Util = require(script.Parent.Parts.Util) -- 3.10: the Pantry button
 local ShowpieceChips = require(script.Parent.Parts.ShowpieceChips) -- glow-up W
 
 local New = Create.New
@@ -424,12 +425,19 @@ function MonsterDetail.Build(ctx)
 				})
 				b:SetDisabled(owned <= 0)
 			end
+			-- 3.10: the Pantry (Kitchen screen) serves cooked dishes to this monster.
+			local extras = New("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 44),
+				LayoutOrder = 10,
+				Parent = list,
+			}, { Create.List("x", 10) })
 			Button.new({
 				Text = "Get more food",
 				Color = C.Blue,
 				Size = UDim2.fromOffset(200, 44),
-				LayoutOrder = 10,
-				Parent = list,
+				LayoutOrder = 1,
+				Parent = extras,
 				OnClick = function()
 					popup:Hide()
 					if ctx.Router:Has("Store") then
@@ -439,6 +447,21 @@ function MonsterDetail.Build(ctx)
 					end
 				end,
 			})
+			if ctx.Router:Has("Kitchen") and Util.unlocked(ctx, Config.Kitchen.Unlock) then
+				Button.new({
+					Name = "Pantry",
+					Text = "Pantry",
+					Color = C.Pink,
+					Size = UDim2.fromOffset(150, 44),
+					LayoutOrder = 2,
+					Parent = extras,
+					OnClick = function()
+						local id = currentId
+						popup:Hide()
+						ctx.Router:Open("Kitchen", { serve = id })
+					end,
+				})
+			end
 		end
 		render()
 		popup:Show()

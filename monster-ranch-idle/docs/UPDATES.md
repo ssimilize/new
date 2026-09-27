@@ -42,6 +42,56 @@ players get and where it lives in the code.
 - `Config.Decor.Layout.keepOut` keeps decor off the stand at plot-local (68, 16).
 - Weekly goal `tourists_15` (family `tourists`, unlock `tourists`).
 
+### Kitchen & Pantry
+
+**For players**
+- From Ranch Level 9 a **Kitchen** stands on your plot, in the gap south of the pens between
+  the statue row and the Feed Garden. Walk up to its door and press **Cook**. The Pantry is also
+  one tap away from a monster's Feed popup (the new **Pantry** button).
+- **Cooking.** 8 recipes turn your food into dishes. Dishes cook for 5 to 60 minutes on the
+  server clock, so they finish while you are away. The Welcome Back screen tells you, and the
+  Kitchen collects them into the Pantry when you open it. You have 2 cooking slots, and a 3rd
+  from Ranch Level 30. The Pantry holds up to 99 of each dish.
+
+  | Dish | Ingredients | Time | Effect |
+  |---|---|---|---|
+  | Berry Pie | 5 sweet, 3 savory | 5 min | counts as 3 sweet growth meals |
+  | Pepper Stew | 5 spicy, 3 savory | 10 min | +20% Job Board output for 2 h |
+  | Lime Tart | 5 sour, 3 sweet | 10 min | fills Mood to the max |
+  | Root Roast | 6 savory, 2 spicy | 15 min | counts as 3 savory growth meals |
+  | Fish Supper | 2 fish, 3 savory | 20 min | +5% loot on its next expedition |
+  | Sushi Roll | 3 fish, 2 sour | 30 min | +20% Job Board output for 2 h |
+  | Golden Honeycake | 2 golden, 5 sweet | 45 min | +1 Bond heart |
+  | Golden Feast | 3 golden, 3 of each food | 60 min | +1 Bond heart, makes 2 |
+
+- **Serving.** Tap Serve on a Pantry dish and pick the monster; only monsters that can use the
+  dish are offered (growth meals for Babies and Teens, job boosts for Teens and Adults, no Mood
+  dish for a monster already at full Mood, and so on).
+- **Fish** come from the Fishing Pond. Until you have some, the fish recipes say "Needs fish from
+  the Fishing Pond".
+- **Golden seeds.** Each Feed Garden harvest has a 5% chance to drop a Golden seed once the
+  Kitchen is open. Plant it in a garden plot (the garden's Plant menu or the Pantry's
+  "Plant a seed") and 30 minutes later it gives 2 Golden Honeyfruit for the golden recipes.
+- New weekly goal: "Cook 10 dishes".
+
+**In the code**
+- `Config/Kitchen` (recipes, effects, slots, cap, golden seed numbers), `Logic/Kitchen`
+  (slots, costs, boost windows, `GoldenSeed(userId, n)`, `ServeProblem`), `Systems/Kitchen`
+  (actions `Kitchen.Cook`, `Kitchen.Collect`, `Kitchen.Serve`, `Kitchen.PlantGolden`; save
+  section `profile.Kitchen`; session `slotCount`, `fish`, `fishing`), `Screens/Kitchen` and
+  `Screens/Parts/DishIcon` (dishes drawn from Frames, no images).
+- Bus: `DishCooked (player, { dish, count })` per collected slot (Weekly counts `count`,
+  `Config.Quests.CountField`); `WelcomeItem` kind `kitchen`.
+- Hooks added to existing systems (small, each with its own test in `Kitchen.spec`):
+  `Jobs:RegisterOutputBoost` and `Logic/Jobs.BoostedSeconds` (extra work time inside a boost
+  window; a scout hour's egg chance scales), `Expeditions` loot modifiers now also receive the
+  squad ids, `Ranch:RegisterCrop` / `RegisterHarvestHook` / `PlantCrop` (the golden crop and
+  the seed roll), `Monsters:AddMeals`, `Bond:AddHeart`.
+- Fishing is an optional dependency (`FishCount`, `SpendFish`); without it fish count as 0.
+- World: `Config.World.KitchenOffset` / `KitchenSize`, built from Parts in `World/Build.luau`;
+  a Decor keep-out zone; the "Cook" prompt in `Controllers/Interaction`.
+- Unlocks: `kitchen` 9, `kitchen_slot_3` 30.
+
 ## 3.9 · Family and fortune
 
 ### Buyer reputation

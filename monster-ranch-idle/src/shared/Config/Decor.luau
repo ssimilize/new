@@ -366,6 +366,7 @@ Decor.Layout = {
 		{ -35.5, 44, 27.5, 3.5 }, -- the Hall of Fame statue row
 		{ 42, 44, 6, 5 }, -- the Feed Garden
 		{ 68, 16, 3.5, 3.5 }, -- 3.10: the Guestbook stand beside the gate (Config.Tourists.World.stand)
+		{ 14, 43, 10, 8 }, -- the Kitchen and its door (3.10)
 	},
 	-- Legacy pen slots (pen-local fractions of the half extents) the migration puts old decor on.
 	legacySpots = { { -0.62, -0.55 }, { 0.62, -0.55 }, { 0, -0.62 } },

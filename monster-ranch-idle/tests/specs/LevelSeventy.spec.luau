@@ -405,6 +405,9 @@ return function(t)
 			table.insert(list, box("barn", bo[1], bo[3], World.BarnSize[1], World.BarnSize[3]))
 			-- The barn door opens toward plot-local -z: keep room to stand in front of it.
 			table.insert(list, box("barn door", bo[1], bo[3] - World.BarnSize[3] / 2 - 2, 6, 4))
+			local ko = World.KitchenOffset
+			table.insert(list, box("kitchen", ko[1], ko[3], World.KitchenSize[1], World.KitchenSize[3]))
+			table.insert(list, box("kitchen door", ko[1] - 3, ko[3] - World.KitchenSize[3] / 2 - 2, 6, 4))
 			local go = World.GardenOffset
 			table.insert(list, box("garden", go[1], go[3], World.GardenSize[1], World.GardenSize[2]))
 			local so, row = World.StatueRowOffset, World.StatueRow

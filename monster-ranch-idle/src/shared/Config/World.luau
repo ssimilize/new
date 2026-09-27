@@ -39,6 +39,7 @@ World.IncubatorOffset = { -65, 0, -3 }
 World.BarnOffset = { 58, 0, 45 }
 World.StatueRowOffset = { -60, 0, 44 }
 World.GardenOffset = { 42, 0, 44 }
+World.KitchenOffset = { 14, 0, 45 } -- 3.10: in the south gap between the statue row and the garden
 
 -- Footprints on the plot floor ({ x, z } studs), used to build the pieces and by
 -- LevelSeventy.spec to prove that no two pieces overlap and all stay inside PlotSize.
@@ -46,6 +47,7 @@ World.IncubatorPadSize = 15 -- diameter of the pad's rim
 World.BarnSize = { 14, 10, 12 } -- x, height, z (the door faces plot-local -z)
 World.GardenSize = { 10, 8 } -- reserved: the garden has no world model yet
 World.StatueRow = { count = 8, spacing = 7, pedestal = 4.4 } -- runs +x from StatueRowOffset
+World.KitchenSize = { 16, 9, 10 } -- x, height, z (3.10; the door faces plot-local -z)
 
 -- Hub buildings (Market Square), relative to the origin.
 World.Hub = {

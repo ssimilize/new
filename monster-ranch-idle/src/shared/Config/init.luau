@@ -17,6 +17,7 @@ local Config = {
 	Orders = require(script.Orders), -- 3.8: Ranch Orders
 	Bounties = require(script.Bounties), -- 3.9: Expedition Bounties
 	Tourists = require(script.Tourists), -- 3.10: Ranch Tourists
+	Kitchen = require(script.Kitchen), -- 3.10: Kitchen & Pantry
 	Mutations = require(script.Mutations),
 	Weather = require(script.Weather),
 	Eggs = require(script.Eggs),
