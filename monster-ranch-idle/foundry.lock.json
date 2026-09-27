@@ -1,7 +1,7 @@
 {
   "foundry": {
-    "commit": "df77c0e",
-    "syncedAt": "2026-09-27T22:56:28+00:00"
+    "commit": "2365180",
+    "syncedAt": "2026-09-27T23:06:55+00:00"
   },
   "game": "monster-ranch",
   "packages": {
@@ -51,6 +51,14 @@
       "version": "0.1.0",
       "files": {
         "Score.luau": "b6e21337e36925b8cf81873e86490cd08d072f7f0860d9828e64da1bd7d9b966"
+      }
+    },
+    "EffectGraph": {
+      "version": "0.1.0",
+      "files": {
+        "EffectGraph.luau": "b871f59b305b71e54267ab3a24f97fbc827c08f5b2f466583e72e1b4e5eb0a65",
+        "library/guildhall.luau": "93bf0187f24c2487ee746f02ddf3dd3b94e9c30313d8e1a81a3ccd7ab3848fb5",
+        "library/monster-ranch.luau": "a7800450602bdacdb2e9e8685abf54d0af5b99f517d9b20c2b16012eb428fe40"
       }
     }
   },

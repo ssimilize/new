@@ -60,7 +60,9 @@ local RunService = game:GetService("RunService")
 
 local ConfigFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")
 local Config = require(ConfigFolder)
-local Presets = require(ConfigFolder:WaitForChild("Vfx"))
+-- Config/Vfx, with the presets from the Foundry EffectGraph library once the Quality controller
+-- handed in ctx.Foundry (Visuals/VfxPresets; identical either way)
+local Presets = require(script.Parent.VfxPresets).Table
 local ParticleBudget = require(ReplicatedStorage.Shared.Logic.ParticleBudget)
 local LodRules = require(ReplicatedStorage.Shared.Logic.Quality)
 local Quality = require(script.Parent.Quality)
