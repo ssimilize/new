@@ -231,6 +231,34 @@ Regions.List = {
 		colors = { sky = "#0E5E7A", ground = "#1FA3A0" },
 		added = "4.0",
 	},
+	-- R2-CLOCKWORK (roadmap 4.1 · Clockwork Canyon): the region the 3.4 plan never shipped
+	-- (Spark/Stone, three clockwork lines); the Deep Reef took region slot 8, so this is 9 and
+	-- opens after it. Reached through the Clockwork Gate (Config.Clockwork), like the Deep Reef's.
+	{
+		id = "clockwork",
+		short = "Clockwork", -- region tab label
+		name = "Clockwork Canyon",
+		order = 9,
+		unlock = "region_clockwork",
+		opensAt = 1854543600, -- Sat 7 Oct 2028, 15:00 UTC (roadmap 4.1, one quarter after the Deep Reef)
+		elements = { "spark", "stone" },
+		enemyLines = { "cogling", "gritcog", "brassling", "zappip", "pebblet" },
+		levels = { 74, 88 },
+		rarity = { 5, 6 },
+		bosses = {
+			[10] = { name = "The Gearwarden", line = "gritcog", form = "geartitan" },
+			[20] = {
+				name = "The Sparking Sovereign",
+				line = "cogling",
+				form = "dynamowasp",
+				firstClear = { { kind = "egg", id = "clockwork", amount = 2 } },
+			},
+		},
+		food = "savory",
+		eggs = { { egg = "clockwork", perMinute = 0.003, fromStage = 1 }, { egg = "royal", perMinute = 0.0005, fromStage = 10 } },
+		colors = { sky = "#C9A45C", ground = "#6E5A46" },
+		added = "4.1",
+	},
 }
 
 Regions.ById = {}

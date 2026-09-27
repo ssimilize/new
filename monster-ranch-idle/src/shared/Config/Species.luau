@@ -1549,6 +1549,61 @@ Species.Lines = {
 		pools = { "reef" },
 	}),
 	-- ── end of glow-up DR block ──
+	-- ── R2-CLOCKWORK · Clockwork Canyon (roadmap 4.1): three Spark/Stone lines, hatched from
+	-- the Clockwork Egg. `special = "taunt"` on Gritcog is the raid boss's gear mechanic
+	-- (Config.Raids "clockwork"): three Gritcog adds keep re-taunting, so the party's attacks
+	-- funnel onto the first living one, breaking the gears in order before the boss itself
+	-- takes damage — the same "ordinary field, no new engine code" trick as the Frost
+	-- Leviathan's regrowth (Config.Raids' comment). ──
+	line({
+		id = "cogling",
+		elements = { "spark" },
+		archetype = "bug",
+		added = "4.1",
+		forms = {
+			{ id = "cogling", name = "Cogling" },
+			{ id = "gearwing", name = "Gearwing" },
+			{ { id = "dynamowasp", name = "Dynamowasp" } },
+		},
+		base = { hp = 145, atk = 46, def = 20, spd = 27, luck = 9 },
+		weight = 1.6,
+		special = "blast",
+		passive = "haste",
+		pools = { "clockwork" },
+	}),
+	line({
+		id = "gritcog",
+		elements = { "stone" },
+		archetype = "golem",
+		added = "4.1",
+		forms = {
+			{ id = "gritcog", name = "Gritcog" },
+			{ id = "flywheel", name = "Flywheel" },
+			{ { id = "geartitan", name = "Geartitan" } },
+		},
+		base = { hp = 240, atk = 35, def = 44, spd = 8, luck = 6 },
+		weight = 340.0,
+		special = "taunt",
+		passive = "guard",
+		pools = { "clockwork" },
+	}),
+	line({
+		id = "brassling",
+		elements = { "spark", "stone" },
+		archetype = "fox",
+		added = "4.1",
+		forms = {
+			{ id = "brassling", name = "Brassling" },
+			{ id = "clockfox", name = "Clockfox" },
+			{ { id = "brassrunner", name = "Brassrunner" } },
+		},
+		base = { hp = 155, atk = 41, def = 27, spd = 21, luck = 11 },
+		weight = 26.0,
+		special = "drain",
+		passive = "crit",
+		pools = { "clockwork" },
+	}),
+	-- ── end of R2-CLOCKWORK block ──
 }
 
 -- Lookups ---------------------------------------------------------------
