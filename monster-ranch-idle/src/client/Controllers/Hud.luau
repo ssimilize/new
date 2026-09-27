@@ -3,6 +3,8 @@
 
 	  top-left      coins / gems / food pills (count-up; gems → Store "gems", food → Store "food")
 	  top-right     Ranch Level + XP bar (Config.Unlocks.XPToNext) · ⚙ Settings button beside it
+	  utility col   (x -246) Settings · Photo · Build · Events calendar (3.8), then up to 2 countdown
+	                chips for Logic/Calendar.Soon(now, 24 h) ("Titan  3:12:04"); a chip opens Events
 	  top-centre    server weather banner (global.Weather) with mutation hint and countdown
 	  left stack    Shop · Eggs (ready badge) · Monsters (can-grow badge) · Codex · Market · Daily ·
 	                Jobs (3.7: badge = workers whose storage is full)
@@ -23,7 +25,7 @@
 	While a Stampede is in its lobby or live, the Stampede card glows gold, pulses and shows a
 	badge until you join (the countdown on it is the time to the start / the end).
 	Client bus: "Hud.Flash" (buttonName | targetName) pulses that button.
-	The centre (weather banner, bottom bar) hides while a modal screen is open.
+	The centre (weather banner, bottom bar, event chips) hides while a modal screen is open.
 	Market.MailCollected (update 1.3) shows as a toast ("Your Rare Cindlet sold for 12K!").
 ]]
 
@@ -40,6 +42,7 @@ local LoginStreak = require(Shared.Logic.LoginStreak)
 local MasteryLogic = require(Shared.Logic.Mastery)
 local CodexLogic = require(Shared.Logic.Codex) -- glow-up O: claimable milestones badge
 local JobsLogic = require(Shared.Logic.Jobs)
+local Calendar = require(Shared.Logic.Calendar)
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -426,6 +429,46 @@ local function refreshStampede(now: number)
 	end
 end
 
+-- 3.8 · Events calendar chips ------------------------------------------------------------
+
+local CHIP_COUNT = 2
+local CHIP_WINDOW = 24 * 3600
+local CHIP_LABEL = {
+	titan = "Titan",
+	region = "New region",
+	pass = "Ranch Pass",
+	raid = "Raid",
+	clubwars = "Club Wars",
+	arena = "Arena",
+	reset = "Weekly reset",
+}
+local chips = { list = {}, keys = {} }
+
+local function refreshChips(now: number)
+	-- Polled like the weather banner: hidden while any screen is open.
+	local free = ctx.Router:Current() == nil
+	chips.column.Visible = free
+	if not free then
+		return
+	end
+	local soon = Calendar.Soon(now, CHIP_WINDOW)
+	for i, chip in chips.list do
+		local e = soon[i]
+		chip.root.Visible = e ~= nil
+		if e then
+			if chips.keys[i] ~= e.key then
+				chips.keys[i] = e.key
+				chip.label.Text = CHIP_LABEL[e.kind] or e.name
+				Tiles.clear(chip.iconHolder)
+				Icon.new(e.icon, 24).Parent = chip.iconHolder
+			end
+			chip.time.Text = Format.clock(math.max(0, e.startsAt - now))
+		else
+			chips.keys[i] = nil
+		end
+	end
+end
+
 local function refreshCollect(now: number)
 	local total = math.floor(StoreKit.jarTotal(ctx.Store, now))
 	if total == collect.last then
@@ -580,6 +623,78 @@ local function build()
 		end,
 	})
 	buttons.Build = { gui = buildButton.Root, button = buildButton, color = C.Orange }
+
+	-- 3.8: the events calendar, under the hammer. Nothing else sits in this column on a phone
+	-- (the right stack starts 80 px further right; the centre banners end left of it).
+	local eventsButton = Button.new({
+		Name = "Events",
+		Text = "📅",
+		Color = C.Blue,
+		Size = UDim2.fromOffset(46, 46),
+		TextSize = 24,
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -246, 0, 172),
+		Parent = root,
+		OnClick = function()
+			openScreen("Events")
+		end,
+	})
+	buttons.Events = { gui = eventsButton.Root, button = eventsButton, color = C.Blue }
+
+	-- Countdown chips under the calendar button, right-aligned to the utility column: below the
+	-- weather banner (y 12-52) and the Titan / Stampede / broadcast banners (y 58-204, centred),
+	-- left of the right stack. Hidden with the centre while a screen is open.
+	local chipColumn = New("Frame", {
+		Name = "EventChips",
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -246, 0, 226),
+		Size = UDim2.fromOffset(200, CHIP_COUNT * 34 + (CHIP_COUNT - 1) * 6),
+		Parent = root,
+	}, { Create.List("y", 6, Enum.HorizontalAlignment.Right) })
+	table.insert(centre, chipColumn)
+	chips.column = chipColumn
+	for i = 1, CHIP_COUNT do
+		local chip = New("TextButton", {
+			Name = "EventChip" .. i,
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundColor3 = C.Dark,
+			BackgroundTransparency = 0.25,
+			Size = UDim2.fromOffset(200, 34),
+			LayoutOrder = i,
+			Visible = false,
+			Parent = chipColumn,
+		}, { Create.Round(), Create.Stroke(2, C.White, 0.1) })
+		local iconHolder = Tiles.frame({ Position = UDim2.fromOffset(6, 5), Size = UDim2.fromOffset(24, 24), Parent = chip })
+		local label = Create.Text({
+			Name = "Label",
+			Text = "",
+			TextSize = Theme.TextSize.Small,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextWrapped = false,
+			Position = UDim2.fromOffset(36, 0),
+			Size = UDim2.new(1, -118, 1, 0),
+			Parent = chip,
+		})
+		local time = Create.Text({
+			Name = "Time",
+			Text = "",
+			TextSize = Theme.TextSize.Small,
+			TextColor3 = C.Gold,
+			Stroke = true,
+			TextXAlignment = Enum.TextXAlignment.Right,
+			TextWrapped = false,
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -8, 0, 0),
+			Size = UDim2.new(0, 74, 1, 0),
+			Parent = chip,
+		})
+		chip.Activated:Connect(function()
+			openScreen("Events")
+		end)
+		chips.list[i] = { root = chip, label = label, time = time, iconHolder = iconHolder }
+	end
 
 	-- Weather (top-centre)
 	local banner = New("Frame", {
@@ -949,6 +1064,7 @@ function Hud.Init(context)
 		local now = ctx:Now()
 		refreshCollect(now)
 		refreshStampede(now)
+		refreshChips(now)
 		-- The level cap rises on a date: turn "MAX" back into a percentage at that instant.
 		local cap = Config.Unlocks.MaxLevelAt(now)
 		if cap ~= shownCap then

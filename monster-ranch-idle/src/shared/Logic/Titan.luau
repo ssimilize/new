@@ -20,6 +20,12 @@
 	  Titan.Overlaps(schedule, duration, lobbySeconds, from, to) -> boolean
 	      whether any scheduled invasion (lobby to end) overlaps [from, to]: the Stampede skips such
 	      a period, so the two giants never share the arena.
+	  Titan.HoldsStampede(boss, titan?, startsAt) -> boolean
+	      whether an invasion overlaps the Stampede starting at `startsAt` (its lobby to its end);
+	      boss = Config.Boss, titan = Config.Titan or nil (no titans: never)
+	  Titan.NextStampede(boss, titan?, now) -> number
+	      3.8: the next Stampede start at or after `now` on the Boss.Period clock, skipping the
+	      periods a titan holds. The Boss system schedules with it; Logic/Calendar shows it.
 ]]
 
 local Titan = {}
@@ -115,6 +121,24 @@ function Titan.Overlaps(schedule: { any }, duration: number, lobbySeconds: numbe
 		end
 	end
 	return false
+end
+
+function Titan.HoldsStampede(boss, titan, startsAt: number): boolean
+	if not titan then
+		return false
+	end
+	return Titan.Overlaps(titan.Schedule, titan.Duration, titan.LobbySeconds, startsAt - boss.LobbySeconds, startsAt + boss.Duration)
+end
+
+function Titan.NextStampede(boss, titan, now: number): number
+	local startsAt = math.ceil(now / boss.Period) * boss.Period
+	for _ = 1, 8 do -- past a titan invasion (a couple of periods at most)
+		if not Titan.HoldsStampede(boss, titan, startsAt) then
+			break
+		end
+		startsAt += boss.Period
+	end
+	return startsAt
 end
 
 return Titan

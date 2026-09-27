@@ -67,10 +67,6 @@ local byUser = {} -- [userId] = participant
 
 -- Schedule --------------------------------------------------------------------------------
 
-local function nextStart(now: number): number
-	return math.ceil(now / Cfg.Period) * Cfg.Period
-end
-
 local function bossFor(startsAt: number)
 	local slot = math.floor(startsAt / Cfg.Period)
 	return Cfg.Rotation[(slot % #Cfg.Rotation) + 1]
@@ -93,23 +89,19 @@ end
 
 -- Glow-up TT: a scheduled titan invasion holds the arena at some point of this period (its
 -- lobby to its end), so this Stampede is skipped and the two giants never share the arena.
-local function titanHolds(startsAt: number): boolean
+-- 3.8: the rule is shared (Logic/Titan.NextStampede) so the Events calendar shows the same slot.
+local function titans()
 	local T = ctx.Config.Titan
-	if not T or not ctx:GetSystem("Titan") then
-		return false
-	end
-	return TitanLogic.Overlaps(T.Schedule, T.Duration, T.LobbySeconds, startsAt - Cfg.LobbySeconds, startsAt + Cfg.Duration)
+	return if T and ctx:GetSystem("Titan") then T else nil
+end
+
+local function titanHolds(startsAt: number): boolean
+	return TitanLogic.HoldsStampede(Cfg, titans(), startsAt)
 end
 
 local function scheduleNext(now: number)
 	local G = global()
-	local startsAt = nextStart(now)
-	for _ = 1, 8 do -- past a titan invasion (a couple of periods at most)
-		if not titanHolds(startsAt) then
-			break
-		end
-		startsAt += Cfg.Period
-	end
+	local startsAt = TitanLogic.NextStampede(Cfg, titans(), now)
 	G.state = "idle"
 	G.startsAt = startsAt
 	G.endsAt = startsAt + Cfg.Duration
