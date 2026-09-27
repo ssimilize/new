@@ -18,6 +18,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
+local Format = require(Shared.Logic.Format)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -83,13 +84,20 @@ return {
 		local reviewing = false -- moderators: the gallery shows the review queue
 
 		Widgets.Tabs({
-			Tabs = { { id = "design", text = "Design" }, { id = "gallery", text = "Gallery" }, { id = "copies", text = "My copies" } },
+			Tabs = {
+				{ id = "design", text = "Design" },
+				{ id = "gallery", text = "Gallery" },
+				{ id = "theme", text = "Design Week" },
+				{ id = "copies", text = "My copies" },
+			},
 			Selected = tab,
 			Parent = panel.Body,
 			OnChanged = function(id)
 				tab = id
 				if id == "gallery" and #(StoreKit.tbl(ctx.Store, "session.Workshop").gallery or {}) == 0 then
 					Util.request(ctx, "Workshop.Browse", { tab = "new" })
+				elseif id == "theme" then
+					Util.request(ctx, "Workshop.Theme")
 				end
 				refresh()
 			end,
@@ -416,6 +424,218 @@ return {
 			end
 		end
 
+		-- Design Week ---------------------------------------------------------------------------
+		local function drawTheme()
+			local sess = StoreKit.tbl(ctx.Store, "session.Workshop")
+			local theme = if type(sess.theme) == "table" then sess.theme else nil
+			local header = New("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 40),
+				Parent = content,
+			}, { Create.List("x", 16, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
+			Util.text({
+				Text = if theme then string.format("This week: %s", theme.name) else "Loading design week...",
+				Font = Theme.Fonts.Display,
+				TextSize = Theme.TextSize.Body,
+				Size = UDim2.fromOffset(280, 32),
+				LayoutOrder = 1,
+				Parent = header,
+			})
+			if theme then
+				local clock = Util.text({
+					Text = "",
+					TextColor3 = C.TextMuted,
+					TextSize = Theme.TextSize.Small,
+					Size = UDim2.fromOffset(160, 32),
+					LayoutOrder = 2,
+					Parent = header,
+				})
+				Widgets.Countdown(clock, function()
+					return theme.endsAt
+				end, function(left)
+					return "Ends in " .. Format.duration(left)
+				end)
+				Util.text({
+					Text = string.format("%d votes left today", theme.votesLeft or 0),
+					TextColor3 = C.TextMuted,
+					TextSize = Theme.TextSize.Small,
+					Size = UDim2.fromOffset(160, 32),
+					LayoutOrder = 3,
+					Parent = header,
+				})
+			end
+
+			local top = 44
+			if theme and not theme.entered then
+				local copies = StoreKit.tbl(ctx.Store, "profile.Workshop.copies")
+				local designs = StoreKit.tbl(ctx.Store, "profile.Workshop.designs")
+				local enterRow = Widgets.Scroll({
+					Position = UDim2.fromOffset(0, top),
+					Size = UDim2.new(1, 0, 0, 92),
+					Cell = Vector2.new(190, 84),
+					Padding = 6,
+					Parent = content,
+				})
+				for i, id in designs do
+					local copy = copies[id]
+					if copy then
+						local card = New("Frame", {
+							Name = "Enter_" .. tostring(id),
+							BackgroundColor3 = C.PanelDeep,
+							LayoutOrder = i,
+							Parent = enterRow,
+						}, { Create.Corner(8) })
+						local sw = swatch(copy.color or "#FFFFFF", copy.color2 or "#FFFFFF", 32, card)
+						sw.Position = UDim2.fromOffset(8, 8)
+						Util.text({
+							Text = tostring(copy.name),
+							TextSize = Theme.TextSize.Small - 2,
+							TextWrapped = true,
+							Position = UDim2.fromOffset(48, 6),
+							Size = UDim2.new(1, -56, 0, 34),
+							Parent = card,
+						})
+						Button.new({
+							Name = "Enter",
+							Text = "Enter",
+							Color = C.Green,
+							TextSize = Theme.TextSize.Small - 2,
+							Size = UDim2.fromOffset(174, 32),
+							Position = UDim2.fromOffset(8, 46),
+							Parent = card,
+							OnClick = function()
+								local ok = Util.requestOnce(ctx, "Workshop.Enter", { design = id })
+								if ok then
+									ctx:Toast("Entered into this week's Design Week!", "success")
+									Util.request(ctx, "Workshop.Theme")
+									refresh()
+								end
+							end,
+						})
+					end
+				end
+				top += 96
+			elseif theme and theme.entered then
+				Util.text({
+					Text = "You've entered this week's Design Week.",
+					TextColor3 = C.TextMuted,
+					Position = UDim2.fromOffset(0, top),
+					Size = UDim2.new(1, 0, 0, 24),
+					Parent = content,
+				})
+				top += 30
+			end
+
+			local grid = Widgets.Scroll({
+				Name = "ThemeEntries",
+				Position = UDim2.fromOffset(0, top),
+				Size = UDim2.new(1, 0, 1, -top),
+				Cell = Vector2.new(232, 150),
+				Padding = 8,
+				Parent = content,
+			})
+			local entries = if theme and type(theme.entries) == "table" then theme.entries else {}
+			local featured = if type(sess.featured) == "table" then sess.featured else {}
+			if #entries == 0 and #featured == 0 then
+				Util.text({
+					Text = "No entries yet this week. Enter a design above!",
+					TextColor3 = C.TextMuted,
+					Size = UDim2.fromOffset(400, 40),
+					Parent = grid,
+				})
+			end
+			for i, d in featured do
+				local card = New("Frame", {
+					Name = "Featured_" .. tostring(d.id),
+					BackgroundColor3 = C.Gold,
+					LayoutOrder = i,
+					Parent = grid,
+				}, { Create.Corner(10) })
+				local sw = swatch(d.color or "#FFFFFF", d.color2 or "#FFFFFF", 48, card)
+				sw.Position = UDim2.fromOffset(10, 10)
+				Util.text({
+					Text = "Featured: " .. tostring(d.name),
+					Font = Theme.Fonts.Display,
+					TextSize = Theme.TextSize.Small,
+					TextWrapped = true,
+					Position = UDim2.fromOffset(66, 8),
+					Size = UDim2.new(1, -74, 0, 34),
+					Parent = card,
+				})
+				Util.text({
+					Text = string.format("%s · by %s", shapeLabel(d.shape or ""), tostring(d.creatorName)),
+					TextColor3 = C.TextMuted,
+					TextSize = Theme.TextSize.Small - 2,
+					Position = UDim2.fromOffset(66, 42),
+					Size = UDim2.new(1, -74, 0, 22),
+					Parent = card,
+				})
+				Button.new({
+					Name = "BuyFeatured",
+					Text = string.format("Buy %d", Cfg.FeaturedPrice.ribbons),
+					Color = C.Green,
+					TextSize = Theme.TextSize.Small - 2,
+					Size = UDim2.fromOffset(140, 38),
+					AnchorPoint = Vector2.new(0, 1),
+					Position = UDim2.new(0, 8, 1, -8),
+					Parent = card,
+					OnClick = function()
+						local ok = Util.requestOnce(ctx, "Workshop.Buy", { design = d.id })
+						if ok then
+							ctx:Toast(tostring(d.name) .. " is in My copies", "success")
+						end
+					end,
+				})
+			end
+			for i, d in entries do
+				local card = New("Frame", {
+					Name = "Entry_" .. tostring(d.id),
+					BackgroundColor3 = if d.mine then C.Blue else C.PanelDeep,
+					LayoutOrder = #featured + i,
+					Parent = grid,
+				}, { Create.Corner(10) })
+				local sw = swatch(d.color or "#FFFFFF", d.color2 or "#FFFFFF", 48, card)
+				sw.Position = UDim2.fromOffset(10, 10)
+				Util.text({
+					Text = tostring(d.name),
+					Font = Theme.Fonts.Display,
+					TextSize = Theme.TextSize.Small,
+					Position = UDim2.fromOffset(66, 8),
+					Size = UDim2.new(1, -74, 0, 22),
+					Parent = card,
+				})
+				Util.text({
+					Text = string.format("%s · by %s\n%d votes", shapeLabel(d.shape or ""), tostring(d.creatorName), d.votes or 0),
+					TextColor3 = C.TextMuted,
+					TextSize = Theme.TextSize.Small - 2,
+					TextWrapped = true,
+					TextYAlignment = Enum.TextYAlignment.Top,
+					Position = UDim2.fromOffset(66, 30),
+					Size = UDim2.new(1, -74, 0, 44),
+					Parent = card,
+				})
+				if not d.mine then
+					Button.new({
+						Name = "Vote",
+						Text = if d.voted then "Voted" else "Vote",
+						Color = if d.voted then C.Gray else C.Pink,
+						Disabled = d.voted == true,
+						TextSize = Theme.TextSize.Small - 2,
+						Size = UDim2.fromOffset(100, 38),
+						AnchorPoint = Vector2.new(0, 1),
+						Position = UDim2.new(0, 8, 1, -8),
+						Parent = card,
+						OnClick = function()
+							local ok = Util.requestOnce(ctx, "Workshop.Vote", { design = d.id })
+							if ok then
+								refresh()
+							end
+						end,
+					})
+				end
+			end
+		end
+
 		-- Copies -------------------------------------------------------------------------------
 		local function drawCopies()
 			local copies = StoreKit.tbl(ctx.Store, "profile.Workshop.copies")
@@ -496,6 +716,8 @@ return {
 			Util.clear(content)
 			if tab == "gallery" then
 				drawGallery()
+			elseif tab == "theme" then
+				drawTheme()
 			elseif tab == "copies" then
 				drawCopies()
 			else

@@ -39,6 +39,8 @@
 	Public API: Workshop:Copy(player, designId) -> copy?  (a design the player owns)
 ]]
 
+local DesignWeek = require(script.DesignWeek)
+
 local Workshop = {
 	Name = "Workshop",
 	Dependencies = { "Currency", "Progression", "Monsters", "Accessories", "Rewards" },
@@ -47,7 +49,16 @@ local Workshop = {
 Workshop.Profile = {
 	Version = 1,
 	Default = function()
-		return { designs = {}, made = { week = 0, n = 0 }, copies = {}, liked = {}, next = 1 }
+		return {
+			designs = {},
+			made = { week = 0, n = 0 },
+			copies = {},
+			liked = {},
+			next = 1,
+			-- Design Week (R2): one entry per player per week, a daily vote budget.
+			designWeek = { week = 0, entered = false },
+			votesToday = { day = 0, n = 0 },
+		}
 	end,
 }
 
@@ -135,6 +146,24 @@ local function view(record, userId: number)
 		copies = record.copies or 0,
 		mine = record.creator == userId,
 	}
+end
+
+-- This week's Featured designs (last week's Design Week winners), for the Gallery to sell.
+local function featuredGallery(player, wk: number)
+	local ok, result = service().Results(wk - 1)
+	if not ok or type(result) ~= "table" then
+		return {}
+	end
+	local list = {}
+	for _, id in result.winners or {} do
+		local gok, record = fetch(id)
+		if gok and type(record) == "table" and record.featured == wk and not record.hidden then
+			local v = view(record, player.UserId)
+			v.featured = true
+			table.insert(list, v)
+		end
+	end
+	return list
 end
 
 local function storeCopy(player, s, record, n: number)
@@ -392,7 +421,8 @@ local function buy(player, id: string)
 	if copy and copy.n >= Config.MaxCopies then
 		ctx:Fail(string.format("You can keep %d copies of a design", Config.MaxCopies))
 	end
-	Currency:Charge(player, Config.CopyPrice, "workshop_copy")
+	local price = if record.featured == week() then Config.FeaturedPrice else Config.CopyPrice
+	Currency:Charge(player, price, "workshop_copy")
 	if record.removed then
 		ctx:Fail("That design isn't available")
 	end
@@ -406,7 +436,7 @@ local function buy(player, id: string)
 		return current
 	end)
 	if not ok or type(updated) ~= "table" then
-		for key, amount in Config.CopyPrice do
+		for key, amount in price do
 			Currency:Add(player, key, amount, "workshop_refund")
 		end
 		ctx:Fail("The Workshop is busy. Try again in a moment")
@@ -537,6 +567,11 @@ function Workshop:Copy(player, designId: string)
 	return nil
 end
 
+-- Finalizes last week's Design Week if nobody has yet (tests; also runs every 60 s).
+function Workshop:CheckDesignWeek()
+	DesignWeek.Check()
+end
+
 -- Lifecycle ----------------------------------------------------------------------------
 
 function Workshop.Init(context)
@@ -574,6 +609,16 @@ function Workshop.Init(context)
 	ctx.Net:Handle("Workshop.Moderate", function(player, payload)
 		return moderate(player, payload.design, payload.verdict)
 	end)
+
+	DesignWeek.Init(ctx, {
+		service = service,
+		fetch = fetch,
+		remember = remember,
+		mustSection = mustSection,
+		getDesign = getDesign,
+		featuredGallery = featuredGallery,
+		Progression = Progression,
+	})
 end
 
 function Workshop.PlayerAdded(player)
@@ -583,6 +628,7 @@ function Workshop.PlayerAdded(player)
 	sess.moderator = isModerator(player)
 	sess.queue = {}
 	ctx:DirtySession(player)
+	DesignWeek.PlayerAdded(player)
 end
 
 return Workshop

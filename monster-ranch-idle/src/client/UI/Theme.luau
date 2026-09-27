@@ -49,6 +49,12 @@ Theme.Fonts = {
 	Mono = Enum.Font.Code,
 }
 
+-- R2-A11Y: two client-only mirrors of profile.Settings, read straight off the module (same
+-- pattern as UI/Anim.enabled) so any component can consult them without threading ctx through.
+-- Set once, on join and on every profile.Settings change, by the Broadcasts controller.
+Theme.ColorBlind = false -- adds Config.Rarities.mark / Config.Elements.glyph next to every chip's colour
+Theme.TextScale = 1 -- 1 = normal, ~1.15 = large (Create.Text stores the unscaled size to rescale live)
+
 Theme.TextSize = {
 	Hero = 40,
 	Title = 30,
@@ -97,7 +103,7 @@ Theme.Slices = {
 
 function Theme.Rarity(index: number): Color3
 	local r = Config.Rarities.List[index]
-	return if r then hex(r.color) else Theme.Colors.Gray
+	return if r then hex(if Theme.ColorBlind and r.cbColor then r.cbColor else r.color) else Theme.Colors.Gray
 end
 
 function Theme.RarityName(index: number): string
@@ -105,9 +111,21 @@ function Theme.RarityName(index: number): string
 	return if r then r.name else "?"
 end
 
+-- R2-A11Y: the letter drawn next to a rarity chip's colour in colour-blind mode.
+function Theme.RarityMark(index: number): string
+	local r = Config.Rarities.List[index]
+	return if r then r.mark else "?"
+end
+
+-- R2-A11Y: the glyph drawn next to an element chip's colour in colour-blind mode.
+function Theme.ElementGlyph(id: string): string
+	local e = Config.Elements.ById[id]
+	return if e then e.glyph else "?"
+end
+
 function Theme.Element(id: string): Color3
 	local e = Config.Elements.ById[id]
-	return if e then hex(e.color) else Theme.Colors.Gray
+	return if e then hex(if Theme.ColorBlind and e.cbColor then e.cbColor else e.color) else Theme.Colors.Gray
 end
 
 function Theme.ElementLight(id: string): Color3
@@ -123,6 +141,22 @@ end
 function Theme.Food(id: string): Color3
 	local f = Config.Food.ById[id]
 	return if f then hex(f.color) else Theme.Colors.Food
+end
+
+-- R2-A11Y: every TextLabel/TextButton built by Create.Text carries a "BaseTextSize" attribute
+-- (its size at Theme.TextScale == 1). Call this once, after changing Theme.TextScale, to resize
+-- every already-built label live (screens are built once and reused - see Kernel/Router.luau -
+-- so this is the only way an open or previously-opened screen picks up the new scale without a
+-- rejoin). `root` is normally the whole PlayerGui.
+function Theme.RescaleText(root: Instance)
+	for _, inst in root:GetDescendants() do
+		if inst:IsA("TextLabel") or inst:IsA("TextButton") then
+			local base = inst:GetAttribute("BaseTextSize")
+			if type(base) == "number" then
+				inst.TextSize = base * Theme.TextScale
+			end
+		end
+	end
 end
 
 -- Readable text colour on top of a background colour.

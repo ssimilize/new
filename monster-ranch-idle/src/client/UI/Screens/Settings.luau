@@ -12,21 +12,28 @@
 	Language comes first so a player who can't read the current one still finds it. Its
 	button cycles Auto → English → Español → Português; language names are never
 	translated, and Auto shows the language it picked.
+
+	R2-A11Y: three accessibility settings, applied live (no rejoin):
+	  · Text size cycles Normal → Large (Settings.SetTextSize) → Theme.TextScale (~1.15x),
+	    rescaled on every already-built screen too (Theme.RescaleText, see Broadcasts controller).
+	  · Colour-blind mode (Settings.Set "colorBlind") adds a letter/glyph next to every rarity /
+	    element chip's colour (Theme.ColorBlind; Widgets.RarityChip/ElementChip, MonsterIcon.card).
+	  · Reduced motion (Settings.Set "reducedMotion") stops camera shake/kicks and shortens big UI
+	    tweens, independently of Low graphics (CameraDirector:ReducedMotion(), UI/Anim.enabled).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
-local Create = require(UI.Create)
 local Button = require(UI.Components.Button)
 local Panel = require(UI.Components.Panel)
+local Widgets = require(UI.Components.Widgets)
 local Util = require(script.Parent.Parts.Util)
 local Locale = require(ReplicatedStorage.Shared.Locale)
 local QualityRules = require(ReplicatedStorage.Shared.Logic.Quality)
 local Quality = require(UI.Parent.Visuals.Quality)
 
-local New = Create.New
 local C = Theme.Colors
 
 local ROW_HEIGHT = 60
@@ -35,12 +42,29 @@ local ROWS = {
 	{ key = "music", name = "Music", desc = "Music and nature sounds", default = true, order = 1 },
 	{ key = "sfx", name = "Sound effects", desc = "Buttons, hatches and battles", default = true, order = 2 },
 	{ key = "hideBroadcasts", name = "Hide broadcasts", desc = "Hide server-wide announcements", default = false, order = 4 },
+	{
+		key = "colorBlind",
+		name = "Colour-blind mode",
+		desc = "Add letters and symbols to rarity and element colours",
+		default = false,
+		order = 6,
+	},
+	{
+		key = "reducedMotion",
+		name = "Reduced motion",
+		desc = "Turn off camera shake and camera swoops",
+		default = false,
+		order = 7,
+	},
 }
 local GRAPHICS_ORDER = 3
+local TEXT_SIZE_ORDER = 5
 
 -- One literal per label so every one is translated whole.
 local AUTO_LABELS = { "Auto · Low", "Auto · Medium", "Auto · High" }
 local PINNED_LABELS = { high = "High", low = "Low" }
+local TEXT_SIZE_CHOICES = { "normal", "large" }
+local TEXT_SIZE_LABELS = { normal = "Normal", large = "Large" }
 
 local LANGUAGE_NAMES = {}
 for _, language in Locale.Languages do
@@ -53,16 +77,18 @@ return {
 		local panel = Panel.new({
 			Title = "Settings",
 			Color = C.Gray,
-			Size = UDim2.fromOffset(620, 480),
+			Size = UDim2.fromOffset(620, 600),
 			OnClose = function()
 				ctx.Router:Close("Settings")
 			end,
 		})
-		local list = New("Frame", {
-			BackgroundTransparency = 1,
+		-- R2-A11Y: a ScrollingFrame, not a plain Frame - eight rows no longer fit a 320-tall
+		-- phone's share of the panel outright (Client.spec's phone-fit check).
+		local list = Widgets.List({
 			Size = UDim2.new(1, 0, 1, -50),
+			Padding = 8,
 			Parent = panel.Body,
-		}, { Create.List("y", 8) })
+		})
 
 		local bag = Util.bag()
 		local toggles = {}
@@ -163,6 +189,31 @@ return {
 		end)
 		paintGraphics()
 
+		-- Text size (R2-A11Y) ------------------------------------------------------
+		local textSizeButton = row(TEXT_SIZE_ORDER, "Text size", "Make menu text bigger", 210)
+
+		local function textSizeSetting(): string
+			local value = pending.textSize or saved("textSize")
+			return if table.find(TEXT_SIZE_CHOICES, value) then value else "normal"
+		end
+
+		local function paintTextSize()
+			local setting = textSizeSetting()
+			textSizeButton:SetText(TEXT_SIZE_LABELS[setting])
+			textSizeButton:SetColor(if setting == "large" then C.Blue else C.Gray)
+		end
+
+		textSizeButton:SetOnClick(function()
+			local index = table.find(TEXT_SIZE_CHOICES, textSizeSetting()) or 1
+			local nextValue = TEXT_SIZE_CHOICES[index % #TEXT_SIZE_CHOICES + 1]
+			pending.textSize = nextValue
+			paintTextSize()
+			Util.request(ctx, "Settings.SetTextSize", { textSize = nextValue })
+			pending.textSize = nil
+			paintTextSize()
+		end)
+		paintTextSize()
+
 		languageButton:SetOnClick(function()
 			local index = table.find(Locale.Choices, languageSetting()) or 1
 			local nextValue = Locale.Choices[index % #Locale.Choices + 1]
@@ -227,6 +278,7 @@ return {
 				bag.add(ctx.Store:Observe("profile.Settings", function()
 					paintLanguage()
 					paintGraphics()
+					paintTextSize()
 					for _, item in ROWS do
 						paint(item)
 					end

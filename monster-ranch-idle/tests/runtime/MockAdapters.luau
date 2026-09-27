@@ -49,24 +49,27 @@ function MockAdapters.network()
 		reported = {}, -- design ids hidden by reports, oldest first (3.0.1)
 		designReads = 0, -- Designs.Get calls, to check caching (3.0.1)
 		designsDown = false,
+		designWeekEntries = {}, -- [week] = { designId } (R2 Design Weeks)
+		designWeekResults = {}, -- [week] = { week, theme, winners = { designId }, finalizedAt } | nil
 		titan = {}, -- Titan invasion pool records by key (glow-up TT)
 		titanDown = false,
 	}
 end
 
-function MockAdapters.new(options: { startTime: number?, network: any?, placeMode: string? }?)
+function MockAdapters.new(options: { startTime: number?, network: any?, placeMode: string?, isOwnerServer: boolean? }?)
 	local opts = options or {}
 	local network = opts.network or MockAdapters.network()
 	local now = opts.startTime or 1790000000 -- a Thursday in Sept 2026 (UTC)
 	local precise = 0
 
 	local a = {}
-	a.log = { kicks = {}, events = {}, states = {}, analytics = {}, published = {}, ads = {} }
+	a.log = { kicks = {}, events = {}, states = {}, analytics = {}, published = {}, ads = {}, streamAround = {} }
 	jobCounter += 1
 	a.JobId = "test-job-" .. tostring(jobCounter)
 	a.PlaceId = 0
 	a.PlaceMode = opts.placeMode -- "hub" runs this server as the Trading Hub (3.0)
 	a.IsStudio = false
+	a.IsOwnerServer = opts.isOwnerServer or false
 	a.OfflineMaxSeconds = 7 * 24 * 3600
 
 	a.Clock = {
@@ -141,7 +144,14 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 		NameOf = function(userId)
 			return a.names[userId]
 		end,
+		-- R2-STREAMING: records every pre-teleport stream-around request (position = { x, y, z });
+		-- set a.streamAroundFails = true to make it fail (as it would with StreamingEnabled off).
+		RequestStreamAround = function(player, position, timeout)
+			table.insert(a.log.streamAround, { player = player, position = position, timeout = timeout })
+			return a.streamAroundFails ~= true
+		end,
 	}
+	a.streamAroundFails = false
 	a.names = {} -- [userId] = name, for players who are not on the server
 
 	-- Global leaderboards: boards[key][userId] = value. Set a.leaderboardsDown to fail calls.
@@ -253,7 +263,11 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 	}
 
 	a.adResult = true
+	a.adAvailable = true
 	a.Ads = {
+		CheckAvailable = function()
+			return a.adAvailable, if a.adAvailable then "Available" else "mock unavailable"
+		end,
 		ShowRewarded = function(player, placement)
 			table.insert(a.log.ads, { player = player, placement = placement })
 			return a.adResult
@@ -548,6 +562,43 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 			end
 			return true, ids
 		end,
+		-- Design Week (R2), shared through options.network.
+		EnterWeek = function(week, id)
+			if network.designsDown then
+				return false
+			end
+			local list = network.designWeekEntries[week]
+			if not list then
+				list = {}
+				network.designWeekEntries[week] = list
+			end
+			if not table.find(list, id) then
+				table.insert(list, id)
+			end
+			return true
+		end,
+		WeekEntries = function(week)
+			if network.designsDown then
+				return false, {}
+			end
+			return true, deepCopy(network.designWeekEntries[week] or {})
+		end,
+		Rollover = function(week, transform)
+			if network.designsDown then
+				return false, nil
+			end
+			local result = transform(deepCopy(network.designWeekResults[week]))
+			if result ~= nil then
+				network.designWeekResults[week] = deepCopy(result)
+			end
+			return true, deepCopy(result)
+		end,
+		Results = function(week)
+			if network.designsDown then
+				return false, nil
+			end
+			return true, deepCopy(network.designWeekResults[week])
+		end,
 	}
 
 	-- Market and price history (shared through options.network). Set network.marketDown to
@@ -727,6 +778,13 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 				network.titan[key] = deepCopy(result)
 			end
 			return true, deepCopy(result)
+		end,
+		Remove = function(key)
+			if network.titanDown then
+				return false
+			end
+			network.titan[key] = nil
+			return true
 		end,
 	}
 

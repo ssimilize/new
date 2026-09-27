@@ -80,6 +80,8 @@ return {
 		"Visits", -- glow-up Y: the crown, the Visiting Showcase, Ranch of the Week
 		-- Glow-up Z: every plot's placed decor, night lights, placement mode's world side
 		"Decor",
+		-- R2-CLOCKWORK: Clockwork Canyon's gear landmark and walk-in area (appended, see RULES)
+		"ClockworkCanyon",
 	},
 	Screens = {
 		-- C2 · Ranch & monsters

@@ -135,3 +135,49 @@ its side and only delivers to players who opted in.
 | One send across servers | Two servers running while a reminder falls due | Exactly one notification |
 | Off switch | Clear `SecretName` and publish | No prompt, no Reminders button, no sends |
 
+## Owner checklist: ids Creator Hub has to create
+
+`Logic/LaunchCheck.Missing(Config)` scans Config for every owner-created id that is still a
+placeholder (`0` or `""`) and lists exactly this table; in Studio the server warns once at
+boot with a one-line summary if anything is still missing (never on a live server). Run the
+release gate below to fail a build the same way. This table is current as of writing; if a
+pass, product, badge, reminder kind or the moderator group changes, regenerate it by reading
+`LaunchCheck.Missing` rather than editing the numbers by hand.
+
+| Area | What to create in Creator Hub | Where the id goes |
+|---|---|---|
+| Game passes (8) | Auto-Collect (149 R$), Extra Incubator (199 R$), Big Barn (199 R$), Explorer (249 R$), Breeding Pod (249 R$), VIP Rancher (299 R$), Lucky Hatcher (349 R$), Double Coins (399 R$) | `Config.Monetization.Passes.<key>.gamePassId` |
+| Developer products (11) | Starter Pack (99 R$), 100/550/1,200/2,600/7,000 Gems, Rain/Thunderstorm/Starfall Totem, Ranch Pass season (399 R$), Ranch Pass gift (399 R$) | `Config.Monetization.Products.<key>.productId` |
+| Badges (3) | Codex milestones: 50 forms, 100 forms, Complete | `Config.Codex.BadgeIds.<milestone>` |
+| Group (1) | The game's Roblox group | `Config.Quests.GroupId` |
+| Reminders: secret (1) | Open Cloud API key (`user-notification`, write) stored as an experience secret | `Config.Reminders.SecretName` |
+| Reminders: templates (4) | Notification templates: egg, expedition, stampede, streak (Creator Hub → Engagement → Notifications) | `Config.Reminders.Templates.<kind>` |
+| Moderation (optional) | A Roblox group for moderators (or list user ids directly in `Config.Workshop.Moderators`) | `Config.Workshop.ModeratorGroup.id` |
+
+Running the release gate: `RELEASE_CHECK=1 lune run tests LaunchCheck` fails the run if the
+real Config still has anything missing (normal `lune run tests LaunchCheck`, with no env var,
+always passes so CI stays green before launch).
+
+## 6. Live-server checks (Kernel/LiveChecks)
+
+`Kernel/Adapters.luau` has five spots marked with a comment pointing here, each a Roblox
+service surface that only a live server can prove: Market (MemoryStore quotas and
+`GetRangeAsync` paging), Arena (`GetSortedAsync` min/max paging), Ads (the `AdService`
+surface), the hub Trade Board (MemoryStore quotas with many hub servers) and Titan
+(MemoryStore request units with many servers). `Kernel/LiveChecks.Run(adapters)` exercises
+each one safely (a throwaway `LiveCheck_` key namespace, short TTLs, cleaned up after itself
+where the store has a delete; the Market probe is a club listing for a club that does not exist, so no
+player can see or buy it, and the Arena check only reads) and returns a `[PASS]`/`[FAIL]` line per check with timing.
+
+Run it from a live **private server** (not a public server, so it never touches real
+players), from the developer console's server command bar:
+
+```
+require(game.ServerScriptService.Server.Kernel.LiveChecks).Run()
+```
+
+It is also wired as the QABridge command `livechecks` (`ServerStorage.QABridge:Invoke("livechecks")`)
+for the same Studio flow as every other staged check, but — unlike the rest of QABridge — it
+always runs against the **real** adapters, never `QA_MemoryProfiles`, and is refused unless the
+server is Studio or the owner's own private server (`Adapters.IsStudio` / `Adapters.IsOwnerServer`).
+

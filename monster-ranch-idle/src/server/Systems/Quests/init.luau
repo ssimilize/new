@@ -5,6 +5,10 @@
 
 	Save section (profile.Quests):
 	  tutorial     = { step, progress }                  -- step indexes Config.Quests.Tutorial; > #Tutorial = done
+	  tutorial2    = { step, progress, fastForwarded }    -- R2-ONBOARDING: step indexes Config.Quests.Tutorial2
+	  screensSeen  = { [screenName] = true }              -- R2-ONBOARDING: first-time cards already shown
+	  veteran      = boolean                              -- R2-ONBOARDING: profile predates this update (Migrate)
+	  whatsNewSeen = boolean                              -- R2-ONBOARDING: the "What's new" card was acked
 	  daily        = { day, list = { { id, progress, claimed } } }
 	  achievements = { [id] = { progress, claimed } }
 	  codes        = { [CODE] = true }                   -- upper-case code keys
@@ -15,6 +19,20 @@
 	Tutorial: the current step advances on its `topic` (with `filter`) up to `target`; `ack` steps
 	complete through Quests.Ack. Completing a step grants its reward, fires Quests.StepDone and logs
 	the onboarding funnel step. Entering Config.Quests.TutorialRain.step starts the scripted rain.
+
+	Tutorial chapter two (R2-ONBOARDING, profile.Quests.tutorial2): the same shape and pipeline as
+	chapter one (Config.Quests.Tutorial2), gated on Quests:TutorialDone (chapter one first) and each
+	step's `unlock` (Progression:IsUnlocked, nil = always available). Two steps have no gameplay bus
+	topic (a screen opened, the Deep Reef dive); the client reports those with Quests.Signal, which
+	republishes them as the "TutorialSignal" bus topic so they run through the same progress code.
+	Quests.Signal also marks profile.Quests.screensSeen for the client's first-time screen cards
+	(Config.Quests.ScreenCards), independent of tutorial2's own progress.
+
+	A profile older than Quests.Profile.Version 2 is migrated with `veteran = true`: on its first
+	PlayerAdded, tutorial2 fast-forwards (no reward) past every step already unlocked, since a
+	returning player already has access to that feature; it stops at the first step not yet
+	unlocked, which then plays out normally once the player reaches it. `veteran` also gates the
+	one-time "What's new" card (Config.Quests.WhatsNew, Quests.AckWhatsNew).
 
 	Dailies: unlock at "dailies"; every UTC day Config.Quests.DailyCount entries are picked from
 	DailyPool (skipping locked ones), deterministically per (userId, day).
@@ -32,6 +50,7 @@
 	Public API (other systems):
 	  Quests:TutorialStep(player) -> stepIndex, stepId?      -- stepId nil when the tutorial is done
 	  Quests:TutorialDone(player) -> boolean
+	  Quests:Tutorial2Step(player) -> stepIndex, stepId?     -- R2-ONBOARDING: stepId nil when chapter two is done
 	  Quests:PassPremium(player) -> boolean
 	  Quests:GrantPass(player) -> boolean                    -- a gifted pass: premium now, or banked
 ]]
@@ -71,16 +90,33 @@ local function newPass()
 end
 
 Quests.Profile = {
-	Version = 1,
+	Version = 2, -- R2-ONBOARDING: chapter two + screen cards + What's new (see Migrate)
 	Default = function()
 		return {
 			tutorial = { step = 1, progress = 0 },
+			tutorial2 = { step = 1, progress = 0, fastForwarded = false },
+			screensSeen = {},
+			veteran = false,
+			whatsNewSeen = false,
 			daily = { day = 0, list = {} },
 			achievements = {},
 			codes = {},
 			pass = newPass(),
 			passCredit = 0,
 		}
+	end,
+	-- A profile saved before this update has no tutorial2: mark it `veteran` so PlayerAdded
+	-- fast-forwards chapter two past whatever it already has access to (no reward), and so the
+	-- "What's new" card shows once. TableUtil.reconcile (Kernel) fills the rest of the new fields
+	-- from Default after this runs.
+	Migrate = function(section, from)
+		if from < 2 then
+			section.tutorial2 = { step = 1, progress = 0, fastForwarded = false }
+			section.screensSeen = {}
+			section.veteran = true
+			section.whatsNewSeen = false
+		end
+		return section
 	end,
 }
 
@@ -272,6 +308,84 @@ local function progressTutorial(player, s, topic: string, detail, amount: number
 	end
 end
 
+-- Tutorial, chapter two (R2-ONBOARDING) -------------------------------------------------
+
+local function currentStep2(s)
+	return Config.Tutorial2[s.tutorial2.step]
+end
+
+-- Always available (nil `unlock`), or gated the same way every other feature is.
+local function stepUnlocked2(player, step): boolean
+	return step.unlock == nil or Progression:IsUnlocked(player, step.unlock)
+end
+
+local function completeStep2(player, s)
+	local index = s.tutorial2.step
+	local step = Config.Tutorial2[index]
+	if not step then
+		return
+	end
+	s.tutorial2.step = index + 1
+	s.tutorial2.progress = 0
+	ctx:Dirty(player, "tutorial2")
+	local granted = grant(player, step.reward, "tutorial2", true)
+	ctx.Net:Fire(player, "Quests.StepDone", { step = step.id, rewards = granted })
+	ctx.Analytics.Onboarding(player, #Config.Tutorial + index, step.id)
+end
+
+-- Chapter two only runs once chapter one is done, and only while the current step's feature
+-- is unlocked (a topic can't fire for a locked feature in practice, but stay safe).
+local function progressTutorial2(player, s, topic: string, detail, amount: number)
+	if currentStep(s) ~= nil then
+		return
+	end
+	local step = currentStep2(s)
+	if not step or step.topic ~= topic or not stepUnlocked2(player, step) or not Objectives.Matches(step.filter, detail) then
+		return
+	end
+	local target = Objectives.Target(step)
+	s.tutorial2.progress = math.min(target, s.tutorial2.progress + amount)
+	ctx:Dirty(player, "tutorial2")
+	if s.tutorial2.progress >= target then
+		completeStep2(player, s)
+	end
+end
+
+-- A returning player's profile predates chapter two: skip (no reward) every step whose
+-- feature they already have access to, since they don't need the intro. Stops at the first
+-- step not yet unlocked, which then plays out normally once they reach it.
+local function fastForwardTutorial2(player, s)
+	if currentStep(s) ~= nil then
+		return
+	end
+	local step = currentStep2(s)
+	while step and stepUnlocked2(player, step) do
+		s.tutorial2.step += 1
+		s.tutorial2.progress = 0
+		step = currentStep2(s)
+	end
+	ctx:Dirty(player, "tutorial2")
+end
+
+-- Quests.Signal: a client-observed action with no gameplay bus topic (a screen opened, the
+-- Deep Reef dive). Screen opens also mark screensSeen for the client's first-time cards.
+local SIGNAL_SCREENS = { Care = true, Decorate = true, Codex = true, Boss = true }
+
+local function onSignal(player, id: string): { first: boolean }
+	local s = section(player)
+	local first = false
+	local screen = string.match(id, "^open:(.+)$")
+	if screen and SIGNAL_SCREENS[screen] then
+		if not s.screensSeen[screen] then
+			s.screensSeen[screen] = true
+			ctx:Dirty(player, "screensSeen", screen)
+			first = true
+		end
+	end
+	ctx.Bus:Publish("TutorialSignal", player, { id = id })
+	return { first = first }
+end
+
 -- Dailies ------------------------------------------------------------------------------
 
 local function ensureDaily(player, s)
@@ -348,13 +462,14 @@ local function onTopic(player, topic: string, detail)
 		return
 	end
 	progressTutorial(player, s, topic, detail or {}, amount)
+	progressTutorial2(player, s, topic, detail or {}, amount)
 	progressDailies(player, s, topic, detail or {}, amount)
 	progressAchievements(player, s, topic, detail or {}, amount)
 end
 
 local function questTopics(): { string }
 	local set = {}
-	for _, list in { Config.Tutorial, Config.DailyPool, Config.Achievements } do
+	for _, list in { Config.Tutorial, Config.Tutorial2, Config.DailyPool, Config.Achievements } do
 		for _, def in list do
 			if def.topic then
 				set[def.topic] = true
@@ -395,6 +510,15 @@ end
 function Quests:TutorialDone(player): boolean
 	local s = ctx:Section(player)
 	return s ~= nil and currentStep(s) == nil
+end
+
+function Quests:Tutorial2Step(player): (number, string?)
+	local s = ctx:Section(player)
+	if not s then
+		return 1, nil
+	end
+	local step = currentStep2(s)
+	return s.tutorial2.step, step and step.id
 end
 
 -- A Ranch Pass from somewhere other than the player's own purchase (glow-up L: a friend's gift).
@@ -466,6 +590,21 @@ function Quests.Init(context)
 			ctx:Fail("Finish this step first")
 		end
 		completeStep(player, s)
+		return nil
+	end)
+
+	-- R2-ONBOARDING: a client-observed action with no gameplay bus topic (the `id` whitelist
+	-- lives in the Api.Actions schema).
+	ctx.Net:Handle("Quests.Signal", function(player, payload)
+		return onSignal(player, payload.id)
+	end)
+
+	ctx.Net:Handle("Quests.AckWhatsNew", function(player, _payload)
+		local s = section(player)
+		if not s.whatsNewSeen then
+			s.whatsNewSeen = true
+			ctx:Dirty(player, "whatsNewSeen")
+		end
 		return nil
 	end)
 
@@ -580,6 +719,14 @@ function Quests.PlayerAdded(player, _info)
 	end
 	if type(s.tutorial.step) ~= "number" or s.tutorial.step < 1 then
 		s.tutorial.step, s.tutorial.progress = 1, 0
+	end
+	if type(s.tutorial2.step) ~= "number" or s.tutorial2.step < 1 then
+		s.tutorial2.step, s.tutorial2.progress = 1, 0
+	end
+	if s.veteran and not s.tutorial2.fastForwarded then
+		fastForwardTutorial2(player, s)
+		s.tutorial2.fastForwarded = true
+		ctx:Dirty(player, "tutorial2")
 	end
 	ensurePass(player, s)
 	ensureDaily(player, s)

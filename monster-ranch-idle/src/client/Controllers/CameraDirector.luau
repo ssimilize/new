@@ -28,7 +28,8 @@
 	While a shot plays: letterbox bars and a full-screen tap catcher with "Tap to skip" in UI.Top
 	(taps do not reach the world), the HUD layer hidden. A Router screen opening, PhotoMode or
 	mounting a monster mid-shot cuts straight back. Reduced motion (Settings.lowGraphics,
-	UI/Anim.enabled == false, GuiService.ReducedMotionEnabled) cuts instead of gliding.
+	Settings.reducedMotion (R2-A11Y), UI/Anim.enabled == false, GuiService.ReducedMotionEnabled)
+	cuts instead of gliding.
 ]]
 
 local GuiService = game:GetService("GuiService")
@@ -72,8 +73,14 @@ local function lowGraphics(): boolean
 	return type(settings) == "table" and settings.lowGraphics == true
 end
 
+-- R2-A11Y: Settings.reducedMotion (independent of Low graphics).
+local function reducedMotionSetting(): boolean
+	local settings = ctx.Store:Get("profile.Settings")
+	return type(settings) == "table" and settings.reducedMotion == true
+end
+
 local function reducedMotion(): boolean
-	if not Anim.enabled or lowGraphics() then
+	if not Anim.enabled or lowGraphics() or reducedMotionSetting() then
 		return true
 	end
 	local ok, on = pcall(function()

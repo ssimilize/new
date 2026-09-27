@@ -26,6 +26,11 @@ local Button = require(UI.Components.Button)
 local New = Create.New
 local C = Theme.Colors
 
+-- One whole string (translations match whole displayed strings): while placing, the Gamepad
+-- controller clears its cursor (so the D-pad and the face buttons reach the Decor controller's
+-- own bindings instead of navigating these buttons) and shows this legend.
+local LEGEND = "D-pad Move · Ⓧ Rotate · Ⓐ Place · R1 Pick up · Ⓨ Stash · Ⓑ Leave"
+
 local TABS = {
 	{ id = "all", name = "All" },
 	{ id = "fence", name = "Fences" },
@@ -309,6 +314,7 @@ return {
 				changedConn:Disconnect()
 			end
 			changedConn = decor.Changed:Connect(refresh)
+			root:SetAttribute("GamepadLegend", LEGEND)
 			refresh()
 		end
 		screen.Close = function()
@@ -316,6 +322,7 @@ return {
 				changedConn:Disconnect()
 				changedConn = nil
 			end
+			root:SetAttribute("GamepadLegend", nil)
 			if decor then
 				decor.Exit()
 			end

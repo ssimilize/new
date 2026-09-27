@@ -52,7 +52,10 @@ local penOrZero = T.integer(0, Config.Economy.Pens.max) -- 0 = barn / storage
 Api.Actions = {
 	-- Settings (S1) ---------------------------------------------------------------
 	["Settings.Set"] = {
-		schema = T.struct({ key = T.enum({ "music", "sfx", "lowGraphics", "hideBroadcasts" }), value = T.boolean }),
+		schema = T.struct({
+			key = T.enum({ "music", "sfx", "lowGraphics", "hideBroadcasts", "colorBlind", "reducedMotion" }),
+			value = T.boolean,
+		}),
 		rate = 4,
 		returns = "nil",
 	},
@@ -60,6 +63,8 @@ Api.Actions = {
 	["Settings.SetLanguage"] = { schema = T.struct({ language = T.enum(Locale.Choices) }), rate = 2, returns = "nil" },
 	-- Glow-up P: the Graphics choice; "low" also sets lowGraphics (reduced motion), the others clear it.
 	["Settings.SetGraphics"] = { schema = T.struct({ graphics = T.enum({ "auto", "high", "low" }) }), rate = 2, returns = "nil" },
+	-- R2-A11Y: the Text size choice (Theme.TextScale, live, no rejoin).
+	["Settings.SetTextSize"] = { schema = T.struct({ textSize = T.enum({ "normal", "large" }) }), rate = 2, returns = "nil" },
 
 	-- Monsters (S2) ---------------------------------------------------------------
 	["Monsters.Rename"] = { schema = T.struct({ id = id, name = T.string(20) }), rate = 1, returns = "{ name: string } (filtered)" },
@@ -639,6 +644,29 @@ Api.Actions = {
 		rate = 3,
 		returns = "nil",
 	},
+
+	-- R2 Design Weeks (Systems/Workshop/DesignWeek.luau) -------------------------------------
+	["Workshop.Enter"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 0.5, returns = "{ design: string, theme: string }" },
+	["Workshop.Vote"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 2, returns = "{ votes: number }" },
+	["Workshop.Theme"] = { schema = T.none, rate = 1, returns = "{ count: number }" },
+
+	-- R2-STREAMING: added at the end of this table, appended block, not reordering anything above.
+	-- Pre-streams the world around a far destination (Sky Islands, the Stampede Arena) before the
+	-- client moves its own character there locally, so it never lands in the void. Yields on the
+	-- server for Player:RequestStreamAroundAsync; the client awaits the reply before it teleports.
+	["World.StreamAround"] = {
+		schema = T.struct({ x = T.number(-1000, 1000), y = T.number(-200, 500), z = T.number(-1000, 1000) }),
+		rate = 1,
+		returns = "nil",
+	},
+
+	-- R2-ONBOARDING · tutorial chapter two (Systems/Quests, Config/Quests Tutorial2/ScreenCards/WhatsNew)
+	["Quests.Signal"] = {
+		schema = T.struct({ id = T.enum({ "open:Care", "open:Decorate", "open:Codex", "open:Boss", "dive" }) }),
+		rate = 4,
+		returns = "{ first: boolean }  -- a client-observed action with no gameplay bus topic (screen opened, dive)",
+	},
+	["Quests.AckWhatsNew"] = { schema = T.none, rate = 1, returns = 'nil  -- the one-time "What\'s new" card was acked' },
 }
 
 --[[
@@ -681,7 +709,7 @@ Api.State = {
 	profile = {
 		Currency = "{ coins, gems, stardust, friendship, treats, ribbons, tokens = { [eventId]: n }, food = { sweet, spicy, savory, sour } }",
 		Progression = "{ level, xp }",
-		Settings = "{ music, sfx, lowGraphics, hideBroadcasts, language, graphics }",
+		Settings = "{ music, sfx, lowGraphics, hideBroadcasts, language, graphics, colorBlind, textSize, reducedMotion }",
 		Monsters = "{ list = { [id]: Monster }, codex = { [lineId]: { forms = { [formId]: true }, variants = { [n]: true }, count } }, nextId }",
 		HallOfFame = "{ entries = { Statue }, legacy = { [element]: pct }, upgrades = { [upgradeId]: level }, starShards }",
 		Rebirth = "{ stars, skills = { [skillId]: level }, lastAt, dust }",
@@ -721,6 +749,8 @@ Api.State = {
 		Visits = "{ day, liked = { ['u'..userId]: true }, paidCount, got, week, weekLikes, received }  -- glow-up Y (paid private)",
 		Decor = "{ layout = { { id, x, z, rot } }, migrated, starter }  -- glow-up Z: plot-local grid units, rot × 45°",
 		RaceGear = "{ owned = { [gearId]: true }, equipped = { saddle, trail, banner }, races, live, podiums, wins, duels }  -- glow-up LR",
+		-- R2 Design Weeks: added to profile.Workshop (see Api.State.profile.Workshop above).
+		Workshop_DesignWeek = "profile.Workshop also has: designWeek = { week, entered: designId|false }, votesToday = { day, n }",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -745,6 +775,8 @@ Api.State = {
 		Reminders = "{ available: boolean, prompt: boolean }  -- prompt = show Roblox's notification opt-in now",
 		Visits = "{ showcase: RanchSnapshot | false }  -- glow-up Y: the friend's ranch in this player's Visiting Showcase (Logic/Visits)",
 		LiveRace = "{ heat: number|false, meter, lap, progress, strikes, finished, dq, result = { place, time, finished, field, rewards, cup, dq }|false }  -- glow-up LR",
+		-- R2 Design Weeks: added to session.Workshop (see Api.State.session.Workshop above).
+		Workshop_DesignWeek = "session.Workshop also has: theme = { id, name, endsAt, entered: designId|false, votesLeft, entries = { { id, name, creatorName, shape, slot, color, color2, votes, mine, voted } } }, featured = { DesignView + featured: true }",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",
@@ -849,6 +881,9 @@ Api.Topics = {
 	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total' })  -- glow-up O",
 	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
+	-- R2-ONBOARDING · republished by Quests.Signal for a tutorial chapter two step with no
+	-- gameplay topic of its own (a screen opened, the Deep Reef dive).
+	TutorialSignal = "(player, { id: string })",
 }
 
 -- Shared shapes (documentation) -----------------------------------------------------

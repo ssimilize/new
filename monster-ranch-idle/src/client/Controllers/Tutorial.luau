@@ -7,6 +7,16 @@
 	arrow). `ack` steps get a "Got it" button → Quests.Ack { step = id }. Quests.StepDone
 	shows a small reward toast. Everything hides once the tutorial is done.
 	Also publishes the client bus topic "Tutorial.Arrow" (target name or nil) on every step.
+
+	Chapter two (R2-ONBOARDING): once chapter one is done, the same card shows
+	profile.Quests.tutorial2 / Config.Quests.Tutorial2 instead, one step at a time as round
+	one's features unlock (a step with an `unlock` key hides until Progression allows it).
+
+	First-time screen cards + What's new (R2-ONBOARDING): the first time a player opens Care,
+	Decorate, Codex or the Stampede screen (ctx.Router.Opened), a short Dialog explains it
+	(Config.Quests.ScreenCards, once per player: profile.Quests.screensSeen via Quests.Signal
+	"open:<Screen>"). A returning player whose profile predates this update (`veteran`, set by
+	Systems/Quests Migrate) sees Config.Quests.WhatsNew once, with buttons that open each screen.
 ]]
 
 local RunService = game:GetService("RunService")
@@ -17,6 +27,8 @@ local Button = require(script.Parent.Parent.UI.Components.Button)
 local Widgets = require(script.Parent.Parent.UI.Components.Widgets)
 local Anim = require(script.Parent.Parent.UI.Anim)
 local Util = require(script.Parent.Parent.UI.Screens.Parts.Util)
+local Dialog = require(script.Parent.Parent.UI.Screens.Parts.Dialog)
+local StoreKit = require(script.Parent.Parent.UI.Components.StoreKit)
 
 local New = Create.New
 local C = Theme.Colors
@@ -35,6 +47,9 @@ local renderConn = nil
 local cachedTarget: GuiObject? = nil
 local lastLookup = 0
 local acking = false
+
+-- R2-ONBOARDING: screens with a first-time explanation card (Config.Quests.ScreenCards).
+local SCREEN_CARDS = { Care = true, Decorate = true, Codex = true, Boss = true }
 
 local function getTarget(name: string): GuiObject?
 	local hud = ctx:GetController("Hud")
@@ -115,10 +130,34 @@ local function startArrow()
 	end)
 end
 
-local function render(tutorial)
-	local Steps = ctx.Config.Quests.Tutorial
-	local step = if type(tutorial) == "table" then tutorial.step else nil
-	local def = if type(step) == "number" then Steps[step] else nil
+-- R2-ONBOARDING: chapter two steps with an `unlock` key hide until that feature is (the ones
+-- without one are always available once chapter one is done).
+local function step2Unlocked(def): boolean
+	return def.unlock == nil or StoreKit.isUnlocked(ctx.Store, def.unlock)
+end
+
+-- Picks what the card should currently show: chapter one while it's running, else the next
+-- unlocked chapter-two step, else nothing.
+local function activeStep()
+	local Steps1 = ctx.Config.Quests.Tutorial
+	local t1 = ctx.Store:Get("profile.Quests.tutorial")
+	local step1 = if type(t1) == "table" then t1.step else nil
+	local def1 = if type(step1) == "number" then Steps1[step1] else nil
+	if def1 then
+		return 1, step1, def1, t1, #Steps1
+	end
+	local Steps2 = ctx.Config.Quests.Tutorial2
+	local t2 = ctx.Store:Get("profile.Quests.tutorial2")
+	local step2 = if type(t2) == "table" then t2.step else nil
+	local def2 = if type(step2) == "number" then Steps2[step2] else nil
+	if def2 and step2Unlocked(def2) then
+		return 2, step2, def2, t2, #Steps2
+	end
+	return nil, nil, nil, nil, nil
+end
+
+local function render()
+	local chapter, step, def, tutorial, total = activeStep()
 	currentDef = def
 	local newArrow = if def then def.arrow else nil
 	if newArrow ~= lastArrowTopic then
@@ -133,7 +172,7 @@ local function render(tutorial)
 	end
 	local wasVisible = card.Visible
 	card.Visible = true
-	stepLabel.Text = string.format("Step %d of %d", step, #Steps)
+	stepLabel.Text = if chapter == 2 then string.format("New: %d of %d", step, total) else string.format("Step %d of %d", step, total)
 	textLabel.Text = def.text
 	local target = def.target or 1
 	local progress = math.clamp(if type(tutorial.progress) == "number" then tutorial.progress else 0, 0, target)
@@ -154,6 +193,73 @@ local function render(tutorial)
 	else
 		stopArrow()
 	end
+end
+
+-- R2-ONBOARDING: the first time a player opens one of SCREEN_CARDS, Quests.Signal reports it
+-- (also completes the "codex_intro" chapter-two step) and, the first time, shows the card.
+local function onScreenOpened(name: string)
+	if not SCREEN_CARDS[name] then
+		return
+	end
+	local ok, res = Util.request(ctx, "Quests.Signal", { id = "open:" .. name })
+	if not ok or type(res) ~= "table" or not res.first then
+		return
+	end
+	local info = ctx.Config.Quests.ScreenCards[name]
+	if not info then
+		return
+	end
+	Dialog.show(ctx.UI.Top, {
+		Title = info.title,
+		Color = C.Blue,
+		Size = Vector2.new(460, 260),
+		Text = info.text,
+		Buttons = { { Text = "Got it", Color = C.Green } },
+	})
+end
+
+-- R2-ONBOARDING: a returning player whose profile predates this update sees round one's
+-- features listed once, with buttons that open each screen.
+local function maybeShowWhatsNew()
+	if ctx.Store:Get("profile.Quests.veteran") ~= true or ctx.Store:Get("profile.Quests.whatsNewSeen") == true then
+		return
+	end
+	local info = ctx.Config.Quests.WhatsNew
+	Dialog.show(ctx.UI.Top, {
+		Title = info.title,
+		Color = C.Gold,
+		Size = Vector2.new(500, 320),
+		Text = info.text,
+		Build = function(content, close)
+			local row = New("Frame", {
+				Name = "Buttons",
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 96),
+				LayoutOrder = 2,
+				Parent = content,
+			}, { Create.Grid(Vector2.new(130, 40), 8) })
+			for i, btn in info.buttons do
+				Button.new({
+					Text = btn.text,
+					Color = C.Orange,
+					Size = UDim2.fromOffset(130, 40),
+					TextSize = Theme.TextSize.Small,
+					LayoutOrder = i,
+					Parent = row,
+					OnClick = function()
+						-- Closes the card first: it sits above the Screens layer, so the
+						-- opened screen would otherwise be hidden behind it.
+						close()
+						ctx.Router:Open(btn.screen)
+					end,
+				})
+			end
+		end,
+		Buttons = { { Text = "Got it", Color = C.Green } },
+		OnClose = function()
+			Util.request(ctx, "Quests.AckWhatsNew")
+		end,
+	})
 end
 
 function Tutorial.Init(context)
@@ -240,6 +346,9 @@ function Tutorial.Init(context)
 	end
 
 	ctx.Store:Observe("profile.Quests.tutorial", render)
+	ctx.Store:Observe("profile.Quests.tutorial2", render)
+	ctx.Router.Opened:Connect(onScreenOpened)
+	ctx.Store:WhenReady(maybeShowWhatsNew)
 
 	ctx.Net:On("Quests.StepDone", function(payload)
 		if type(payload) ~= "table" then

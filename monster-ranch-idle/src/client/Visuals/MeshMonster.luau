@@ -12,8 +12,21 @@
 	(The first version built every monster through its own EditableMesh; Roblox's EditableMesh
 	memory budget ran out at about eight monsters on screen, 2026-09-25.)
 
+	R2-LOWQ: a form may also have a `lowMesh` id (MeshMonsterAssets, empty until tools/blender/lowpoly.py's
+	output is published) - a decimated mesh on the same rig (same bones, same clips, same texture: its
+	UVs survive the decimate, so no separate texture id). `cheap` (Low graphics, or a fight that caps its
+	crowd) builds that instead when the form has one; a form without one keeps building the full mesh, as
+	before. Both variants are cached and cloned per form (one CreateMeshPartAsync each, at most), so a
+	scene that mixes them (a crowd-capped fight while the ranch behind it is not) never rebuilds either.
+	Nothing about Has() changes: a form with only a full mesh is still "has a mesh" even when `cheap` is
+	asked for. Animation is unaffected either way - MonsterAnimator already throttles pose updates by
+	Quality and distance, and both mesh variants share the same bones, so a low-poly monster keeps
+	walking, sleeping and reacting exactly like a full one, just cheaper to draw.
+
 		MeshMonster.Has(form) -> boolean
-		MeshMonster.Build(appearance, size, anchored, look?) -> Model   MonsterModel's contract; size in studs
+		MeshMonster.Build(appearance, size, anchored, look?, cheap?) -> Model   MonsterModel's contract;
+			size in studs; cheap (Low graphics or a crowd-capped fight) builds the form's low-poly
+			mesh (MeshMonsterAssets.<form>.lowMesh) when it has one, else today's full mesh
 		MeshMonster.Pose(model, clip, t, loop)                sets every Bone.Transform for time t
 		MeshMonster.HasClip(model, clip) -> boolean           the form has that authored clip
 		MeshMonster.Length(model, clip) -> number?            its length in seconds
@@ -64,6 +77,7 @@ type Data = {
 	bounds: { number },
 	scale: number,
 	mesh: string,
+	lowMesh: string,
 	texture: string,
 }
 
@@ -85,7 +99,9 @@ local folder = script.Parent:FindFirstChild("MeshMonsters")
 local extraFolder = script.Parent:FindFirstChild("MeshMonsterClips")
 local BLEND = 0.25
 local cache: { [string]: Data } = {}
-local templates: { [string]: MeshPart } = {}
+-- Per form, the full mesh and (once published) the low-poly one: both may be wanted in the same
+-- scene (a crowd-capped fight in front of a ranch that is not), so each gets its own slot.
+local templates: { [string]: { full: MeshPart?, low: MeshPart? } } = {}
 local loading: { [string]: boolean } = {}
 local rigs: { [Model]: Rig } = setmetatable({}, { __mode = "k" }) :: any
 local available: boolean? = nil
@@ -165,6 +181,7 @@ local function load(form: string): Data
 		bounds = raw.bounds,
 		scale = raw.scale or 1,
 		mesh = Assets[form].mesh,
+		lowMesh = Assets[form].lowMesh or "",
 		texture = Assets[form].texture,
 	}
 	cache[form] = data
@@ -186,24 +203,33 @@ local function boneCFrame(bone, k: number): CFrame
 	return CFrame.new(c[1] * k, c[2] * k, c[3] * k, c[4], c[5], c[6], c[7])
 end
 
--- The form's mesh at its modelled size (1 unit tall), made once and cloned for every monster.
--- CreateMeshPartAsync yields, so a second build of the same form waits for the first.
-local function template(form: string, data: Data): MeshPart
-	while loading[form] do
+-- The form's mesh at its modelled size (1 unit tall), made once per variant and cloned for every
+-- monster. CreateMeshPartAsync yields, so a second build of the same form (and variant) waits for
+-- the first.
+local function template(form: string, data: Data, cheap: boolean): (MeshPart, boolean)
+	local useLow = cheap and data.lowMesh ~= ""
+	local variant = if useLow then "low" else "full"
+	local key = form .. "#" .. variant
+	while loading[key] do
 		task.wait()
 	end
-	local part = templates[form]
-	if part then
-		return part
+	local slot = templates[form]
+	if not slot then
+		slot = {}
+		templates[form] = slot
 	end
-	loading[form] = true
+	local part = slot[variant]
+	if part then
+		return part, useLow
+	end
+	loading[key] = true
 	local ok, made = pcall(function()
 		if meshSource then
-			return meshSource(form)
+			return meshSource(form, useLow)
 		end
-		return game:GetService("AssetService"):CreateMeshPartAsync(Content.fromUri(data.mesh))
+		return game:GetService("AssetService"):CreateMeshPartAsync(Content.fromUri(if useLow then data.lowMesh else data.mesh))
 	end)
-	loading[form] = nil
+	loading[key] = nil
 	if not ok then
 		error(made)
 	end
@@ -212,8 +238,8 @@ local function template(form: string, data: Data): MeshPart
 	made.CanQuery = false
 	made.CanTouch = false
 	made.Anchored = false
-	templates[form] = made
-	return made
+	slot[variant] = made
+	return made, useLow
 end
 
 local function weldTo(root: BasePart, part: BasePart)
@@ -223,8 +249,10 @@ local function weldTo(root: BasePart, part: BasePart)
 	weld.Parent = part
 end
 
--- `look` overrides the appearance's own (Hall of Fame statues are Golden).
-function MeshMonster.Build(appearance, size: number, anchored: boolean, look: string?): Model
+-- `look` overrides the appearance's own (Hall of Fame statues are Golden). `cheap` asks for the
+-- form's low-poly mesh (Low graphics, or a crowd-capped fight); a form without one still gets the
+-- full mesh, exactly as if `cheap` were false.
+function MeshMonster.Build(appearance, size: number, anchored: boolean, look: string?, cheap: boolean?): Model
 	local data = load(appearance.form)
 	local b = data.bounds
 	local k = size * HEIGHT_PER_SIZE * data.scale / (b[5] - b[2])
@@ -245,7 +273,8 @@ function MeshMonster.Build(appearance, size: number, anchored: boolean, look: st
 
 	-- The part is centred on the mesh's bounds.
 	local centre = Vector3.new(b[1] + b[4], b[2] + b[5], b[3] + b[6]) * (k / 2)
-	local mesh = template(appearance.form, data):Clone()
+	local built, usedLow = template(appearance.form, data, cheap == true)
+	local mesh = built:Clone()
 	mesh.Name = "Mesh"
 	mesh.Size *= k
 	mesh.CFrame = root.CFrame * CFrame.new(centre)
@@ -311,6 +340,7 @@ function MeshMonster.Build(appearance, size: number, anchored: boolean, look: st
 	model:SetAttribute("Rainbow", appearance.variant == 2) -- a static holographic texture (MonsterLooks)
 	model:SetAttribute("Height", height)
 	model:SetAttribute("Skinned", true)
+	model:SetAttribute("LowPoly", usedLow)
 
 	local wears = look or MonsterLooks.For(appearance)
 	if wears then
