@@ -60,7 +60,7 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 	local precise = 0
 
 	local a = {}
-	a.log = { kicks = {}, events = {}, states = {}, analytics = {}, published = {}, ads = {} }
+	a.log = { kicks = {}, events = {}, states = {}, analytics = {}, published = {}, ads = {}, streamAround = {} }
 	jobCounter += 1
 	a.JobId = "test-job-" .. tostring(jobCounter)
 	a.PlaceId = 0
@@ -140,7 +140,14 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 		NameOf = function(userId)
 			return a.names[userId]
 		end,
+		-- R2-STREAMING: records every pre-teleport stream-around request (position = { x, y, z });
+		-- set a.streamAroundFails = true to make it fail (as it would with StreamingEnabled off).
+		RequestStreamAround = function(player, position, timeout)
+			table.insert(a.log.streamAround, { player = player, position = position, timeout = timeout })
+			return a.streamAroundFails ~= true
+		end,
 	}
+	a.streamAroundFails = false
 	a.names = {} -- [userId] = name, for players who are not on the server
 
 	-- Global leaderboards: boards[key][userId] = value. Set a.leaderboardsDown to fail calls.

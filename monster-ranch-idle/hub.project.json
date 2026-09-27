@@ -14,7 +14,13 @@
       }
     },
     "Workspace": {
-      "$properties": { "StreamingEnabled": false },
+      "$properties": {
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 150,
+        "StreamingTargetRadius": 300,
+        "StreamOutBehavior": "LowMemory",
+        "StreamingIntegrityMode": "PauseOutsideRadius"
+      },
       "$attributes": { "PlaceMode": "hub" }
     },
     "Lighting": {

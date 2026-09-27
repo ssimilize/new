@@ -616,6 +616,16 @@ Api.Actions = {
 		rate = 3,
 		returns = "nil",
 	},
+
+	-- R2-STREAMING: added at the end of this table, appended block, not reordering anything above.
+	-- Pre-streams the world around a far destination (Sky Islands, the Stampede Arena) before the
+	-- client moves its own character there locally, so it never lands in the void. Yields on the
+	-- server for Player:RequestStreamAroundAsync; the client awaits the reply before it teleports.
+	["World.StreamAround"] = {
+		schema = T.struct({ x = T.number(-1000, 1000), y = T.number(-200, 500), z = T.number(-1000, 1000) }),
+		rate = 1,
+		returns = "nil",
+	},
 }
 
 --[[

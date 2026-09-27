@@ -10,6 +10,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Streaming = require(script.Parent.Parent.Visuals.Streaming)
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -32,6 +33,8 @@ local ctx
 local boardGui = nil
 local boardTitle, boardScope, boardRows = nil, nil, {}
 local boardIndex = 1
+local cycleToken = 0
+local connections = {}
 
 local function state()
 	local G = ctx.Store:Get("global.Leaderboards")
@@ -134,26 +137,65 @@ function Leaderboards.Init(context)
 	ctx = context
 end
 
+-- The board (Workspace.World.Hub.Buildings.leaderboard.Body) may stream in long after Start,
+-- and can stream out and back in later: each arrival gets a fresh SurfaceGui and cycle loop.
+local function onBody(body: Instance)
+	if not body:IsA("BasePart") then
+		return
+	end
+	buildBoard(body)
+	drawBoard()
+	cycleToken += 1
+	local token = cycleToken
+	task.spawn(function()
+		while token == cycleToken and boardGui and boardGui.Parent do
+			task.wait(CYCLE)
+			if token ~= cycleToken then
+				return
+			end
+			boardIndex = boardIndex % #Boards.Boards + 1
+			drawBoard()
+		end
+	end)
+end
+
+local function onLeaderboardBuilding(board: Instance)
+	table.insert(connections, Streaming.OnChild(board, "Body", onBody))
+end
+
 function Leaderboards.Start()
 	ctx.Store:Observe("global.Leaderboards", drawBoard)
 
 	task.spawn(function()
 		local world = workspace:WaitForChild("World", 60)
-		local hub = world and world:WaitForChild("Hub", 30)
-		local buildings = hub and hub:WaitForChild("Buildings", 30)
-		local board = buildings and buildings:WaitForChild("leaderboard", 30)
-		local body = board and board:WaitForChild("Body", 30)
-		if not body or not body:IsA("BasePart") then
+		if not world then
 			return
 		end
-		buildBoard(body)
-		drawBoard()
-		while boardGui and boardGui.Parent do
-			task.wait(CYCLE)
-			boardIndex = boardIndex % #Boards.Boards + 1
-			drawBoard()
-		end
+		table.insert(
+			connections,
+			Streaming.OnChild(world, "Hub", function(hub)
+				table.insert(
+					connections,
+					Streaming.OnChild(hub, "Buildings", function(buildings)
+						table.insert(connections, Streaming.OnChild(buildings, "leaderboard", onLeaderboardBuilding))
+					end)
+				)
+			end)
+		)
 	end)
+end
+
+-- Not called by the kernel today; kept so the controller can be unplugged.
+function Leaderboards.Destroy()
+	cycleToken += 1
+	for _, connection in connections do
+		connection:Disconnect()
+	end
+	table.clear(connections)
+	if boardGui then
+		boardGui:Destroy()
+		boardGui = nil
+	end
 end
 
 return Leaderboards
