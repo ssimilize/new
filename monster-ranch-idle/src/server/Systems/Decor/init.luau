@@ -62,6 +62,28 @@ local function setup(player)
 		return
 	end
 	s.layout = Layout.Clean(s.layout)
+	-- A piece a newer building now covers (3.10: Kitchen, Fishing Pond, Guestbook stand keep-outs)
+	-- goes back to storage, or every later layout save would fail on it.
+	local kept, moved = {}, 0
+	for _, entry in s.layout do
+		if Layout.Check(entry) == nil then
+			table.insert(kept, entry)
+		else
+			Shop:ReturnDecor(player, entry.id)
+			moved += 1
+		end
+	end
+	if moved > 0 then
+		s.layout = kept
+		ctx:Dirty(player, "layout")
+		ctx.Bus:Publish("PlotChanged", player, {})
+		ctx.Bus:Publish("WelcomeItem", player, {
+			kind = "decor",
+			text = if moved == 1
+				then "A decoration moved to storage to make room for a new building"
+				else string.format("%d decorations moved to storage to make room for new buildings", moved),
+		})
+	end
 	if not s.starter then
 		s.starter = true
 		for _, def in Config.Decor.List do

@@ -2818,4 +2818,6 @@ return {
 	["Fish Log · {1} / {2} kinds caught"] = "Registro de peixes · {1} / {2} tipos pescados",
 	["Catch {1} kinds · {2} gems"] = "Pesque {1} tipos · {2} gemas",
 	["×{1} · best {2}"] = "×{1} · recorde {2}",
+	["A decoration moved to storage to make room for a new building"] = "Uma decoração foi para o depósito para abrir espaço a um novo prédio",
+	["{1} decorations moved to storage to make room for new buildings"] = "{1} decorações foram para o depósito para abrir espaço a novos prédios",
 }
