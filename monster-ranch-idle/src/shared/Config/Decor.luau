@@ -326,6 +326,18 @@ add("arena_cup_gold", "Gold Arena Cup", "statue", "cup", { 2, 2 }, nil, "#F5C630
 add("arena_cup_crystal", "Crystal Arena Cup", "statue", "cup", { 2, 2 }, nil, "#A9DEFF", "#7CC7FF", { reward = "arena", mat = "Glass" })
 add("arena_cup_champion", "Champion Arena Cup", "statue", "cup", { 2, 2 }, nil, "#FF7AC8", "#F5C630", { reward = "arena", mat = "Foil" })
 
+-- Update 3.9 · Buyer reputation: never sold, one per Ranch Orders buyer, granted once when that
+-- buyer reaches the top reputation level (Config.Orders.BuyerById[id].decor, Rep.Gifts).
+local BUYER = { reward = "orders_rep" }
+add("rep_scarecrow", "Rosa's Scarecrow", "statue", "rep_scarecrow", { 3, 1 }, nil, "#E5484D", "#F4DFA6", BUYER)
+add("rep_stove", "Pip's Stove", "fun", "rep_stove", { 2, 2 }, nil, "#3A3A44", "#F08A4B", BUYER)
+add("rep_bread_oven", "Milo's Bread Oven", "fun", "rep_bread_oven", { 3, 3 }, nil, "#C98B5A", "#E3B26B", BUYER)
+add("rep_anchor", "Wren's Anchor", "statue", "rep_anchor", { 3, 2 }, nil, "#4A5A6A", "#2E6FA8", BUYER)
+add("rep_medicine_cabinet", "Ada's Medicine Cabinet", "fun", "rep_medicine_cabinet", { 2, 1 }, nil, "#F4F4F0", "#E5484D", BUYER)
+add("rep_display_case", "Juno's Display Case", "fun", "rep_display_case", { 2, 2 }, nil, "#8A5A2B", "#A9DEFF", BUYER)
+add("rep_lookout_sign", "Tam's Lookout Sign", "fun", "rep_lookout_sign", { 2, 1 }, nil, "#6B4424", "#3E7A2E", BUYER)
+add("rep_telescope", "Hale's Telescope", "statue", "rep_telescope", { 2, 2 }, nil, "#C9A227", "#3A2D55", BUYER)
+
 for _, d in Decor.List do
 	d.mesh = d.mesh or ""
 	d.kind = d.kind or "fun"

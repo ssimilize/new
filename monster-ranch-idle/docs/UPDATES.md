@@ -3,6 +3,55 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.9 · Family and fortune
+
+### Buyer reputation
+
+**For players**
+- Every Ranch Orders buyer now remembers you. Filling one of their orders earns them
+  reputation: Easy 1, Medium 2, Hard 4, Goods 2 points.
+- Each buyer has 4 levels, at 5, 15, 35 and 70 points. Their perks apply to their own orders:
+  - Level 1: +10% coins on their monster orders.
+  - Level 2: their Hard orders carry an egg 40% of the time (was 25%), plus a one-time
+    thank-you gift of 20 gems and 20 food.
+  - Level 3: +25% coins instead of +10%, and they can post a 4th "favourite buyer" order. Only
+    one favourite order a day, from your highest-reputation buyer at level 3 or higher.
+  - Level 4: a one-time decor piece in their style. Rosa's Scarecrow, Pip's Stove, Milo's Bread
+    Oven, Wren's Anchor, Ada's Medicine Cabinet, Juno's Display Case, Tam's Lookout Sign and
+    Hale's Telescope. These pieces are never sold.
+- A toast tells you when a buyer reaches a new level.
+- On the Orders tab, each card shows its buyer's level. The new **Buyers** button (top right)
+  shows all 8 buyers with their level, a bar to the next level and the next perk.
+
+**In the code**
+- `Config.Orders`: `BuyerIds` (rosa, pip, milo, wren, ada, juno, tam, hale, in `Buyers` order),
+  `BuyerById[id] = { id, name, index, decor }`, and `Rep` (`Points`, `Levels`, `CoinBonus` by level,
+  `EggLevel`/`EggChance`, `FavLevel`, `Gifts`, `Perks`).
+- `Logic/Orders`:
+  - Every drawn order stores `buyer`. It is the same buyer the 3.8 seed pick gave, so today's
+    orders don't change, and orders saved without an id still read it from the seed (`BuyerId`).
+  - `Make`/`Draw` take the reputation. A Hard order's egg compares the same roll with the
+    buyer's chance at draw time, so the draw's RNG sequence is unchanged.
+  - New: `RepPoints`, `RepLevel`, `RepProgress`, `CoinBonus`, `EggChanceAt`, `Favourite` (most
+    points at level 3+, ties by id), `FavSeed` (`Rng.seed("orders_fav", userId, day)`),
+    `DrawFavourite`, `GiftsBetween`, `GiftItems`. `Pay`/`Coins` take the buyer's level.
+- `Systems/Orders`:
+  - Profile v2 adds `rep`, `gifts` (highest level whose gift was paid) and `favDay`, via a
+    Migrate from v1.
+  - A fill pays the coin bonus of the buyer's level before the fill, then adds the points.
+  - A new level sends `ctx:Notify` ("{name} is now a level {n} buyer!") and pays any unpaid
+    gift once through `Rewards:Grant` (source "orders_rep"). The food flavour comes from its own
+    seed.
+  - The favourite order is `list[PerDay + 1]`. It is posted at the day's draw, or as soon as a
+    buyer reaches level 3 that day, at most once a day. It can be filled but not rerolled.
+  - `Orders.Fill` accepts index `PerDay + 1`. `OrderFilled` now carries `buyer`.
+- `Config.Decor` / `DecorArt`: 8 reward-only pieces (`price = nil`, `reward = "orders_rep"`), each
+  with its own part model in the style of the 3.8 arena cups.
+- UI (`Screens/Jobs`): a "Buyers" header button on the Orders tab toggles the Buyers panel (4 x 2
+  buyer cards). Order cards add a "Level n" chip, a "Favourite" chip, and the coin bonus on the
+  coins line. The confirm dialog's price includes the bonus.
+- Tests: `OrdersRep.spec`, `OrdersRepClient.spec`.
+
 ## 3.8 · Reasons to come back
 
 ### Weekly goals
