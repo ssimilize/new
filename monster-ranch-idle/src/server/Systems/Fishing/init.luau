@@ -43,7 +43,7 @@ local Seasons = require(Shared.Logic.Seasons)
 local Fishing = {
 	Name = "Fishing",
 	Dependencies = { "Progression", "Monsters", "Rewards" },
-	OptionalDependencies = { "Observatory" }, -- 3.12: the rare_fish star perk
+	OptionalDependencies = { "Observatory", "TreasureMaps" }, -- 3.12: the rare_fish star perk; 3.13: map pieces
 }
 
 Fishing.Profile = {
@@ -275,6 +275,11 @@ local function finish(player, runId: number, inputs)
 	end
 	ctx:Dirty(player)
 	local extras = Logic.Extras(run.seed, run.bonus)
+	-- 3.13 Treasure Maps: a map piece roll per catch (its own seeded stream).
+	local TreasureMaps = ctx:GetSystem("TreasureMaps")
+	for _, item in if TreasureMaps then TreasureMaps:Drop(player, "fishing") else {} do
+		table.insert(extras, item)
+	end
 	local granted = if #extras > 0 then Rewards:Grant(player, extras, Cfg.Source) else {}
 	local seasonal = Cfg.ById[id].season ~= nil
 	ctx.Bus:Publish("FishCaught", player, { fish = id, rarity = result.rarity, weight = weight, seasonal = seasonal })

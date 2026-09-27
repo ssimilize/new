@@ -178,6 +178,15 @@ Weekly.Pool = {
 		target = 10,
 		unlock = "trial_tower",
 	},
+	-- 3.13 · Treasure Maps
+	{
+		id = "treasure_2",
+		family = "treasure",
+		text = "Open 2 treasure chests",
+		topic = "TreasureOpened",
+		target = 2,
+		unlock = "treasure_maps",
+	},
 }
 
 Weekly.ById = {}

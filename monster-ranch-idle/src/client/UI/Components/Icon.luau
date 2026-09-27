@@ -4,6 +4,7 @@
 	Kinds: coin · gem · food · treat · stardust · friendship · token · ribbon · xp · egg · star · lock · trophy
 	       · amber · shovel (3.11, Dig Site) · honey · honey_<kind> · royal_jelly (3.12, Apiary)
 	       · amber · shovel (3.11, Dig Site) · tower_retry (3.12, a Trial Tower Retry token)
+	       · map_piece · treasure_map (3.13, Treasure Maps)
 	Any icon name from art/ui/ICONS.md also works as a kind ("food_sweet", "decor_hay_bale", ...).
 
 		Icon.new("coin", 28)       -- returns a Frame (size × size)
@@ -298,6 +299,37 @@ function Icon.new(kind: string, size: number?): Frame
 			Position = UDim2.fromScale(0.46, 0.46),
 			Parent = d,
 		})
+	elseif kind == "map_piece" or kind == "treasure_map" then
+		-- 3.13 · Treasure Maps: a parchment scrap (a piece) or a whole sheet (a map) with a red X.
+		local stroke = math.max(1, px / 20)
+		local whole = kind == "treasure_map"
+		local sheet = New("Frame", {
+			Name = "Parchment",
+			BackgroundColor3 = Color3.fromHex("#EAD3A0"),
+			Size = if whole then UDim2.fromScale(0.9, 0.74) else UDim2.fromScale(0.62, 0.62),
+			Position = if whole then UDim2.fromScale(0.05, 0.13) else UDim2.fromScale(0.19, 0.19),
+			Rotation = if whole then 0 else -8,
+			Parent = frame,
+		}, { Create.Corner(UDim.new(0.12, 0)), Create.Stroke(stroke) })
+		New("Frame", {
+			Name = "Trail",
+			BackgroundColor3 = Color3.fromHex("#A0703D"),
+			Size = UDim2.fromScale(0.5, 0.06),
+			Position = UDim2.fromScale(0.14, 0.62),
+			Rotation = -20,
+			Parent = sheet,
+		})
+		for _, r in { 45, -45 } do
+			New("Frame", {
+				Name = "Cross",
+				BackgroundColor3 = Color3.fromHex("#D0342C"),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Size = UDim2.fromScale(0.42, 0.1),
+				Position = UDim2.fromScale(0.66, 0.4),
+				Rotation = r,
+				Parent = sheet,
+			})
+		end
 	elseif kind == "lock" then
 		local d = disc(C.Gray)
 		glyph(d, "🔒", C.White, 0.6)
