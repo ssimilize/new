@@ -202,5 +202,24 @@ return function(t)
 			c:Close("Market")
 			expectClean(c)
 		end)
+
+		it("leaves its prompts alone once the world is still (its own rebuild does not trigger another)", function()
+			local h = TestKernel.new({ systems = allSystems() })
+			local p = h:Join()
+			local c = ClientHarness.new(h, p)
+			c:Advance(2)
+			local door = c.world.workspace.World.Hub.Buildings.market.Door
+			local prompt = door:FindFirstChildOfClass("Attachment"):FindFirstChildOfClass("ProximityPrompt")
+			local rebuilt = 0
+			c.world.workspace.World.DescendantAdded:Connect(function(d)
+				if d:IsA("ProximityPrompt") then
+					rebuilt += 1
+				end
+			end)
+			c:Advance(5)
+			expect(rebuilt).toBe(0)
+			expect(prompt.Parent ~= nil and prompt.Parent.Parent == door).toBe(true)
+			expectClean(c)
+		end)
 	end)
 end

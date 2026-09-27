@@ -6,6 +6,7 @@
 return function(t)
 	local describe, it, expect = t.describe, t.it, t.expect
 	local TestKernel, ClientHarness = t.TestKernel, t.ClientHarness
+	local CFrame = t.Roblox.CFrame
 	local Config = t.Shared("Config")
 
 	local Reef = Config.DeepReef
@@ -131,6 +132,36 @@ return function(t)
 			expect(abyss.IsDescended()).toBe(false)
 			c:Trigger(reefArea.SurfaceBell.ReturnPad:FindFirstChildOfClass("ProximityPrompt"))
 			c:Advance(0.2)
+			expectClean(c)
+		end)
+		it("keeps its life still and its bubbles off while the camera is far away, and wakes near it", function()
+			local h = TestKernel.new({})
+			local p = h:Join()
+			local c = ClientHarness.new(h, p)
+			c:Advance(2)
+			local area = c.world.workspace:FindFirstChild("AbyssArea")
+			local fish = area.Fish:FindFirstChildWhichIsA("BasePart")
+			local bubbles = area.Vents:FindFirstChild("Bubbles", true)
+			local camera = c.world.workspace.CurrentCamera
+			local home = camera.CFrame
+			-- The harness camera starts by the plaza, hundreds of studs from the abyss (Visuals/Wake).
+			local before = fish.CFrame
+			c:Advance(1)
+			expect(fish.CFrame == before).toBe(true)
+			expect(bubbles.Enabled).toBe(false)
+
+			local center = Abyss.Area.center
+			camera.CFrame = CFrame.new(center[1], center[2] + 20, center[3])
+			c:Advance(1)
+			expect(fish.CFrame == before).toBe(false)
+			expect(bubbles.Enabled).toBe(true)
+
+			camera.CFrame = home
+			c:Advance(1)
+			local asleep = fish.CFrame
+			c:Advance(1)
+			expect(fish.CFrame == asleep).toBe(true)
+			expect(bubbles.Enabled).toBe(false)
 			expectClean(c)
 		end)
 	end)
