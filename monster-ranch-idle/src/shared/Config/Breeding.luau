@@ -58,4 +58,14 @@ Breeding.MaxBreedSpeed = 0.5
 -- tiny and a huge species stays sensible); breeding toward Huge is capped at this range.
 Breeding.WeightRatioRange = { 0.5, 2.5 }
 
+-- Added by 3.9 (pedigree & breeding planner) --------------------------------------------
+-- A breeding target is one gene stat and the grade (or better) the player hopes for.
+Breeding.TargetGrades = { "C", "B", "A", "S" }
+-- The planner shows each stat's chance of this grade or better while no target is set.
+Breeding.PlanGrade = "B"
+-- Ribbons the first time a player breeds a baby with grade A (or better) in a stat, and again
+-- the first time with grade S in it: at most #MilestoneGrades x 5 stats awards per player.
+Breeding.MilestoneGrades = { "A", "S" }
+Breeding.MilestoneRibbons = 10
+
 return Breeding

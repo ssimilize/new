@@ -341,9 +341,18 @@ Api.Actions = {
 	["Breeding.Claim"] = {
 		schema = T.struct({ pod = T.integer(1, 2) }),
 		rate = 2,
-		returns = "{ monster: Monster, hybridDiscovered: boolean, surges: number }",
+		returns = "{ monster: Monster, hybridDiscovered: boolean, surges: number, targetMet: boolean }",
 	},
 	["Breeding.Cancel"] = { schema = T.struct({ pod = T.integer(1, 2) }), rate = 1, returns = "nil  -- fee is not refunded" },
+	-- 3.9: the planner's goal; no stat clears it (grades C/B/A/S, checked by the handler too)
+	["Breeding.SetTarget"] = {
+		schema = T.struct({
+			stat = T.optional(T.enum(Config.Genetics.Stats)),
+			grade = T.optional(T.enum(Config.Breeding.TargetGrades)),
+		}),
+		rate = 2,
+		returns = "{ target: { stat, grade } | false }",
+	},
 
 	-- Ranch Jobs (3.7) · see Config/Jobs and Logic/Jobs ---------------------------------
 	["Jobs.Assign"] = {
@@ -680,7 +689,7 @@ Api.State = {
 		Shop = "{ window, bought = { [eggType]: n }, decor = { [decorId]: n owned }, themes = { [themeId]: true } }",
 		Ranch = "{ pens = { Pen }, incubatorTier, barnTier, garden = { tier, plots = { { flavor|false, readyAt } } } }",
 		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id } }",
-		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true } }",
+		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true }, target = { stat, grade } | false, milestones = { [stat]: grade } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",

@@ -35,6 +35,7 @@
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Appearance = require(Shared.Logic.Appearance)
 local Formulas = require(Shared.Logic.Formulas)
+local Pedigree = require(Shared.Logic.Pedigree)
 
 local Trade = {
 	Name = "Trade",
@@ -224,6 +225,7 @@ end
 
 local function summarize(kind: string, id: string, record)
 	if kind == "monster" then
+		local parentA, parentB = Pedigree.ParentNames(record.ped)
 		return {
 			kind = "monster",
 			id = id,
@@ -235,6 +237,7 @@ local function summarize(kind: string, id: string, record)
 			lv = record.lv or 1,
 			stars = record.stars or 1,
 			gen = record.gen or 0,
+			parents = if parentA and parentB then { parentA, parentB } else nil, -- 3.9: names only
 		}
 	end
 	return { kind = "egg", id = id, type = record.type }
