@@ -93,7 +93,7 @@ local function ensureWeek(player, s)
 	end
 	if #s.goals == 0 and Progression:IsUnlocked(player, Cfg.Unlock) then
 		local picked = WeeklyLogic.Pick(Cfg.Pool, Cfg.GoalCount, player.UserId, week, function(def)
-			return def.unlock == nil or Progression:IsUnlocked(player, def.unlock)
+			return (def.unlock == nil or Progression:IsUnlocked(player, def.unlock)) and WeeklyLogic.Available(def, week)
 		end)
 		for i, def in picked do
 			s.goals[i] = { id = def.id, progress = 0 }

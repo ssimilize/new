@@ -140,7 +140,7 @@ return {
 					Position = UDim2.new(1, -12, 0.5, 0),
 					Parent = card,
 					OnClick = function()
-						ctx.Router:Open(e.screen)
+						ctx.Router:Open(e.screen, e.params)
 					end,
 				})
 			end

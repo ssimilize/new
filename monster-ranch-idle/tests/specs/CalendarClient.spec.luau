@@ -76,6 +76,8 @@ return function(t)
 			c:Click(row:FindFirstChild("Go", true))
 			c:Advance(0.5)
 			expect(c.kernel.Router:Current()).toBe("Arena")
+			-- The arena season row opens the Arena straight on its Season tab.
+			expect(c:HasText("Season 1 starts in", c:Screen("Arena"))).toBe(true)
 			expectClean(c)
 		end)
 

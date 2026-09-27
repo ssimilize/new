@@ -88,6 +88,24 @@ return function(t)
 			expect(#W.Pool).toBeAtLeast(18)
 		end)
 
+		it("draws the titan goal only in a week with a titan invasion", function()
+			local titan = W.ById.titan_1
+			expect(titan.during).toBe("titan")
+			local first = Config.Titan.Schedule[1].startsAt
+			local titanWeek = Config.Leaderboards.Week(first)
+			expect(WeeklyLogic.Available(titan, titanWeek)).toBe(true)
+			expect(WeeklyLogic.Available(titan, titanWeek - 1)).toBe(false)
+			expect(WeeklyLogic.Available(titan, 1)).toBe(false) -- the week 3.8 ships: no invasion
+			expect(WeeklyLogic.Available(W.ById.feed_60, 1)).toBe(true)
+			-- A server at a week without an invasion never draws it, whoever the player is.
+			for userId = 1, 80 do
+				local h, p = boot(12, userId)
+				for _, g in h:Section(p, "Weekly").goals do
+					expect(g.id ~= "titan_1").toBe(true)
+				end
+			end
+		end)
+
 		it("gives a player the same goals on two servers in one week", function()
 			local h1, p1 = boot(12, 4242)
 			local h2, p2 = boot(12, 4242)

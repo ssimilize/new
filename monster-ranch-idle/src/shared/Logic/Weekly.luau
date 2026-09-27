@@ -12,6 +12,23 @@ local Cfg = Config.Weekly
 
 local Weekly = {}
 
+-- Whether a goal can be done in `week` at all. A goal with `during = "titan"` needs a titan
+-- invasion that starts inside that week (Config.Titan.Schedule); invasions are rare and dated,
+-- so drawing it in any other week would leave a goal nobody can finish.
+function Weekly.Available(def, week: number): boolean
+	if def.during == "titan" then
+		local from = Config.Leaderboards.WeekEndsAt(week - 1)
+		local to = Config.Leaderboards.WeekEndsAt(week)
+		for _, entry in Config.Titan.Schedule do
+			if entry.startsAt >= from and entry.startsAt < to then
+				return true
+			end
+		end
+		return false
+	end
+	return true
+end
+
 -- The week's goals: up to `count` entries of `pool` that pass `eligible(def)`, never two of one
 -- family, in a deterministic order for (userId, week). Returns the chosen definitions.
 function Weekly.Pick(pool, count: number, userId: number, week: number, eligible: ((any) -> boolean)?)

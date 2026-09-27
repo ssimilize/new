@@ -4,7 +4,8 @@
 	(Logic/Weekly.Pick), only from features unlocked when the week's draw first happens, and never
 	two goals of one `family`. The week is Config.Leaderboards.Week (Saturday 15:00 UTC reset).
 
-	Pool entry: { id, family, text, topic, target, filter?, unlock? }
+	Pool entry: { id, family, text, topic, target, filter?, unlock?, during? }
+	  during = "titan": drawn only in a week with a titan invasion (Logic/Weekly.Available)
 	  topic/filter/target work like Quests objectives (Logic/Objectives); counts use
 	  Config.Quests.CountField. Targets are sized for a casual player to finish in 5-7 days.
 
@@ -38,7 +39,15 @@ Weekly.Pool = {
 	{ id = "evolve_3", family = "growing", text = "Grow up 3 monsters", topic = "MonsterEvolved", target = 3 },
 	{ id = "pet_25", family = "social", text = "Pet 25 monsters on other ranches", topic = "PetGiven", target = 25 },
 	{ id = "stampede_4", family = "stampede", text = "Join 4 Stampedes", topic = "BossJoined", target = 4, unlock = "boss" },
-	{ id = "titan_1", family = "stampede", text = "Join a Titan invasion", topic = "TitanJoined", target = 1, unlock = "boss" },
+	{
+		id = "titan_1",
+		family = "stampede",
+		text = "Join a Titan invasion",
+		topic = "TitanJoined",
+		target = 1,
+		unlock = "boss",
+		during = "titan",
+	},
 	{
 		id = "contests_3",
 		family = "contests",

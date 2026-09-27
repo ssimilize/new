@@ -76,7 +76,7 @@ return {
 			return StoreKit.tbl(ctx.Store, "profile.Arena")
 		end
 
-		Widgets.Tabs({
+		local tabs = Widgets.Tabs({
 			Tabs = {
 				{ id = "battle", text = "Battle" },
 				{ id = "defense", text = "Defense" },
@@ -591,9 +591,17 @@ return {
 
 		return {
 			Root = panel.Root,
-			Open = function()
+			Open = function(params)
 				isOpen = true
 				bag.clean()
+				-- { tab = "season" } (the Events calendar's Go) opens straight on that tab.
+				if
+					type(params) == "table"
+					and (params.tab == "battle" or params.tab == "defense" or params.tab == "rewards" or params.tab == "season")
+				then
+					tab = params.tab
+					tabs:Select(params.tab)
+				end
 				for _, path in { "session.Arena", "profile.Arena", "profile.Monsters.list", "profile.Progression.level" } do
 					bag.add(ctx.Store:Observe(path, refresh))
 				end

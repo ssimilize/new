@@ -67,7 +67,16 @@ local BLURB = {
 	stampede = "Join the server boss for rewards.",
 }
 
-local function entry(kind: string, key: string, name: string, startsAt: number, endsAt: number?, icon: string, screen: string?)
+local function entry(
+	kind: string,
+	key: string,
+	name: string,
+	startsAt: number,
+	endsAt: number?,
+	icon: string,
+	screen: string?,
+	params: any?
+)
 	return {
 		key = key,
 		kind = kind,
@@ -77,6 +86,7 @@ local function entry(kind: string, key: string, name: string, startsAt: number, 
 		icon = icon,
 		blurb = BLURB[kind],
 		screen = screen,
+		params = params, -- passed to Router:Open with `screen` (e.g. { tab = "season" })
 	}
 end
 
@@ -184,13 +194,25 @@ local function arena(out, now: number, untilAt: number)
 	if season >= 1 then
 		local name = string.format("Arena Season %d", season)
 		local startsAt, endsAt = ArenaLogic.SeasonStartsAt(season), ArenaLogic.SeasonEndsAt(season)
-		table.insert(out, entry("arena", "arena:" .. season, name, startsAt, endsAt, "trophy", "Arena"))
+		table.insert(out, entry("arena", "arena:" .. season, name, startsAt, endsAt, "trophy", "Arena", { tab = "season" }))
 	end
 	local nextSeason = season + 1
 	local startsAt = ArenaLogic.SeasonStartsAt(nextSeason)
 	if startsAt < untilAt then
 		local name = string.format("Arena Season %d", nextSeason)
-		table.insert(out, entry("arena", "arena:" .. nextSeason, name, startsAt, ArenaLogic.SeasonEndsAt(nextSeason), "trophy", "Arena"))
+		table.insert(
+			out,
+			entry(
+				"arena",
+				"arena:" .. nextSeason,
+				name,
+				startsAt,
+				ArenaLogic.SeasonEndsAt(nextSeason),
+				"trophy",
+				"Arena",
+				{ tab = "season" }
+			)
+		)
 	end
 end
 
