@@ -515,4 +515,112 @@ return function(t)
 			expectClean(c)
 		end)
 	end)
+
+	-- R2-LEGENDS: Gamepad.SetScope, the external-scope hook for a mode with no Router screen
+	-- or Focus modal of its own (Live Race's HUD, Deep Reef swimming). Decorate is a screen, but
+	-- it scopes the whole time it is open (not just a "running" sub-mode) so it lives here too.
+	describe("Gamepad external scopes", function()
+		it("scopes Live Race's HUD once a heat is joined, shows the legend from countdown and Ⓑ leaves", function()
+			local LR = Config.LiveRace
+			local h = TestKernel.new({ systems = allSystems() })
+			local p = h:Join()
+			local P = h:System("Progression")
+			while P:GetLevel(p) < 16 do
+				P:AddXP(p, Config.Unlocks.XPToNext(P:GetLevel(p)) - h:Section(p, "Progression").xp, "test")
+			end
+			local m = h:System("Monsters"):Create(p, { line = "zappip", rarity = 6, stage = 3 }, "test", true)
+			h:Call(p, "Riding.Mount", { id = m.id })
+
+			local c = ClientHarness.new(h, p)
+			c:Advance(1)
+			c:UseGamepad(true)
+			local screen = c:Open("Racing")
+			c:Advance(0.5)
+			local join = c:Button("Join Live Race (up to 6 riders)", screen)
+			c:Click(join)
+			c:Advance(0.5)
+			expect(c.kernel.Router:Current()).toBeNil()
+			local LEGEND = "Left Stick Steer · Ⓐ Jump · RT Boost · Ⓑ Leave"
+			-- Lobby: the HUD is scoped (B already leaves) but the running legend isn't up yet.
+			expect(legendText(c) ~= LEGEND).toBe(true)
+
+			c:Advance(LR.LobbySeconds + 1)
+			expect(c:Store("global.LiveRace").state).toBe("countdown")
+			expect(legendText(c)).toBe(LEGEND)
+			c:Advance(LR.CountdownSeconds + 1)
+			expect(c:Store("global.LiveRace").state).toBe("running")
+			expect(legendText(c)).toBe(LEGEND)
+			expect(c:Selected()).toBe(nil) -- the pad reaches the race, not the HUD cursor
+
+			c:Press("ButtonB")
+			c:Advance(0.5)
+			expect(c:Store("session.LiveRace").heat).toBe(false)
+			expect(legendText(c)).toBe("Ⓨ Monsters") -- back to the HUD's own legend
+			expectClean(c)
+		end)
+
+		it("scopes Decorate's tray for its whole session; Ⓐ places, Ⓧ rotates, Ⓑ leaves", function()
+			local h = TestKernel.new({ systems = allSystems() })
+			local p = h:Join()
+			local c = ClientHarness.new(h, p)
+			c:Advance(1)
+			c:UseGamepad(true)
+			c:Open("Decorate")
+			c:Advance(0.5)
+			expect(legendText(c)).toBe("D-pad Move · Ⓧ Rotate · Ⓐ Place · R1 Pick up · Ⓨ Stash · Ⓑ Leave")
+			expect(c:Selected()).toBe(nil) -- the pad reaches placement mode, not the tray's buttons
+
+			local decor = c.kernel:GetController("Decor")
+			local before = #decor.Draft()
+			c:Press("ButtonA") -- places the first owned piece
+			c:Advance(0.2)
+			expect(#decor.Draft()).toBe(before + 1)
+			local placed = decor.Selected()
+			expect(placed ~= nil).toBe(true)
+			c:Press("ButtonX") -- rotate
+			c:Advance(0.1)
+			expect(decor.Draft()[placed].rot).toBe(1)
+
+			c:Press("ButtonB")
+			c:Advance(0.3)
+			expect(c.kernel.Router:Current()).toBeNil()
+			expect(legendText(c)).toBe("Ⓨ Monsters") -- back to the HUD's own legend
+			expectClean(c)
+		end)
+
+		it("scopes the pad while swimming in Deep Reef; R2 ascends and Ⓑ swims up", function()
+			local AFTER_CAP = Config.Unlocks.LevelCaps[2].from + 3600
+			local h = TestKernel.new({ systems = allSystems(), startTime = AFTER_CAP })
+			local p = h:Join()
+			local P = h:System("Progression")
+			while P:GetLevel(p) < 64 do
+				P:AddXP(p, Config.Unlocks.XPToNext(P:GetLevel(p)) - h:Section(p, "Progression").xp, "test")
+			end
+			local c = ClientHarness.new(h, p)
+			c:Advance(2)
+			c:UseGamepad(true)
+			local reef = c.kernel:GetController("DeepReef")
+			local dock = c.world.workspace:FindFirstChild("DiveDock")
+			expect(legendText(c)).toBe("Ⓨ Monsters") -- the HUD's own legend, not scoped yet
+
+			c:Trigger(dock.DivePad:FindFirstChildOfClass("ProximityPrompt"))
+			c:Advance(0.5)
+			expect(reef.IsInside()).toBe(true)
+			expect(legendText(c)).toBe("Left Stick Swim · R2 Ascend · L2 Descend · Ⓧ Swim up")
+
+			local root = c.character.PrimaryPart
+			local startY = root.Position.Y
+			c:_input(Enum.KeyCode.ButtonR2, Enum.UserInputState.Begin, Enum.UserInputType.Gamepad1)
+			c:Advance(1.5)
+			expect(root.Position.Y > startY).toBe(true)
+			c:_input(Enum.KeyCode.ButtonR2, Enum.UserInputState.End, Enum.UserInputType.Gamepad1)
+			c:Advance(0.2)
+
+			c:Press("ButtonB")
+			c:Advance(0.5)
+			expect(reef.IsInside()).toBe(false)
+			expect(legendText(c)).toBe("Ⓨ Monsters") -- back to the HUD's own legend
+			expectClean(c)
+		end)
+	end)
 end

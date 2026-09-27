@@ -18,7 +18,9 @@
 	  red, and a draft copy of the layout is edited: Add(id) at the nearest free spot, tap a piece to
 	  select it, tap or drag the ground to move it, Rotate (45°), Remove (back to the tray), Undo
 	  (Config.Decor.Layout.undo steps), Save (Decor.Save with the whole draft). Bad pieces show a red
-	  box, the selected one a white box. Pad: D-pad nudges, X rotates, Y removes, L1 undo, R1 next piece.
+	  box, the selected one a white box. Pad (the Decorate screen's GamepadLegend clears the cursor,
+	  like Racing/Surf/PhotoMode, so these reach placement mode directly): D-pad nudges, X rotates,
+	  Y removes, L1 undo, R1 next piece, A places the first owned piece in tray order.
 	  Exit restores the HUD, the camera and the saved layout.
 
 	Public (for the screen and specs):
@@ -458,6 +460,19 @@ function Decor.Select(i: number?)
 	drawDraft()
 end
 
+-- Pad Place (Ⓐ): the tray has no cursor while placing (the Decorate screen's GamepadLegend
+-- clears it, like Racing/Surf/PhotoMode), so this adds the first owned piece in tray order
+-- instead of a specific tap.
+function Decor.AddFirstAvailable(): (boolean, string?)
+	local available = Decor.Available()
+	for _, def in Config.Decor.List do
+		if (available[def.id] or 0) > 0 then
+			return Decor.Add(def.id)
+		end
+	end
+	return false, "You don't have any decor to place"
+end
+
 function Decor.Add(id: string): (boolean, string?)
 	if not edit then
 		return false, nil
@@ -615,6 +630,11 @@ local function connectInput()
 					Decor.Undo()
 				elseif key == Enum.KeyCode.ButtonR1 and #edit.draft > 0 then
 					Decor.Select(((edit.selected or 0) % #edit.draft) + 1)
+				elseif key == Enum.KeyCode.ButtonA then
+					local ok, err = Decor.AddFirstAvailable()
+					if not ok and err and ctx then
+						ctx:Toast(err, "error")
+					end
 				end
 				return
 			end
