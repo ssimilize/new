@@ -116,9 +116,12 @@ end
 -- The Descent: a dark crack in the Deep Reef's own sand ------------------------------------------
 
 function AbyssBuild.Descent(reefArea: Folder): Model
-	local floor = reefArea:FindFirstChild("Floor")
-	local floorY = if floor and floor:IsA("BasePart") then floor.Position.Y + floor.Size.Y / 2 else 0
-	local at = Vector3.new(Config.DeepReef.Area.center[1], floorY, Config.DeepReef.Area.center[3]) + v3(Cfg.Descent.offset)
+	-- On the reef's sand (Config.DeepReef.Area.floorY). Not measured off the reef's Floor part: it
+	-- is a cylinder lying on its side, so its Size.Y is the 320-stud diameter, and half of that
+	-- put the chasm 158 studs up, above the water where no swimmer could reach it (Studio,
+	-- 2026-09-27).
+	local R = Config.DeepReef.Area
+	local at = Vector3.new(R.center[1], R.floorY, R.center[3]) + v3(Cfg.Descent.offset)
 	local chasm = model("Chasm", reefArea)
 	disc("Rim", 16, 0.8, at + Vector3.new(0, 0.3, 0), hex("#101425"), chasm, { Material = Enum.Material.Basalt })
 	local pad = disc("DivePad", 11, 0.4, at + Vector3.new(0, 0.1, 0), hex("#2A1E4A"), chasm, {
