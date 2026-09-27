@@ -64,6 +64,15 @@ return function(t)
 			local main = serde.decode("json", fs.readFile(t.Root .. "/default.project.json"))
 			expect(hub.tree.Workspace["$attributes"].PlaceMode).toBe("hub")
 			expect(main.tree.Workspace["$attributes"]).toBeNil()
+			-- Both places stream (R2-STREAMING); the hub is a small map, so it streams a smaller
+			-- radius round each player. Only the radii may differ.
+			local hubWs, mainWs = hub.tree.Workspace["$properties"], main.tree.Workspace["$properties"]
+			expect(hubWs.StreamingEnabled).toBe(true)
+			expect(mainWs.StreamingEnabled).toBe(true)
+			expect(hubWs.StreamingTargetRadius <= mainWs.StreamingTargetRadius).toBe(true)
+			for _, key in { "StreamingMinRadius", "StreamingTargetRadius" } do
+				hubWs[key] = mainWs[key]
+			end
 			-- Everything else is the same game.
 			hub.tree.Workspace["$attributes"] = nil
 			hub.name = main.name
