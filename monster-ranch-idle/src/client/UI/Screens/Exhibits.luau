@@ -154,8 +154,8 @@ return {
 				end
 				return StoreKit.num(store, "profile.Shop.decor." .. itemId, 0), placed
 			elseif setId == "honey" then
-				-- The Apiary keeps its jars in profile.Apiary.honey (3.12 contract: Apiary:Honey).
-				local jars = StoreKit.tbl(store, "profile.Apiary.honey")
+				-- The Apiary keeps its jars in profile.Apiary.store ({ [kind]: n }, royal_jelly included).
+				local jars = StoreKit.tbl(store, "profile.Apiary.store")
 				return tonumber(jars[itemId]) or 0, 0
 			end
 			return 0, 0

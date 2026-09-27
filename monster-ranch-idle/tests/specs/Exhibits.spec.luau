@@ -260,19 +260,21 @@ return function(t)
 
 		it("fills the Star Atlas from the Observatory's charts", function()
 			withFakes(function()
+				local charts = Config.Observatory.Charts
+				local first, second = charts[1].id, charts[2].id
 				local h, donated = boot({
 					Observatory = {
 						Charted = function()
-							return { kite = true }
+							return { [second] = true }
 						end,
 					},
 				})
 				local p = curator(h)
-				expect(h:Section(p, "Exhibits").filled.stars.kite).toBe(true)
-				h.kernel.Bus:Publish("StarCharted", p, { chart = "lantern" })
-				expect(h:Section(p, "Exhibits").filled.stars.lantern).toBe(true)
+				expect(h:Section(p, "Exhibits").filled.stars[second]).toBe(true)
+				h.kernel.Bus:Publish("StarCharted", p, { chart = first })
+				expect(h:Section(p, "Exhibits").filled.stars[first]).toBe(true)
 				expect(#donated).toBe(1)
-				h.kernel.Bus:Publish("StarCharted", p, { chart = "lantern" })
+				h.kernel.Bus:Publish("StarCharted", p, { chart = first })
 				expect(#donated).toBe(1)
 			end)
 		end)
