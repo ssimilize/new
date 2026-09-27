@@ -1,7 +1,7 @@
 {
   "foundry": {
-    "commit": "df77c0e",
-    "syncedAt": "2026-09-27T22:56:28+00:00"
+    "commit": "17356c6",
+    "syncedAt": "2026-09-27T23:03:36+00:00"
   },
   "game": "monster-ranch",
   "packages": {
@@ -51,6 +51,16 @@
       "version": "0.1.0",
       "files": {
         "Score.luau": "b6e21337e36925b8cf81873e86490cd08d072f7f0860d9828e64da1bd7d9b966"
+      }
+    },
+    "SkyWeather": {
+      "version": "0.1.0",
+      "files": {
+        "Noise.luau": "a6a955793f1b1b6187c2e05d9c62a4ac347cd97af63151924aad7170c4fc6063",
+        "rules/guildhall.luau": "f6c89392f4431bb060ab9ac54f9215e44bff82cb7aa1998bcf7abd4194ff0926",
+        "rules/monster-ranch.luau": "b4df713ac611d61b2d3cdb032e835b75b9dd90d1b6273de5f2c99e134199a325",
+        "Rules.luau": "908c70ce0954868cd3a8c99b1a72284569bfb0642826aa57da4f8de7af7b3fa7",
+        "SkyWeather.luau": "c4d7e7c56e7a557ca1b375c3a68bbcfcaea029d01ebfaae2bf764889e0e8c857"
       }
     }
   },
