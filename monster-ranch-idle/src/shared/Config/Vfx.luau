@@ -881,6 +881,9 @@ Vfx.Mastery.codexCrown = masteryTwinkle("star5", { { 0, "#8FD3FF" }, { 0.5, "#F2
 -- Update 3.8: the Champion's Crown aura, for finishing an arena season in Champion (Config/Arena).
 Vfx.Mastery.championsCrown = masteryTwinkle("star5", { { 0, "#FF7AC8" }, { 0.5, "#F5C630" }, { 1, "#FF7AC8" } }, 1.6, { 1.2, 1.8 }, 0.55)
 
+-- Update 3.9: the Expedition Bounties aura, on a wanted monster in its stage fight (Config/Bounties).
+Vfx.Mastery.bounty = masteryTwinkle("star5", { { 0, "#FFD34D" }, { 1, "#FF4A3D" } }, 1.6, { 0.9, 1.4 }, 0.6)
+
 -- ─── World landmarks ─────────────────────────────────────────────────────────────────
 
 -- A portal's vortex, glow core and pulse ring. `y` is the opening's height as a fraction of the

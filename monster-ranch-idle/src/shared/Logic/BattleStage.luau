@@ -9,8 +9,9 @@
 	  BattleStage.Row(count, layout) -> { { back, across } }   one side's spots: `back` studs behind
 	      the front line, `across` sideways from the centre line; up to `perRow` per row
 	  BattleStage.Placement(units, cfg) -> { [key] = { x, z, scale, boss, side } }
-	      allies at x < 0, enemies at x > 0 (stage space); a lone boss stands centred behind its row
-	  BattleStage.Size(scaleFor, boss, cfg) -> number   the MonsterModel.Build opts.scale that draws a
+	      allies at x < 0, enemies at x > 0 (stage space); a lone boss stands centred behind its row;
+	      a bounty (3.9) keeps its row spot, drawn cfg.scale.bounty bigger (spot.bounty)
+	  BattleStage.Size(scaleFor, boss, cfg, bounty?) -> number   the MonsterModel.Build opts.scale that draws a
 	      monster whose own MonsterModel.ScaleFor is `scaleFor` at the battle size
 	  BattleStage.Step(eventCount, pace) -> seconds    base time per event (the 2D viewer's pace)
 	  BattleStage.Pause(ev, step, pace) -> seconds      the time after one event
@@ -98,7 +99,15 @@ function BattleStage.Placement(units, cfg)
 		for i, unit in others do
 			local spot = spots[i]
 			depth = math.max(depth, spot.back)
-			out[unit.key] = { x = sign * (layout.front + spot.back), z = spot.across, scale = 1, boss = false, side = side }
+			local bounty = unit.bounty == true
+			out[unit.key] = {
+				x = sign * (layout.front + spot.back),
+				z = spot.across,
+				scale = if bounty then cfg.scale.bounty or 1 else 1,
+				boss = false,
+				bounty = if bounty then true else nil,
+				side = side,
+			}
 		end
 		-- Bosses stand behind their row (centred; several spread out).
 		local bossBack = if #others > 0 then depth + layout.bossBack + layout.rowDepth * 0.5 else layout.bossBack
@@ -110,12 +119,14 @@ function BattleStage.Placement(units, cfg)
 	return out
 end
 
-function BattleStage.Size(scaleFor: number, boss: boolean?, cfg): number
+function BattleStage.Size(scaleFor: number, boss: boolean?, cfg, bounty: boolean?): number
 	local s = math.max(scaleFor, 0.01)
 	local shown = math.clamp(s, cfg.scale.min, cfg.scale.max)
 	local size = cfg.scale.unit * shown / s
 	if boss then
 		size *= cfg.scale.boss
+	elseif bounty then
+		size *= cfg.scale.bounty or 1
 	end
 	return size
 end
