@@ -3,6 +3,45 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.9 · Family and fortune
+
+### Pedigree & breeding planner
+
+**For players**
+- **Family tree:** tap the "Genes X/100 · Gen N" line on a monster's page to see it, its two
+  parents and its four grandparents. Each shows an icon, the name, a border in its rarity colour
+  and its five gene grades (HP · ATK · DEF · SPD · Luck). Ancestors from before this update read
+  "Unknown"; a hatched monster's parents read "Hatched".
+- Market listings and the trade log name a bred monster's parents ("Parents: A × B").
+- **Breeding planner:** the Breeding Barn now shows, for each stat, the baby's exact chance of
+  grade B or better (or of your target's grade) instead of the old "+lo–hi%" range. Tap a stat to
+  see its full S / A / B / C / D spread. Tapping "Genes" still explains surges.
+- **Breeding target:** the "Set a target" chip picks a stat and a grade (C, B, A or S). The card
+  then shows "Chance with this pair: X%", the stat is outlined, and choosing a parent lists the
+  best candidates for the target first. A baby that meets the target gets a celebration toast.
+- **Grade milestones:** the first time you breed a baby with grade A in a stat you get 10 Ribbons,
+  and again the first time with grade S in it: up to 10 awards (100 Ribbons), target or not.
+  A first high grade that is already an S pays both.
+
+**In the code**
+- Monster records: `ped = { a, b, aa?, ab?, ba?, bb? }` on bred babies only, snapshots
+  `{ line, form, rarity, variant?, name?, gen, grades }` (`grades` = "BACDS" in
+  `Config.Genetics.Stats` order); no ids, never deeper than grandparents. `Logic/Pedigree`
+  (`Snap`, `Build`, `Copy`, `Name`, `ParentNames`). `MonsterGen.New` keeps `spec.ped` (no draws),
+  `Monsters:Insert` deep-copies it (Trade and Market). No save migration.
+- `Logic/Genetics`: `Odds(a, b, stat)` (exact convolution of Inherit: pick 1/2, surge +2 / +1 /
+  +0, capped, a 10 never surges), `GradeOdds`, `AtLeast(odds, grade)`, `GradeMin`, `Grades`.
+  The planner never reads a pod's seed.
+- Breeding: `Profile.Version` 2 (Migrate adds `target = false`, `milestones = {}`);
+  `Breeding.SetTarget { stat?, grade? }` (no stat clears; grades `Config.Breeding.TargetGrades`);
+  Claim builds `ped`, pays milestones via `Rewards:Grant` source `"breeding_target"`
+  (`MilestoneGrades`, `MilestoneRibbons`), returns `targetMet` and Notifies on a hit.
+  No new `ctx.Rng` draws.
+- `Listing.ItemView.parents` and the trade log summary's `parents` carry names only.
+- Client: `Screens/Parts/FamilyTree` in a MonsterDetail InsetPopup; Breeding screen planner row,
+  target picker dialog and pick `sortBy`.
+- Tests: `Pedigree.spec` (incl. a 200k-roll Monte-Carlo check), `PedigreeClient.spec`.
+
 ## 3.8 · Reasons to come back
 
 ### Weekly goals

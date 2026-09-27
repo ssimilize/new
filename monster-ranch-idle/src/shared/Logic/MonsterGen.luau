@@ -16,6 +16,7 @@
 	  muts = { string }?,
 	  gen = number?,             -- generation (0 hatched, parents' max + 1 when bred)
 	  genes = Genes?,            -- stat genes (Logic/Genetics); rolled last when nil
+	  ped = Pedigree?,           -- 3.9: bred babies' family (Logic/Pedigree); kept as given
 	}
 ]]
 
@@ -144,6 +145,8 @@ function MonsterGen.New(rng, spec, now: number)
 	-- Rolled after everything else so the rolls above stay as they were before genes.
 	-- Given genes are kept pair by pair; a missing pair (Luck in pre-3.7 genes) is rolled.
 	record.genes = if type(spec.genes) == "table" then Genetics.Fill(spec.genes, rng) else Genetics.Roll(rng)
+	-- Pedigree (3.9) draws nothing, so it never moves a seeded roll.
+	record.ped = if type(spec.ped) == "table" then spec.ped else nil
 	return record
 end
 

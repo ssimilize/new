@@ -80,6 +80,7 @@ return function(t)
 			c:Advance(0.3)
 			expect(c:HasText("HP genes: 10 + 10 = +20%")).toBe(true)
 
+			-- Since 3.9 the gene line opens the family tree, which explains genes at its foot.
 			local line = labelWith(c, detail, "Genes ")
 			c:Click(line:FindFirstChild("Tap"))
 			c:Advance(0.3)
@@ -157,8 +158,9 @@ return function(t)
 				end
 			end
 			expect(rows).toBe(2)
-			-- Parent A carries 4 and 6, parent B 2 and 8: the baby gets +6% .. +14% before surges.
-			expect(c:HasText("+6–14%", screen)).toBe(true)
+			-- Since 3.9 the planner shows each stat's chance of B or better instead of the +6..14%
+			-- range (PedigreeClient.spec checks the numbers).
+			expect(c:HasText("Stats show the chance of B or better", screen)).toBe(true)
 			local title = labelWith(c, screen:FindFirstChild("Genes", true), "Genes")
 			c:Click(title:FindFirstChild("Tap"))
 			c:Advance(0.3)
