@@ -9,19 +9,40 @@
 	    genesMin?              -- a gene total of at least this (hard)
 	    food?, amount?         -- goods: this much food of one flavour
 	    egg?                   -- hard: an egg on top, rolled when drawn
+	    buyer                  -- 3.9: the buyer id (Config.Orders.BuyerIds); orders drawn
+	                              before 3.9 have none and read it from the seed
+	    favourite?             -- 3.9: the day's extra favourite buyer order
 	    filled }
 
 	  Orders.Available(level) -> boolean            the feature is open at this Ranch Level
 	  Orders.DaySeed(userId, day) -> number         the day's draw seed
 	  Orders.RerollSeed(userId, day, n) -> number   the n-th reroll's seed that day
-	  Orders.Make(seed, level, allowGoods) -> Order one order from its own seed (no id)
-	  Orders.Draw(userId, day, level) -> { Order }  the day's PerDay orders, at most one goods
+	  Orders.Make(seed, level, allowGoods, rep?, buyer?) -> Order
+	                                                one order from its own seed (no id); the
+	                                                buyer comes from the seed unless given, and
+	                                                its reputation sets the egg chance
+	  Orders.Draw(userId, day, level, rep?) -> { Order }
+	                                                the day's PerDay orders, at most one goods
 	  Orders.GradeMin(grade) -> number              pair points a grade starts at
 	  Orders.Meets(order, m) -> boolean             the monster's genes meet the order
 	  Orders.Qualifies(order, m) -> boolean         Meets and a Teen or Adult
-	  Orders.Pay(order, m?) -> { Reward }           what filling it pays (coins need the monster)
-	  Orders.Coins(m) -> number                     a monster order's coins for this monster
-	  Orders.Buyer(order) -> string
+	  Orders.Pay(order, m?, repLevel?) -> { Reward } what filling it pays (coins need the
+	                                                monster; the buyer's level adds its bonus)
+	  Orders.Coins(m, repLevel?) -> number          a monster order's coins for this monster
+	  Orders.Buyer(order) -> string                 the buyer's display name
+	  Orders.BuyerId(order) -> string               the buyer id (stored, or from the seed)
+
+	Buyer reputation (3.9), rep = profile.Orders.rep = { [buyerId] = points }:
+	  Orders.RepPoints(order) -> number             points filling it earns its buyer
+	  Orders.RepLevel(points) -> number             0..#Rep.Levels
+	  Orders.RepProgress(points) -> (level, from, to?)  the level, its threshold and the next
+	  Orders.CoinBonus(level) -> number             the coin bonus fraction at this level
+	  Orders.EggChanceAt(level) -> number           a Hard order's egg chance at this level
+	  Orders.Favourite(rep) -> string?              the highest buyer at FavLevel+ (ties: id)
+	  Orders.FavSeed(userId, day) -> number         the favourite order's own seed
+	  Orders.DrawFavourite(userId, day, level, rep) -> Order?   the day's extra order, if any
+	  Orders.GiftsBetween(from, to) -> { Gift }     Rep.Gifts for levels in (from, to]
+	  Orders.GiftItems(gift, buyerId, userId) -> { Reward }
 	  Orders.RequirementText(order) -> string
 ]]
 
@@ -92,9 +113,10 @@ local function twoStats(rng)
 	return { a, b }
 end
 
-function Orders.Make(seed: number, level: number, allowGoods: boolean)
+function Orders.Make(seed: number, level: number, allowGoods: boolean, rep: { [string]: number }?, buyer: string?)
 	local rng = Rng.new(seed)
-	local order = { seed = seed, filled = false }
+	local buyerId = buyer or Orders.BuyerId({ seed = seed })
+	local order: { [string]: any } = { seed = seed, buyer = buyerId, filled = false }
 	if allowGoods and rng:Chance(Rules.GoodsChance) then
 		order.kind = "goods"
 		order.difficulty = "goods"
@@ -123,7 +145,9 @@ function Orders.Make(seed: number, level: number, allowGoods: boolean)
 		else
 			order.genesMin = d.genesMin
 		end
-		if rng:Chance(Rules.EggChance) then
+		-- The same roll as before 3.9; only the chance it is compared with depends on the buyer.
+		local points = if type(rep) == "table" then tonumber(rep[buyerId]) or 0 else 0
+		if rng:Chance(Orders.EggChanceAt(Orders.RepLevel(points))) then
 			order.egg = eggFor(rng, level)
 		end
 	else
@@ -133,11 +157,11 @@ function Orders.Make(seed: number, level: number, allowGoods: boolean)
 	return order
 end
 
-function Orders.Draw(userId: number, day: number, level: number)
+function Orders.Draw(userId: number, day: number, level: number, rep: { [string]: number }?)
 	local rng = Rng.new(Orders.DaySeed(userId, day))
 	local list, goods = {}, false
 	for i = 1, Rules.PerDay do
-		local order = Orders.Make(rng:Int(1, SEED_MAX), level, not goods)
+		local order = Orders.Make(rng:Int(1, SEED_MAX), level, not goods, rep)
 		order.id = string.format("%d-%d", day, i)
 		goods = goods or order.kind == "goods"
 		list[i] = order
@@ -169,8 +193,13 @@ function Orders.Qualifies(order, m): boolean
 	return type(m) == "table" and (m.stage or 1) >= Rules.MinStage and Orders.Meets(order, m)
 end
 
-function Orders.Coins(m): number
-	return Rules.CoinMult * Formulas.SellPrice(m)
+function Orders.Coins(m, repLevel: number?): number
+	local base = Rules.CoinMult * Formulas.SellPrice(m)
+	local bonus = Orders.CoinBonus(repLevel or 0)
+	if bonus <= 0 then
+		return base
+	end
+	return math.floor(base * (1 + bonus) + 0.5)
 end
 
 -- Goods pay comes from its own stream of the order's seed, so it never shifts the draw.
@@ -180,7 +209,7 @@ local function goodsPay(order): (number, number)
 	return rng:Int(g.Gems[1], g.Gems[2]), rng:Int(g.Treats[1], g.Treats[2])
 end
 
-function Orders.Pay(order, m)
+function Orders.Pay(order, m, repLevel: number?)
 	local items = {}
 	if order.kind == "goods" then
 		local gems, treats = goodsPay(order)
@@ -190,7 +219,7 @@ function Orders.Pay(order, m)
 	end
 	local d = Rules.Difficulty[order.difficulty] or Rules.Difficulty.easy
 	if m then
-		table.insert(items, { kind = "coins", amount = Orders.Coins(m) })
+		table.insert(items, { kind = "coins", amount = Orders.Coins(m, repLevel) })
 	end
 	table.insert(items, { kind = "gems", amount = d.gems })
 	table.insert(items, { kind = "ribbons", amount = d.ribbons })
@@ -200,9 +229,107 @@ function Orders.Pay(order, m)
 	return items
 end
 
+function Orders.BuyerId(order): string
+	if type(order) == "table" and type(order.buyer) == "string" and Rules.BuyerById[order.buyer] then
+		return order.buyer
+	end
+	-- Orders drawn before 3.9 carry no id: the buyer was always read from the seed this way.
+	local seed = if type(order) == "table" then tonumber(order.seed) or 0 else 0
+	return Rules.BuyerIds[(seed % #Rules.BuyerIds) + 1]
+end
+
 function Orders.Buyer(order): string
-	local n = #Rules.Buyers
-	return Rules.Buyers[((order.seed or 0) % n) + 1]
+	return Rules.BuyerById[Orders.BuyerId(order)].name
+end
+
+-- Buyer reputation (3.9) -----------------------------------------------------------------------
+
+local Rep = Rules.Rep
+
+function Orders.RepPoints(order): number
+	return if type(order) == "table" then Rep.Points[order.difficulty] or 0 else 0
+end
+
+function Orders.RepLevel(points: number?): number
+	local level = 0
+	for i, need in Rep.Levels do
+		if (tonumber(points) or 0) >= need then
+			level = i
+		end
+	end
+	return level
+end
+
+function Orders.RepProgress(points: number?): (number, number, number?)
+	local level = Orders.RepLevel(points)
+	return level, Rep.Levels[level] or 0, Rep.Levels[level + 1]
+end
+
+function Orders.CoinBonus(level: number): number
+	return Rep.CoinBonus[level] or 0
+end
+
+function Orders.EggChanceAt(level: number): number
+	return if level >= Rep.EggLevel then Rep.EggChance else Rules.EggChance
+end
+
+function Orders.Favourite(rep): string?
+	if type(rep) ~= "table" then
+		return nil
+	end
+	local best, bestPoints = nil, -1
+	for _, id in Rules.BuyerIds do
+		local points = tonumber(rep[id]) or 0
+		if Orders.RepLevel(points) >= Rep.FavLevel and (points > bestPoints or (points == bestPoints and id < best)) then
+			best, bestPoints = id, points
+		end
+	end
+	return best
+end
+
+function Orders.FavSeed(userId: number, day: number): number
+	return Rng.seed("orders_fav", userId, day)
+end
+
+function Orders.DrawFavourite(userId: number, day: number, level: number, rep)
+	local buyer = Orders.Favourite(rep)
+	if not buyer then
+		return nil
+	end
+	local rng = Rng.new(Orders.FavSeed(userId, day))
+	local order = Orders.Make(rng:Int(1, SEED_MAX), level, false, rep, buyer)
+	order.id = string.format("%d-fav", day)
+	order.favourite = true
+	return order
+end
+
+function Orders.GiftsBetween(from: number, to: number)
+	local list = {}
+	for _, gift in Rep.Gifts do
+		if gift.level > from and gift.level <= to then
+			table.insert(list, gift)
+		end
+	end
+	return list
+end
+
+function Orders.GiftItems(gift, buyerId: string, userId: number)
+	local items = {}
+	if gift.gems then
+		table.insert(items, { kind = "gems", amount = gift.gems })
+	end
+	if gift.food then
+		-- The flavour comes from its own seed, so the gift never moves another roll.
+		local rng = Rng.new(Rng.seed("orders_rep_gift", userId, buyerId, gift.level))
+		table.insert(items, { kind = "food", id = rng:Pick(Config.Food.Ids), amount = gift.food })
+	end
+	if gift.decor then
+		local b = Rules.BuyerById[buyerId]
+		if b and b.decor then
+			table.insert(items, { kind = "decor", id = b.decor, amount = 1 })
+		end
+	end
+	return items
 end
 
 function Orders.RequirementText(order): string

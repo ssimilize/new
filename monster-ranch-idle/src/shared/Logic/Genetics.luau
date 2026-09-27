@@ -25,6 +25,15 @@
 	  Genetics.Grade(points) -> { grade, min, color }
 	  Genetics.Range(a, b, stat) -> (lo, hi)      a baby's possible points before surges
 	  Genetics.Preview(a, b) -> { stats = { { stat, lo, hi } }, surgeChance }
+
+	Breeding planner (update 3.9): the exact odds of Inherit (no sampling, never a seed):
+	  Genetics.Odds(a, b, stat) -> { [0..2 × MaxGene] = probability }
+	                                              the baby's points in `stat` (every key present)
+	  Genetics.GradeOdds(a, b, stat) -> { S, A, B, C, D }   the same, summed by grade
+	  Genetics.AtLeast(odds, grade) -> number     chance of `grade` or better; `odds` is either
+	                                              of the two tables above
+	  Genetics.GradeMin(grade) -> number?         the points a grade letter starts at
+	  Genetics.Grades(genes) -> string            one grade letter per stat, Stats order ("BACDS")
 ]]
 
 local Config = require(script.Parent.Parent.Config)
@@ -163,6 +172,87 @@ function Genetics.Preview(a, b)
 		table.insert(stats, { stat = stat, lo = lo, hi = hi })
 	end
 	return { stats = stats, surgeChance = Rules.SurgeChance + Rules.BigSurgeChance }
+end
+
+-- Breeding planner (3.9) ------------------------------------------------------------------
+
+-- One parent's contribution: either gene of the pair at 1/2, then the surge Inherit rolls
+-- (checked the same way: +2 at BigSurgeChance, else +1 at SurgeChance, capped; a gene
+-- already at MaxGene never surges).
+local function parentGene(g1: number, g2: number): { [number]: number }
+	local dist = {}
+	local big, small = Rules.BigSurgeChance, Rules.SurgeChance
+	for _, g in { g1, g2 } do
+		if g >= Rules.MaxGene then
+			dist[g] = (dist[g] or 0) + 0.5
+		else
+			local up2, up1 = math.min(Rules.MaxGene, g + 2), math.min(Rules.MaxGene, g + 1)
+			dist[up2] = (dist[up2] or 0) + 0.5 * big
+			dist[up1] = (dist[up1] or 0) + 0.5 * small
+			dist[g] = (dist[g] or 0) + 0.5 * (1 - big - small)
+		end
+	end
+	return dist
+end
+
+function Genetics.Odds(a, b, stat: string): { [number]: number }
+	local a1, a2 = Genetics.Pair(a, stat)
+	local b1, b2 = Genetics.Pair(b, stat)
+	local fromA, fromB = parentGene(a1, a2), parentGene(b1, b2)
+	local odds = {}
+	for points = 0, 2 * Rules.MaxGene do
+		odds[points] = 0
+	end
+	for ga, pa in fromA do
+		for gb, pb in fromB do
+			odds[ga + gb] += pa * pb
+		end
+	end
+	return odds
+end
+
+function Genetics.GradeOdds(a, b, stat: string)
+	local out = {}
+	for _, g in Rules.Grades do
+		out[g.grade] = 0
+	end
+	for points, p in Genetics.Odds(a, b, stat) do
+		local grade = Genetics.Grade(points).grade
+		out[grade] += p
+	end
+	return out
+end
+
+function Genetics.GradeMin(grade: string): number?
+	for _, g in Rules.Grades do
+		if g.grade == grade then
+			return g.min
+		end
+	end
+	return nil
+end
+
+function Genetics.AtLeast(odds, grade: string): number
+	local min = Genetics.GradeMin(grade)
+	if type(odds) ~= "table" or not min then
+		return 0
+	end
+	local total = 0
+	for key, p in odds do
+		local points = if type(key) == "number" then key else Genetics.GradeMin(key)
+		if points and points >= min and type(p) == "number" then
+			total += p
+		end
+	end
+	return math.clamp(total, 0, 1)
+end
+
+function Genetics.Grades(genes): string
+	local letters = {}
+	for _, stat in Rules.Stats do
+		table.insert(letters, Genetics.Grade(Genetics.Points(genes, stat)).grade)
+	end
+	return table.concat(letters)
 end
 
 return Genetics

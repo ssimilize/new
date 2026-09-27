@@ -6,11 +6,21 @@
 	  pods       = { [1..2] = { state = "idle"|"running", a = id|false, b = id|false, startedAt, endsAt, seed } }
 	  daily      = { day, counts = { [monsterId] = breeds used today } }   -- UTC day
 	  discovered = { [lineId] = true }                                      -- lines this player has bred
+	  target     = { stat, grade } | false        -- 3.9: the planner's goal (a gene stat, C/B/A/S)
+	  milestones = { [stat] = "A" | "S" }         -- 3.9: best grade already rewarded per stat
+	  (Version 2, update 3.9: Migrate adds target = false and milestones = {})
 
 	Session (session.Breeding): { podCount, breedsPerDay }
 
 	Actions: Breeding.Start { pod, a, b } · Breeding.Claim { pod } · Breeding.Cancel { pod }
-	  (Claim returns the baby and `surges`, how many of its genes surged: Logic/Genetics)
+	  · Breeding.SetTarget { stat?, grade? } (no stat clears the target)
+	  (Claim returns the baby, `surges`, how many of its genes surged: Logic/Genetics, and
+	  `targetMet`, whether the baby reached the target)
+
+	Pedigree (3.9): the baby gets `ped` (Logic/Pedigree) from its parents at claim time. A baby
+	with grade A or better in a stat pays MilestoneRibbons the first time for that stat, and
+	grade S again the first time (Rewards source "breeding_target"), target or not. A baby that
+	meets the target gets a celebration toast.
 
 	Rules:
 	  • unlock "breeding"; pods = 1 + Breeding Pod pass (Monetization:HasPass, optional)
@@ -33,12 +43,14 @@
 local Shared = game:GetService("ReplicatedStorage").Shared
 local BreedingLogic = require(Shared.Logic.Breeding)
 local Formulas = require(Shared.Logic.Formulas)
+local Genetics = require(Shared.Logic.Genetics)
+local Pedigree = require(Shared.Logic.Pedigree)
 local Rng = require(Shared.Logic.Rng)
 
 local Breeding = {
 	Name = "Breeding",
 	Dependencies = { "Currency", "Progression", "Monsters" },
-	OptionalDependencies = { "Monetization" },
+	OptionalDependencies = { "Monetization", "Rewards" },
 }
 
 local function idlePod()
@@ -46,13 +58,24 @@ local function idlePod()
 end
 
 Breeding.Profile = {
-	Version = 1,
+	Version = 2,
 	Default = function()
 		local pods = {}
 		for i = 1, 2 do
 			pods[i] = idlePod()
 		end
-		return { pods = pods, daily = { day = 0, counts = {} }, discovered = {} }
+		return { pods = pods, daily = { day = 0, counts = {} }, discovered = {}, target = false, milestones = {} }
+	end,
+	Migrate = function(section, fromVersion)
+		if fromVersion < 2 then
+			if type(section.target) ~= "table" then
+				section.target = false
+			end
+			if type(section.milestones) ~= "table" then
+				section.milestones = {}
+			end
+		end
+		return section
 	end,
 }
 
@@ -133,6 +156,47 @@ local function requireParent(player, id: string)
 		ctx:Fail(Formulas.DisplayName(m) .. " must be an Adult to breed")
 	end
 	return m
+end
+
+-- Pedigree & planner (3.9) ------------------------------------------------------------------
+
+-- Ribbons for the first A (or better) and the first S bred in each stat, in one grant; the
+-- Rewards card tells the player.
+local function payMilestones(player, s, genes)
+	if type(s.milestones) ~= "table" then
+		s.milestones = {}
+	end
+	local rules = Config.Breeding
+	local paid = 0
+	for _, stat in Config.Genetics.Stats do
+		local points = Genetics.Points(genes, stat)
+		local best = s.milestones[stat]
+		local bestMin = if best then Genetics.GradeMin(best) or -1 else -1
+		for _, grade in rules.MilestoneGrades do
+			local min = Genetics.GradeMin(grade)
+			if min and points >= min and min > bestMin then
+				paid += 1
+				s.milestones[stat] = grade
+				bestMin = min
+			end
+		end
+	end
+	if paid == 0 then
+		return
+	end
+	ctx:Dirty(player, "milestones")
+	local Rewards = ctx:GetSystem("Rewards")
+	if Rewards then
+		Rewards:Grant(player, { { kind = "ribbons", amount = paid * rules.MilestoneRibbons } }, "breeding_target")
+	end
+end
+
+local function meetsTarget(target, genes): boolean
+	if type(target) ~= "table" then
+		return false
+	end
+	local min = Genetics.GradeMin(target.grade)
+	return min ~= nil and Genetics.Points(genes, target.stat) >= min
 end
 
 -- Public API ------------------------------------------------------------------------------
@@ -229,6 +293,7 @@ local function claim(player, payload)
 	end
 
 	local spec, isHybrid = BreedingLogic.Roll(Rng.new(pod.seed), a, b)
+	spec.ped = Pedigree.Build(a, b)
 	local record, err = Monsters:Create(player, spec, "breed")
 	if not record then
 		ctx:Fail(err or "Your ranch is full. Sell monsters or upgrade the barn.")
@@ -247,6 +312,20 @@ local function claim(player, payload)
 		serverDiscovered[spec.line] = true
 	end
 
+	payMilestones(player, s, record.genes)
+	local targetMet = meetsTarget(s.target, record.genes)
+	if targetMet then
+		ctx:Notify(
+			player,
+			string.format(
+				"Breeding target reached! %s grade %s",
+				Config.Genetics.StatNames[s.target.stat] or s.target.stat,
+				Genetics.Grade(Genetics.Points(record.genes, s.target.stat)).grade
+			),
+			"reward"
+		)
+	end
+
 	ctx.Bus:Publish("Bred", player, { id = record.id, hybrid = isHybrid, discovery = discovery })
 	ctx.Bus:Publish("RanchXP", player, { amount = Config.Unlocks.XP.breed, reason = "breed" })
 	ctx.Analytics.Custom(player, "Breed", record.rarity, {
@@ -254,7 +333,12 @@ local function claim(player, payload)
 		hybrid = tostring(isHybrid),
 		variant = tostring(record.variant),
 	})
-	return { monster = record, hybridDiscovered = isHybrid and newForPlayer, surges = spec.surges or 0 }
+	return {
+		monster = record,
+		hybridDiscovered = isHybrid and newForPlayer,
+		surges = spec.surges or 0,
+		targetMet = targetMet,
+	}
 end
 
 local function cancel(player, payload)
@@ -265,6 +349,28 @@ local function cancel(player, payload)
 	freeParents(player, pod)
 	resetPod(player, payload.pod)
 	return nil
+end
+
+local function setTarget(player, payload)
+	Progression:Require(player, Config.Breeding.Unlock)
+	local s = section(player)
+	if payload.stat == nil then
+		s.target = false
+		ctx:Dirty(player, "target")
+		return { target = false }
+	end
+	if not table.find(Config.Genetics.Stats, payload.stat) then
+		ctx:Fail("That stat has no genes")
+	end
+	if payload.grade == nil then
+		ctx:Fail("Pick a grade for your target")
+	end
+	if not table.find(Config.Breeding.TargetGrades, payload.grade) then
+		ctx:Fail("A target grade is C, B, A or S")
+	end
+	s.target = { stat = payload.stat, grade = payload.grade }
+	ctx:Dirty(player, "target")
+	return { target = s.target }
 end
 
 -- Timers ------------------------------------------------------------------------------------
@@ -304,6 +410,7 @@ function Breeding.Init(context)
 	ctx.Net:Handle("Breeding.Start", start)
 	ctx.Net:Handle("Breeding.Claim", claim)
 	ctx.Net:Handle("Breeding.Cancel", cancel)
+	ctx.Net:Handle("Breeding.SetTarget", setTarget)
 
 	ctx.Bus:Subscribe("PassesChanged", function(player)
 		refreshSession(player)

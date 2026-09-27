@@ -25,7 +25,7 @@
 	Session (session.Trade):
 	  { status = "none"|"outgoing"|"incoming"|"open"|"countdown", partner = { userId, name }|false,
 	    mine = TradeSide, theirs = TradeSide, endsAt }
-	  TradeSide = { items = { { kind, id, appearance = Appearance|false, egg = eggType|false } }, ready, confirmed }
+	  TradeSide = { items = { { kind, id, appearance = Appearance|false, egg = eggType|false, parents = { nameA, nameB }|false } }, ready, confirmed }
 
 	Bus: publishes TradeCompleted { partner } and RanchXP for both players; fires Trade.Completed.
 	Eggs is optional; it is expected to expose Get/Remove/Insert/Count (and optionally
@@ -35,6 +35,7 @@
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Appearance = require(Shared.Logic.Appearance)
 local Formulas = require(Shared.Logic.Formulas)
+local Pedigree = require(Shared.Logic.Pedigree)
 
 local Trade = {
 	Name = "Trade",
@@ -118,11 +119,19 @@ end
 
 local function itemView(owner, item)
 	if item.kind == "monster" then
-		return { kind = "monster", id = item.id, appearance = Monsters:Appearance(owner, item.id) or false, egg = false }
+		local record = Monsters:Get(owner, item.id)
+		local parentA, parentB = Pedigree.ParentNames(record and record.ped)
+		return {
+			kind = "monster",
+			id = item.id,
+			appearance = Monsters:Appearance(owner, item.id) or false,
+			egg = false,
+			parents = if parentA and parentB then { parentA, parentB } else false, -- 3.9: names only
+		}
 	end
 	local Eggs = eggsSystem()
 	local record = Eggs and Eggs:Get(owner, item.id)
-	return { kind = "egg", id = item.id, appearance = false, egg = record and record.type or false }
+	return { kind = "egg", id = item.id, appearance = false, egg = record and record.type or false, parents = false }
 end
 
 local function sideView(owner, side)
@@ -224,6 +233,7 @@ end
 
 local function summarize(kind: string, id: string, record)
 	if kind == "monster" then
+		local parentA, parentB = Pedigree.ParentNames(record.ped)
 		return {
 			kind = "monster",
 			id = id,
@@ -235,6 +245,7 @@ local function summarize(kind: string, id: string, record)
 			lv = record.lv or 1,
 			stars = record.stars or 1,
 			gen = record.gen or 0,
+			parents = if parentA and parentB then { parentA, parentB } else nil, -- 3.9: names only
 		}
 	end
 	return { kind = "egg", id = id, type = record.type }
