@@ -149,7 +149,12 @@ function Create.Text(props: { [string]: any }): TextLabel
 	for k, v in props do
 		defaults[k] = v
 	end
+	-- R2-A11Y: keep the unscaled size so Theme.RescaleText can restore + rescale it later
+	-- (large text setting), without every caller needing to know about Theme.TextScale.
+	local baseTextSize = defaults.TextSize
+	defaults.TextSize = baseTextSize * Theme.TextScale
 	local label = Create.New("TextLabel", defaults)
+	label:SetAttribute("BaseTextSize", baseTextSize)
 	if stroke ~= false then
 		local isLight = defaults.TextColor3 == Theme.Colors.White or stroke == true
 		if isLight then

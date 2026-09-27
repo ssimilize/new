@@ -9,7 +9,9 @@
 	  · Boss.Result → the Stampede result popup (rank, share, rewards, egg), shown even when
 	    the Boss screen is closed. At the arena (StampedeArena:Fountain) the popup waits for the
 	    loot fountain out of the fallen giant, which already flew the rewards.
-	  · profile.Settings.lowGraphics → UI/Anim.enabled (reduced motion).
+	  · profile.Settings.lowGraphics / .reducedMotion → UI/Anim.enabled (reduced motion; either
+	    one is enough). R2-A11Y: also mirrors .colorBlind → Theme.ColorBlind and .textSize →
+	    Theme.TextScale + Theme.RescaleText(ctx.UI.Gui) (live, no rejoin: see Theme.luau).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -313,7 +315,13 @@ function Broadcasts.Init(context)
 				banner:Destroy()
 			end
 		end
-		Anim.enabled = settings.lowGraphics ~= true
+		Anim.enabled = settings.lowGraphics ~= true and settings.reducedMotion ~= true
+		Theme.ColorBlind = settings.colorBlind == true
+		local nextScale = if settings.textSize == "large" then 1.15 else 1
+		if Theme.TextScale ~= nextScale then
+			Theme.TextScale = nextScale
+			Theme.RescaleText(ctx.UI.Gui)
+		end
 	end)
 
 	ctx.Net:On("Social.Broadcast", show)

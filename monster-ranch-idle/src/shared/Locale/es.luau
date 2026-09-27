@@ -2426,4 +2426,13 @@ return {
 	["You haven't earned that gear yet"] = "Aún no has ganado ese equipo",
 	["You're already in this race"] = "Ya estás en esta carrera",
 	["boost"] = "turbo",
+
+	-- R2-A11Y
+	["Colour-blind mode"] = "Modo daltónico",
+	["Add letters and symbols to rarity and element colours"] = "Añade letras y símbolos a los colores de rareza y elemento",
+	["Reduced motion"] = "Movimiento reducido",
+	["Turn off camera shake and camera swoops"] = "Desactiva el temblor y los giros bruscos de cámara",
+	["Text size"] = "Tamaño del texto",
+	["Make menu text bigger"] = "Agranda el texto de los menús",
+	["Large"] = "Grande",
 }
