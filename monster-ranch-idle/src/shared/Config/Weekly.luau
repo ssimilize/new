@@ -142,6 +142,14 @@ Weekly.Pool = {
 		filter = { seasonal = true },
 		unlock = "fishing",
 	},
+	{
+		id = "stars_5",
+		family = "observatory",
+		text = "Make 5 star sightings",
+		topic = "StarSighted",
+		target = 5,
+		unlock = "observatory",
+	},
 }
 
 Weekly.ById = {}

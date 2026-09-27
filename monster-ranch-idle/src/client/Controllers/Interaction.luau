@@ -9,6 +9,7 @@
 	  own kitchen      Kitchen.Door "Cook" -> Router:Open("Kitchen")   (3.10)
 	  own pond         FishingPond.Dock -> Router:Open("Fishing")   (3.10; the screen shows its own lock)
 	  own dig site     DigSite.Rack -> Router:Open("DigSite")        (3.11; the screen shows its own lock)
+	  own observatory  Observatory.Telescope -> Router:Open("Observatory")  (3.12; the screen shows its own lock)
 
 	Ranch prompts exist only on the local player's own plot (found in global.Plots by UserId)
 	and are rebuilt when the plot or the number of owned pens changes. Prompts are created on
@@ -210,6 +211,14 @@ local function buildRanchPrompts(index: number?, penCount: number)
 			open("DigSite")
 		end)
 		prompt.Name = "DigPrompt"
+	end
+	local observatory = plot:FindFirstChild("Observatory")
+	local scope = observatory and observatory:FindFirstChild("Telescope")
+	if scope and scope:IsA("BasePart") then
+		local prompt = addPrompt(ranchPrompts, scope, scope.Position, "Stargaze", "Observatory", PROMPT_DISTANCE, function()
+			open("Observatory")
+		end)
+		prompt.Name = "StargazePrompt"
 	end
 end
 

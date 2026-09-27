@@ -43,6 +43,7 @@ local Seasons = require(Shared.Logic.Seasons)
 local Fishing = {
 	Name = "Fishing",
 	Dependencies = { "Progression", "Monsters", "Rewards" },
+	OptionalDependencies = { "Observatory" }, -- 3.12: the rare_fish star perk
 }
 
 Fishing.Profile = {
@@ -67,6 +68,7 @@ Fishing.Profile = {
 local ctx
 local Cfg -- Config.Fishing
 local Progression, Monsters, Rewards
+local Observatory -- 3.12, optional (found in Start)
 
 local runs = {} -- [player] = { id, seed, bonus, season, startedAt }
 local nextRun = 0
@@ -204,6 +206,11 @@ local function start(player)
 	nextRun += 1
 	local seed = ctx.Rng:Int(1, 2 ^ 30)
 	local bonus = Fishing:Bonus(player)
+	-- 3.12: the Observatory's rare_fish perk adds to the bonus (nothing added at 0).
+	local stars = if Observatory then Observatory:Perk(player, "rare_fish") else 0
+	if type(stars) == "number" and stars > 0 then
+		bonus += stars
+	end
 	local season = Seasons.At(ctx:Now()).id
 	runs[player] = { id = nextRun, seed = seed, bonus = bonus, season = season, startedAt = ctx.Clock.Precise() }
 	return {
@@ -343,6 +350,10 @@ function Fishing.Init(context)
 			ctx:Dirty(player, "buddy")
 		end
 	end)
+end
+
+function Fishing.Start()
+	Observatory = ctx:GetSystem("Observatory")
 end
 
 function Fishing.PlayerAdded(player)

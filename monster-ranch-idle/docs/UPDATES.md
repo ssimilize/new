@@ -3,6 +3,36 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.12 · Honey & stars
+
+### Observatory & Star Charts
+
+**For players**
+- From Ranch Level 19 a small domed observatory stands in the north strip of every ranch, west of
+  the Apiary's spot. The "Stargaze" prompt on its telescope opens the Observatory.
+- The Observatory works at night only (the ranch's day/night cycle). By day the screen shows when
+  night falls.
+- Three sightings a night. A sighting deals 5 to 7 stars and a faint line pattern; tap the stars in
+  the traced order within 12 seconds. A good trace logs one observation on its chart; a miss still
+  uses the sighting.
+- 12 Star Charts: 8 all year and one for each season (only observed in its season). Three
+  observations chart it and grant its perk for good: faster eggs, more ranch income, better odds of
+  rare fish, more expedition loot, quicker Dojo training, extra hive hours or ranch appeal. Each
+  kind of perk has a cap.
+- New weekly goal: make 5 star sightings.
+
+**In the code**
+- `Config/Observatory` (charts, perks and caps, timing), `Logic/Observatory` (night clock, seeded sky,
+  tap check, perk sums), `Systems/Observatory` (actions `Observatory.Start` / `Observatory.Submit`,
+  one-shot sighting ids, a private seed secret, `Observatory:Perk` / `Observatory:Charted`), screen
+  `UI/Screens/Observatory`, the prompt in `Controllers/Interaction`, the building in
+  `World/Build.luau` (`Config.World.Observatory`, keep-out in `Config/Decor`).
+- Perks: an Eggs speed provider, a Ranch rate modifier, an Expeditions loot modifier and a Tourists
+  appeal bonus (all registered in Observatory's Start); Fishing adds `rare_fish` to the cast bonus
+  and the Dojo takes `dojo_time` off the training time (optional lookups in their Start).
+  `hive_hours` is for the Apiary. Topics: `StarSighted` (new, the weekly goal `stars_5`) and
+  `StarCharted`.
+
 ## 3.11 · Seasons & secrets
 
 ### Dig Site & Fossils
