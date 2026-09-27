@@ -99,6 +99,8 @@ Unlocks.Features = {
 	-- 3.10 · Kitchen & Pantry (Config/Kitchen)
 	kitchen = 9,
 	kitchen_slot_3 = 30,
+	-- 3.10 · Gene Lab (Config/GeneLab)
+	gene_lab = 21,
 }
 
 -- Player-facing names for the level-up popup.
@@ -155,6 +157,7 @@ Unlocks.Names = {
 	tourists = "Ranch Tourists",
 	kitchen = "Kitchen",
 	kitchen_slot_3 = "Kitchen slot 3",
+	gene_lab = "Gene Lab",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

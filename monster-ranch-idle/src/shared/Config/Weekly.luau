@@ -79,6 +79,14 @@ Weekly.Pool = {
 		unlock = "arena",
 	},
 	{
+		id = "genelab_5",
+		family = "genelab",
+		text = "Tune 5 genes in the Gene Lab",
+		topic = "GeneTuned",
+		target = 5,
+		unlock = "gene_lab",
+	},
+	{
 		id = "bounty_3",
 		family = "bounties",
 		text = "Defeat 3 bounties",

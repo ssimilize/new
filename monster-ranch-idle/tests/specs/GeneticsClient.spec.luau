@@ -89,7 +89,9 @@ return function(t)
 			-- The middle column still holds everything with the gene line added: its rows and
 			-- the list's gaps add up to no more than the column's height (the mock does not lay
 			-- out lists, so this sums the sizes the way UIListLayout would).
-			local middle = line.Parent
+			-- (3.10: the gene line sits in a row with the Gene Lab button.)
+			local lineRow = if line.Parent.Name == "GenesRow" then line.Parent else line
+			local middle = lineRow.Parent
 			local layout = middle:FindFirstChildOfClass("UIListLayout")
 			local used, rows = 0, 0
 			for _, child in middle:GetChildren() do
@@ -99,7 +101,7 @@ return function(t)
 				end
 			end
 			used += layout.Padding.Offset * (rows - 1)
-			expect(line.LayoutOrder).toBeGreaterThan(luck.Parent.LayoutOrder)
+			expect(lineRow.LayoutOrder).toBeGreaterThan(luck.Parent.LayoutOrder)
 			expect(used).toBeAtMost(middle.Size.Y.Offset)
 			expectClean(c)
 		end)

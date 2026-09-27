@@ -26,6 +26,12 @@
 	  Genetics.Range(a, b, stat) -> (lo, hi)      a baby's possible points before surges
 	  Genetics.Preview(a, b) -> { stats = { { stat, lo, hi } }, surgeChance }
 
+	Gene locks (update 3.10, the Gene Lab): Inherit, Range, Preview, Odds and GradeOdds take two
+	optional trailing arguments lockA, lockB: the stat each parent has locked (its record's
+	`geneLock`) or nil. A parent passes its BETTER gene of its locked stat for certain; surges
+	still apply after. Without locks every result is exactly as before. Inherit draws the same
+	random numbers with or without locks, so a lock never moves any other roll.
+
 	Breeding planner (update 3.9): the exact odds of Inherit (no sampling, never a seed):
 	  Genetics.Odds(a, b, stat) -> { [0..2 × MaxGene] = probability }
 	                                              the baby's points in `stat` (every key present)
@@ -143,13 +149,19 @@ local function surge(rng, gene: number): (number, boolean)
 	return math.min(Rules.MaxGene, gene + gain), true
 end
 
-function Genetics.Inherit(rng, a, b)
+function Genetics.Inherit(rng, a, b, lockA: string?, lockB: string?)
 	local genes, surges = {}, 0
 	for _, stat in Rules.Stats do
 		local a1, a2 = Genetics.Pair(a, stat)
 		local b1, b2 = Genetics.Pair(b, stat)
 		local fromA = if rng:Int(1, 2) == 1 then a1 else a2
 		local fromB = if rng:Int(1, 2) == 1 then b1 else b2
+		if lockA == stat then
+			fromA = math.max(a1, a2)
+		end
+		if lockB == stat then
+			fromB = math.max(b1, b2)
+		end
 		local surgedA, surgedB
 		fromA, surgedA = surge(rng, fromA)
 		fromB, surgedB = surge(rng, fromB)
@@ -159,16 +171,18 @@ function Genetics.Inherit(rng, a, b)
 	return genes, surges
 end
 
-function Genetics.Range(a, b, stat: string): (number, number)
+function Genetics.Range(a, b, stat: string, lockA: string?, lockB: string?): (number, number)
 	local a1, a2 = Genetics.Pair(a, stat)
 	local b1, b2 = Genetics.Pair(b, stat)
-	return math.min(a1, a2) + math.min(b1, b2), math.max(a1, a2) + math.max(b1, b2)
+	local loA = if lockA == stat then math.max(a1, a2) else math.min(a1, a2)
+	local loB = if lockB == stat then math.max(b1, b2) else math.min(b1, b2)
+	return loA + loB, math.max(a1, a2) + math.max(b1, b2)
 end
 
-function Genetics.Preview(a, b)
+function Genetics.Preview(a, b, lockA: string?, lockB: string?)
 	local stats = {}
 	for _, stat in Rules.Stats do
-		local lo, hi = Genetics.Range(a, b, stat)
+		local lo, hi = Genetics.Range(a, b, stat, lockA, lockB)
 		table.insert(stats, { stat = stat, lo = lo, hi = hi })
 	end
 	return { stats = stats, surgeChance = Rules.SurgeChance + Rules.BigSurgeChance }
@@ -176,10 +190,14 @@ end
 
 -- Breeding planner (3.9) ------------------------------------------------------------------
 
--- One parent's contribution: either gene of the pair at 1/2, then the surge Inherit rolls
--- (checked the same way: +2 at BigSurgeChance, else +1 at SurgeChance, capped; a gene
--- already at MaxGene never surges).
-local function parentGene(g1: number, g2: number): { [number]: number }
+-- One parent's contribution: either gene of the pair at 1/2 (the better one for certain when
+-- `locked`, 3.10), then the surge Inherit rolls (checked the same way: +2 at BigSurgeChance,
+-- else +1 at SurgeChance, capped; a gene already at MaxGene never surges).
+local function parentGene(g1: number, g2: number, locked: boolean?): { [number]: number }
+	if locked then
+		g1 = math.max(g1, g2)
+		g2 = g1
+	end
 	local dist = {}
 	local big, small = Rules.BigSurgeChance, Rules.SurgeChance
 	for _, g in { g1, g2 } do
@@ -195,10 +213,10 @@ local function parentGene(g1: number, g2: number): { [number]: number }
 	return dist
 end
 
-function Genetics.Odds(a, b, stat: string): { [number]: number }
+function Genetics.Odds(a, b, stat: string, lockA: string?, lockB: string?): { [number]: number }
 	local a1, a2 = Genetics.Pair(a, stat)
 	local b1, b2 = Genetics.Pair(b, stat)
-	local fromA, fromB = parentGene(a1, a2), parentGene(b1, b2)
+	local fromA, fromB = parentGene(a1, a2, lockA == stat), parentGene(b1, b2, lockB == stat)
 	local odds = {}
 	for points = 0, 2 * Rules.MaxGene do
 		odds[points] = 0
@@ -211,12 +229,12 @@ function Genetics.Odds(a, b, stat: string): { [number]: number }
 	return odds
 end
 
-function Genetics.GradeOdds(a, b, stat: string)
+function Genetics.GradeOdds(a, b, stat: string, lockA: string?, lockB: string?)
 	local out = {}
 	for _, g in Rules.Grades do
 		out[g.grade] = 0
 	end
-	for points, p in Genetics.Odds(a, b, stat) do
+	for points, p in Genetics.Odds(a, b, stat, lockA, lockB) do
 		local grade = Genetics.Grade(points).grade
 		out[grade] += p
 	end

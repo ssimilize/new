@@ -92,6 +92,41 @@ players get and where it lives in the code.
   a Decor keep-out zone; the "Cook" prompt in `Controllers/Interaction`.
 - Unlocks: `kitchen` 9, `kitchen_slot_3` 30.
 
+### Gene Lab
+
+**For players**
+- From Ranch Level 21 the Gene Lab opens from Monster Detail (the Gene Lab button on the genes
+  line) and from the Breeding Barn's header. No new HUD button.
+- **Tune:** pick an Adult and a stat. The weaker gene of that stat's pair (the first when both
+  are equal) gains +1 on a success. Cost: 20 × (gene + 1) Stardust, spent whatever happens.
+  Odds: 90% for genes 0–4, 60% for 5–6, 35% for 7. The Lab stops at 8 (9 and 10 only come from
+  breeding surges). 5 tunes per UTC day. The screen shows the odds, the cost and the tunes left
+  before every tune, and the result with a pulse or a shake.
+- **Gene lock:** 5 Star Shards lock one stat on one Adult. Its next baby gets its better gene
+  of that stat for certain (surges still apply). One lock per monster; locking another stat
+  replaces it with no refund (the confirm says so).
+- The breeding planner counts locks in every chance and marks a locked stat "Locked".
+- New weekly goal: "Tune 5 genes in the Gene Lab" (family `genelab`; every tune counts,
+  success or not).
+
+**In the code**
+- `Config/GeneLab`, `Logic/GeneLab` (Weaker, Cost, Chance, Seed, Roll, TunesLeft),
+  `Systems/GeneLab` (Profile v1 `{ day, tunes, attempts }`; actions `GeneLab.Tune`,
+  `GeneLab.Lock`; Bus `GeneTuned { stat, success }`), `Screens/GeneLab`.
+- Rolls are seeded by ("genelab", userId, monsterId, attempt) with the saved attempt counter,
+  so a rejoin never rerolls. Busy monsters (expedition, breeding, job, trade) are refused
+  through `Monsters:Available`.
+- `Logic/Genetics` Inherit, Range, Preview, Odds and GradeOdds take optional `lockA, lockB`
+  (the parents' `geneLock`); without them nothing changes, and Inherit draws the same random
+  numbers either way, so a lock never moves another roll. `Logic/Breeding` Roll and Outcomes
+  pass the records' locks.
+- The lock lives on the monster record (`geneLock`). `Breeding.Claim` clears both parents'
+  locks after the baby is made; a cancelled pod (or a claim refused for a full ranch) keeps
+  them. `Monsters:Insert` clears it, so a traded or Market-listed monster arrives unlocked
+  (a listing taken back or a rolled-back trade also comes back unlocked).
+- Tests: `GeneLab.spec`, `GeneLabClient.spec`; `GeneticsClient.spec` reads the gene line
+  through its new row.
+
 ## 3.9 · Family and fortune
 
 ### Buyer reputation

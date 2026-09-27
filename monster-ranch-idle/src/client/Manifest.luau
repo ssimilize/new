@@ -98,6 +98,7 @@ return {
 		"Jobs", -- 3.7 · Ranch Jobs
 		"Guestbook", -- 3.10 · Ranch Tourists
 		"Kitchen", -- 3.10 · Kitchen & Pantry
+		"GeneLab", -- 3.10 · Gene Lab (from Monster Detail and the Breeding Barn)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

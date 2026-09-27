@@ -285,6 +285,7 @@ function Monsters:Insert(player, record, source: string)
 	copy.genes = Genetics.Fill(record.genes, ctx.Rng)
 	copy.loc, copy.pen, copy.busy, copy.locked = "barn", 0, false, false
 	copy.acc = nil
+	copy.geneLock = nil -- 3.10: a Gene Lab lock never travels with a traded or listed monster
 	return insert(player, copy, source)
 end
 

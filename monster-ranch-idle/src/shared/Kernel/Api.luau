@@ -393,6 +393,20 @@ Api.Actions = {
 		rate = 2,
 		returns = "{ rewards: { Reward } }",
 	},
+	-- Gene Lab (3.10) · see Config/GeneLab and Logic/GeneLab ------------------------------------
+	-- Tune: the weaker gene of `stat` on an owned, free Adult gains +1 on a seeded success roll.
+	["GeneLab.Tune"] = {
+		schema = T.struct({ id = id, stat = T.enum(Config.Genetics.Stats) }),
+		rate = 2,
+		returns = "{ success: boolean, stat: string, gene: number, cost: number, chance: number, tunesLeft: number }",
+	},
+	-- Lock: the Adult's next baby gets its better gene of `stat` (Star Shards, replaces a lock).
+	["GeneLab.Lock"] = {
+		schema = T.struct({ id = id, stat = T.enum(Config.Genetics.Stats) }),
+		rate = 2,
+		returns = "{ stat: string, cost: number }",
+	},
+
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
 		schema = T.struct({ index = T.integer(1, Config.Orders.PerDay + 1), id = T.optional(id) }), -- 3.9: PerDay + 1 is the favourite buyer order
@@ -705,6 +719,7 @@ Api.State = {
 		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id }, bounty = { week, list = { { region, stage, name, line, seed, done } }, count } }",
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true }, target = { stat, grade } | false, milestones = { [stat]: grade } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
+		GeneLab = "{ day, tunes, attempts }  -- 3.10: tunes used on UTC `day`, lifetime attempts (the roll seed)",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
@@ -825,6 +840,7 @@ Api.Topics = {
 	TitanDamage = "(player, { damage: number, won: boolean })  -- per participant when a titan invasion ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
+	GeneTuned = "(player, { stat: string, success: boolean })  -- 3.10: every Gene Lab tune, success or not",
 	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
 	TouristVisited = "(player, { stars: number })  -- 3.10: one Ranch Tourist visited (online or while away)",
 	DishCooked = "(player, { dish: string, count: number })  -- 3.10: dishes collected from the Kitchen into the Pantry",
