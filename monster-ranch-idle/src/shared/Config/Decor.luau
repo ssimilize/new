@@ -320,6 +320,12 @@ add("candle_lantern", "Candle Lantern", "light", "lantern", { 2, 2 }, { token = 
 add("spooky_fence", "Spooky Fence", "fence", "fence", { 4, 1 }, { token = 60 }, "#4A3A5A", nil, ev("harvestmoon", { mat = "Wood" }))
 add("apple_bob", "Apple Bobbing Tub", "toy", "tub", { 3, 3 }, { token = 120 }, "#8A5A2B", "#E5484D", ev("harvestmoon", TOY))
 
+-- Update 3.8 · Arena season cups: never sold (price = nil), granted by arena season rewards
+-- (Config.Arena.SeasonRewards). `reward` names what grants the piece.
+add("arena_cup_gold", "Gold Arena Cup", "statue", "cup", { 2, 2 }, nil, "#F5C630", "#8A5A2B", { reward = "arena", mat = "Foil" })
+add("arena_cup_crystal", "Crystal Arena Cup", "statue", "cup", { 2, 2 }, nil, "#A9DEFF", "#7CC7FF", { reward = "arena", mat = "Glass" })
+add("arena_cup_champion", "Champion Arena Cup", "statue", "cup", { 2, 2 }, nil, "#FF7AC8", "#F5C630", { reward = "arena", mat = "Foil" })
+
 for _, d in Decor.List do
 	d.mesh = d.mesh or ""
 	d.kind = d.kind or "fun"

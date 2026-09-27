@@ -106,7 +106,7 @@ local function drawBoard()
 		return
 	end
 	local G = state()
-	local board = Boards.Boards[boardIndex]
+	local board = Boards.Weekly[boardIndex]
 	local rows = G.global and G.global[board.id]
 	local scopeText = "This week · everywhere"
 	if type(rows) ~= "table" or #rows == 0 then
@@ -150,7 +150,7 @@ function Leaderboards.Start()
 		drawBoard()
 		while boardGui and boardGui.Parent do
 			task.wait(CYCLE)
-			boardIndex = boardIndex % #Boards.Boards + 1
+			boardIndex = boardIndex % #Boards.Weekly + 1
 			drawBoard()
 		end
 	end)

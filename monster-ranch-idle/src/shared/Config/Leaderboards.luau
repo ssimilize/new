@@ -4,6 +4,10 @@
 	week). The week's #1 on each global board gets that board's nameplate title for the
 	whole following week.
 
+	period: "week" (the default) or "season" (3.8: the "arena" board runs for a whole arena
+	season, Logic/Arena.SeasonAt, keyed arena_s<N>, and has no weekly champion or title).
+	Leaderboards.Weekly lists the weekly boards only (the Leaderboards screen and hub board).
+
 	short: the tab label (the full name is shown on the board).
 	format: how values are shown. Values are stored as whole numbers; weights are stored in
 	hundredths of a kilogram (see WeightScale).
@@ -31,12 +35,19 @@ Leaderboards.Boards = {
 		unit = "likes",
 		color = "#FF6FA8",
 	},
+	-- Update 3.8: arena rating this arena season (Arena:SeasonRating). Shown in the Arena screen.
+	{ id = "arena", name = "Arena Season", short = "Arena", format = "count", color = "#FF7AC8", period = "season" },
 }
 
 Leaderboards.ById = {}
+Leaderboards.Weekly = {}
 for i, board in Leaderboards.Boards do
 	board.order = i
+	board.period = board.period or "week"
 	Leaderboards.ById[board.id] = board
+	if board.period == "week" then
+		table.insert(Leaderboards.Weekly, board)
+	end
 end
 
 -- Weeks start on Saturday at 15:00 UTC (10:00 ET in winter), with the weekly update.
@@ -57,9 +68,13 @@ function Leaderboards.WeekEndsAt(week: number): number
 	return Leaderboards.WeekAnchor + (week + 1) * Leaderboards.WeekSeconds
 end
 
--- The DataStore key for one board in one week.
-function Leaderboards.Key(boardId: string, week: number): string
-	return boardId .. "_w" .. tostring(week)
+-- The DataStore key for one board in one period: a week, or an arena season for season boards.
+function Leaderboards.Key(boardId: string, n: number): string
+	local board = Leaderboards.ById[boardId]
+	if board and board.period == "season" then
+		return boardId .. "_s" .. tostring(n)
+	end
+	return boardId .. "_w" .. tostring(n)
 end
 
 return Leaderboards

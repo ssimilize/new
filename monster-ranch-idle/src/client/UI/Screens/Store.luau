@@ -382,6 +382,9 @@ return {
 			end
 			local decorOwned = shop.decor or {}
 			for i, d in Config.Decor.List do
+				if d.price == nil then
+					continue -- 3.8: reward-only pieces (arena season cups) are never sold
+				end
 				local cell = Util.card({ LayoutOrder = i, Parent = grid })
 				local art = Sheet.icon("decor_" .. d.id, {
 					AnchorPoint = Vector2.new(0.5, 0),

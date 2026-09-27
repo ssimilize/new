@@ -203,6 +203,10 @@ Mastery.Ladder = {
 for _, item in require(script.Parent.Codex).Items do
 	table.insert(Mastery.Rewards, item)
 end
+-- Update 3.8: arena season titles and the Champion's Crown aura (Config/Arena.SeasonItems).
+for _, item in require(script.Parent.Arena).SeasonItems do
+	table.insert(Mastery.Rewards, item)
+end
 
 Mastery.EquipKinds = { "aura", "flourish", "plinth", "title" }
 

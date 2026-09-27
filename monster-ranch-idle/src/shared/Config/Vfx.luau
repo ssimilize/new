@@ -878,6 +878,8 @@ Vfx.Mastery = {
 }
 -- Glow-up O: the Codex Crown aura, for completing the whole Codex (Config/Codex.Items).
 Vfx.Mastery.codexCrown = masteryTwinkle("star5", { { 0, "#8FD3FF" }, { 0.5, "#F2C230" }, { 1, "#FF7AC8" } }, 1.5, { 1.2, 1.8 }, 0.5)
+-- Update 3.8: the Champion's Crown aura, for finishing an arena season in Champion (Config/Arena).
+Vfx.Mastery.championsCrown = masteryTwinkle("star5", { { 0, "#FF7AC8" }, { 0.5, "#F5C630" }, { 1, "#FF7AC8" } }, 1.6, { 1.2, 1.8 }, 0.55)
 
 -- ─── World landmarks ─────────────────────────────────────────────────────────────────
 

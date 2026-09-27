@@ -37,6 +37,7 @@ function MockAdapters.network()
 		prices = {}, -- price history records by item key
 		marketDown = false,
 		arena = {}, -- Arena records by userId (2.1)
+		arenaIndex = {}, -- [IndexName(season)] = { [userId] = rating } (3.8)
 		arenaDown = false,
 		hubBoard = {}, -- Trade Board ads by id (3.0)
 		hubDown = false,
@@ -322,8 +323,16 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 	}
 
 	-- Arena (2.1), shared through options.network; network.arenaDown fails every call.
+	-- 3.8: ratings live in one index per season (network.arenaIndex[IndexName(season)]), like the
+	-- real OrderedDataStores; Near only reads the season it is asked for.
 	network.arena = network.arena or {}
+	network.arenaIndex = network.arenaIndex or {}
+	local function arenaIndexName(season)
+		local n = tonumber(season) or 0
+		return if n > 0 then "MonsterRanch_ArenaRatings_s" .. tostring(n) else "MonsterRanch_ArenaRatings_v1"
+	end
 	a.Arena = {
+		IndexName = arenaIndexName,
 		Get = function(userId)
 			if network.arenaDown then
 				return false, nil
@@ -340,17 +349,23 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 			end
 			return true, deepCopy(result)
 		end,
-		Index = function(_userId, _rating)
-			return not network.arenaDown
+		Index = function(userId, rating, season)
+			if network.arenaDown then
+				return false
+			end
+			local name = arenaIndexName(season)
+			network.arenaIndex[name] = network.arenaIndex[name] or {}
+			network.arenaIndex[name][userId] = math.floor(rating)
+			return true
 		end,
-		Near = function(rating, window, count)
+		Near = function(rating, window, count, season)
 			if network.arenaDown then
 				return false, {}
 			end
 			local list = {}
-			for userId, record in network.arena do
-				if record.team and math.abs((record.rating or 0) - rating) <= window then
-					table.insert(list, { userId = userId, rating = record.rating })
+			for userId, value in network.arenaIndex[arenaIndexName(season)] or {} do
+				if math.abs(value - rating) <= window then
+					table.insert(list, { userId = userId, rating = value })
 				end
 			end
 			table.sort(list, function(x, y)

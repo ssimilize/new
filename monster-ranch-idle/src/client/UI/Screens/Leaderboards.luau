@@ -51,16 +51,17 @@ function Leaderboards.Build(ctx)
 		end,
 	})
 
-	local selected = Boards.Boards[1].id
+	local selected = Boards.Weekly[1].id
 	local scope = "server"
 	local render
 
 	local tabList = {}
-	for _, board in Boards.Boards do
-		-- Short labels at an even width so every board fits in one row (6 boards since 3.0).
+	for _, board in Boards.Weekly do
+		-- Short labels at an even width so every board fits in one row (6 boards since 3.0). The
+		-- season board (3.8, arena) lives in the Arena screen's Season tab.
 		table.insert(
 			tabList,
-			{ id = board.id, text = board.short or board.name, width = math.floor((812 - 8 * (#Boards.Boards - 1)) / #Boards.Boards) }
+			{ id = board.id, text = board.short or board.name, width = math.floor((812 - 8 * (#Boards.Weekly - 1)) / #Boards.Weekly) }
 		)
 	end
 	local tabs = Widgets.Tabs({

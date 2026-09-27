@@ -3,14 +3,20 @@
 	Arena screen.
 
 	Arena.Snapshot(m) -> Fighter          -- what a defense team stores: { line, form, look }
-	Arena.Normalize(fighter) -> record    -- the BattleSim record every fighter uses
-	Arena.Fight(attack, defense, seed) -> BattleReplay   -- attack/defense = { Fighter }
+	Arena.Normalize(fighter, featured?) -> record   -- the BattleSim record every fighter uses;
+	                                      -- featured = { [lineId] = true } (3.8) adds FeaturedBoost
+	Arena.Fight(attack, defense, seed, season?) -> BattleReplay   -- attack/defense = { Fighter };
+	                                      -- season (3.8) boosts that season's featured lines, both sides
 	Arena.Expected(a, b) -> 0..1          -- Elo win chance of rating a against b
 	Arena.Delta(a, b, won) -> points      -- rating change for `a`
 	Arena.Tier(rating) -> tier def
 	Arena.Bot(rating, seed) -> { key, name, rating, team = { Fighter }, bot = true }
 	Arena.SeasonAt(now) -> number        -- 3.8: the season running at `now` (0 before season 1)
 	Arena.SeasonStartsAt(season), Arena.SeasonEndsAt(season) -> unix time
+	Arena.Featured(season) -> { lineId }  -- 3.8: the season's featured lines (none for season 0)
+	Arena.FeaturedSet(season) -> { [lineId] = true }
+	Arena.SoftReset(rating) -> number     -- one season's reset: ResetFraction back to StartRating
+	Arena.Reseason(record, season) -> boolean   -- brings a stored record into `season` (in place)
 ]]
 
 local Config = require(script.Parent.Parent.Config)
@@ -27,7 +33,7 @@ function Arena.Snapshot(m)
 	return { line = m.line, form = m.form, look = Appearance.Of(m) }
 end
 
-function Arena.Normalize(fighter)
+function Arena.Normalize(fighter, featured: { [string]: boolean }?)
 	local def = Species.ById[fighter.line]
 	assert(def, "unknown line " .. tostring(fighter.line))
 	local form = Species.Form(fighter.line, 3, fighter.form)
@@ -46,16 +52,18 @@ function Arena.Normalize(fighter)
 		mood = 100,
 		name = "",
 		look = fighter.look,
+		statMult = if featured and featured[fighter.line] then 1 + Cfg.Season.FeaturedBoost else nil,
 	}
 end
 
-function Arena.Fight(attack, defense, seed: number)
+function Arena.Fight(attack, defense, seed: number, season: number?)
+	local featured = Arena.FeaturedSet(season or 0)
 	local a, d = {}, {}
 	for _, f in attack do
-		table.insert(a, Arena.Normalize(f))
+		table.insert(a, Arena.Normalize(f, featured))
 	end
 	for _, f in defense do
-		table.insert(d, Arena.Normalize(f))
+		table.insert(d, Arena.Normalize(f, featured))
 	end
 	return BattleSim.Simulate(a, d, seed, { maxTurns = Cfg.MaxTurns })
 end
@@ -134,6 +142,55 @@ end
 
 function Arena.SeasonEndsAt(season: number): number
 	return Arena.SeasonStartsAt(season + 1)
+end
+
+-- The season's featured lines: `Featured` distinct lines from the bot pool (adult lines, no
+-- event or raid lines), seeded by the season number alone, so every server agrees.
+local featuredCache = {}
+function Arena.Featured(season: number): { string }
+	if season <= 0 then
+		return {}
+	end
+	if not featuredCache[season] then
+		local rng = Rng.new(Rng.seed("arena_featured", season))
+		local pool = table.clone(botPool())
+		local list = {}
+		while #list < math.min(Cfg.Season.Featured, #pool) do
+			table.insert(list, table.remove(pool, rng:Int(1, #pool)))
+		end
+		featuredCache[season] = list
+	end
+	return table.clone(featuredCache[season])
+end
+
+function Arena.FeaturedSet(season: number): { [string]: boolean }
+	local set = {}
+	for _, line in Arena.Featured(season) do
+		set[line] = true
+	end
+	return set
+end
+
+function Arena.SoftReset(rating: number): number
+	local start = Cfg.StartRating
+	local moved = start + (rating - start) * (1 - Cfg.Season.ResetFraction)
+	return math.max(Cfg.MinRating, math.floor(moved + 0.5))
+end
+
+-- A record last touched in an older season takes one soft reset per season it missed (a record
+-- from before season 1 counts as season 0). Returns true when it changed.
+function Arena.Reseason(record, season: number): boolean
+	local from = tonumber(record.season) or 0
+	if from >= season then
+		return false
+	end
+	local rating = tonumber(record.rating) or Cfg.StartRating
+	for _ = 1, math.min(season - from, 20) do
+		rating = Arena.SoftReset(rating)
+	end
+	record.rating = rating
+	record.season = season
+	return true
 end
 
 return Arena
