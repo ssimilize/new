@@ -50,7 +50,9 @@ function FossilLog.new(ctx, parent: Instance, size: UDim2)
 
 		Tiles.label({
 			Name = "FossilSummary",
-			Text = string.format("Fossils · %d / %d complete · %d pieces", done, #Cfg.Fossils, DigLogic.PieceCount(pieces)),
+			Text = if DigLogic.PieceCount(pieces) == 1
+				then string.format("Fossils · %d / %d complete · 1 piece", done, #Cfg.Fossils)
+				else string.format("Fossils · %d / %d complete · %d pieces", done, #Cfg.Fossils, DigLogic.PieceCount(pieces)),
 			TextSize = Theme.TextSize.Body,
 			Size = UDim2.new(1, -12, 0, 28),
 			LayoutOrder = 1,

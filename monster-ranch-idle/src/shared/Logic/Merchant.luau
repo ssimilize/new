@@ -135,6 +135,9 @@ local PAY_FORMAT = {
 }
 
 function Merchant.PayText(pay, amount: number): string
+	if pay.kind == "dishes" and amount == 1 then
+		return "Pay 1 Dish"
+	end
 	return string.format(PAY_FORMAT[pay.kind] or "%s", Format.commas(amount))
 end
 

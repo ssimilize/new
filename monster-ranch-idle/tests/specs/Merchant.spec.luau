@@ -115,6 +115,12 @@ return function(t)
 	end)
 
 	describe("Stock", function()
+		it("labels a price in the singular for one dish", function()
+			expect(Logic.PayText({ kind = "dishes" }, 1)).toBe("Pay 1 Dish")
+			expect(Logic.PayText({ kind = "dishes" }, 4)).toBe("Pay 4 Dishes")
+			expect(Logic.PayText({ kind = "fish" }, 1)).toBe("Pay 1 Fish")
+		end)
+
 		it("rolls Slots distinct offers per visit, the same for every player and server", function()
 			local k = Logic.Visit(START)
 			local a, b = Logic.Stock(k), Logic.Stock(k)
