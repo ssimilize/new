@@ -24,7 +24,7 @@ function Context.new(kernel, entry)
 		Rng = kernel.Rng,
 		Services = kernel.Adapters,
 		Analytics = kernel.Analytics,
-		Foundry = kernel.Foundry, -- the vendored Foundry packages (Kernel/ServerFoundry); nil in a TestKernel
+		Foundry = kernel.Foundry, -- the vendored Foundry packages (Kernel/ServerFoundry, built by Main.server / TestKernel)
 		_kernel = kernel,
 		_entry = entry,
 		_allowed = {},

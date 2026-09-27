@@ -162,6 +162,86 @@ return function(t)
 		end)
 	end)
 
+	describe("string requires (wave 1a)", function()
+		local StringRequire = require("../runtime/StringRequire")
+
+		local function tree()
+			-- Foundry/{ Contract/{Contract}, Pkg/{Pkg, Helper, tables/{guild(init)/{part1}}} }
+			local function node(name, parent)
+				local n = { Name = name, Parent = parent, _kids = {} }
+				function n:FindFirstChild(k)
+					return self._kids[k]
+				end
+				if parent then
+					parent._kids[name] = n
+				end
+				return n
+			end
+			local root = node("Foundry")
+			local contractFolder = node("Contract", root)
+			local contract = node("Contract", contractFolder)
+			local pkg = node("Pkg", root)
+			local main = node("Pkg", pkg)
+			local helper = node("Helper", pkg)
+			local guild = node("guild", node("tables", pkg))
+			local part1 = node("part1", guild)
+			return { contract = contract, main = main, helper = helper, guild = guild, part1 = part1 }
+		end
+
+		it("resolves ./, ../ and @self over instances, the way Roblox does", function()
+			local n = tree()
+			expect(StringRequire.resolve(n.main, "./Helper")).toBe(n.helper)
+			expect(StringRequire.resolve(n.main, "../Contract/Contract")).toBe(n.contract)
+			expect(StringRequire.resolve(n.main, "./tables/guild")).toBe(n.guild)
+			expect(StringRequire.resolve(n.guild, "@self/part1")).toBe(n.part1)
+			expect(StringRequire.resolve(n.part1, "../../Helper")).toBe(n.helper)
+			expect(pcall(StringRequire.resolve, n.main, "./Missing")).toBe(false)
+			expect(pcall(StringRequire.resolve, n.main, "Helper")).toBe(false)
+		end)
+
+		it("only the vendored packages may require by string", function()
+			local root = "C:/r/monster-ranch-idle"
+			expect(StringRequire.allowed(root .. "/src/shared/Foundry/Pkg/Pkg.luau", root)).toBe(true)
+			expect(StringRequire.allowed("C:\\r\\monster-ranch-idle\\src\\shared\\Foundry\\Pkg\\Pkg.luau", root)).toBe(true)
+			expect(StringRequire.allowed(root .. "/src/shared/Logic/Rng.luau", root)).toBe(false)
+			expect(StringRequire.allowed(root .. "/src/shared/FoundryAdapter.luau", root)).toBe(false)
+			expect(StringRequire.allowed(nil, root)).toBe(false)
+		end)
+
+		it("every vendored package loads through the Loader and through a booted client", function()
+			local names = {}
+			for _, child in folder:GetChildren() do
+				if child:FindFirstChild(child.Name) then
+					table.insert(names, child.Name)
+				end
+			end
+			table.sort(names)
+			local foundry, _, warned = server()
+			expect(#warned).toBe(0)
+			local h = TestKernel.new({ systems = {} })
+			local c = ClientHarness.new(h, h:Join())
+			for _, name in names do
+				if name ~= "Game" then
+					expect(foundry.packages[name] ~= nil).toBe(true)
+					expect(c.kernel.Foundry.packages[name] ~= nil).toBe(true)
+				end
+			end
+			expect(#names >= 2).toBe(true) -- Contract and the generated Game at least
+		end)
+
+		it("a TestKernel builds kernel.Foundry on the mock clock and every system's ctx carries it", function()
+			local h = TestKernel.new({ systems = { "Currency" } })
+			local foundry = h.kernel.Foundry
+			expect(foundry.packages.Contract ~= nil).toBe(true)
+			expect(h.kernel._systems.Currency.ctx.Foundry).toBe(foundry)
+			local adapter = foundry.adapter("Currency")
+			local t0 = adapter.now()
+			h:Advance(90)
+			expect(adapter.now() - t0).toBe(90)
+			expect(adapter.budget("particles")).toBe(600)
+		end)
+	end)
+
 	describe("the bus", function()
 		it("server: emit publishes (player, payload); on hands over the detail with the player", function()
 			local foundry, bus = server()

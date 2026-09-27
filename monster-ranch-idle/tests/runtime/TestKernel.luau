@@ -64,6 +64,16 @@ function TestKernel.new(options)
 	local Kernel = Loader.get("Server.Kernel.Kernel")
 	local adapters = MockAdapters.new({ startTime = options.startTime, network = options.network, placeMode = options.placeMode })
 	local kernel = Kernel.new({ adapters = adapters, verbose = options.verbose })
+	-- kernel.Foundry as Main.server builds it, on the mock clock (ctx.Foundry in every system)
+	kernel.Foundry = Loader.get("Server.Kernel.ServerFoundry").new({
+		folder = Loader.game:GetService("ReplicatedStorage").Shared:FindFirstChild("Foundry"),
+		requireModule = Loader.require,
+		Bus = kernel.Bus,
+		serverTime = function()
+			return adapters.Clock.Unix() -- what the client harness serves as GetServerTimeNow
+		end,
+		verbose = options.verbose,
+	})
 	for name, api in options.stubs or {} do
 		kernel:Stub(name, api)
 	end

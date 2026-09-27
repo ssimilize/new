@@ -26,6 +26,7 @@ local luau = require("@lune/luau")
 local roblox = require("@lune/roblox")
 
 local RobloxMock = require("./RobloxMock")
+local StringRequire = require("./StringRequire")
 
 local ClientHarness = {}
 ClientHarness.__index = ClientHarness
@@ -314,6 +315,13 @@ function ClientHarness:_env(scriptInstance)
 	local env = table.clone(self.globals)
 	env.script = scriptInstance
 	env.require = function(target)
+		-- string requires only inside the vendored Foundry packages (see StringRequire)
+		if type(target) == "string" then
+			local rec = RobloxMock.records[scriptInstance]
+			if rec and StringRequire.allowed(rec.extra.source, ROOT) then
+				return self:require(StringRequire.resolve(scriptInstance, target))
+			end
+		end
 		return self:require(target)
 	end
 	return env
