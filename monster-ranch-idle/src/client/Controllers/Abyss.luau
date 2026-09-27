@@ -34,6 +34,7 @@ local AbyssBuild = require(Client.Visuals.AbyssBuild)
 local AbyssLife = require(Client.Visuals.AbyssLife)
 local Quality = require(Client.Visuals.Quality)
 local StoreKit = require(Client.UI.Components.StoreKit)
+local Wake = require(Client.Visuals.Wake)
 
 local Cfg = Config.Abyss
 local hex = Color3.fromHex
@@ -47,6 +48,7 @@ local ctx
 local chasm: Model? = nil
 local area: Folder? = nil
 local life = nil
+local lifeWake = nil -- Visuals/Wake: the life only moves while the camera is near the Area
 local lowGraphics = false
 local built = false
 local descended = false
@@ -170,6 +172,7 @@ local function build()
 	chasm = AbyssBuild.Descent(reefArea :: Folder)
 	area = AbyssBuild.Area(workspace)
 	life = AbyssLife.Build(area :: Folder, lowGraphics)
+	lifeWake = Wake.new(v3(Cfg.Area.center), Cfg.Area.radius)
 	wireChasm(chasm :: Model)
 	wireArea(area :: Folder)
 end
@@ -222,7 +225,11 @@ function Abyss.Start()
 			return
 		end
 		if life then
-			AbyssLife.Step(life, dt)
+			local awake, changed = Wake.Step(lifeWake, dt)
+			if changed then
+				AbyssLife.SetAwake(life, awake)
+			end
+			AbyssLife.Step(life, dt, awake)
 		end
 	end)
 end

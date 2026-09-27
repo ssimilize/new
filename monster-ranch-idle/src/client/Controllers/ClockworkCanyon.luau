@@ -11,7 +11,8 @@
 	  Gears                   every gear the builder made turns client-side every Heartbeat
 	                          (Visuals/ClockworkGears), cheap (a handful of parts) and
 	                          streaming-safe (a gear whose model has streamed out is dropped from
-	                          the list instead of erroring).
+	                          the list instead of erroring). The tower's and the area's gears each
+	                          turn only while the camera is near them (Visuals/Wake).
 
 	ClockworkCanyon.GearCount() -> number   tests: how many gears are currently turning.
 ]]
@@ -25,6 +26,7 @@ local Config = require(Shared.Config)
 local Client = script.Parent.Parent
 local ClockworkBuild = require(Client.Visuals.ClockworkBuild)
 local ClockworkGears = require(Client.Visuals.ClockworkGears)
+local Wake = require(Client.Visuals.Wake)
 
 local Cfg = Config.Clockwork
 
@@ -36,7 +38,12 @@ local ClockworkCanyon = {
 local ctx
 local built = false
 local landmark, area
-local gearState
+local gearSets = {} -- { { state, wake } }: the tower's gears and the area's, far apart
+local TOWER_RADIUS = 40 -- studs round Config.Clockwork.Landmark.position the tower's gears reach
+
+local function v3(t: { number }): Vector3
+	return Vector3.new(t[1], t[2], t[3])
+end
 
 local function prompt(parent: Instance, action: string, object: string, distance: number, onTrigger: () -> ())
 	local p = Instance.new("ProximityPrompt")
@@ -72,16 +79,22 @@ local function build()
 	landmark = ClockworkBuild.Landmark(workspace)
 	area = ClockworkBuild.Area(workspace)
 	wireArea(area :: Folder)
-	local gears = ClockworkGears.Build(landmark :: Model)
-	for _, g in ClockworkGears.Build(area :: Folder).gears do
-		table.insert(gears.gears, g)
-	end
-	gearState = gears
+	gearSets = {
+		{
+			state = ClockworkGears.Build(landmark :: Model),
+			wake = Wake.new(v3(Cfg.Landmark.position), TOWER_RADIUS),
+		},
+		{ state = ClockworkGears.Build(area :: Folder), wake = Wake.new(v3(Cfg.Area.center), Cfg.Area.radius) },
+	}
 end
 
 -- Tests: how many gears are currently turning.
 function ClockworkCanyon.GearCount(): number
-	return ClockworkGears.Count(gearState)
+	local n = 0
+	for _, set in gearSets do
+		n += ClockworkGears.Count(set.state)
+	end
+	return n
 end
 
 function ClockworkCanyon.Init(context)
@@ -102,7 +115,11 @@ function ClockworkCanyon.Start()
 			end
 			return
 		end
-		ClockworkGears.Step(gearState, dt)
+		for _, set in gearSets do
+			if Wake.Step(set.wake, dt) then
+				ClockworkGears.Step(set.state, dt)
+			end
+		end
 	end)
 end
 

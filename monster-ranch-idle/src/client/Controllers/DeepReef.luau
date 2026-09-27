@@ -54,6 +54,7 @@ local ReefBuild = require(Client.Visuals.ReefBuild)
 local ReefLife = require(Client.Visuals.ReefLife)
 local Quality = require(Client.Visuals.Quality)
 local StoreKit = require(Client.UI.Components.StoreKit)
+local Wake = require(Client.Visuals.Wake)
 
 local Cfg = Config.DeepReef
 local hex = Color3.fromHex
@@ -73,6 +74,7 @@ local ctx
 local dock: Model? = nil
 local area: Folder? = nil
 local life = nil
+local lifeWake = nil -- Visuals/Wake: the life only moves while the camera is near the Area
 local lowGraphics = false
 local built = false
 
@@ -404,6 +406,7 @@ local function build()
 	dock = ReefBuild.Dock(workspace)
 	area = ReefBuild.Area(workspace, lowGraphics)
 	life = ReefLife.Build(area :: Folder, lowGraphics)
+	lifeWake = Wake.new(v3(Cfg.Area.center), Cfg.Area.radius)
 	wireDock(dock :: Model)
 	wireArea(area :: Folder)
 end
@@ -534,7 +537,11 @@ function DeepReef.Start()
 			return
 		end
 		if life then
-			ReefLife.Step(life, dt)
+			local awake, changed = Wake.Step(lifeWake, dt)
+			if changed then
+				ReefLife.SetAwake(life, awake)
+			end
+			ReefLife.Step(life, dt, awake)
 		end
 		if swimming and dt > 0 then
 			stepSwim(dt)

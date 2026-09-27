@@ -5,8 +5,9 @@
 	shaft, so glow motes take their place: small, static, drifting points of colour instead.
 
 	  AbyssLife.Build(area: Folder, low: boolean) -> state
-	  AbyssLife.Step(state, dt)          drifts the motes, swims the fish (Config.Abyss.Life.rate
-	                                     updates a second)
+	  AbyssLife.Step(state, dt, awake?)  drifts the motes, swims the fish (Config.Abyss.Life.rate
+	                                     updates a second); awake == false only runs the clock
+	  AbyssLife.SetAwake(state, awake)   pauses / resumes the vent bubbles
 	  AbyssLife.SetLow(state, low)       rebuilds fish and motes to the new cap
 	  AbyssLife.Destroy(state)
 	  AbyssLife.Stats(state) -> { fish, motes, vents }   tests: live counts
@@ -206,8 +207,12 @@ function AbyssLife.SetLow(state, low: boolean)
 	state.motes, state.moteFolder = buildMotes(state.area, Cfg.Area, L.motes, low, rng)
 end
 
-function AbyssLife.Step(state, dt: number)
+-- Far from the camera (Visuals/Wake) only the clock runs, so the life wakes where it would be.
+function AbyssLife.Step(state, dt: number, awake: boolean?)
 	state.clock += dt
+	if awake == false then
+		return
+	end
 	state.acc += dt
 	local every = if state.rate > 0 then 1 / state.rate else 0
 	if state.acc < every then
@@ -216,6 +221,13 @@ function AbyssLife.Step(state, dt: number)
 	state.acc = 0
 	stepFish(state.fish, state.clock)
 	stepMotes(state.motes, state.clock)
+end
+
+-- Pauses the vent bubbles while the camera is far away (Visuals/Wake); nothing is rebuilt.
+function AbyssLife.SetAwake(state, awake: boolean)
+	for _, emitter in state.vents do
+		emitter.Enabled = awake
+	end
 end
 
 function AbyssLife.Destroy(state)

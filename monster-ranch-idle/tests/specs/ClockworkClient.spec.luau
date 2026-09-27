@@ -6,6 +6,7 @@
 return function(t)
 	local describe, it, expect = t.describe, t.it, t.expect
 	local TestKernel, ClientHarness = t.TestKernel, t.ClientHarness
+	local CFrame = t.Roblox.CFrame
 
 	local function expectClean(c)
 		local problems = c:Problems()
@@ -57,6 +58,26 @@ return function(t)
 			tower.Gear1:Destroy()
 			c:Advance(1)
 			expect(canyon.GearCount()).toBe(before - 1)
+			expectClean(c)
+		end)
+		it("turns the tower's gears only while the camera is near the tower", function()
+			local h = TestKernel.new({})
+			local p = h:Join()
+			local c = ClientHarness.new(h, p)
+			c:Advance(2)
+			local gear1 = c.world.workspace.ClockworkTower.Gear1 :: Model
+			local camera = c.world.workspace.CurrentCamera
+			local home = camera.CFrame -- by the plaza, near the tower
+
+			camera.CFrame = CFrame.new(3000, 20, 3000) -- far from the tower and the canyon (Visuals/Wake)
+			c:Advance(1)
+			local asleep = gear1:GetPivot()
+			c:Advance(1)
+			expect(gear1:GetPivot() == asleep).toBe(true)
+
+			camera.CFrame = home
+			c:Advance(1)
+			expect(gear1:GetPivot() == asleep).toBe(false)
 			expectClean(c)
 		end)
 	end)

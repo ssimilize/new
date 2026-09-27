@@ -6,8 +6,10 @@
 	  ReefLife.Build(area: Folder, low: boolean) -> state    kelp sway records, vent bubble emitters,
 	                                                         fish schools and light shafts from
 	                                                         Config.DeepReef.Life / .Area
-	  ReefLife.Step(state, dt)                               swims the fish, sways the kelp (kelp at
-	                                                         Config.DeepReef.Life.rate updates a second)
+	  ReefLife.Step(state, dt, awake?)                       swims the fish, sways the kelp (kelp at
+	                                                         Config.DeepReef.Life.rate updates a second);
+	                                                         awake == false only runs the clock
+	  ReefLife.SetAwake(state, awake)                        pauses / resumes the vent bubbles
 	  ReefLife.SetLow(state, low)                            rebuilds fish and shafts to the new cap
 	  ReefLife.Destroy(state)
 	  ReefLife.Stats(state) -> { kelp, fish, shafts, vents }  tests: live counts
@@ -217,8 +219,12 @@ function ReefLife.SetLow(state, low: boolean)
 	state.shafts = buildShafts(state.area, Cfg.Area, L.shafts, low, rng)
 end
 
-function ReefLife.Step(state, dt: number)
+-- Far from the camera (Visuals/Wake) only the clock runs, so the life wakes where it would be.
+function ReefLife.Step(state, dt: number, awake: boolean?)
 	state.clock += dt
+	if awake == false then
+		return
+	end
 	state.acc += dt
 	local every = if state.rate > 0 then 1 / state.rate else 0
 	if state.acc < every then
@@ -227,6 +233,13 @@ function ReefLife.Step(state, dt: number)
 	state.acc = 0
 	swayKelp(state.stalks, state.clock)
 	stepFish(state.fish, state.clock)
+end
+
+-- Pauses the vent bubbles while the camera is far away (Visuals/Wake); nothing is rebuilt.
+function ReefLife.SetAwake(state, awake: boolean)
+	for _, emitter in state.vents do
+		emitter.Enabled = awake
+	end
 end
 
 function ReefLife.Destroy(state)
