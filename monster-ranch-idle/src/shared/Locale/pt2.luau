@@ -578,14 +578,4 @@ return {
 	["Pick a squad on the Expeditions screen first"] = "Primeiro escolha uma equipe na tela de expedições",
 	["Leaderboard"] = "Classificação",
 	["{1} Retry tokens"] = "{1} fichas de nova tentativa",
-	-- Monster Contests theme tags, shown upper-case on the Contests screen
-	["FANCY"] = "ELEGANTE",
-	["HERO"] = "HERÓI",
-	["SPORTY"] = "ESPORTIVO",
-	["NATURE"] = "NATUREZA",
-	["CUTE"] = "FOFO",
-	["ROYAL"] = "REAL",
-	["SILLY"] = "MALUCO",
-	["SPACE"] = "ESPAÇO",
-	["SWEET"] = "DOCE",
 }
