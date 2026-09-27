@@ -12,6 +12,9 @@
 	  players                          { { userId, name, ready } }
 	  global  { system }               that system's global state table
 	  section { userId, system }       a player's save section (a copy)
+	  livechecks                       runs Kernel/LiveChecks against the REAL adapters (never
+	                                    QA_MemoryProfiles); refused unless Adapters.IsStudio or
+	                                    Adapters.IsOwnerServer, see docs/GO_LIVE.md §6
 	Write commands (refused unless the session runs on QA_MemoryProfiles, see Kernel/Adapters, so
 	they can never change a real save):
 	  set     { userId, path, value }  profile field, path = { system, key, ... }; marks it dirty
@@ -102,6 +105,13 @@ function commands.titan(kernel, args)
 	return startsAt
 end
 
+-- Runs against the REAL adapters (kernel.Adapters), never QA_MemoryProfiles: it must prove
+-- the real Roblox services, not the in-memory stubs. Guarded separately from WRITES below.
+function commands.livechecks(kernel)
+	local LiveChecks = require(script.Parent.LiveChecks)
+	return LiveChecks.Run(kernel.Adapters)
+end
+
 function commands.config(_kernel, args)
 	local path = args.path
 	assert(type(path) == "table" and #path >= 2, 'path = { "Boss", "Period" }')
@@ -122,6 +132,9 @@ function QABridge.Run(kernel, command: string, args: any?): { ok: boolean, resul
 	end
 	if WRITES[command] and kernel.Adapters.QA ~= true then
 		return { ok = false, err = command .. " needs QA_MemoryProfiles (set the Workspace attribute in Edit, then Play)" }
+	end
+	if command == "livechecks" and not (kernel.Adapters.IsStudio or kernel.Adapters.IsOwnerServer) then
+		return { ok = false, err = "livechecks needs Studio or the experience owner's private server (docs/GO_LIVE.md §6)" }
 	end
 	local ok, result = pcall(fn, kernel, args or {})
 	if ok then

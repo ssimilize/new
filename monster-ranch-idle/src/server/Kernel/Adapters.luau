@@ -114,6 +114,13 @@ function Adapters.Roblox()
 	adapters.JobId = if game.JobId ~= "" then game.JobId else "studio-" .. tostring(math.random(1, 1e9))
 	adapters.PlaceId = game.PlaceId
 	adapters.IsStudio = isStudio
+	-- True in a private server owned by the experience's own creator (an owner testing on a
+	-- live server, e.g. from the developer console). Used to gate QABridge's `livechecks`
+	-- (Kernel/QABridge, docs/GO_LIVE.md §6): a public server or another player's private
+	-- server never passes this.
+	adapters.IsOwnerServer = game.PrivateServerOwnerId ~= 0
+		and game.CreatorType == Enum.CreatorType.User
+		and game.PrivateServerOwnerId == game.CreatorId
 	adapters.OfflineMaxSeconds = 7 * 24 * 3600
 
 	adapters.Clock = {
@@ -272,7 +279,7 @@ function Adapters.Roblox()
 	-- keyed by listing id; open listings are also indexed in MemoryStore sorted maps for
 	-- browsing (one map per scope and kind, sorted by price, expiring with the listing).
 	-- Mailboxes (sale proceeds, returned items) are one DataStore key per user.
-	-- VERIFY in a live server: MemoryStore quotas and GetRangeAsync paging.
+	-- Live check: Kernel/LiveChecks (MemoryStore quotas and GetRangeAsync paging, docs/GO_LIVE.md §6).
 	local MemoryStoreService = game:GetService("MemoryStoreService")
 	local function storeOf(name: string)
 		local ok, store = pcall(function()
@@ -455,7 +462,7 @@ function Adapters.Roblox()
 	-- Config.Leaderboards.Key). Values are whole numbers; failures return false / nil.
 	-- Arena (update 2.1): one record per player { userId, name, rating, team, wins, losses,
 	-- updatedAt } in a DataStore (atomic Update), and ratings in an OrderedDataStore for
-	-- matchmaking. VERIFY in a live server: GetSortedAsync min/max paging.
+	-- matchmaking. Live check: Kernel/LiveChecks (GetSortedAsync min/max paging, docs/GO_LIVE.md §6).
 	local arenaStore = storeOf("MonsterRanch_Arena_v1")
 	local arenaIndex = nil
 	local function ratings()
@@ -574,8 +581,22 @@ function Adapters.Roblox()
 
 	-- Rewarded video ads. The AdService API surface is checked at runtime; in Studio (or when
 	-- the API is unavailable) ads are simulated as watched so flows can be tested.
-	-- VERIFY in Studio against the current AdService documentation before launch.
+	-- Live check: Kernel/LiveChecks (docs/GO_LIVE.md §6).
 	adapters.Ads = {
+		-- Read-only: asks AdService for availability without showing anything. Used by
+		-- Kernel/LiveChecks so the AdService surface can be probed on a real server without
+		-- putting an ad in front of a player.
+		CheckAvailable = function(): (boolean, string)
+			if isStudio then
+				return true, "studio (simulated available)"
+			end
+			local ok, result = pcall(function()
+				local AdService = game:GetService("AdService")
+				local availability = AdService:GetAdAvailabilityNowAsync(Enum.AdFormat.RewardedVideo)
+				return tostring(availability.AdAvailabilityResult)
+			end)
+			return ok, if ok then result else tostring(result)
+		end,
 		ShowRewarded = function(player, placement: string): boolean
 			if isStudio then
 				return true
@@ -735,7 +756,7 @@ function Adapters.Roblox()
 		end,
 	}
 	-- The Trade Board: one MemoryStore sorted map, ad id -> ad, sorted by post time.
-	-- VERIFY in a live server: MemoryStore quotas with many hub servers.
+	-- Live check: Kernel/LiveChecks (MemoryStore quotas with many hub servers, docs/GO_LIVE.md §6).
 	local boardOk, board = pcall(function()
 		return MemoryStoreService:GetSortedMap("MonsterRanch_HubBoard_v1")
 	end)
@@ -927,7 +948,7 @@ function Adapters.Roblox()
 	-- Every server folds its own damage in with an atomic Update every Config.Titan.ReportSeconds,
 	-- so this is MemoryStore, not a DataStore key (which throttles writes to one key); the entry
 	-- expires a day after its last write. Get never writes. Both yield: the Titan system calls
-	-- them through Services.Spawn. VERIFY in a live server: request units with many servers.
+	-- them through Services.Spawn. Live check: Kernel/LiveChecks (request units with many servers, docs/GO_LIVE.md §6).
 	local TITAN_TTL = 24 * 3600
 	local titanOk, titanMap = pcall(function()
 		return MemoryStoreService:GetHashMap("MonsterRanch_Titan_v1")
@@ -949,6 +970,12 @@ function Adapters.Roblox()
 					end, TITAN_TTL)
 				end)
 				return ok, if ok then result else nil
+			end,
+			-- Used by LiveChecks (Kernel/LiveChecks) to erase its throwaway probe key.
+			Remove = function(key: string): boolean
+				return (pcall(function()
+					titanMap:RemoveAsync(key)
+				end))
 			end,
 		}
 		else nil

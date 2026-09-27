@@ -121,11 +121,13 @@ Client code and the World geometry run in Lune through `tests/runtime/RobloxMock
 
 ## Launch checklist
 
-- [ ] Real `gamePassId` / `productId` values in `Config/Monetization.luau`
-- [ ] AdService flow verified in a live server (see `Kernel/Adapters.luau`)
-- [ ] `Config.Quests.GroupId` set; codes reviewed
+- [ ] `Logic/LaunchCheck.Missing(Config)` empty (game passes, developer products, Codex badges,
+      `Config.Quests.GroupId`, Reminders secret/templates, the Workshop moderator group) — the
+      server warns this in Studio at boot, and `RELEASE_CHECK=1 lune run tests LaunchCheck`
+      fails a build on it; owner checklist and per-id table in `docs/GO_LIVE.md`
+- [ ] `Kernel/LiveChecks.Run()` all `[PASS]` from a live private server's developer console
+      (Market, Arena, AdService, hub Trade Board, Titan — see `docs/GO_LIVE.md` §6)
 - [ ] Studio API access enabled and DataStore name final (`MonsterRanch_Profiles_v1`)
-- [ ] Market DataStores (`MonsterRanch_Market_v1`, `MonsterRanch_Mail_v1`, `MonsterRanch_Prices_v1`) and MemoryStore browse maps (`mk_*`) checked in live servers: quotas, `GetRangeAsync` paging, listing expiry
 - [ ] Clubs DataStore (`MonsterRanch_Clubs_v1`) and the `Clubs` MessagingService topic checked across two live servers
 - [ ] Leaderboard OrderedDataStores (`LB_<board>_w<week>`) checked in a live server, and `Config.Leaderboards.WeekAnchor` lined up with the Saturday update time
 - [ ] Sound ids in `Config/Sounds.luau`; art swapped in `Visuals/*` and `UI/Theme.Images`

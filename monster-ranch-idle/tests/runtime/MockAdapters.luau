@@ -53,7 +53,7 @@ function MockAdapters.network()
 	}
 end
 
-function MockAdapters.new(options: { startTime: number?, network: any?, placeMode: string? }?)
+function MockAdapters.new(options: { startTime: number?, network: any?, placeMode: string?, isOwnerServer: boolean? }?)
 	local opts = options or {}
 	local network = opts.network or MockAdapters.network()
 	local now = opts.startTime or 1790000000 -- a Thursday in Sept 2026 (UTC)
@@ -66,6 +66,7 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 	a.PlaceId = 0
 	a.PlaceMode = opts.placeMode -- "hub" runs this server as the Trading Hub (3.0)
 	a.IsStudio = false
+	a.IsOwnerServer = opts.isOwnerServer or false
 	a.OfflineMaxSeconds = 7 * 24 * 3600
 
 	a.Clock = {
@@ -252,7 +253,11 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 	}
 
 	a.adResult = true
+	a.adAvailable = true
 	a.Ads = {
+		CheckAvailable = function()
+			return a.adAvailable, if a.adAvailable then "Available" else "mock unavailable"
+		end,
 		ShowRewarded = function(player, placement)
 			table.insert(a.log.ads, { player = player, placement = placement })
 			return a.adResult
@@ -712,6 +717,13 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 				network.titan[key] = deepCopy(result)
 			end
 			return true, deepCopy(result)
+		end,
+		Remove = function(key)
+			if network.titanDown then
+				return false
+			end
+			network.titan[key] = nil
+			return true
 		end,
 	}
 
