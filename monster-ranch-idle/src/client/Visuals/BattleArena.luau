@@ -38,12 +38,14 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Sprites = require(Shared.Config.VfxSprites)
+local PropMeshes = require(Shared.Config.PropMeshes)
 local Tuning = require(Shared.Config.BattleStage)
 local Plan = require(Shared.Logic.BattleStage)
 
 local MonsterModel = require(script.Parent.MonsterModel)
 local MonsterAnimator = require(script.Parent.MonsterAnimator)
 local Vfx = require(script.Parent.Vfx)
+local PropMesh = require(script.Parent.PropMesh)
 
 local UI = script.Parent.Parent.UI
 local Theme = require(UI.Theme)
@@ -391,6 +393,17 @@ local function buildProp(parent: Instance, def, base: CFrame)
 	end
 	model.PrimaryPart = main
 	model.Parent = parent
+	-- A generated mesh (Config/PropMeshes) takes the parts' place once it loads.
+	local generated = PropMeshes.battle[kind]
+	if generated and (type(def.mesh) ~= "string" or def.mesh == "") then
+		local parts = {}
+		for _, child in model:GetChildren() do
+			if child:IsA("BasePart") then
+				table.insert(parts, child)
+			end
+		end
+		PropMesh.Replace(generated, parts, base, model)
+	end
 	return model
 end
 

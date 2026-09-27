@@ -1,0 +1,55 @@
+{
+ "note": "2026-09-26 prop art pass: text-only, reviewed before publishing (_G.RbxGenPublish).",
+ "jobs": [
+  {
+   "key": "r_dock",
+   "prompt": "a small wooden pier dock, weathered planks on round wooden posts, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    6,
+    2,
+    18
+   ],
+   "maxTriangles": 4000
+  },
+  {
+   "key": "r_bell",
+   "prompt": "an old brass diving bell with round porthole windows and green patina, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    8,
+    10,
+    8
+   ],
+   "maxTriangles": 5000
+  },
+  {
+   "key": "r_gate",
+   "prompt": "an ancient stone gate arch covered in pink coral and green seaweed, glowing blue runes, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    18,
+    22,
+    6
+   ],
+   "maxTriangles": 6000
+  },
+  {
+   "key": "r_ruins",
+   "prompt": "sunken ancient temple ruins with broken marble columns and fallen stones, covered in coral and seaweed, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    40,
+    18,
+    30
+   ],
+   "maxTriangles": 8000
+  },
+  {
+   "key": "r_giant_clam",
+   "prompt": "a giant open clam shell with a big glowing white pearl inside, pink and purple shell, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    9,
+    5,
+    7
+   ],
+   "maxTriangles": 4000
+  }
+ ]
+}

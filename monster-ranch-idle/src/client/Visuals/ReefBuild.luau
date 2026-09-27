@@ -28,6 +28,8 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local Rng = require(ReplicatedStorage.Shared.Logic.Rng)
 
 local Cfg = Config.DeepReef
+local PropMeshes = require(ReplicatedStorage.Shared.Config.PropMeshes)
+local PropMesh = require(script.Parent.PropMesh)
 local hex = Color3.fromHex
 
 local ReefBuild = {}
@@ -90,6 +92,24 @@ local function body(prop: string, cframe: CFrame, parent: Model)
 		b:SetAttribute("Mesh", def.mesh)
 	end
 	parent.PrimaryPart = b
+	-- A generated mesh (Config/PropMeshes) takes the place of the parts it stands for once it
+	-- loads: names starting with one of `replace` (all but the body without a list).
+	local generated = PropMeshes.reef[prop]
+	if generated then
+		local parts = {}
+		for _, child in parent:GetChildren() do
+			if child:IsA("BasePart") and child ~= b then
+				local take = generated.replace == nil
+				for _, prefix in generated.replace or {} do
+					take = take or string.sub(child.Name, 1, #prefix) == prefix
+				end
+				if take then
+					table.insert(parts, child)
+				end
+			end
+		end
+		PropMesh.Replace(generated, parts, cframe, parent)
+	end
 	return b
 end
 

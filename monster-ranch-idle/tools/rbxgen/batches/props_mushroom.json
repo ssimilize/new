@@ -1,0 +1,15 @@
+{
+ "note": "mushroom (no face) alone",
+ "jobs": [
+  {
+   "key": "b_mushroom",
+   "prompt": "a giant red toadstool mushroom with white spots and a plain white stem, no face, no eyes, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    3,
+    3,
+    3
+   ],
+   "maxTriangles": 2500
+  }
+ ]
+}

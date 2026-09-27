@@ -1,0 +1,105 @@
+{
+ "note": "2026-09-26 prop art pass: text-only, reviewed before publishing (_G.RbxGenPublish).",
+ "jobs": [
+  {
+   "key": "d_garden_fountain",
+   "prompt": "a round two-tier garden fountain, cream white stone, a wide basin full of clear blue water and a small top bowl, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    6,
+    5,
+    6
+   ],
+   "maxTriangles": 6000
+  },
+  {
+   "key": "d_little_windmill",
+   "prompt": "a small cute windmill with a round cream stone tower, a red-brown cone roof and four wooden sails, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    4,
+    8,
+    4
+   ],
+   "maxTriangles": 6000
+  },
+  {
+   "key": "d_monster_statue",
+   "prompt": "a statue of a cute chubby round monster with big pointy ears sitting on a square pedestal, pale blue polished stone, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    3,
+    5,
+    3
+   ],
+   "maxTriangles": 5000
+  },
+  {
+   "key": "d_moon_bridge",
+   "prompt": "a small arched red wooden footbridge with golden railings, East Asian garden style, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    3,
+    3,
+    6
+   ],
+   "maxTriangles": 5000
+  },
+  {
+   "key": "d_splash_pool",
+   "prompt": "a round inflatable kiddie paddling pool, cyan water inside, red and white striped inflatable rim, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    6,
+    1.5,
+    6
+   ],
+   "maxTriangles": 4000
+  },
+  {
+   "key": "d_stone_well",
+   "prompt": "an old grey stone water well with a small wooden roof, a rope and a wooden bucket, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    4,
+    5,
+    4
+   ],
+   "maxTriangles": 5000
+  },
+  {
+   "key": "d_star_obelisk",
+   "prompt": "a slim purple crystal obelisk with a golden star on top, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    2,
+    6,
+    2
+   ],
+   "maxTriangles": 4000
+  },
+  {
+   "key": "d_stone_lion",
+   "prompt": "a small guardian lion statue sitting on a pedestal, light grey stone, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    2,
+    3,
+    3
+   ],
+   "maxTriangles": 5000
+  },
+  {
+   "key": "d_scarecrow",
+   "prompt": "a friendly scarecrow on a wooden pole, straw hat, green patched shirt, straw hands, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    3,
+    6,
+    1.5
+   ],
+   "maxTriangles": 5000
+  },
+  {
+   "key": "d_snowman",
+   "prompt": "a cute snowman made of three snowballs, carrot nose, black top hat, red scarf, stylized cartoon game asset, chunky rounded toy-like shapes, bright saturated colours, single object",
+   "size": [
+    3,
+    5,
+    3
+   ],
+   "maxTriangles": 4000
+  }
+ ]
+}
