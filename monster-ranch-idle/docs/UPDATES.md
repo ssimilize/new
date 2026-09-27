@@ -77,6 +77,38 @@ players get and where it lives in the code.
   mode with `sortBy = -SellPrice`. The HUD side button keeps its Name "Jobs".
 - Tests: `Orders.spec`, `OrdersClient.spec`.
 
+### Events calendar
+
+Everyone has it (no unlock); it reads the dates already in the configs, so it needs no launch date.
+
+**For players**
+- **The calendar** (📅 under the Build hammer, top right) shows what's on now, what's next and
+  when it starts:
+  - **Now:** what's running, with an "Ends in" countdown (the seasonal event, the Ranch Pass
+    season, the arena season, a live Stampede or Egg Hunt round).
+  - **This week:** everything that starts before the Saturday reset.
+  - **Coming up:** the next 30 days, plus the next seasonal event, titan invasion, region
+    opening, Ranch Pass season, raid and Club Wars date however far away.
+  - Each row has an icon, its date, a live countdown and a one-line blurb; **Go** opens its
+    screen (Arena, Quests, Expeditions, Boss, Raids, Clubs, Leaderboards).
+- **HUD chips:** up to two countdowns ("Titan  3:12:04") for anything starting in the next 24 hours,
+  under the calendar button. Tapping one opens the calendar. They hide while a screen is open and
+  never show the Stampede (it has its own card) or back-to-back Egg Hunt rounds.
+- **Reminder:** players who turned reminders on can get a nudge 30 minutes before a titan
+  invasion, a seasonal event or a region opening (within the usual 2 a day). Off until the owner
+  fills its template id (`Config.Reminders.Templates.event`).
+
+**In the code**
+- `Logic/Calendar`: `Entries(now, horizon)`, `Now`, `Soon`, `Sections`, `NextBig`. Sources:
+  `Config.Events` windows and reruns (respecting `Flags.ActiveEvent`), `Quests.Seasons`,
+  `Titan.Schedule`, region and raid `opensAt`, `Clubs.War.startsAt`, `Logic/Arena` seasons,
+  `Leaderboards.WeekEndsAt`, the next Stampede and `Logic/EggHunt.Round` during Spring Bloom.
+- `Logic/Titan.NextStampede` / `HoldsStampede`: the Stampede slot, skipping periods a titan
+  holds. The Boss system now schedules with it, so the calendar and the server agree.
+- Screen `Events`; HUD `Events` button (y 172) and `EventChips`; reminder kind `event`
+  (`Config.Reminders.Event`: 30 min lead, 14-day horizon under the MemoryStore expiry).
+- Tests: `Calendar.spec`, `CalendarClient.spec`.
+
 ## 3.7 · Ranch Jobs + Luck
 
 Like 3.6, no launch date of its own: the Job Board and Luck work as soon as the update is published.

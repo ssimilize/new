@@ -11,7 +11,8 @@
 	prompt never comes back by itself; the Daily streak screen has a Reminders on/off button.
 
 	Planning: when an opted-in player leaves, the facts (eggs ready, expeditions back, next
-	Stampede for players who have joined one, a streak about to break) go through
+	Stampede for players who have joined one, a streak about to break, 3.8: the next titan
+	invasion / seasonal event / region opening from Logic/Calendar) go through
 	Logic/Reminders.Plan and each planned item is written to the MemoryStore map "queue"
 	(key "u<userId>:<kind>", sortKey = due time). Joining again removes them.
 
@@ -31,6 +32,7 @@
 
 local Shared = game:GetService("ReplicatedStorage").Shared
 local Logic = require(Shared.Logic.Reminders)
+local Calendar = require(Shared.Logic.Calendar)
 
 local Reminders = {
 	Name = "Reminders",
@@ -115,6 +117,9 @@ local function facts(player)
 			out.streakDeadline = status.deadline
 		end
 	end
+	-- 3.8: the next titan invasion, seasonal event or region opening (Logic/Calendar).
+	local big = Calendar.NextBig(now, Config.Reminders.Event.horizonSeconds)
+	out.eventAt = if big then big.startsAt else nil
 	local country = countries[player]
 	out.offset = if country then Config.Reminders.Offsets[country] else nil
 	return out

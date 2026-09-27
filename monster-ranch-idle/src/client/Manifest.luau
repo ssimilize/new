@@ -94,6 +94,7 @@ return {
 		"Expeditions",
 		"Breeding",
 		"Jobs", -- 3.7 · Ranch Jobs
+		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",
 		"HallOfFame",

@@ -13,6 +13,9 @@
 	  stampede    the first Stampede at least Stampede.minAwaySeconds after leaving (players who
 	              have joined one before)
 	  streak      a streak with no shield breaks at the end of the UTC day; sent hoursLeft before
+	  event       3.8: a titan invasion, a seasonal event or a region opening starts; sent
+	              Event.leadSeconds before, when it starts within Event.horizonSeconds of leaving
+	              (Logic/Calendar.NextBig)
 
 	Delivery: planned items wait in a MemoryStore sorted map keyed by due time; every running
 	server polls it and leases an item before sending, so two servers never send the same one.
@@ -29,8 +32,9 @@ Reminders.Templates = {
 	expedition = "",
 	stampede = "",
 	streak = "",
+	event = "",
 }
-Reminders.Kinds = { "egg", "expedition", "stampede", "streak" }
+Reminders.Kinds = { "egg", "expedition", "stampede", "streak", "event" }
 
 Reminders.Url = "https://apis.roblox.com/cloud/v2/users/%d/notifications"
 
@@ -46,6 +50,8 @@ Reminders.MaxTries = 3
 
 Reminders.Stampede = { minAwaySeconds = 3 * 3600, leadSeconds = 5 * 60 }
 Reminders.Streak = { minStreak = 2, hoursLeft = 4 }
+-- horizonSeconds stays well under the MemoryStore's 45-day item expiry.
+Reminders.Event = { leadSeconds = 30 * 60, horizonSeconds = 14 * 86400 }
 
 -- Quiet hours in the player's rough local time: [start, stop) wraps midnight.
 Reminders.Quiet = { start = 22, stop = 8 }
