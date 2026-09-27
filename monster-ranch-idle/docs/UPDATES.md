@@ -3,6 +3,175 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.8 · Reasons to come back
+
+### Weekly goals
+
+**For players**
+- **Weekly goals** (Ranch Level 5): every week you get 5 goals, like "Hatch 15 eggs", "Collect
+  coin jars 40 times" or "Run 8 races". They're sized to finish in about 5 to 7 days of casual play.
+  - The goals come from the features you have unlocked, one per area, so you never get two egg
+    goals or two Arena goals in one week.
+  - A new set arrives every Saturday at 15:00 UTC, with the weekly leaderboards.
+- **The weekly chest** has three steps, each claimable as soon as you reach it:
+  - 1 goal: 20 minutes of coins + 15 gems.
+  - 3 goals: 1 hour of coins + 40 gems + 10 random food.
+  - 5 goals: 2 hours of coins + 100 gems + a Crystal egg (a Royal egg from Ranch Level 25).
+  - Forgot to claim? Any step you reached is paid automatically when the week ends, and Welcome
+    Back says "Your weekly chest paid out".
+- The Quests screen has a new **Weekly** tab (goals, chest and the reset countdown), and the HUD's
+  Quests badge counts chest steps ready to claim.
+
+**In the code**
+- `Config.Weekly`: `Unlock` ("weekly", Ranch Level 5 in `Config.Unlocks`), `GoalCount`, `RoyalLevel`,
+  the `Pool` (21 goals `{ id, family, text, topic, target, filter?, unlock? }`, counted from existing
+  bus topics) and the three-step `Chest`.
+- `Logic/Weekly`: `Pick` (seeded by `Rng.seed("weekly", userId, week)`, unlock-filtered, one goal per
+  family), `Done`, `Reached`, `Claimed`, `Unclaimed`, `ChestReward` (the Royal swap).
+- `Logic/Objectives`: moved from `Systems/Quests/Objectives` (which now re-exports it) so Quests and
+  Weekly share `Matches`, `Amount` and `Target`.
+- `Systems/Weekly`:
+  - Save section `{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }`.
+  - Action `Weekly.Claim { step }`; rewards through `Rewards:Grant` with source "weekly".
+  - The week is `Config.Leaderboards.Week`. The draw happens once, the first time the player is
+    unlocked in that week, and then stays fixed. Rollover is lazy (join, goal topics, LevelUp and
+    a 30 s sweep): unclaimed reached steps are paid and a `WelcomeItem` (kind "weekly") is published.
+- UI: a Weekly tab in `Screens/Quests`; `Hud` adds claimable chest steps to the Quests badge;
+  Welcome Back shows the "weekly" line with a gem icon.
+- Tests: `Weekly.spec`, `WeeklyClient.spec`.
+
+### Ranch Orders
+
+**For players**
+- **Ranch Orders** (Ranch Level 10): buyers post 3 orders every day (UTC) on the Job Board's new
+  **Orders** tab (the HUD's Jobs button).
+- **Monster orders** ask for a Teen or Adult with good genes:
+  - **Easy**: one stat at grade C or better. **Medium**: one stat at grade B or better.
+  - **Hard** (Ranch Level 20+): one stat at grade A, or two stats at grade B, or a gene total of
+    60 or more (of 100).
+  - Pay: 3 times the monster's sell price in coins, plus 5 / 10 / 25 gems and 2 / 5 / 10 Ribbons.
+    A Hard order may also carry an egg (1 in 4): a Crystal Egg, or from Ranch Level 25 sometimes a
+    Royal Egg. The card shows it.
+  - "Choose monster" lists the Teens and Adults that meet it, not busy or locked, cheapest first.
+    A confirm names the monster, which leaves the ranch for good. Your last monster can't go.
+- **Goods orders** ask for 150–400 food of one flavour (more at higher levels) and pay 10–20
+  gems and 5–10 Treats. At most one a day.
+- **Reroll:** once a day, replace one unfilled order for free.
+- Rejoining never changes the day's orders. Welcome Back mentions new orders.
+
+**In the code**
+- `Config.Orders` (difficulties, pay, egg chance and weights, goods amounts, buyers) and
+  `Logic/Orders`:
+  - `Draw(userId, day, level)`: the day's orders from `Rng.seed("orders", userId, day)`; each
+    order rolls everything from its own seed (goods chance 20%, at most one goods order).
+    Difficulty weights: Easy 60 / Medium 40 below Lv 20; Easy 35 / Medium 40 / Hard 25 from 20.
+  - A reroll draws from `Rng.seed("orders", userId, day, "reroll", n)`. It can't draw goods while
+    another order of the day is goods.
+  - Goods pay comes from `Rng.seed(order.seed, "pay")`. Coins are `CoinMult × Formulas.SellPrice`,
+    read before the monster leaves.
+- `Systems/Orders` (save `profile.Orders = { day, list, rerolls }`):
+  - `Orders.Fill { index, id? }` and `Orders.Reroll { index }`.
+  - The list is drawn on join, on the minute timer, on any action and on reaching Lv 10.
+  - Monsters leave through `Monsters:Remove(player, id, "order")`. Publishes `OrderFilled`.
+- `Screens/Jobs` has "Jobs" / "Orders" tabs (params `{ tab }`). The picker uses Monsters pick
+  mode with `sortBy = -SellPrice`. The HUD side button keeps its Name "Jobs".
+- Tests: `Orders.spec`, `OrdersClient.spec`.
+
+### Events calendar
+
+Everyone has it (no unlock); it reads the dates already in the configs, so it needs no launch date.
+
+**For players**
+- **The calendar** (📅 under the Build hammer, top right) shows what's on now, what's next and
+  when it starts:
+  - **Now:** what's running, with an "Ends in" countdown (the seasonal event, the Ranch Pass
+    season, the arena season, a live Stampede or Egg Hunt round).
+  - **This week:** everything that starts before the Saturday reset.
+  - **Coming up:** the next 30 days, plus the next seasonal event, titan invasion, region
+    opening, Ranch Pass season, raid and Club Wars date however far away.
+  - Each row has an icon, its date, a live countdown and a one-line blurb; **Go** opens its
+    screen (Arena, Quests, Expeditions, Boss, Raids, Clubs, Leaderboards).
+- **HUD chips:** up to two countdowns ("Titan  3:12:04") for anything starting in the next 24 hours,
+  under the calendar button. Tapping one opens the calendar. They hide while a screen is open and
+  never show the Stampede (it has its own card) or back-to-back Egg Hunt rounds.
+- **Reminder:** players who turned reminders on can get a nudge 30 minutes before a titan
+  invasion, a seasonal event or a region opening (within the usual 2 a day). Off until the owner
+  fills its template id (`Config.Reminders.Templates.event`).
+
+**In the code**
+- `Logic/Calendar`: `Entries(now, horizon)`, `Now`, `Soon`, `Sections`, `NextBig`. Sources:
+  `Config.Events` windows and reruns (respecting `Flags.ActiveEvent`), `Quests.Seasons`,
+  `Titan.Schedule`, region and raid `opensAt`, `Clubs.War.startsAt`, `Logic/Arena` seasons,
+  `Leaderboards.WeekEndsAt`, the next Stampede and `Logic/EggHunt.Round` during Spring Bloom.
+- `Logic/Titan.NextStampede` / `HoldsStampede`: the Stampede slot, skipping periods a titan
+  holds. The Boss system now schedules with it, so the calendar and the server agree.
+- Screen `Events`; HUD `Events` button (y 172) and `EventChips`; reminder kind `event`
+  (`Config.Reminders.Event`: 30 min lead, 14-day horizon under the MemoryStore expiry).
+- Tests: `Calendar.spec`, `CalendarClient.spec`.
+
+### Arena seasons
+
+Season 1 runs from Saturday 3 October to Saturday 28 November 2026, 15:00 UTC. Seasons are 8
+arena weeks long, back to back.
+
+**For players**
+- **Seasons:** the Champions Arena now runs in 8-week seasons on top of its weekly rewards,
+  which are unchanged.
+- **Soft reset:** when a new season starts, every rating moves halfway back to 1,000 (a 1,600
+  Champion starts the next season at 1,300). It happens the first time your record is used in
+  the new season, whether you play or someone fights your defense team.
+- **Fresh matchmaking:** you only meet players who have fought or set a defense this season.
+- **Featured lines:** each season features 3 species lines, the same on every server. Featured
+  monsters fight at +10% stats, on both sides of the fight.
+- **Season rewards:** your best tier of the season pays once, the first time you join or use the
+  arena after the season ends (Welcome Back mentions it):
+
+  | Best tier | Reward |
+  |---|---|
+  | Bronze | nothing |
+  | Silver | title "Arena Silver" + 100 gems |
+  | Gold | title "Arena Gold" + 200 gems + Gold Arena Cup |
+  | Crystal | title "Arena Crystal" + 400 gems + Crystal Arena Cup |
+  | Champion | title "Arena Champion" + 800 gems + Champion Arena Cup + Champion's Crown Aura |
+
+  - Titles and the aura are Mastery cosmetics, worn at once if you wear none of that kind.
+  - The cups are decor that is never sold.
+- **Season tab** in the Arena screen shows:
+  - the season and an ends-in countdown (before season 1: "Season 1 starts in ...");
+  - the featured lines;
+  - your season best;
+  - the reward track;
+  - the season top 10 and your rank.
+
+**In the code**
+- **Config and rules:**
+  - `Config/Arena.Season`, `SeasonRewards` and `SeasonItems`. The season items are merged into
+    `Config/Mastery.Rewards`.
+  - Aura Vfx: `Config/Vfx.Mastery.championsCrown`.
+  - Cups: `Config/Decor` (`price = nil`, `reward = "arena"`), built by the `cup` model in `Config/DecorArt`.
+  - The Store skips decor with no price.
+  - `Logic/Arena`: `SeasonAt`, `SeasonStartsAt`, `SeasonEndsAt`, `Featured`, `FeaturedSet`,
+    `SoftReset` and `Reseason`. `Normalize(fighter, featured?)` sets `statMult`, and
+    `Fight(attack, defense, seed, season?)` passes the season's featured set.
+- **The Arena system:**
+  - Profile v2 adds `seasonOf`, `seasonBest` and `seasonPaid`.
+  - Records carry `season`.
+  - `Arena:SeasonRating(player)`.
+  - Mastery is an optional dependency, looked up when a reward is paid. Without it the gems and
+    cups still pay.
+  - A record from an older season takes one soft reset per season it missed.
+- **The ratings index:** the adapter keeps one index per season
+  (`Services.Arena.IndexName(season)`: `MonsterRanch_ArenaRatings_s<N>`; season 0 keeps
+  `_v1`). `Index` and `Near` take the season as a last argument.
+- **Leaderboards:**
+  - Boards have a `period` ("week" or "season").
+  - The new "arena" board is a season board: `Key("arena", n)` = `arena_s<N>`, and its value is
+    the current season rating.
+  - It has no weekly champion or title.
+  - `Config.Leaderboards.Weekly` lists the weekly boards for the Leaderboards screen, the hub
+    board and nameplates.
+- **Tests:** `ArenaSeasons.spec`, `ArenaSeasonsClient.spec`.
+
 ## 3.7 · Ranch Jobs + Luck
 
 Like 3.6, no launch date of its own: the Job Board and Luck work as soon as the update is published.

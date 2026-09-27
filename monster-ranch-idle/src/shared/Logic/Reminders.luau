@@ -10,7 +10,8 @@
 	      expiresAt); nil = no good time left. offset nil = no quiet-hours rule.
 	  Reminders.Plan(facts, now) -> { { kind, dueAt, expiresAt } }   soonest first, ≤ MaxPlanned
 	      facts = { eggsReadyAt?, expeditionsBackAt?, stampede = boolean?, streakDeadline?,
-	                offset?, templates = { [kind]: string }? }
+	                eventAt?, offset?, templates = { [kind]: string }? }
+	      eventAt (3.8): when the next titan / seasonal event / region opening starts
 	  Reminders.Allow(record?, now) -> (ok, record)   record = { day, n, last, prev } per player
 	  Reminders.Refund(record?) -> record?            gives back a send that failed
 ]]
@@ -93,6 +94,11 @@ function Reminders.Plan(facts, now: number)
 	if facts.stampede and period and period > 0 then
 		local start = math.ceil((now + c.Stampede.minAwaySeconds) / period) * period
 		add("stampede", start - c.Stampede.leadSeconds, start)
+	end
+	-- 3.8: like the Stampede, a nudge leadSeconds before the start, dropped once it has begun.
+	local eventAt = tonumber(facts.eventAt)
+	if eventAt and c.Event and eventAt - c.Event.leadSeconds >= earliest then
+		add("event", eventAt - c.Event.leadSeconds, eventAt)
 	end
 	local deadline = tonumber(facts.streakDeadline)
 	if deadline and deadline > earliest then

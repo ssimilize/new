@@ -10,8 +10,17 @@
 	            (Jobs.SetFlavor) and Recall (Jobs.Recall)
 	Header: Collect all (Jobs.Collect). Stored amounts tick every second while open.
 
+	Tabs (3.8): "Jobs" (the slots above) and "Orders" (Ranch Orders, Logic/Orders): one card
+	per order with its buyer, the requirement in words, the rewards (and the egg a hard order
+	rolled), Reroll (once a day, Orders.Reroll) and
+	  monster orders  "Choose monster": Monsters pick mode with the Teens and Adults that meet it
+	                  (not busy, not locked), cheapest first, then a confirm naming the monster
+	                  that leaves → Orders.Fill { index, id }
+	  goods orders    "Hand over" → Orders.Fill { index }
+	Params: { tab? = "jobs" | "orders" }.
+
 	Reads: profile.Jobs.slots, session.Jobs.slotCount, profile.Monsters.list,
-	profile.Progression.level (all tolerated nil).
+	profile.Progression.level, profile.Orders, profile.Currency.food (all tolerated nil).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -21,6 +30,7 @@ local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
 local JobsLogic = require(Shared.Logic.Jobs)
+local OrdersLogic = require(Shared.Logic.Orders)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -30,10 +40,12 @@ local Panel = require(UI.Components.Panel)
 local Widgets = require(UI.Components.Widgets)
 local MonsterIcon = require(UI.Components.MonsterIcon)
 local Util = require(script.Parent.Parts.Util)
+local Dialog = require(script.Parent.Parts.Dialog)
 
 local New = Create.New
 local C = Theme.Colors
 local Rules = Config.Jobs
+local OrderRules = Config.Orders
 local StatNames = Config.Genetics.StatNames
 
 local HOUR = 3600
@@ -89,6 +101,8 @@ return {
 		local refresh
 		local tickers = {} -- per working card: fn() that updates its stored amount
 		local lockOverlay = nil
+		local ordersLock = nil
+		local tab = "jobs"
 
 		local collectAll = Button.new({
 			Name = "CollectAll",
@@ -100,18 +114,59 @@ return {
 			Parent = panel.HeaderRight,
 		})
 
-		Util.text({
+		local tabs = Widgets.Tabs({
+			Tabs = { { id = "jobs", text = "Jobs" }, { id = "orders", text = "Orders" } },
+			Selected = tab,
+			Size = UDim2.fromOffset(276, 44),
+			Parent = panel.Body,
+			OnChanged = function(id)
+				tab = id
+				if refresh then
+					refresh()
+				end
+			end,
+		})
+		local jobsIntro = Util.text({
 			Text = string.format("Teens and Adults resting in the barn can work. Workers store up to %d hours.", Rules.MaxHours),
 			TextColor3 = C.TextMuted,
-			Size = UDim2.new(1, 0, 0, 22),
+			Position = UDim2.fromOffset(290, 0),
+			Size = UDim2.new(1, -290, 0, 44),
+			Parent = panel.Body,
+		})
+		local ordersIntro = Util.text({
+			Text = "Buyers post new orders every day. A monster you hand over leaves for good.",
+			TextColor3 = C.TextMuted,
+			Position = UDim2.fromOffset(290, 0),
+			Size = UDim2.new(1, -290, 0, 44),
+			Visible = false,
+			Parent = panel.Body,
+		})
+		local jobsView = New("Frame", {
+			Name = "JobsView",
+			BackgroundTransparency = 1,
+			Position = UDim2.fromOffset(0, 50),
+			Size = UDim2.new(1, 0, 1, -50),
 			Parent = panel.Body,
 		})
 		local row = New("Frame", {
 			Name = "Slots",
 			BackgroundTransparency = 1,
-			Position = UDim2.fromOffset(0, 30),
-			Size = UDim2.new(1, 0, 1, -30),
+			Size = UDim2.fromScale(1, 1),
+			Parent = jobsView,
+		}, { Create.List("x", 10) })
+		local ordersView = New("Frame", {
+			Name = "OrdersView",
+			BackgroundTransparency = 1,
+			Position = UDim2.fromOffset(0, 50),
+			Size = UDim2.new(1, 0, 1, -50),
+			Visible = false,
 			Parent = panel.Body,
+		})
+		local ordersRow = New("Frame", {
+			Name = "Orders",
+			BackgroundTransparency = 1,
+			Size = UDim2.fromScale(1, 1),
+			Parent = ordersView,
 		}, { Create.List("x", 10) })
 
 		local function slots()
@@ -323,8 +378,234 @@ return {
 			end
 		end
 
+		-- Orders (3.8) -------------------------------------------------------------------------
+
+		local function orders()
+			local p = ctx.Store:Get("profile.Orders")
+			return if type(p) == "table" then p else {}
+		end
+
+		-- A monster the picker may offer for `order`.
+		local function eligible(order, m): boolean
+			return type(m) == "table" and not m.busy and not m.locked and OrdersLogic.Qualifies(order, m)
+		end
+
+		local function confirmHandOver(index: number, id: string)
+			local m = Util.monsters(ctx)[id]
+			if not m then
+				return
+			end
+			Dialog.confirm(ctx.UI.Top, {
+				Title = "Hand over this monster?",
+				Text = string.format(
+					"%s leaves your ranch for good. The buyer pays %s coins.",
+					Formulas.DisplayName(m),
+					Format.commas(OrdersLogic.Coins(m))
+				),
+				ConfirmText = "Hand over",
+				ConfirmColor = C.Orange,
+				OnConfirm = function()
+					Util.requestOnce(ctx, "Orders.Fill", { index = index, id = id })
+				end,
+			})
+		end
+
+		local function chooseFor(index: number, order)
+			local count = 0
+			for _, m in Util.monsters(ctx) do
+				if eligible(order, m) then
+					count += 1
+				end
+			end
+			if count == 0 then
+				ctx:Toast("None of your free Teens or Adults meet this order yet", "info")
+				return
+			end
+			Util.pick(ctx, {
+				title = "Choose a monster for this order (cheapest first)",
+				max = 1,
+				filter = function(m)
+					return eligible(order, m)
+				end,
+				-- The picker sorts highest first: the cheapest monster that qualifies leads.
+				sortBy = function(m)
+					return -Formulas.SellPrice(m)
+				end,
+				returnTo = "Jobs",
+				returnParams = { tab = "orders" },
+				onPick = function(ids)
+					confirmHandOver(index, ids[1])
+				end,
+			})
+		end
+
+		local function drawOrder(index: number, order, rerollsLeft: number)
+			local root = Util.card({
+				Name = "Order" .. index,
+				Size = UDim2.new(1 / OrderRules.PerDay, -7, 1, 0),
+				LayoutOrder = index,
+				Parent = ordersRow,
+			})
+			local col = New("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 1, -56),
+				Parent = root,
+			}, { Create.Padding(10, 10, 10, 10), Create.List("y", 6, Enum.HorizontalAlignment.Center) })
+			Util.text({
+				Text = OrdersLogic.Buyer(order),
+				Font = Theme.Fonts.Display,
+				TextSize = Theme.TextSize.Body + 1,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Size = UDim2.new(1, 0, 0, 24),
+				LayoutOrder = 1,
+				Parent = col,
+			})
+			local d = OrderRules.Difficulty[order.difficulty] or OrderRules.Difficulty.easy
+			local chips = New("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 26),
+				LayoutOrder = 2,
+				Parent = col,
+			}, { Create.List("x", 4, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center) })
+			Widgets.Chip({ Text = d.name, Color = Color3.fromHex(d.color), Parent = chips })
+			Util.text({
+				Name = "Requirement",
+				Text = OrdersLogic.RequirementText(order),
+				TextSize = Theme.TextSize.Body,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Size = UDim2.new(1, 0, 0, 48),
+				LayoutOrder = 3,
+				Parent = col,
+			})
+			local hint
+			if order.kind == "goods" then
+				local food = ctx.Store:Get("profile.Currency.food")
+				local have = if type(food) == "table" then food[order.food] or 0 else 0
+				hint = string.format("You have %s", Format.commas(math.floor(have)))
+			else
+				local n = 0
+				for _, m in Util.monsters(ctx) do
+					if eligible(order, m) then
+						n += 1
+					end
+				end
+				hint = string.format("Monsters that qualify: %d", n)
+			end
+			Util.text({
+				Text = hint,
+				TextColor3 = C.TextMuted,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Size = UDim2.new(1, 0, 0, 20),
+				LayoutOrder = 4,
+				Parent = col,
+			})
+			local base, egg = {}, nil
+			for _, item in OrdersLogic.Pay(order) do
+				if item.kind == "egg" then
+					egg = item
+				else
+					table.insert(base, item)
+				end
+			end
+			Util.rewardRow(base, col, { LayoutOrder = 5, Align = Enum.HorizontalAlignment.Center })
+			if order.kind == "monster" then
+				Util.text({
+					Text = string.format("Plus coins: %d times its sell price", OrderRules.CoinMult),
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Size = UDim2.new(1, 0, 0, 20),
+					LayoutOrder = 6,
+					Parent = col,
+				})
+			end
+			if egg then
+				local eggRow = Util.rewardRow({ egg }, col, { LayoutOrder = 7, Align = Enum.HorizontalAlignment.Center })
+				eggRow.Name = "Egg"
+			end
+
+			if order.filled then
+				Util.text({
+					Name = "Filled",
+					Text = "Order filled",
+					Font = Theme.Fonts.Display,
+					TextSize = Theme.TextSize.Body + 1,
+					TextColor3 = C.Green,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					AnchorPoint = Vector2.new(0.5, 1),
+					Position = UDim2.new(0.5, 0, 1, -14),
+					Size = UDim2.new(1, -16, 0, 30),
+					Parent = root,
+				})
+				return
+			end
+			local hasReroll = rerollsLeft > 0
+			if hasReroll then
+				Button.new({
+					Name = "Reroll",
+					Text = "Reroll",
+					Color = C.Gray,
+					Size = UDim2.new(0.38, -8, 0, 44),
+					AnchorPoint = Vector2.new(0, 1),
+					Position = UDim2.new(0, 8, 1, -8),
+					TextSize = Theme.TextSize.Small + 1,
+					Parent = root,
+					OnClick = function()
+						Util.requestOnce(ctx, "Orders.Reroll", { index = index })
+					end,
+				})
+			end
+			Button.new({
+				Name = "Fill",
+				Text = if order.kind == "goods" then "Hand over" else "Choose monster",
+				Color = C.Green,
+				Size = if hasReroll then UDim2.new(0.62, -12, 0, 44) else UDim2.new(1, -16, 0, 44),
+				AnchorPoint = Vector2.new(1, 1),
+				Position = UDim2.new(1, -8, 1, -8),
+				TextSize = Theme.TextSize.Body,
+				Parent = root,
+				OnClick = function()
+					if order.kind == "goods" then
+						Util.requestOnce(ctx, "Orders.Fill", { index = index })
+					else
+						chooseFor(index, order)
+					end
+				end,
+			})
+		end
+
+		local function drawOrders()
+			Util.clear(ordersRow)
+			if ordersLock then
+				ordersLock:Destroy()
+				ordersLock = nil
+			end
+			if not Util.unlocked(ctx, OrderRules.Unlock) then
+				ordersLock = Util.lockOverlay(ordersView, Util.unlockText(OrderRules.Unlock))
+				return
+			end
+			local p = orders()
+			local list = if type(p.list) == "table" then p.list else {}
+			local left = math.max(0, OrderRules.RerollsPerDay - (tonumber(p.rerolls) or 0))
+			for index = 1, OrderRules.PerDay do
+				local order = list[index]
+				if type(order) == "table" then
+					drawOrder(index, order, left)
+				end
+			end
+		end
+
 		local function draw()
 			if not isOpen then
+				return
+			end
+			local onJobs = tab ~= "orders"
+			jobsView.Visible = onJobs
+			jobsIntro.Visible = onJobs
+			collectAll.Root.Visible = onJobs
+			ordersView.Visible = not onJobs
+			ordersIntro.Visible = not onJobs
+			if not onJobs then
+				table.clear(tickers)
+				drawOrders()
 				return
 			end
 			Util.clear(row)
@@ -349,18 +630,30 @@ return {
 			end
 			tick()
 			if not Util.unlocked(ctx, Rules.Unlock) then
-				lockOverlay = Util.lockOverlay(panel.Body, Util.unlockText(Rules.Unlock))
+				lockOverlay = Util.lockOverlay(jobsView, Util.unlockText(Rules.Unlock))
 			end
 		end
 		refresh = Util.debounce(draw)
 
 		return {
 			Root = panel.Root,
-			Open = function()
+			Open = function(params)
 				isOpen = true
 				bag.clean()
-				for _, path in { "profile.Jobs", "session.Jobs", "profile.Monsters.list", "profile.Progression.level" } do
+				for _, path in
+					{
+						"profile.Jobs",
+						"session.Jobs",
+						"profile.Monsters.list",
+						"profile.Progression.level",
+						"profile.Orders",
+						"profile.Currency.food",
+					}
+				do
 					bag.add(ctx.Store:Observe(path, refresh))
+				end
+				if type(params) == "table" and (params.tab == "jobs" or params.tab == "orders") and params.tab ~= tab then
+					tabs:Select(params.tab)
 				end
 				refresh()
 				task.spawn(function()

@@ -621,6 +621,20 @@ Art.Models = {
 			P("ball", { 0.6, 0.3, 0.5 }, { 0.2, 0.15, -0.7 }, "SmoothPlastic", b, SMALL),
 		}
 	end,
+	-- 3.8: an arena season cup (a = cup colour, b = plinth and trim; def.mat = cup material).
+	cup = function(a, b, def)
+		local m = def.mat or "Foil"
+		return {
+			P("block", { 1.8, 0.5, 1.8 }, { 0, 0.25, 0 }, "Marble", b),
+			P("cyl", { 1.1, 0.25, 1.1 }, { 0, 0.62, 0 }, m, a),
+			P("cyl", { 0.35, 0.9, 0.35 }, { 0, 1.2, 0 }, m, a),
+			P("cyl", { 1.2, 0.3, 1.2 }, { 0, 1.75, 0 }, m, a),
+			P("cyl", { 1.6, 1, 1.6 }, { 0, 2.35, 0 }, m, a),
+			P("block", { 0.25, 0.8, 0.25 }, { -1, 2.4, 0 }, m, a, SMALL),
+			P("block", { 0.25, 0.8, 0.25 }, { 1, 2.4, 0 }, m, a, SMALL),
+			P("block", { 1.82, 0.12, 0.3 }, { 0, 0.35, -0.8 }, "SmoothPlastic", "#FFFFFF", SMALL),
+		}
+	end,
 }
 
 -- The parts of one piece (a fresh table; callers may keep it).

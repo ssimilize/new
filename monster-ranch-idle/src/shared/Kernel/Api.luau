@@ -364,6 +364,20 @@ Api.Actions = {
 		returns = "{ rewards: { Reward } }  -- the forager's stored food, paid before the change",
 	},
 
+	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
+	["Weekly.Claim"] = {
+		schema = T.struct({ step = T.integer(1, #Config.Weekly.Chest) }),
+		rate = 2,
+		returns = "{ rewards: { Reward } }",
+	},
+	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
+	["Orders.Fill"] = {
+		schema = T.struct({ index = T.integer(1, Config.Orders.PerDay), id = T.optional(id) }),
+		rate = 2,
+		returns = "{ rewards: { Reward } }  -- id: the monster a monster order takes",
+	},
+	["Orders.Reroll"] = { schema = T.struct({ index = T.integer(1, Config.Orders.PerDay) }), rate = 1, returns = "nil" },
+
 	-- Social (S5) ------------------------------------------------------------------
 	["Social.Pet"] = { schema = T.struct({ owner = T.userId, id = id }), rate = 4, returns = "{ friendship: number, left: number }" },
 	["Social.Like"] = { schema = T.struct({ owner = T.userId }), rate = 2, returns = "{ likes: number }" },
@@ -668,6 +682,8 @@ Api.State = {
 		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id } }",
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
+		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
+		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, filled } }, rerolls }  -- see Logic/Orders",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true }, pass, passCredit }",
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true }, vip = { day, opened } }",
@@ -680,7 +696,7 @@ Api.State = {
 		Surf = "{ best, runs }",
 		Racing = "{ day, rewarded, week, cup, races, wins, best, bestDay, bestToday }",
 		Workshop = "{ designs = { designId }, made = { week, n }, copies = { [designId]: { n, name, shape, slot, color, color2, creatorName } }, liked = { [designId]: true }, next }",
-		Arena = "{ defense = { id }, attempts = { day, n }, week, bestTier, lastTier, claimed }",
+		Arena = "{ defense = { id }, attempts = { day, n }, week, bestTier, lastTier, claimed, seasonOf, seasonBest, seasonPaid }",
 		Raids = "{ day, rewarded, wins, runs }",
 		Market = "{ listings = { listingId }, stats = { sold, bought, earned, spent } }",
 		Clubs = "{ id: string|false, claimed = { week, goals = { [goalId]: true }, boss }, attacks = { day, n }, war = { day, n, claimed } }",
@@ -716,7 +732,7 @@ Api.State = {
 		Raids = "{ lobby: string|false }",
 		TradingHub = "{ ad: adId|false, postedAt }",
 		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } }, moderator: boolean, queue = { view + reports, creatorId } }",
-		Arena = "{ rating, tier, attemptsLeft, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
+		Arena = "{ rating, tier, attemptsLeft, season, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
 		Reminders = "{ available: boolean, prompt: boolean }  -- prompt = show Roblox's notification opt-in now",
 		Visits = "{ showcase: RanchSnapshot | false }  -- glow-up Y: the friend's ranch in this player's Visiting Showcase (Logic/Visits)",
 		LiveRace = "{ heat: number|false, meter, lap, progress, strikes, finished, dq, result = { place, time, finished, field, rewards, cup, dq }|false }  -- glow-up LR",
@@ -737,7 +753,7 @@ Api.State = {
 		Clubs = "{ here = { ['u'..userId]: { clubId, tag, color, emblem, name, open, banner } }, ladder = { week, at, rows = { { rank, clubId, name, tag, color, emblem, points } } } }",
 		Monetization = "{ vip = { ['u'..userId]: true } }  -- VIP Rancher owners in this server (chat tags)",
 		Community = "{ premium = { ['u'..userId]: true } }  -- Roblox Premium members in this server (nameplate badge)",
-		Leaderboards = "{ week, endsAt, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
+		Leaderboards = "{ week, endsAt, season, server = { [boardId]: { Row } }, global = { [boardId]: { Row } }, champions = { [boardId]: { userId, name } | false }, globalAt }  -- Row = { userId, name, value, label? }",
 		Mastery = "{ here = { ['u'..userId]: { flourish: string|false, title: string|false, plinth: string|false } } }  -- equipped prestige cosmetics of players in this server",
 		Companions = "{ walkers = { ['u'..userId]: { { id, appearance } } } }  -- glow-up T: each player's companions, drawn by every client",
 		HallOfFame = "{ plaza = { ['u'..userId]: { slot, name, appearance, rarity } } }  -- glow-up O: best statues on the hub plaza (<= Config.Codex.Plaza.max)",
@@ -760,7 +776,7 @@ Api.Topics = {
 	RanchXP = "(player, { amount: number, reason: string })",
 	LevelUp = "(player, { level: number })",
 	MonsterCreated = "(player, { id: string, source: 'hatch'|'breed'|'trade'|'reward'|'starter' })",
-	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth', acc: { [slot]: accessoryId }?, line: string?, rarity: number? })",
+	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth'|'order', acc: { [slot]: accessoryId }?, line: string?, rarity: number? })",
 	MonsterChanged = "(player, { id: string, fields: { string }? })",
 	MonsterFed = "(player, { id: string, flavor: string })",
 	MonsterLeveled = "(player, { id: string, lv: number })",
@@ -781,6 +797,7 @@ Api.Topics = {
 	TitanDamage = "(player, { damage: number, won: boolean })  -- per participant when a titan invasion ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
+	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
 	Retired = "(player, { rarity: number, element: string })",

@@ -1,14 +1,17 @@
 --[[
-	Quests screen (C3). Params: { tab? = "daily" | "achievements" | "pass" }.
+	Quests screen (C3). Params: { tab? = "daily" | "weekly" | "achievements" | "pass" }.
 
 	Daily: today's quests with progress bars and Claim (Quests.ClaimDaily { index }).
+	Weekly (3.8): this week's goals (profile.Weekly, Config/Weekly) with progress bars, the
+	three-step chest with Claim (Weekly.Claim { step }) and the reset countdown
+	(Config.Leaderboards.WeekEndsAt). Locked before Config.Weekly.Unlock.
 	Achievements: every achievement with progress and Claim (Quests.ClaimAchievement { id }).
 	Ranch Pass: tiers from Config.Quests.PassAt(now) with free and premium tracks, the pass XP bar,
 	Claim (Quests.ClaimPass { tier, track }) and a premium lock with "Get Ranch Pass", which
 	prompts the `ranchPass` developer product after Monetization.CanBuy agrees. Outside a season
 	(Config.Quests.PassOnSale) the button is disabled and says when the next pass goes on sale.
 
-	Reads: profile.Quests, profile.Progression.level (tolerated nil).
+	Reads: profile.Quests, profile.Weekly, profile.Progression.level (tolerated nil).
 ]]
 
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -17,6 +20,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
+local WeeklyLogic = require(Shared.Logic.Weekly)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -29,6 +33,8 @@ local Util = require(script.Parent.Parts.Util)
 local New = Create.New
 local C = Theme.Colors
 local Q = Config.Quests
+local W = Config.Weekly
+local TABS = { daily = true, weekly = true, achievements = true, pass = true }
 
 local DAILY_BY_ID = {}
 for _, def in Q.DailyPool do
@@ -61,12 +67,13 @@ return {
 
 		local tabs = Widgets.Tabs({
 			Tabs = {
-				{ id = "daily", text = "Daily", width = 130 },
-				{ id = "achievements", text = "Achievements", width = 160 },
-				{ id = "pass", text = "Ranch Pass", width = 140 },
+				{ id = "daily", text = "Daily", width = 96 },
+				{ id = "weekly", text = "Weekly", width = 106 },
+				{ id = "achievements", text = "Achievements", width = 150 },
+				{ id = "pass", text = "Ranch Pass", width = 128 },
 			},
 			Selected = tab,
-			Size = UDim2.fromOffset(446, 44),
+			Size = UDim2.fromOffset(504, 44),
 			Parent = panel.HeaderRight,
 			OnChanged = function(id)
 				tab = id
@@ -196,6 +203,157 @@ return {
 			end
 			if not Util.unlocked(ctx, "dailies") then
 				Util.lockOverlay(content, Util.unlockText("dailies"))
+			end
+		end
+
+		local function drawWeekly()
+			local weekly = ctx.Store:Get("profile.Weekly")
+			weekly = if type(weekly) == "table" then weekly else {}
+			local now = ctx:Now()
+			local week = Config.Leaderboards.Week(now)
+			-- The server pays last week's chest at rollover: never show a stale week.
+			local section = if weekly.week == week then weekly else {}
+			local goals = if type(section.goals) == "table" then section.goals else {}
+			local done = WeeklyLogic.Done(section)
+			local level = tonumber(ctx.Store:Get("profile.Progression.level")) or 1
+
+			local header = Util.text({
+				Text = "",
+				TextColor3 = C.TextMuted,
+				Size = UDim2.new(0.58, 0, 0, 26),
+				Parent = content,
+			})
+			local endsAt = Config.Leaderboards.WeekEndsAt(week)
+			Widgets.Countdown(header, function()
+				return endsAt
+			end, function(left)
+				return string.format("New weekly goals in %s", Format.duration(left))
+			end)
+			header.Text = string.format("New weekly goals in %s", Format.duration(endsAt - now))
+
+			local list =
+				Widgets.List({ Position = UDim2.fromOffset(0, 30), Size = UDim2.new(0.58, 0, 1, -30), Padding = 8, Parent = content })
+			list.Name = "Goals"
+			if #goals == 0 then
+				Util.text({
+					Text = "Your weekly goals appear here each week.",
+					TextColor3 = C.TextMuted,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Size = UDim2.new(1, 0, 0, 60),
+					Parent = list,
+				})
+			end
+			for i, entry in goals do
+				local def = type(entry) == "table" and W.ById[entry.id]
+				if def then
+					local target = def.target or 1
+					local progress = math.min(tonumber(entry.progress) or 0, target)
+					local finished = progress >= target
+					local row = New("Frame", {
+						Name = "Goal" .. i,
+						BackgroundColor3 = if finished then C.PanelDeep else C.Card,
+						Size = UDim2.new(1, -4, 0, 64),
+						LayoutOrder = i,
+						Parent = list,
+					}, { Create.Corner(Theme.Radius.Card), Create.Stroke(2.5, if finished then C.Green else C.Line) })
+					Util.text({
+						Text = def.text,
+						Font = Theme.Fonts.Display,
+						TextSize = Theme.TextSize.Body,
+						Position = UDim2.fromOffset(14, 4),
+						Size = UDim2.new(1, -28, 0, 26),
+						TextTruncate = Enum.TextTruncate.AtEnd,
+						TextWrapped = false,
+						Parent = row,
+					})
+					Widgets.Bar({
+						Color = if finished then C.Green else C.Blue,
+						Value = math.clamp(progress / target, 0, 1),
+						Text = string.format("%s / %s", Format.short(progress), Format.short(target)),
+						Position = UDim2.fromOffset(14, 34),
+						Size = UDim2.new(1, -28, 0, 22),
+						Parent = row,
+					})
+				end
+			end
+
+			-- The chest track: three steps, each claimable as soon as it is reached.
+			local chest = New("Frame", {
+				Name = "Chest",
+				BackgroundTransparency = 1,
+				AnchorPoint = Vector2.new(1, 0),
+				Position = UDim2.new(1, 0, 0, 0),
+				Size = UDim2.new(0.42, -14, 1, 0),
+				Parent = content,
+			}, { Create.List("y", 8) })
+			local title = Util.text({
+				Text = string.format("Weekly chest · %d / %d goals done", done, W.GoalCount),
+				Font = Theme.Fonts.Display,
+				TextSize = Theme.TextSize.Body,
+				Size = UDim2.new(1, 0, 0, 26),
+				Parent = chest,
+			})
+			title.LayoutOrder = 0
+			for step, def in W.Chest do
+				local reached = done >= def.goals
+				local claimed = WeeklyLogic.Claimed(section, step)
+				local card = New("Frame", {
+					Name = "Step" .. step,
+					BackgroundColor3 = if claimed then C.PanelDeep else C.Card,
+					Size = UDim2.new(1, 0, 0, 104),
+					LayoutOrder = step,
+					Parent = chest,
+				}, { Create.Corner(Theme.Radius.Card), Create.Stroke(2.5, if reached and not claimed then C.Green else C.Line) })
+				Util.text({
+					Text = string.format("Goals: %d / %d", math.min(done, def.goals), def.goals),
+					Font = Theme.Fonts.Display,
+					TextColor3 = if reached then C.Green else C.Text,
+					Position = UDim2.fromOffset(12, 4),
+					Size = UDim2.new(1, -150, 0, 26),
+					Parent = card,
+				})
+				Util.rewardRow(WeeklyLogic.ChestReward(step, level), card, {
+					Position = UDim2.fromOffset(12, 34),
+					Size = UDim2.new(1, -150, 0, 64),
+					IconSize = 26,
+				})
+				if claimed then
+					Util.text({
+						Text = "Claimed ✓",
+						Font = Theme.Fonts.Display,
+						TextColor3 = C.Green,
+						TextXAlignment = Enum.TextXAlignment.Center,
+						AnchorPoint = Vector2.new(1, 0.5),
+						Position = UDim2.new(1, -10, 0.5, 0),
+						Size = UDim2.fromOffset(124, 48),
+						Parent = card,
+					})
+				else
+					local button = Button.new({
+						Name = "Claim",
+						Text = "Claim",
+						Color = C.Green,
+						Size = UDim2.fromOffset(124, 50),
+						TextSize = Theme.TextSize.Body,
+						AnchorPoint = Vector2.new(1, 0.5),
+						Position = UDim2.new(1, -10, 0.5, 0),
+						Disabled = not reached,
+						Parent = card,
+					})
+					button:SetOnClick(function()
+						if not reached then
+							ctx:Toast(string.format("Finish %d of your weekly goals first", def.goals), "info")
+							return
+						end
+						local ok, res = Util.requestOnce(ctx, "Weekly.Claim", { step = step })
+						if ok then
+							claimToast(res)
+						end
+					end)
+				end
+			end
+			if not Util.unlocked(ctx, W.Unlock) then
+				Util.lockOverlay(content, Util.unlockText(W.Unlock))
 			end
 		end
 
@@ -457,6 +615,8 @@ return {
 				drawAchievements()
 			elseif tab == "pass" then
 				drawPass()
+			elseif tab == "weekly" then
+				drawWeekly()
 			else
 				drawDaily()
 			end
@@ -468,10 +628,10 @@ return {
 			Open = function(params)
 				isOpen = true
 				bag.clean()
-				if type(params) == "table" and (params.tab == "daily" or params.tab == "achievements" or params.tab == "pass") then
+				if type(params) == "table" and TABS[params.tab] then
 					tabs:Select(params.tab)
 				end
-				for _, path in { "profile.Quests", "profile.Progression.level" } do
+				for _, path in { "profile.Quests", "profile.Weekly", "profile.Progression.level" } do
 					bag.add(ctx.Store:Observe(path, refresh))
 				end
 				refresh()

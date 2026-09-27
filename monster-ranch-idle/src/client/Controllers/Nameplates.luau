@@ -37,7 +37,7 @@ local function titlesFor(userId: number): { string }
 	if type(champions) ~= "table" then
 		return list
 	end
-	for _, board in Config.Leaderboards.Boards do
+	for _, board in Config.Leaderboards.Weekly do
 		local champ = champions[board.id]
 		if type(champ) == "table" and champ.userId == userId then
 			table.insert(list, board.title)
