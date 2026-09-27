@@ -272,7 +272,7 @@ return function(t)
 			expect(M:Insert(q, old, "market").ped).toBeNil()
 		end)
 
-		it("names the parents in the trade log", function()
+		it("names the parents on the trade offer and in the trade log", function()
 			local h = TestKernel.new({ systems = { "Currency", "Progression", "Rewards", "Monsters", "Trade" } })
 			local x, y = h:Join(nil, "Alice"), h:Join(nil, "Bob")
 			for _, pl in { x, y } do
@@ -289,6 +289,11 @@ return function(t)
 			h:Call(y, "Trade.Respond", { from = x.UserId, accept = true })
 			h:Call(x, "Trade.SetOffer", { items = { { kind = "monster", id = baby.id } } })
 			h:Call(y, "Trade.SetOffer", { items = { { kind = "monster", id = other.id } } })
+			-- The partner sees the parents' names on the offer before accepting, and no ids.
+			h:Advance(1)
+			local offered = h:Client(y).session.Trade.theirs.items[1]
+			expect(offered.parents).toEqual({ "Pip", Pedigree.Name(Pedigree.Snap(g2)) })
+			expect(h:Client(x).session.Trade.theirs.items[1].parents).toBe(false)
 			h:Call(x, "Trade.SetReady", { ready = true })
 			h:Call(y, "Trade.SetReady", { ready = true })
 			h:Call(x, "Trade.Confirm")

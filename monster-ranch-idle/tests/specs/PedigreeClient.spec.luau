@@ -2,7 +2,7 @@
 	PedigreeClient (update 3.9): the pedigree and the breeding planner through the real client
 	(ClientHarness, real clicks): the family tree popup on Monster Detail, the planner's per-stat
 	chances and grade spread in the Breeding Barn, the target chip and picker, the best-for-target
-	parent sort, and Spanish.
+	parent sort, the parents in the trade window, and Spanish.
 ]]
 return function(t)
 	local describe, it, expect = t.describe, t.it, t.expect
@@ -281,6 +281,35 @@ return function(t)
 			expect(h:Section(p, "Breeding").target).toBe(false)
 			expect(c:HasText("Set a target", screen)).toBe(true)
 			expect(c:HasText("Stats show the chance of B or better", screen)).toBe(true)
+			expectClean(c)
+		end)
+	end)
+
+	describe("Trade window", function()
+		it("names a bred monster's parents in the partner's offer detail", function()
+			local h = TestKernel.new({ systems = allSystems() })
+			local x, y = h:Join(nil, "Alice"), h:Join(nil, "Bob")
+			for _, pl in { x, y } do
+				levelTo(h, pl, 12)
+				h.kernel.Data:Get(pl)._meta.playSeconds = 3600
+			end
+			local baby, mama, papa = family(h, x)
+			local c = ClientHarness.new(h, y)
+			c:Advance(1)
+			h:Call(x, "Trade.Request", { target = y.UserId })
+			h:Call(y, "Trade.Respond", { from = x.UserId, accept = true })
+			h:Call(x, "Trade.SetOffer", { items = { { kind = "monster", id = baby.id } } })
+			c:Advance(1)
+			if c.kernel.Router:Current() ~= "Trade" then
+				c:Open("Trade")
+			end
+			local screen = c:Screen("Trade")
+			c:Advance(0.5)
+			local tile = screen:FindFirstChild("Theirs", true):FindFirstChild("Tile1", true)
+			c:Click(tile)
+			c:Advance(0.5)
+			local names = string.format("Parents: %s × %s", Pedigree.Name(Pedigree.Snap(mama)), Pedigree.Name(Pedigree.Snap(papa)))
+			expect(c:HasText(names)).toBe(true)
 			expectClean(c)
 		end)
 	end)
