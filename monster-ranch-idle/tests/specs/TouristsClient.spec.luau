@@ -35,10 +35,12 @@ return function(t)
 		end
 	end
 
-	-- Runs server and client to just past this player's next tourist (1 s frames).
+	-- Runs server and client to just past this player's next tourist (1 s frames). The server pays
+	-- visits on a 5 s tick, so the visit can land up to 5 s after NextAt; +6 covers every user id's
+	-- phase and stays well inside the 16 s walk.
 	local function nextVisit(c, h, p)
 		local now = h.adapters.Clock.Now()
-		c:Advance(Logic.NextAt(p.UserId, now) - now + 2, 1)
+		c:Advance(Logic.NextAt(p.UserId, now) - now + 6, 1)
 	end
 
 	local function ownPlot(c, p): number?
