@@ -21,10 +21,16 @@
 	  Jobs.ScoutEggs(isUnlocked) -> { { egg, weight } }
 	  Jobs.Elapsed(slot, now) -> seconds             stored work time, capped at MaxHours
 	  Jobs.IsFull(slot, now) -> boolean              a collecting job whose storage is full
-	  Jobs.Collect(slot, m, now, eggs) -> (rewards, since, carry, rolled)
+	  Jobs.Collect(slot, m, now, eggs, boosts?) -> (rewards, since, carry, rolled)
 	                                                 what the slot pays now and its new counters;
 	                                                 `eggs` = Jobs.ScoutEggs(...) for scouts
-	  Jobs.Pending(slot, m, now, eggs) -> rewards    the same payout, without the counters
+	  Jobs.Pending(slot, m, now, eggs, boosts?) -> rewards    the same payout, without the counters
+	  Jobs.BoostedSeconds(since, seconds, boosts) -> number
+	                                                 3.10: output boosts (Kitchen dishes), a list of
+	                                                 { from, to, pct }: each adds pct × the part of
+	                                                 [from, to] inside the worked time. Miners and
+	                                                 foragers earn that much extra work time; a
+	                                                 scout hour's egg chance is × (1 + its share)
 ]]
 
 local Config = require(script.Parent.Parent.Config)
@@ -131,7 +137,19 @@ function Jobs.IsFull(slot, now: number): boolean
 	return now - (slot.since or now) >= Rules.MaxHours * HOUR
 end
 
-local function scoutFinds(slot, m, hours: number, eggs)
+function Jobs.BoostedSeconds(since: number, seconds: number, boosts): number
+	local extra = 0
+	for _, b in boosts or {} do
+		local a = math.max(since, tonumber(b.from) or 0)
+		local z = math.min(since + seconds, tonumber(b.to) or 0)
+		if z > a then
+			extra += (tonumber(b.pct) or 0) * (z - a)
+		end
+	end
+	return extra
+end
+
+local function scoutFinds(slot, m, hours: number, eggs, boosts)
 	local found = {}
 	if #eggs == 0 then
 		return found
@@ -141,9 +159,11 @@ local function scoutFinds(slot, m, hours: number, eggs)
 	for i, entry in eggs do
 		weights[i] = entry.weight
 	end
+	local since = slot.since or 0
 	for h = 1, hours do
 		local rng = Rng.new(Rng.seed("scout", slot.seed or 0, (slot.rolled or 0) + h))
-		if rng:Chance(chance) then
+		local boost = if boosts then Jobs.BoostedSeconds(since + (h - 1) * HOUR, HOUR, boosts) / HOUR else 0
+		if rng:Chance(math.min(1, chance * (1 + boost))) then
 			local egg = eggs[rng:Weighted(weights)].egg
 			found[egg] = (found[egg] or 0) + 1
 		end
@@ -151,7 +171,7 @@ local function scoutFinds(slot, m, hours: number, eggs)
 	return found
 end
 
-function Jobs.Collect(slot, m, now: number, eggs)
+function Jobs.Collect(slot, m, now: number, eggs, boosts)
 	local job = slot.job
 	local since, carry, rolled = slot.since or now, slot.carry or 0, slot.rolled or 0
 	local rewards = {}
@@ -161,7 +181,7 @@ function Jobs.Collect(slot, m, now: number, eggs)
 	local elapsed = Jobs.Elapsed(slot, now)
 	if job == "miner" or job == "forager" then
 		local perSecond = if job == "miner" then Jobs.CoinsPerSecond(m) else Jobs.FoodPerHour(m) / HOUR
-		local value = perSecond * elapsed + carry
+		local value = perSecond * (elapsed + Jobs.BoostedSeconds(since, elapsed, boosts)) + carry
 		local amount = math.floor(value)
 		if amount > 0 then
 			if job == "miner" then
@@ -175,7 +195,7 @@ function Jobs.Collect(slot, m, now: number, eggs)
 	-- Scout: whole hours only; the part of an hour already worked carries over unless the
 	-- storage was full (the time past the cap is lost, as for every job).
 	local hours = math.floor(elapsed / HOUR)
-	local found = scoutFinds(slot, m, hours, eggs or {})
+	local found = scoutFinds(slot, m, hours, eggs or {}, boosts)
 	for _, entry in eggs or {} do
 		local n = found[entry.egg]
 		if n then
@@ -186,8 +206,8 @@ function Jobs.Collect(slot, m, now: number, eggs)
 	return rewards, (if full then now else since + hours * HOUR), carry, rolled + hours
 end
 
-function Jobs.Pending(slot, m, now: number, eggs)
-	return (Jobs.Collect(slot, m, now, eggs))
+function Jobs.Pending(slot, m, now: number, eggs, boosts)
+	return (Jobs.Collect(slot, m, now, eggs, boosts))
 end
 
 return Jobs

@@ -17,6 +17,10 @@
 	  (Claim returns the baby, `surges`, how many of its genes surged: Logic/Genetics, and
 	  `targetMet`, whether the baby reached the target)
 
+	Gene locks (3.10, Gene Lab): the baby's genes honour each parent's `geneLock`
+	(Logic/Genetics), and a successful claim clears both parents' locks. A cancelled pod, or a
+	claim refused for a full ranch, keeps them.
+
 	Pedigree (3.9): the baby gets `ped` (Logic/Pedigree) from its parents at claim time. A baby
 	with grade A or better in a stat pays MilestoneRibbons the first time for that stat, and
 	grade S again the first time (Rewards source "breeding_target"), target or not. A baby that
@@ -301,6 +305,13 @@ local function claim(player, payload)
 
 	freeParents(player, pod)
 	resetPod(player, payload.pod)
+	-- 3.10: a Gene Lab lock is used up by the baby it shaped (rolled just above).
+	for _, parent in { a, b } do
+		if parent.geneLock then
+			parent.geneLock = nil
+			Monsters:Changed(player, parent.id, { "geneLock" })
+		end
+	end
 
 	local newForPlayer = not s.discovered[spec.line]
 	if newForPlayer then

@@ -155,6 +155,23 @@ return {
 			end,
 		})
 
+		-- 3.10: the Gene Lab (shown once it unlocks).
+		local geneLabButton = Button.new({
+			Name = "GeneLab",
+			Text = "Gene Lab",
+			Color = C.Purple,
+			Size = UDim2.fromOffset(150, 44),
+			TextSize = Theme.TextSize.Body,
+			LayoutOrder = 1,
+			Parent = panel.HeaderRight,
+			OnClick = function()
+				if ctx.Router:Has("GeneLab") then
+					ctx.Router:Open("GeneLab")
+				end
+			end,
+		})
+		geneLabButton:SetVisible(false)
+
 		local selA: string? = nil
 		local selB: string? = nil
 		local pod = 1
@@ -244,7 +261,10 @@ return {
 				sortBy = if tg
 					then function(m)
 						if partner then
-							return Genetics.AtLeast(Genetics.GradeOdds(m.genes, partner.genes, tg.stat), tg.grade)
+							return Genetics.AtLeast(
+								Genetics.GradeOdds(m.genes, partner.genes, tg.stat, m.geneLock, partner.geneLock),
+								tg.grade
+							)
 						end
 						return Genetics.Points(m.genes, tg.stat)
 					end
@@ -365,7 +385,7 @@ return {
 			if tg and a and b then
 				text = string.format(
 					"Chance with this pair: %s",
-					chanceText(Genetics.AtLeast(Genetics.GradeOdds(a.genes, b.genes, tg.stat), tg.grade))
+					chanceText(Genetics.AtLeast(Genetics.GradeOdds(a.genes, b.genes, tg.stat, a.geneLock, b.geneLock), tg.grade))
 				)
 			elseif a and b then
 				text = string.format("Stats show the chance of %s or better", planGrade())
@@ -796,7 +816,7 @@ return {
 
 			-- Genes (3.9 planner): each stat's chance of the plan grade or better, one line of five
 			-- fixed-width cells; the target's stat is outlined. Tap a stat for its grade spread.
-			local genes = o.genes or Genetics.Preview(a.genes, b.genes)
+			local genes = o.genes or Genetics.Preview(a.genes, b.genes, a.geneLock, b.geneLock)
 			local grade = planGrade()
 			local tg = target()
 			local TITLE_W, LINE_H = 64, 26
@@ -815,18 +835,40 @@ return {
 				Parent = genesRow,
 			}, { Create.List("x", 4, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
 			for i, stat in Config.Genetics.Stats do
-				local odds = Genetics.GradeOdds(a.genes, b.genes, stat)
+				-- 3.10: a parent's Gene Lab lock counts in the odds, and marks the stat "Locked".
+				local odds = Genetics.GradeOdds(a.genes, b.genes, stat, a.geneLock, b.geneLock)
 				local chance = Genetics.AtLeast(odds, grade)
 				local statName = Config.Genetics.StatNames[stat] or stat
 				local isTarget = tg ~= nil and tg.stat == stat
+				local isLocked = a.geneLock == stat or b.geneLock == stat
 				local cell = New("Frame", {
 					Name = "Plan_" .. stat,
 					BackgroundColor3 = C.PanelDeep,
-					BackgroundTransparency = if isTarget then 0 else 1,
+					BackgroundTransparency = if isTarget or isLocked then 0 else 1,
 					Size = UDim2.fromOffset(84, LINE_H),
 					LayoutOrder = i,
 					Parent = cells,
-				}, if isTarget then { Create.Corner(6), Create.Stroke(2, C.Gold) } else nil)
+				}, if isTarget or isLocked then { Create.Corner(6), Create.Stroke(2, if isTarget then C.Gold else C.Purple) } else nil)
+				if isLocked then
+					local tag = New("Frame", {
+						Name = "Locked",
+						BackgroundColor3 = C.Purple,
+						AnchorPoint = Vector2.new(0.5, 1),
+						Position = UDim2.new(0.5, 0, 0, 4),
+						Size = UDim2.fromOffset(52, 14),
+						ZIndex = 3,
+						Parent = cell,
+					}, { Create.Corner(7) })
+					Util.text({
+						Text = "Locked",
+						TextSize = Theme.TextSize.Tiny,
+						TextColor3 = C.White,
+						TextXAlignment = Enum.TextXAlignment.Center,
+						Size = UDim2.fromScale(1, 1),
+						ZIndex = 4,
+						Parent = tag,
+					})
+				end
 				Util.text({
 					Text = statName,
 					TextColor3 = C.TextMuted,
@@ -988,6 +1030,7 @@ return {
 			if not Util.unlocked(ctx, BreedingConfig.Unlock) then
 				lockOverlay = Util.lockOverlay(panel.Body, Util.unlockText(BreedingConfig.Unlock))
 			end
+			geneLabButton:SetVisible(Util.unlocked(ctx, Config.GeneLab.Unlock))
 		end
 		refresh = Util.debounce(draw)
 

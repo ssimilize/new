@@ -101,6 +101,15 @@ Unlocks.Features = {
 
 	-- 3.9 · Expedition Bounties (Config/Bounties)
 	bounties = 6,
+	-- 3.10 · Ranch Tourists (Config/Tourists)
+	tourists = 11,
+	-- 3.10 · Kitchen & Pantry (Config/Kitchen)
+	kitchen = 9,
+	kitchen_slot_3 = 30,
+	-- 3.10 · Gene Lab (Config/GeneLab)
+	gene_lab = 21,
+	-- 3.10 · Fishing Pond (Config/Fishing)
+	fishing = 13,
 }
 
 -- Player-facing names for the level-up popup.
@@ -161,6 +170,11 @@ Unlocks.Names = {
 	raid_abyss = "Trench Sovereign raid",
 
 	bounties = "Bounties",
+	tourists = "Ranch Tourists",
+	kitchen = "Kitchen",
+	kitchen_slot_3 = "Kitchen slot 3",
+	gene_lab = "Gene Lab",
+	fishing = "Fishing Pond",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

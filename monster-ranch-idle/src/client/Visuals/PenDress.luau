@@ -271,7 +271,7 @@ function PenDress.Garden(parent: Instance, base: CFrame, garden, now: number, de
 		table.insert(parts, soil)
 		if stage > 0 then
 			local look = G.stages[stage]
-			local flavor = Config.Food.ById[plot.flavor]
+			local flavor = Config.Food.ById[plot.flavor] or (plot.flavor == Config.Kitchen.Golden.id and Config.Kitchen.Golden) -- 3.10
 			local fruitColor = hex(flavor and flavor.color, WHITE)
 			local offsets = if detail == "far" then { 0 } else G.plants
 			for j, dz in offsets do

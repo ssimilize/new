@@ -17,6 +17,7 @@
 	    IncubatorPad                 Part (attrs PlotId, Incubator = true)
 	    Barn                         Model (attr PlotId) with Body, Roof*, Door
 	    Gate                         Model with PostL, PostR, Sign (client adds the owner name)
+	    FishingPond                  Model (attr PlotId, 3.10) with Water, Bed, Rim*, Dock, DockPost*
 	  SpawnLocation
 	  Boundary/Wall<1-4>             low stone wall on the perimeter (Config.World.Boundary)
 	  Boundary/Barrier<1-4>          invisible, tall, collides: keeps players on the map
@@ -53,6 +54,7 @@ local COLORS = {
 	plazaEdge = hex("#CDBF9E"),
 	stone = hex("#B9B3A5"),
 	water = hex("#5EC3F2"),
+	pondBed = hex("#3E6B5A"),
 	penGround = hex("#A2D776"),
 	fence = hex("#9C6130"),
 	fenceDark = hex("#7A4A22"),
@@ -64,6 +66,9 @@ local COLORS = {
 	padRim = hex("#F2A93B"),
 	sign = hex("#FFF7E3"),
 	ink = hex("#2A2419"),
+	kitchen = hex("#F4E6C8"), -- 3.10
+	kitchenRoof = hex("#B8423A"),
+	kitchenGlass = hex("#9ED8F0"),
 }
 
 local PEN_FLOOR_HEIGHT = 0.8 -- floor top sits at GroundY + 0.4
@@ -394,6 +399,74 @@ local function buildPlot(World, plot, parent: Instance)
 	barn.PrimaryPart = barnBody
 	barn:SetAttribute("PlotId", plot.id)
 	barn.Parent = model
+
+	-- Kitchen (3.10, Config/Kitchen): cream walls, a red roof and a chimney; the door faces the
+	-- pens (plot-local -Z). The client puts the "Cook" prompt on Door.
+	local ko = World.KitchenOffset
+	local kitchen = Instance.new("Model")
+	kitchen.Name = "Kitchen"
+	local kSize = Vector3.new(World.KitchenSize[1], World.KitchenSize[2], World.KitchenSize[3])
+	local kCf = plotCf * CFrame.new(ko[1], 0.3 + kSize.Y / 2, ko[3])
+	local kBody = block("Body", kSize, kCf, COLORS.kitchen, kitchen)
+	gableRoof(kitchen, kCf, kSize, COLORS.kitchenRoof, 0.4)
+	local front = -kSize.Z / 2 - 0.2
+	block("Door", Vector3.new(4, 6, 0.4), kCf * CFrame.new(-3, -kSize.Y / 2 + 3, front), COLORS.door, kitchen)
+	block("Window", Vector3.new(5, 3, 0.4), kCf * CFrame.new(3.5, 0.5, front), COLORS.kitchenGlass, kitchen)
+	block("Awning", Vector3.new(6.5, 0.4, 1.6), kCf * CFrame.new(3.5, 2.4, front - 0.6), COLORS.kitchenRoof, kitchen)
+	block("Chimney", Vector3.new(1.6, 4, 1.6), kCf * CFrame.new(kSize.X / 2 - 3, kSize.Y / 2 + 2.4, 1.5), COLORS.stone, kitchen)
+	kitchen.PrimaryPart = kBody
+	kitchen:SetAttribute("PlotId", plot.id)
+	kitchen.Parent = model
+	-- Update 3.10: the Fishing Pond (Config.World.Pond); the client puts the "Go fishing" prompt on the dock.
+	local pondDef = World.Pond
+	if pondDef then
+		local pond = Instance.new("Model")
+		pond.Name = "FishingPond"
+		local po = pondDef.offset
+		local px, pz = pondDef.size[1], pondDef.size[2]
+		local rim = pondDef.rim
+		local pondCf = plotCf * CFrame.new(po[1], 0, po[3])
+		block("Bed", Vector3.new(px, 0.2, pz), pondCf * CFrame.new(0, 0.32, 0), COLORS.pondBed, pond, { CastShadow = false })
+		local water = block("Water", Vector3.new(px, 0.2, pz), pondCf * CFrame.new(0, 0.45, 0), COLORS.water, pond, {
+			CastShadow = false,
+			CanCollide = false,
+			Transparency = 0.25,
+			Material = Enum.Material.Glass,
+		})
+		water:SetAttribute("PlotId", plot.id)
+		local rimH = 0.9
+		block("RimN", Vector3.new(px + rim * 2, rimH, rim), pondCf * CFrame.new(0, 0.3 + rimH / 2, -pz / 2 - rim / 2), COLORS.stone, pond)
+		block("RimS", Vector3.new(px + rim * 2, rimH, rim), pondCf * CFrame.new(0, 0.3 + rimH / 2, pz / 2 + rim / 2), COLORS.stone, pond)
+		block("RimW", Vector3.new(rim, rimH, pz), pondCf * CFrame.new(-px / 2 - rim / 2, 0.3 + rimH / 2, 0), COLORS.stone, pond)
+		-- The east rim leaves a gap for the dock.
+		local dockLen, dockW = pondDef.dock[1], pondDef.dock[2]
+		local side = (pz - dockW) / 2
+		for i, sign in { -1, 1 } do
+			block(
+				"RimE" .. i,
+				Vector3.new(rim, rimH, side),
+				pondCf * CFrame.new(px / 2 + rim / 2, 0.3 + rimH / 2, sign * (dockW / 2 + side / 2)),
+				COLORS.stone,
+				pond
+			)
+		end
+		local dockX = px / 2 + rim + dockLen / 2 - dockLen * 0.55
+		local dock = block("Dock", Vector3.new(dockLen, 0.3, dockW), pondCf * CFrame.new(dockX, 1.05, 0), COLORS.fence, pond)
+		dock:SetAttribute("PlotId", plot.id)
+		dock:SetAttribute("FishingPond", true)
+		for i, sign in { -1, 1 } do
+			block(
+				"DockPost" .. i,
+				Vector3.new(0.5, 1.8, 0.5),
+				pondCf * CFrame.new(dockX - dockLen / 2 + 0.4, 0.9, sign * (dockW / 2 - 0.25)),
+				COLORS.fenceDark,
+				pond
+			)
+		end
+		pond.PrimaryPart = dock
+		pond:SetAttribute("PlotId", plot.id)
+		pond.Parent = model
+	end
 
 	-- Gate at the front edge (facing the hub); the client writes the owner's name above it.
 	local gate = Instance.new("Model")

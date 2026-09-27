@@ -213,6 +213,8 @@ function Icon.forReward(kind: string): string
 		return "ribbon"
 	elseif kind == "accessory" then
 		return "star"
+	elseif kind == "bait" then
+		return "food" -- 3.10: Fishing Pond bait
 	end
 	-- Rewards name currencies in the plural ("coins", "gems", "treats"); the icons are singular.
 	-- Unmapped, every coin / gem chip drew the grey fallback disc (found in Studio 2026-09-26).

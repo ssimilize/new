@@ -271,6 +271,44 @@ return function(t)
 			expect(rejected).toBe(true)
 		end)
 
+		it("returns saved pieces a newer building now covers to storage, with a Welcome Back line", function()
+			local h = boot()
+			local p = h:Join()
+			local Shop = h:System("Shop")
+			Shop:AddDecor(p, "hay_bale", 2)
+			h:Call(p, "Decor.Save", { layout = { e("hay_bale", -30, -25) } })
+			-- A piece saved before 3.10 on the spot the Kitchen now stands on.
+			local covered = e("hay_bale", 7, 22)
+			expect(Layout.Check(covered)).toBe("That spot is blocked")
+			table.insert(h:Section(p, "Decor").layout, covered)
+			local stored = Shop:DecorCount(p, "hay_bale")
+			local welcome = {}
+			h.kernel.Bus:Subscribe("WelcomeItem", function(_, detail)
+				table.insert(welcome, detail)
+			end)
+			local back = h:Rejoin(p)
+			local layout = h:Section(back, "Decor").layout
+			expect(#layout).toBe(1)
+			expect(layout[1].x).toBe(-30)
+			expect(h:System("Shop"):DecorCount(back, "hay_bale")).toBe(stored + 1)
+			local said = false
+			for _, item in welcome do
+				if item.kind == "decor" then
+					said = true
+					expect(item.text).toBe("A decoration moved to storage to make room for a new building")
+				end
+			end
+			expect(said).toBe(true)
+			-- Saving works again, and a clean layout says nothing next time.
+			expect(h:Call(back, "Decor.Save", { layout = { e("hay_bale", -30, -25), e("hay_bale", -27, -25) } }).count).toBe(2)
+			table.clear(welcome)
+			local again = h:Rejoin(back)
+			expect(#h:Section(again, "Decor").layout).toBe(2)
+			for _, item in welcome do
+				expect(item.kind ~= "decor").toBe(true)
+			end
+		end)
+
 		it("moves old pen-slot decor onto the layout and keeps its mood aura", function()
 			local h = boot()
 			local p = h:Join()

@@ -88,6 +88,14 @@ return {
 		"Weekly",
 		-- 3.8 · Ranch Orders
 		"Orders",
+		-- 3.10 · Ranch Tourists
+		"Tourists",
+		-- 3.10 · Kitchen & Pantry
+		"Kitchen",
+		-- 3.10 · Gene Lab
+		"GeneLab",
+		-- 3.10 · Fishing Pond
+		"Fishing",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

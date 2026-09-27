@@ -378,12 +378,60 @@ Api.Actions = {
 		returns = "{ rewards: { Reward } }  -- the forager's stored food, paid before the change",
 	},
 
+	-- Kitchen & Pantry (3.10) · see Config/Kitchen and Logic/Kitchen -------------------
+	["Kitchen.Cook"] = {
+		schema = T.struct({ recipe = T.key(Config.Kitchen.ById), slot = T.optional(T.integer(1, Config.Kitchen.MaxSlots)) }),
+		rate = 3,
+		returns = "{ slot: number, readyAt: number }",
+	},
+	["Kitchen.Collect"] = { schema = T.none, rate = 2, returns = "{ dishes: { [dishId]: number } }" },
+	["Kitchen.Serve"] = {
+		schema = T.struct({ id = id, dish = T.key(Config.Kitchen.ById) }),
+		rate = 4,
+		returns = "{ effect: 'meals'|'mood'|'bond'|'job'|'loot' }",
+	},
+	["Kitchen.PlantGolden"] = { schema = T.struct({ plot = T.integer(1, 8) }), rate = 3, returns = "{ readyAt: number }" },
+	-- Fishing Pond (3.10) · see Config/Fishing and Logic/Fishing -------------------------
+	["Fishing.Start"] = {
+		schema = T.none,
+		rate = 1,
+		returns = "{ run: number, seed: number, bonus: number, duration: number, casts: number, bait: number }",
+	},
+	["Fishing.Finish"] = {
+		schema = T.struct({
+			run = T.integer(1),
+			inputs = T.array(T.struct({ t = T.number(0, Config.Fishing.Duration), down = T.boolean }), Config.Fishing.MaxInputs),
+		}),
+		rate = 1,
+		returns = "{ caught, fish, rarity, weight, time, rewards: { Reward }, best, first }",
+	},
+	["Fishing.Sell"] = {
+		schema = T.struct({ fish = T.key(Config.Fishing.ById), amount = T.integer(1, 9999) }),
+		rate = 4,
+		returns = "{ coins: number }",
+	},
+	["Fishing.SetBuddy"] = { schema = T.struct({ id = id }), rate = 2, returns = "nil" },
+
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
 	["Weekly.Claim"] = {
 		schema = T.struct({ step = T.integer(1, #Config.Weekly.Chest) }),
 		rate = 2,
 		returns = "{ rewards: { Reward } }",
 	},
+	-- Gene Lab (3.10) · see Config/GeneLab and Logic/GeneLab ------------------------------------
+	-- Tune: the weaker gene of `stat` on an owned, free Adult gains +1 on a seeded success roll.
+	["GeneLab.Tune"] = {
+		schema = T.struct({ id = id, stat = T.enum(Config.Genetics.Stats) }),
+		rate = 2,
+		returns = "{ success: boolean, stat: string, gene: number, cost: number, chance: number, tunesLeft: number }",
+	},
+	-- Lock: the Adult's next baby gets its better gene of `stat` (Star Shards, replaces a lock).
+	["GeneLab.Lock"] = {
+		schema = T.struct({ id = id, stat = T.enum(Config.Genetics.Stats) }),
+		rate = 2,
+		returns = "{ stat: string, cost: number }",
+	},
+
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
 		schema = T.struct({ index = T.integer(1, Config.Orders.PerDay + 1), id = T.optional(id) }), -- 3.9: PerDay + 1 is the favourite buyer order
@@ -719,7 +767,10 @@ Api.State = {
 		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id }, bounty = { week, list = { { region, stage, name, line, seed, done } }, count } }",
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true }, target = { stat, grade } | false, milestones = { [stat]: grade } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
+		GeneLab = "{ day, tunes, attempts }  -- 3.10: tunes used on UTC `day`, lifetime attempts (the roll seed)",
+		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
+		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true }, pass, passCredit }",
@@ -749,6 +800,7 @@ Api.State = {
 		Visits = "{ day, liked = { ['u'..userId]: true }, paidCount, got, week, weekLikes, received }  -- glow-up Y (paid private)",
 		Decor = "{ layout = { { id, x, z, rot } }, migrated, starter }  -- glow-up Z: plot-local grid units, rot × 45°",
 		RaceGear = "{ owned = { [gearId]: true }, equipped = { saddle, trail, banner }, races, live, podiums, wins, duels }  -- glow-up LR",
+		Tourists = "{ slot, count, book = { { at, stars, who, good, gi, bad, bi } } }  -- 3.10: Ranch Tourists (Logic/Tourists)",
 		-- R2 Design Weeks: added to profile.Workshop (see Api.State.profile.Workshop above).
 		Workshop_DesignWeek = "profile.Workshop also has: designWeek = { week, entered: designId|false }, votesToday = { day, n }",
 	},
@@ -757,6 +809,7 @@ Api.State = {
 		Ranch = "{ income, rates = { [pen]: coinsPerSec }, caps = { [pen]: seconds }, capacity, used }",
 		Breeding = "{ podCount, breedsPerDay }",
 		Jobs = "{ slotCount }",
+		Kitchen = "{ slotCount, fish, fishing }  -- 3.10: fish = Fishing:FishCount (0 without Fishing); fishing = Fishing is plugged in",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
 		WelcomeBack = "{ pending: boolean, awaySeconds, coins, items = { { kind, text, icon? } } }",
@@ -773,6 +826,7 @@ Api.State = {
 		Workshop = "{ tab: 'top'|'new'|'mine', gallery = { { id, name, creatorName, shape, slot, color, color2, likes, copies, mine, liked } }, moderator: boolean, queue = { view + reports, creatorId } }",
 		Arena = "{ rating, tier, attemptsLeft, season, candidates = { { name, rating, bot, done, team = { { line, form, look } } } } }",
 		Reminders = "{ available: boolean, prompt: boolean }  -- prompt = show Roblox's notification opt-in now",
+		Tourists = "{ score, stars, parts = { [categoryId]: 0..1 }, tip, nextAt, unlocked }  -- 3.10: the ranch's Appeal and the next tourist",
 		Visits = "{ showcase: RanchSnapshot | false }  -- glow-up Y: the friend's ranch in this player's Visiting Showcase (Logic/Visits)",
 		LiveRace = "{ heat: number|false, meter, lap, progress, strikes, finished, dq, result = { place, time, finished, field, rewards, cup, dq }|false }  -- glow-up LR",
 		-- R2 Design Weeks: added to session.Workshop (see Api.State.session.Workshop above).
@@ -802,6 +856,7 @@ Api.State = {
 		Visits = "{ crown = { userId, plot, likes, name } | false, stage = { week, userId, name, likes, monsters = { Appearance } } | false }  -- glow-up Y",
 		LiveRace = "{ state: 'idle'|'lobby'|'countdown'|'running'|'podium', heat, lobbyEndsAt, goAt, podiumEndsAt, laps, racers = { { userId, name, appearance, lane, progress, lateral, finished, dq } }, ghosts = { { name, time, lane } }, results = { { name, place, time|false, ghost, userId, dq, appearance? } }|false }  -- glow-up LR",
 		RaceGear = "{ here = { ['u'..userId]: { saddle, trail, banner } } }  -- glow-up LR: equipped racing gear in this server",
+		Tourists = "{ walk = { ['u'..userId]: { n, at, stars } } }  -- 3.10: each player's last tourist, walked onto their plot by every client",
 	},
 }
 
@@ -838,7 +893,11 @@ Api.Topics = {
 	TitanDamage = "(player, { damage: number, won: boolean })  -- per participant when a titan invasion ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
+	GeneTuned = "(player, { stat: string, success: boolean })  -- 3.10: every Gene Lab tune, success or not",
 	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
+	TouristVisited = "(player, { stars: number })  -- 3.10: one Ranch Tourist visited (online or while away)",
+	DishCooked = "(player, { dish: string, count: number })  -- 3.10: dishes collected from the Kitchen into the Pantry",
+	FishCaught = "(player, { fish: string, rarity: string, weight: number })  -- 3.10: a catch at the Fishing Pond (weight in kg)",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
@@ -878,7 +937,7 @@ Api.Topics = {
 	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
-	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total' })  -- glow-up O",
+	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish' })  -- glow-up O (fish: 3.10)",
 	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
 	-- R2-ONBOARDING · republished by Quests.Signal for a tutorial chapter two step with no
@@ -888,7 +947,7 @@ Api.Topics = {
 
 -- Shared shapes (documentation) -----------------------------------------------------
 Api.Shapes = {
-	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'ribbons'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster'|'accessory', id: string?, amount: number, rarity: number? }",
+	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'ribbons'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster'|'accessory'|'bait', id: string?, amount: number, rarity: number? }",
 	Monster = "see ARCHITECTURE.md → Monster record",
 	Listing = "see ARCHITECTURE.md §8 → Listing (client view)",
 	Appearance = "see Logic/Appearance.luau",

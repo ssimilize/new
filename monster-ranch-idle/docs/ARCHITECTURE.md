@@ -122,6 +122,7 @@ Rules:
 | `locked` | boolean | player lock (can't sell or fuse) |
 | `born`, `gen` | number | |
 | `genes` | `{ hp, atk, def, spd, luck = { a, b } }` | stat genes, each 0..10 (3.6, `Logic/Genetics`; Luck since 3.7). Only `Formulas.Stats` reads them (+1% per point); set at creation or by the Monsters v2/v3 migrations, never changed after |
+| `geneLock` | stat? | 3.10 Gene Lab: the stat whose better gene this Adult's next baby gets for certain. Set by `GeneLab.Lock`, cleared by `Breeding.Claim` and by `Monsters:Insert` (never travels with a traded or listed monster) |
 | `acc` | {[slot]: accessoryId}? | worn accessories (1.5). Set only by Accessories through `Monsters:SetAccessory`; `Monsters:Remove` strips it (the detail of `MonsterRemoved` carries it) and `Monsters:Insert` clears it, so accessories never travel with a traded, listed or retired monster |
 
 All derived numbers (coin rate, stats, power, value, level cap, grow time) come from `Logic/Formulas.luau`. Never store them.

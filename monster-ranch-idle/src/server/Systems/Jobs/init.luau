@@ -25,6 +25,10 @@
 	Public API:
 	  Jobs:SlotCount(player) -> number
 	  Jobs:Workers(player, jobId) -> { Monster }   -- the monsters on that job right now
+	  Jobs:RegisterOutputBoost(key, fn(player, monsterId) -> { { from, to, pct } }?)
+	                                              -- 3.10 (Kitchen dishes): extra output for one
+	                                                 worker over a time window (Logic/Jobs.BoostedSeconds);
+	                                                 miners, foragers and scouts only
 
 	Bus: publishes JobsCollected { rewards } and RateModifiersChanged (guards changed);
 	WelcomeItem when workers stored work while the player was away.
@@ -47,6 +51,7 @@ local Config, Rules
 local Progression, Rewards, Monsters
 
 local notified = {} -- [player] = { [slot] = true } slots whose "storage full" toast was shown
+local outputBoosts = {} -- [key] = fn(player, monsterId) -> { { from, to, pct } }?
 
 local function maxSlots(): number
 	return Config.Jobs.MaxSlots
@@ -116,7 +121,19 @@ local function settle(player, index: number, into)
 	if not m then
 		return
 	end
-	local rewards, since, carry, rolled = JobsLogic.Collect(slot, m, ctx:Now(), JobsLogic.ScoutEggs(isUnlocked(player)))
+	local boosts = {}
+	for key, fn in outputBoosts do
+		local ok, list = pcall(fn, player, m.id)
+		if ok and type(list) == "table" then
+			for _, b in list do
+				table.insert(boosts, b)
+			end
+		elseif not ok then
+			warn(string.format("[Jobs] output boost %s failed: %s", key, tostring(list)))
+		end
+	end
+	local rewards, since, carry, rolled =
+		JobsLogic.Collect(slot, m, ctx:Now(), JobsLogic.ScoutEggs(isUnlocked(player)), if #boosts > 0 then boosts else nil)
 	slot.since, slot.carry, slot.rolled = since, carry, rolled
 	for _, item in rewards do
 		table.insert(into, item)
@@ -165,6 +182,10 @@ function Jobs:Workers(player, jobId: string)
 		end
 	end
 	return list
+end
+
+function Jobs:RegisterOutputBoost(key: string, fn)
+	outputBoosts[key] = fn
 end
 
 -- Actions ---------------------------------------------------------------------------------

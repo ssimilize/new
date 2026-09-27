@@ -6,6 +6,8 @@
 	                   plus a "Build Pen" prompt on the next locked pen -> Router:Open("Ranch")
 	  own incubator    IncubatorPad -> Router:Open("Incubators")
 	  own barn         Barn -> Router:Open("Monsters")
+	  own kitchen      Kitchen.Door "Cook" -> Router:Open("Kitchen")   (3.10)
+	  own pond         FishingPond.Dock -> Router:Open("Fishing")   (3.10; the screen shows its own lock)
 
 	Ranch prompts exist only on the local player's own plot (found in global.Plots by UserId)
 	and are rebuilt when the plot or the number of owned pens changes. Prompts are created on
@@ -175,6 +177,30 @@ local function buildRanchPrompts(index: number?, penCount: number)
 		addPrompt(ranchPrompts, door, front.Position, "Open", "Barn", PROMPT_DISTANCE, function()
 			open("Monsters")
 		end)
+	end
+	local kitchen = plot:FindFirstChild("Kitchen")
+	local kitchenDoor = kitchen and kitchen:FindFirstChild("Door")
+	if kitchenDoor and kitchenDoor:IsA("BasePart") then
+		local front = kitchenDoor.CFrame * CFrame.new(0, 0, -1.5)
+		addPrompt(ranchPrompts, kitchenDoor, front.Position, "Cook", "Kitchen", PROMPT_DISTANCE, function()
+			open("Kitchen")
+		end)
+	end
+	local pond = plot:FindFirstChild("FishingPond")
+	local dock = pond and pond:FindFirstChild("Dock")
+	if dock and dock:IsA("BasePart") then
+		local prompt = addPrompt(
+			ranchPrompts,
+			dock,
+			dock.Position + Vector3.new(0, 2.5, 0),
+			"Go fishing",
+			"Fishing Pond",
+			PROMPT_DISTANCE,
+			function()
+				open("Fishing")
+			end
+		)
+		prompt.Name = "FishPrompt"
 	end
 end
 

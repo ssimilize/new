@@ -79,6 +79,14 @@ Weekly.Pool = {
 		unlock = "arena",
 	},
 	{
+		id = "genelab_5",
+		family = "genelab",
+		text = "Tune 5 genes in the Gene Lab",
+		topic = "GeneTuned",
+		target = 5,
+		unlock = "gene_lab",
+	},
+	{
 		id = "bounty_3",
 		family = "bounties",
 		text = "Defeat 3 bounties",
@@ -86,6 +94,8 @@ Weekly.Pool = {
 		target = 3,
 		unlock = "bounties",
 	},
+	{ id = "cook_10", family = "cooking", text = "Cook 10 dishes", topic = "DishCooked", target = 10, unlock = "kitchen" },
+	{ id = "fish_20", family = "fishing", text = "Catch 20 fish", topic = "FishCaught", target = 20, unlock = "fishing" },
 	{ id = "raids_5", family = "raids", text = "Finish 5 raids", topic = "RaidFinished", target = 5, unlock = "raids" },
 	{
 		id = "crystals_10",
@@ -94,6 +104,15 @@ Weekly.Pool = {
 		topic = "CrystalCollected",
 		target = 10,
 		unlock = "region_sky",
+	},
+	-- 3.10 · Ranch Tourists
+	{
+		id = "tourists_15",
+		family = "tourists",
+		text = "Welcome 15 tourists",
+		topic = "TouristVisited",
+		target = 15,
+		unlock = "tourists",
 	},
 }
 

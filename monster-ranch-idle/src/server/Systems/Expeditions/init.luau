@@ -21,7 +21,7 @@
 	  Expeditions:SlotCount(player) -> number
 	  Expeditions:SquadSize(player) -> number
 	  Expeditions:LootBonus(player, ids) -> pct        -- loot bonus a squad would get right now
-	  Expeditions:RegisterLootModifier(key, fn(player) -> pct)
+	  Expeditions:RegisterLootModifier(key, fn(player, ids) -> pct)   -- ids: the squad (3.10)
 	  Expeditions:ResetForRebirth(player) -> boolean  -- clears region progress (Rebirth)
 	  Expeditions:Bounties(player) -> { Bounty }       -- this week's bounties (3.9)
 	  Expeditions:BountyCount(player) -> number        -- bounties defeated this week (the "bounties" board)
@@ -400,7 +400,7 @@ function Expeditions:LootBonus(player, ids: { string }): number
 		total += paws[i]
 	end
 	for key, fn in lootModifiers do
-		local ok, value = pcall(fn, player)
+		local ok, value = pcall(fn, player, ids)
 		if ok and type(value) == "number" and value == value then
 			total += value
 		elseif not ok then

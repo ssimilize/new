@@ -8,7 +8,8 @@
 	  middle   level bar (lv / Formulas.LevelCap), stat bars (Formulas.Stats; bars show how far
 	           each stat is from its value at this stage's level cap) with a gene grade beside HP,
 	           ATK, DEF and SPD (tap: the gene pair), gene points and generation (tap: the family
-	           tree, Parts/FamilyTree, update 3.9, with how genes work), power, traits (hidden
+	           tree, Parts/FamilyTree, update 3.9, with how genes work; 3.10: the Gene Lab button
+           beside it for an Adult once the Lab unlocks), power, traits (hidden
 	           trait is "???" until Adult), Feed (flavour picker with owned food), Level up ×1 /
 	           ×N (Economy.LevelCost), Grow (Formulas.CanGrow reason) or grow countdown
 	  right    diet meter for this stage, evolution path with branches
@@ -44,6 +45,7 @@ local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local WalkToggle = require(script.Parent.Parts.WalkToggle) -- glow-up T
 local BondBadge = require(script.Parent.Parts.BondBadge)
 local FamilyTree = require(script.Parent.Parts.FamilyTree) -- 3.9
+local Util = require(script.Parent.Parts.Util) -- 3.10: the Pantry button
 local ShowpieceChips = require(script.Parent.Parts.ShowpieceChips) -- glow-up W
 
 local New = Create.New
@@ -238,13 +240,31 @@ function MonsterDetail.Build(ctx)
 			})
 		end
 	end
+	-- 3.10: the genes line also holds the Gene Lab button (shown once the Lab unlocks).
+	local genesRow = Tiles.frame({ Name = "GenesRow", Size = UDim2.new(1, 0, 0, 26), LayoutOrder = 8, Parent = middle })
 	local genesLabel = Tiles.label({
 		Text = "",
 		TextSize = Theme.TextSize.Small,
 		TextColor3 = C.TextMuted,
-		Size = UDim2.new(1, 0, 0, 20),
-		LayoutOrder = 8,
-		Parent = middle,
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.fromScale(0, 0.5),
+		Size = UDim2.new(1, -112, 0, 20),
+		Parent = genesRow,
+	})
+	local geneLabButton = Button.new({
+		Name = "GeneLab",
+		Text = "Gene Lab",
+		Color = C.Purple,
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.fromScale(1, 0.5),
+		Size = UDim2.fromOffset(108, 26),
+		TextSize = Theme.TextSize.Small,
+		Parent = genesRow,
+		OnClick = function()
+			if currentId and ctx.Router:Has("GeneLab") then
+				ctx.Router:Open("GeneLab", { id = currentId })
+			end
+		end,
 	})
 	local openFamily -- set below, once the popup exists
 	Tiles.tap(genesLabel, function()
@@ -424,12 +444,19 @@ function MonsterDetail.Build(ctx)
 				})
 				b:SetDisabled(owned <= 0)
 			end
+			-- 3.10: the Pantry (Kitchen screen) serves cooked dishes to this monster.
+			local extras = New("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 44),
+				LayoutOrder = 10,
+				Parent = list,
+			}, { Create.List("x", 10) })
 			Button.new({
 				Text = "Get more food",
 				Color = C.Blue,
 				Size = UDim2.fromOffset(200, 44),
-				LayoutOrder = 10,
-				Parent = list,
+				LayoutOrder = 1,
+				Parent = extras,
 				OnClick = function()
 					popup:Hide()
 					if ctx.Router:Has("Store") then
@@ -439,6 +466,21 @@ function MonsterDetail.Build(ctx)
 					end
 				end,
 			})
+			if ctx.Router:Has("Kitchen") and Util.unlocked(ctx, Config.Kitchen.Unlock) then
+				Button.new({
+					Name = "Pantry",
+					Text = "Pantry",
+					Color = C.Pink,
+					Size = UDim2.fromOffset(150, 44),
+					LayoutOrder = 2,
+					Parent = extras,
+					OnClick = function()
+						local id = currentId
+						popup:Hide()
+						ctx.Router:Open("Kitchen", { serve = id })
+					end,
+				})
+			end
 		end
 		render()
 		popup:Show()
@@ -768,6 +810,9 @@ function MonsterDetail.Build(ctx)
 			end)
 		end
 		genesLabel.Text = string.format("Genes %d/%d · Gen %d", Genetics.Total(m.genes), Genetics.MaxTotal, tonumber(m.gen) or 0)
+		geneLabButton:SetVisible(
+			stage >= 3 and (tonumber(store:Get("profile.Progression.level")) or 1) >= (Config.Unlocks.Features[Config.GeneLab.Unlock] or 1)
+		)
 
 		-- Traits
 		Tiles.clear(traitsRow)

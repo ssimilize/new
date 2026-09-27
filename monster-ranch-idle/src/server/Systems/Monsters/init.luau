@@ -27,6 +27,8 @@
 	  Monsters:Changed(player, id, fields?)
 	  Monsters:AddMutation(player, id, mutationId) -> "added"|"combined"|"duplicate"|"full"|"missing"
 	  Monsters:AddMood(player, id, amount)
+	  Monsters:AddMeals(player, id, flavor, meals) -> number             -- 3.10 Kitchen dishes: growth meals
+	                                                                       (× mealMult traits); 0 if none needed
 	  Monsters:AddVisibleTrait(player, id) -> traitId?                  -- Rebirth's 3rd trait slot
 	  Monsters:SetAccessory(player, id, slot, accessoryId?) -> previous? -- Accessories (1.5)
 	MonsterRemoved's detail carries the removed record's `acc` (it is stripped from the record)
@@ -283,6 +285,7 @@ function Monsters:Insert(player, record, source: string)
 	copy.genes = Genetics.Fill(record.genes, ctx.Rng)
 	copy.loc, copy.pen, copy.busy, copy.locked = "barn", 0, false, false
 	copy.acc = nil
+	copy.geneLock = nil -- 3.10: a Gene Lab lock never travels with a traded or listed monster
 	return insert(player, copy, source)
 end
 
@@ -403,6 +406,19 @@ function Monsters:AddMood(player, id: string, amount: number)
 		m.mood = value
 		Monsters:Changed(player, id, { "mood" })
 	end
+end
+
+function Monsters:AddMeals(player, id: string, flavor: string, meals: number): number
+	local m = Monsters:Get(player, id)
+	local needed = m and Formulas.MealsNeeded(m.stage)
+	if not m or not needed or Formulas.MealsEaten(m) >= needed then
+		return 0
+	end
+	local added = meals * Config.Traits.Product(Formulas.ActiveTraits(m), "mealMult")
+	m.meals = m.meals or {}
+	m.meals[flavor] = (m.meals[flavor] or 0) + added
+	Monsters:Changed(player, id, { "meals" })
+	return added
 end
 
 function Monsters:CoinRate(player, id: string): number

@@ -56,7 +56,7 @@ local Gate = require(Shared.Logic.Community)
 local Visits = {
 	Name = "Visits",
 	Dependencies = { "Progression", "Rewards" },
-	OptionalDependencies = { "Social", "Plots", "Bond", "Market" },
+	OptionalDependencies = { "Social", "Plots", "Bond", "Market", "Tourists" },
 }
 
 Visits.Profile = {
@@ -251,7 +251,9 @@ local function buildSnapshot(player)
 	if type(plot) ~= "table" then
 		return nil
 	end
-	return Logic.Build(Config, plot, bestFriends(player, plot), ctx:Now())
+	local Tourists = ctx:GetSystem("Tourists") -- 3.10: the Appeal stars on the showcase
+	local stars = if Tourists then Tourists:Stars(player) else 0
+	return Logic.Build(Config, plot, bestFriends(player, plot), ctx:Now(), stars)
 end
 
 local function saveSnapshot(player): boolean

@@ -80,6 +80,8 @@ return {
 		"Visits", -- glow-up Y: the crown, the Visiting Showcase, Ranch of the Week
 		-- Glow-up Z: every plot's placed decor, night lights, placement mode's world side
 		"Decor",
+		-- 3.10: Ranch Tourists walking onto plots, the Guestbook stand
+		"Tourists",
 		-- R2-CLOCKWORK: Clockwork Canyon's gear landmark and walk-in area (appended, see RULES)
 		"ClockworkCanyon",
 		-- R2-ABYSS: the Sunken Abyss's descent and walk-in area (appended, see RULES)
@@ -98,6 +100,10 @@ return {
 		"Expeditions",
 		"Breeding",
 		"Jobs", -- 3.7 · Ranch Jobs
+		"Guestbook", -- 3.10 · Ranch Tourists
+		"Kitchen", -- 3.10 · Kitchen & Pantry
+		"GeneLab", -- 3.10 · Gene Lab (from Monster Detail and the Breeding Barn)
+		"Fishing", -- 3.10 · Fishing Pond (opened from the pond's prompt)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

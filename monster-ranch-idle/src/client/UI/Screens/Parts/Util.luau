@@ -220,6 +220,8 @@ function Util.rewardText(item): string
 		return if a then a.name else "Accessory"
 	elseif kind == "ribbons" then
 		return Format.short(amount) .. " Ribbons"
+	elseif kind == "bait" then
+		return string.format("%s Bait", Format.short(amount))
 	end
 	return Format.short(amount)
 end

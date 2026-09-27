@@ -3,6 +3,184 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.10 · Ranch life
+
+### Ranch Tourists
+
+**For players**
+- From Ranch Level 11, tourists visit your ranch: one about every 10 minutes while you play.
+  Each one walks in through your gate, stops to look around, shows its stars and leaves.
+- Every tourist pays a few minutes of your ranch income: 40 seconds of income per star (so 5
+  stars pay 200 seconds). While you are away, up to 6 tourists still come, and the Welcome Back
+  summary tells you ("6 tourists visited while you were away").
+- Your ranch's **Appeal** (0-100, 1-5 stars) comes from five things: how much decor you placed,
+  how many kinds of decor, your pens (how many and how full), the rarest monsters in your pens and
+  your Codex. A tip names what would help most ("More lights would be nice", "Fill your pens").
+- The new **Guestbook** shows your stars, a bar for each part of your Appeal, the tip, the next
+  tourist's countdown and the last 20 reviews. Open it at the little stand beside your gate or
+  with the "Guestbook" button on the Decorate screen.
+- Friends visiting your ranch in the Visiting Showcase see your Appeal stars.
+- New weekly goal: "Welcome 15 tourists".
+
+**In the code**
+- `Config/Tourists`: cadence (`Interval` 600 s, `AwayMax` 6, `BookSize` 20, `SecondsPerStar` 40),
+  Appeal weights (decor 25, variety 20, pens 20, rarity 20, codex 15), `DecorFull` 40,
+  `VarietyFull` 8, `RarityTop` 3, `CodexFull` 60, `StarSteps` 20/40/60/80, category names, tips,
+  review lines, visitor names and the walk's plot-local spots.
+- `Logic/Tourists`: `Appeal(facts)`, `Stars`, `Tip`, `Offset`/`Slot`/`NextAt` (slots of the unix
+  clock offset by `Rng.seed("tourists", userId)`), `Review` (seeded by user and slot), `Pay`,
+  `Push`, `StarText`.
+- `Systems/Tourists` (unlock `tourists` 11): profile `{ slot, count, book }`, session
+  `{ score, stars, parts, tip, nextAt, unlocked }`, global `walk` (each player's last visit for the
+  clients to draw). A 5 s tick pays due slots; a join pays the missed ones (max 6) with a
+  WelcomeItem. Publishes `TouristVisited (player, { stars })`. Public `Tourists:Appeal(player)`,
+  `Tourists:Stars(player)`. No actions.
+- Visits: the snapshot carries `stars` (`Logic/Visits.Build(..., stars)`, sanitized 0-5); the
+  Visits bar and `Visuals/RanchShowcase` gate show them.
+- Client: `Controllers/Tourists` (stand + prompt, walking tourist built from Parts, no avatar
+  load) and `Screens/Guestbook`; Decorate's header has a "Guestbook" button.
+- `Config.Decor.Layout.keepOut` keeps decor off the stand at plot-local (68, 16).
+- Weekly goal `tourists_15` (family `tourists`, unlock `tourists`).
+
+### Kitchen & Pantry
+
+**For players**
+- From Ranch Level 9 a **Kitchen** stands on your plot, in the gap south of the pens between
+  the statue row and the Feed Garden. Walk up to its door and press **Cook**. The Pantry is also
+  one tap away from a monster's Feed popup (the new **Pantry** button).
+- **Cooking.** 8 recipes turn your food into dishes. Dishes cook for 5 to 60 minutes on the
+  server clock, so they finish while you are away. The Welcome Back screen tells you, and the
+  Kitchen collects them into the Pantry when you open it. You have 2 cooking slots, and a 3rd
+  from Ranch Level 30. The Pantry holds up to 99 of each dish.
+
+  | Dish | Ingredients | Time | Effect |
+  |---|---|---|---|
+  | Berry Pie | 5 sweet, 3 savory | 5 min | counts as 3 sweet growth meals |
+  | Pepper Stew | 5 spicy, 3 savory | 10 min | +20% Job Board output for 2 h |
+  | Lime Tart | 5 sour, 3 sweet | 10 min | fills Mood to the max |
+  | Root Roast | 6 savory, 2 spicy | 15 min | counts as 3 savory growth meals |
+  | Fish Supper | 2 fish, 3 savory | 20 min | +5% loot on its next expedition |
+  | Sushi Roll | 3 fish, 2 sour | 30 min | +20% Job Board output for 2 h |
+  | Golden Honeycake | 2 golden, 5 sweet | 45 min | +1 Bond heart |
+  | Golden Feast | 3 golden, 3 of each food | 60 min | +1 Bond heart, makes 2 |
+
+- **Serving.** Tap Serve on a Pantry dish and pick the monster; only monsters that can use the
+  dish are offered (growth meals for Babies and Teens, job boosts for Teens and Adults, no Mood
+  dish for a monster already at full Mood, and so on).
+- **Fish** come from the Fishing Pond. Until you have some, the fish recipes say "Needs fish from
+  the Fishing Pond".
+- **Golden seeds.** Each Feed Garden harvest has a 5% chance to drop a Golden seed once the
+  Kitchen is open. Plant it in a garden plot (the garden's Plant menu or the Pantry's
+  "Plant a seed") and 30 minutes later it gives 2 Golden Honeyfruit for the golden recipes.
+- New weekly goal: "Cook 10 dishes".
+
+**In the code**
+- `Config/Kitchen` (recipes, effects, slots, cap, golden seed numbers), `Logic/Kitchen`
+  (slots, costs, boost windows, `GoldenSeed(userId, n)`, `ServeProblem`), `Systems/Kitchen`
+  (actions `Kitchen.Cook`, `Kitchen.Collect`, `Kitchen.Serve`, `Kitchen.PlantGolden`; save
+  section `profile.Kitchen`; session `slotCount`, `fish`, `fishing`), `Screens/Kitchen` and
+  `Screens/Parts/DishIcon` (dishes drawn from Frames, no images).
+- Bus: `DishCooked (player, { dish, count })` per collected slot (Weekly counts `count`,
+  `Config.Quests.CountField`); `WelcomeItem` kind `kitchen`.
+- Hooks added to existing systems (small, each with its own test in `Kitchen.spec`):
+  `Jobs:RegisterOutputBoost` and `Logic/Jobs.BoostedSeconds` (extra work time inside a boost
+  window; a scout hour's egg chance scales), `Expeditions` loot modifiers now also receive the
+  squad ids, `Ranch:RegisterCrop` / `RegisterHarvestHook` / `PlantCrop` (the golden crop and
+  the seed roll), `Monsters:AddMeals`, `Bond:AddHeart`.
+- Fishing is an optional dependency (`FishCount`, `SpendFish`); without it fish count as 0.
+- World: `Config.World.KitchenOffset` / `KitchenSize`, built from Parts in `World/Build.luau`;
+  a Decor keep-out zone; the "Cook" prompt in `Controllers/Interaction`.
+- Unlocks: `kitchen` 9, `kitchen_slot_3` 30.
+
+### Gene Lab
+
+**For players**
+- From Ranch Level 21 the Gene Lab opens from Monster Detail (the Gene Lab button on the genes
+  line) and from the Breeding Barn's header. No new HUD button.
+- **Tune:** pick an Adult and a stat. The weaker gene of that stat's pair (the first when both
+  are equal) gains +1 on a success. Cost: 20 × (gene + 1) Stardust, spent whatever happens.
+  Odds: 90% for genes 0–4, 60% for 5–6, 35% for 7. The Lab stops at 8 (9 and 10 only come from
+  breeding surges). 5 tunes per UTC day. The screen shows the odds, the cost and the tunes left
+  before every tune, and the result with a pulse or a shake.
+- **Gene lock:** 5 Star Shards lock one stat on one Adult. Its next baby gets its better gene
+  of that stat for certain (surges still apply). One lock per monster; locking another stat
+  replaces it with no refund (the confirm says so).
+- The breeding planner counts locks in every chance and marks a locked stat "Locked".
+- New weekly goal: "Tune 5 genes in the Gene Lab" (family `genelab`; every tune counts,
+  success or not).
+
+**In the code**
+- `Config/GeneLab`, `Logic/GeneLab` (Weaker, Cost, Chance, Seed, Roll, TunesLeft),
+  `Systems/GeneLab` (Profile v1 `{ day, tunes, attempts }`; actions `GeneLab.Tune`,
+  `GeneLab.Lock`; Bus `GeneTuned { stat, success }`), `Screens/GeneLab`.
+- Rolls are seeded by ("genelab", userId, monsterId, attempt) with the saved attempt counter,
+  so a rejoin never rerolls. Busy monsters (expedition, breeding, job, trade) are refused
+  through `Monsters:Available`.
+- `Logic/Genetics` Inherit, Range, Preview, Odds and GradeOdds take optional `lockA, lockB`
+  (the parents' `geneLock`); without them nothing changes, and Inherit draws the same random
+  numbers either way, so a lock never moves another roll. `Logic/Breeding` Roll and Outcomes
+  pass the records' locks.
+- The lock lives on the monster record (`geneLock`). `Breeding.Claim` clears both parents'
+  locks after the baby is made; a cancelled pod (or a claim refused for a full ranch) keeps
+  them. `Monsters:Insert` clears it, so a traded or Market-listed monster arrives unlocked
+  (a listing taken back or a rolled-back trade also comes back unlocked).
+- Tests: `GeneLab.spec`, `GeneLabClient.spec`; `GeneticsClient.spec` reads the gene line
+  through its new row.
+
+### Fishing Pond
+
+**For players**
+- From Ranch Level 13 every ranch has a pond in the strip behind the pens, with a little dock.
+  Walk onto the dock and use the **Fish** prompt to open the Fishing Pond. There is no HUD button.
+- You get 10 free casts a day (UTC). After that each cast uses 1 Bait. Every Expedition Bounty
+  now also pays 3 Bait.
+- Fishing is a hold-and-release minigame. A fish swims up and down a bar:
+  - Hold **Hold to reel** (or Space, or pad A) and the green zone rises. Let go and it sinks.
+  - While the zone covers the fish, the catch meter fills. When it doesn't, the meter drains.
+  - Fill the meter to land the fish. If the meter empties, or 20 seconds pass, the fish gets away.
+  - Rarer fish move faster and further, and they are harder to hold.
+- There are 16 fish in 4 rarities (Common, Uncommon, Rare, Legendary), and each has a weight range.
+  Sell fish from your bucket for coins, or cook them in the Kitchen.
+- Choose an Adult as your **fishing buddy**. Its Luck (stat and gene) raises your chance of a rare
+  fish and of the extras a catch can bring: the **Old Boot** and **Sunken Chest** decor (never
+  sold) and sometimes a Pearl egg. The screen shows your buddy and the chances.
+- The Codex has a new **Fish Log** tab. It shows every fish you have caught, how many, and the
+  heaviest of each. Milestones at 4, 8 and 16 kinds pay 10, 25 and 60 gems.
+- New weekly board: **Biggest Catch** (the heaviest fish this week; its winner gets the title
+  Master Angler). New weekly goal: "Catch 20 fish".
+
+**In the code**
+- `Config.Fishing`: 16 fish (`Fish`, `ById`, `Ids`), 4 `Rarities` (weight, value in seconds of
+  ranch income, move speed/range/pause, meter fill/drain), and the minigame numbers (Duration 20 s,
+  Step 0.05, zone, lift/gravity, FishRange, MaxInputs, Grace/Late seconds). Also `FreeCasts`,
+  `BuddyShares`, `Decor` extras and `Egg`/`EggChance` (the Pearl egg, Coral Reef's region egg). Unlock key `fishing` (Level 13).
+- `Logic/Fishing`: `Course(seed, bonus)` rolls the fish (rarity weights, with every rarity above
+  Common ×(1 + bonus)), its seeded weight and its path. `Advance`/`Simulate` replay
+  `{ t, down }` moves in fixed steps; the client and the server share them. Also `BuddyBonus`
+  (Loot.LuckBonus with the buddy's Luck counted 5 times), `ExtraChance` (min(cap, chance ×
+  (1 + bonus)), the Bounties formula), `Extras`, `SpendOrder` and `Species`.
+- `Systems/Fishing`: `profile.Fishing` (day/casts, bait, fish, log, buddy, week/weekBest/weekFish,
+  total, best). Actions `Fishing.Start`, `Finish`, `Sell` and `SetBuddy`. It uses the Surf/Racing
+  anti-cheat: an in-memory open run, one-shot run ids, a replay, and the grace and late
+  wall-clock checks. Publishes `FishCaught (player, { fish, rarity, weight })`.
+  - Kitchen contract: `Fishing:FishCount(player)` and `Fishing:SpendFish(player, n)` (cheapest
+    first; it returns false and changes nothing when you are short).
+  - Also `AddBait`, `SpeciesCaught`, `WeekBest` and `Bonus`.
+- `Rewards` has a new kind `bait` (it goes to `Fishing:AddBait`). `Config.Bounties.Reward` gets
+  `{ kind = "bait", amount = 3 }`. Ranch Orders are unchanged.
+- Codex: `Config.Codex.FishSteps`/`Gems.fish`, `Logic/Codex.FishMilestones()`/`FishById()`
+  (ids `fish_<n>`, kept out of `Milestones()`). `Codex.Claim` checks them with
+  `Fishing:SpeciesCaught`. `CodexClaimed` now has the kind `fish`.
+- World: `Config.World.Pond` sets out the `FishingPond` model in `World/Build` (water, bed, rim,
+  dock). `Controllers/Interaction` adds the "Fish" prompt on the dock. Its Decor keep-out is in
+  `Config.Decor.Layout.keepOut`. The decor `old_boot` and `sunken_chest` are in `Config.Decor`
+  and `DecorArt`.
+- Board `fishing` (`Config.Leaderboards`, format weight, kg × 100) and the weekly goal
+  `fish_20` (family `fishing`).
+- Client: `Screens/Fishing`, plus `Parts/FishIcon` (a fish drawn from Frames with a UIGradient)
+  and `Parts/FishLog` (the Codex tab, `Codex` opens with `{ tab = "fishlog" }`).
+- Tests: `Fishing.spec` and `FishingClient.spec`.
+
 ## 3.9 · Family and fortune
 
 ### Buyer reputation

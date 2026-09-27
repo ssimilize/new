@@ -11,7 +11,8 @@
 	    fee = number,                          -- coins
 	    rainbowChance = number,                -- 0..1
 	    goldenChance = number,                 -- 0..1
-	    genes = Genetics.Preview(a.genes, b.genes), -- the baby's gene points per stat before surges
+	    genes = Genetics.Preview(a.genes, b.genes, a.geneLock, b.geneLock), -- the baby's gene points per
+	                                                  -- stat before surges (3.10: gene locks count)
 	  }
 	Breeding.Roll(rng, a, b) -> (MonsterGen spec, isHybrid)   -- spec.surges = genes that surged
 
@@ -169,7 +170,7 @@ function Breeding.Outcomes(a, b)
 		fee = Breeding.Fee(a, b),
 		rainbowChance = rainbow,
 		goldenChance = golden,
-		genes = Genetics.Preview(a.genes, b.genes),
+		genes = Genetics.Preview(a.genes, b.genes, a.geneLock, b.geneLock), -- 3.10: gene locks
 	}
 end
 
@@ -272,7 +273,8 @@ function Breeding.Roll(rng, a, b)
 		muts = muts,
 		gen = math.max(a.gen or 0, b.gen or 0) + 1,
 	}
-	spec.genes, spec.surges = Genetics.Inherit(rng, a.genes, b.genes)
+	-- 3.10: a parent's Gene Lab lock (`geneLock`) passes its better gene of that stat.
+	spec.genes, spec.surges = Genetics.Inherit(rng, a.genes, b.genes, a.geneLock, b.geneLock)
 	return spec, isHybridLine(line)
 end
 
