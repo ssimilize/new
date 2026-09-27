@@ -117,7 +117,12 @@ local mainPlace: boolean? = nil -- the giant, squads and the storm only in the m
 local phase = "off" -- off | gather | fight | ending
 local phaseAt = 0
 local phaseEnds = 0
-local giant = nil -- { model, anim, def, height, gui, bar }
+local giant = nil -- { model, anim, def, height, footprint, gui, bar }
+-- Building the giant waits on its mesh (CreateMeshPartAsync) the first time; the step runs every
+-- frame, so this marks a build in flight (one giant, not one per frame of the wait - Studio
+-- 2026-09-27 found eleven stacked), and a build that lands after the fight was cleared is dropped.
+local spawning = false
+local spawnToken = 0
 local lastFrac: number? = nil
 local lastFlinch = -math.huge
 local pendingFountain = nil -- { payload, done, fired, firedAt, since, closed }
@@ -477,6 +482,7 @@ local function roar()
 end
 
 local function destroyGiant()
+	spawnToken += 1
 	if giant then
 		if giant.anim then
 			giant.anim:Destroy()
@@ -500,7 +506,7 @@ local function syncSquad(g)
 	local cfg = {
 		perPlayer = A.squadPerPlayer,
 		cap = Logic.MaxMonsters(A, Quality.Level()),
-		ringInner = A.ringInner,
+		ringInner = math.max(A.ringInner, if giant then giant.footprint + A.ringGap else 0),
 		ringGap = A.ringGap,
 		ringSpacing = A.ringSpacing,
 		attackEvery = A.attackEvery,
@@ -555,8 +561,15 @@ local function spawnGiant(g)
 	if not ok or not ap then
 		return
 	end
+	spawning = true
+	local token = spawnToken
 	local ok2, model = pcall(MonsterModel.Build, ap, { anchored = true, scale = A.bossScale, vfx = not Quality.IsLow() })
+	spawning = false
 	if not ok2 or not model then
+		return
+	end
+	if token ~= spawnToken or giant then
+		model:Destroy() -- the fight ended (or another build won) while the mesh loaded
 		return
 	end
 	model.Parent = ensureFolder()
@@ -571,7 +584,9 @@ local function spawnGiant(g)
 	local anim = MonsterAnimator.new(model)
 	anim:SetOwn(false)
 	local gui, barFill = hpBar(model, top + 6, def)
-	giant = { model = model, anim = anim, def = def, height = height, gui = gui, bar = barFill }
+	-- Squads stand outside the giant's footprint (its long side), whatever the titan's shape.
+	local footprint = math.max(size.X, size.Z) / 2
+	giant = { model = model, anim = anim, def = def, height = height, footprint = footprint, gui = gui, bar = barFill }
 	lastFrac = nil
 	roar()
 end
@@ -790,7 +805,7 @@ local function step()
 
 	if g.state == "active" then
 		phase = "fight"
-		if not giant and mainPlace then
+		if not giant and not spawning and mainPlace then
 			spawnGiant(g)
 		end
 		stepGiant(g)

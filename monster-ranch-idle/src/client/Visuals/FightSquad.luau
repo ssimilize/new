@@ -87,7 +87,9 @@ end
 
 -- cfg: { perPlayer, cap, ringInner, ringGap, ringSpacing, attackEvery }
 function FightSquad:Sync(squadsData, myUserId: number?, centre: Vector3, cfg, qualityLevel: number, lowQuality: boolean, clock: number)
-	local key = keyOf(squadsData, qualityLevel)
+	-- The ring size is part of the key: the titan's squads re-form once the giant (and its real
+	-- footprint) is drawn.
+	local key = keyOf(squadsData, qualityLevel) .. "|" .. tostring(cfg.ringInner)
 	if key == self.key then
 		return false
 	end

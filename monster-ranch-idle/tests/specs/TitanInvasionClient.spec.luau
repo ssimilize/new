@@ -87,6 +87,54 @@ return function(t)
 			expect(Lighting:FindFirstChild("TitanStorm")).toBe(nil)
 		end)
 
+		it("stands the squads outside the giant's footprint", function()
+			-- Found in Studio 2026-09-27: the ring (24 studs) was smaller than the giant's footprint
+			-- (95 studs long), so two squad monsters stood inside its body. (The same session found
+			-- eleven giants stacked while the first mesh download was in flight; the harness cannot
+			-- yield inside a Heartbeat handler, so that guard was proven in Studio.)
+			local h = TestKernel.new({ systems = allSystems(), startTime = SLOT + 60 })
+			local p = fighter(h)
+			local c = ClientHarness.new(h, p)
+			local MeshMonster = c:require(c.clientFolder.Visuals.MeshMonster)
+			MeshMonster.SetMeshSource(function() -- the giant and squads as 3D monsters
+				local part = c.Instance.new("MeshPart")
+				part.Size = t.Roblox.Vector3.new(1, 1, 1)
+				return part
+			end)
+			local Titan = c:require(c.clientFolder.Controllers.TitanInvasion)
+			local Workspace = c.world.game:GetService("Workspace")
+			local centre = Config.World.StampedeArena.center
+			c:Advance(0.5)
+			c:Click(c:Button("Join", c.kernel.UI.Feedback))
+			c:Advance(1)
+			expect(c:Store("session.Titan").joined).toBe(true)
+			c.character:PivotTo(t.Roblox.CFrame.new(t.Roblox.Vector3.new(centre[1], 0, centre[2])))
+			c:Advance(1)
+			local folder = Workspace:FindFirstChild("TitanInvasion")
+			local giant, squad = nil, {}
+			for _, child in folder:GetChildren() do
+				if child:IsA("Model") then
+					if child.Name == "Cinderwyrm" then
+						expect(giant).toBeNil() -- exactly one giant
+						giant = child
+					else
+						table.insert(squad, child)
+					end
+				end
+			end
+			expect(giant ~= nil).toBe(true)
+			expect(Titan:Stats().squad).toBe(3)
+			expect(#squad).toBe(3)
+			local _, gsize = giant:GetBoundingBox()
+			local footprint = math.max(gsize.X, gsize.Z) / 2
+			for _, m in squad do
+				local at = m:GetPivot().Position
+				local d = math.sqrt((at.X - centre[1]) ^ 2 + (at.Z - centre[2]) ^ 2)
+				expect(d > footprint).toBe(true)
+			end
+			MeshMonster.SetMeshSource(nil)
+		end)
+
 		it("gives a player who arrives mid-invasion the banner and Join, then Cheer", function()
 			local h = TestKernel.new({ systems = allSystems(), startTime = SLOT + 60 })
 			local T = h:System("Titan")
