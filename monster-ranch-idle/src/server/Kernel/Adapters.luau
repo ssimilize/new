@@ -189,6 +189,18 @@ function Adapters.Roblox()
 			end)
 			return if ok and type(result) == "number" then result else 0
 		end,
+		-- Streaming (R2-STREAMING): pre-streams the region around `position` ({ x, y, z }, plain
+		-- numbers so every caller stays testable in the headless Lune kernel, which has no CFrame)
+		-- for `player` before a long teleport (Sky Islands, the Stampede Arena, a same-server ranch
+		-- visit), so they never land in the void. Yields up to `timeout` seconds; false when it
+		-- fails or isn't available (StreamingEnabled off, or the method is missing on older engine
+		-- builds). The one CFrame.new call belongs here, in the Roblox-only adapter.
+		RequestStreamAround = function(player, position: { x: number, y: number, z: number }, timeout: number?): boolean
+			local ok = pcall(function()
+				(player :: any):RequestStreamAroundAsync(CFrame.new(position.x, position.y, position.z), timeout or 5)
+			end)
+			return ok
+		end,
 		-- Display name for any user id (players who are not on this server). Cached.
 		NameOf = function(userId: number): string?
 			local cached = nameCache[userId]

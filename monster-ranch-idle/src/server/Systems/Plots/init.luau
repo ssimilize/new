@@ -61,6 +61,15 @@ local VISIBLE_FIELDS = {
 	acc = true, -- worn accessories are drawn on the monster
 }
 
+-- R2-STREAMING: Workspace.World.Plots.Plot<index>, when the Workspace adapter exists (nil in the
+-- Lune test harness, where there are no Instances to find).
+local function plotModel(index: number): Instance?
+	local ws = ctx.Services.Workspace
+	local world = ws and ws:FindFirstChild("World")
+	local plots = world and world:FindFirstChild("Plots")
+	return plots and plots:FindFirstChild("Plot" .. index)
+end
+
 local function emptyPlot()
 	return { userId = 0, name = "", level = 0, likes = 0, pens = {}, statues = {}, incubators = {}, garden = false, layout = {} }
 end
@@ -149,6 +158,14 @@ local function assign(player)
 			owners[index] = player
 			plotOf[player] = index
 			rebuild(player)
+			-- R2-STREAMING: the plot model (ModelStreamingMode PersistentPerPlayer, Build.luau)
+			-- never streams out for its owner, wherever they wander (Sky Islands, the arena).
+			local model = plotModel(index)
+			if model then
+				pcall(function()
+					(model :: any):AddPersistentPlayer(player)
+				end)
+			end
 			return
 		end
 	end
@@ -234,6 +251,12 @@ function Plots.PlayerRemoving(player)
 	lastBuiltAt[player] = nil
 	pending[player] = nil
 	if index then
+		local model = plotModel(index)
+		if model then
+			pcall(function()
+				(model :: any):RemovePersistentPlayer(player)
+			end)
+		end
 		owners[index] = nil
 		ctx:Global()[index] = emptyPlot()
 		ctx:DirtyGlobal(index)

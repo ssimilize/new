@@ -635,6 +635,16 @@ Api.Actions = {
 	["Workshop.Enter"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 0.5, returns = "{ design: string, theme: string }" },
 	["Workshop.Vote"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 2, returns = "{ votes: number }" },
 	["Workshop.Theme"] = { schema = T.none, rate = 1, returns = "{ count: number }" },
+
+	-- R2-STREAMING: added at the end of this table, appended block, not reordering anything above.
+	-- Pre-streams the world around a far destination (Sky Islands, the Stampede Arena) before the
+	-- client moves its own character there locally, so it never lands in the void. Yields on the
+	-- server for Player:RequestStreamAroundAsync; the client awaits the reply before it teleports.
+	["World.StreamAround"] = {
+		schema = T.struct({ x = T.number(-1000, 1000), y = T.number(-200, 500), z = T.number(-1000, 1000) }),
+		rate = 1,
+		returns = "nil",
+	},
 }
 
 --[[

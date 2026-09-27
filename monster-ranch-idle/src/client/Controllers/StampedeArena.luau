@@ -577,12 +577,18 @@ end
 
 -- ─── Buttons and taps ──────────────────────────────────────────────────────────────
 
+-- R2-STREAMING: pre-stream the arena before the local pivot (same pattern as SkyIslands).
 local function teleport()
 	local character = ctx.Player and ctx.Player.Character
 	if not character then
 		return
 	end
 	local spot = centre + Vector3.new(-(Place.radius + 6), 3, 0)
+	ctx.Net:Request("World.StreamAround", { x = spot.X, y = spot.Y, z = spot.Z })
+	character = ctx.Player and ctx.Player.Character
+	if not character then
+		return
+	end
 	character:PivotTo(CFrame.lookAt(spot, Vector3.new(centre.X, spot.Y, centre.Z)))
 end
 

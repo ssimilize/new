@@ -163,6 +163,7 @@ function ClientHarness.new(testKernel, player, options)
 	local self = setmetatable({}, ClientHarness)
 	self.server = testKernel
 	self.player = player
+	self.options = options
 	self.transportIssues = {}
 	self.events = {}
 	self._modules = {}
@@ -326,17 +327,58 @@ function ClientHarness:_buildWorld()
 	local world = self.world
 	local folder = self.Instance.new("Folder")
 	folder.Name = "ServerOnly"
-	local build = self.Instance.new("ModuleScript")
-	build.Name = "Build"
-	RobloxMock.records[build].extra.source = ROOT .. "/src/server/Systems/World/Build.luau"
-	build.Parent = folder
+	-- R2-STREAMING: the whole Systems/World folder is mounted (not just a loose Build module), so
+	-- Build.luau's sibling requires (Balcony, Dress, Scenery, BuildingMeshes, SceneryMeshes) resolve
+	-- the way they do for real (Build.luau: `script.Parent:FindFirstChild("Balcony")`); before this,
+	-- Balcony was always nil here and the VIP balcony pad never existed in a client spec's world.
+	local worldSystem = mountTree(world, ROOT .. "/src/server/Systems/World", "World", folder)
 	local Config = self:require(world.game:GetService("ReplicatedStorage").Shared.Config)
-	local Build = self:require(build)
+	local Build = self:require(worldSystem.Build)
 	local adapters = self.server.adapters
 	local worldFolder = Build.world(Config, Config.TradingHub.Mode(adapters.PlaceId, adapters.PlaceMode))
+	-- R2-STREAMING: options.lateWorldParts = { "Hub.Buildings.leaderboard.Body", ... } (dot paths
+	-- from the World folder) are cut out before the client ever sees them, so a spec can start the
+	-- controller with the part missing and add it late (:StreamIn), or simulate it streaming out
+	-- and back in as a fresh instance (:StreamOut), the way a real StreamingEnabled client would.
+	self._stashed = {}
+	for _, path in self.options.lateWorldParts or {} do
+		local inst = worldFolder
+		for part in string.gmatch(path, "[^.]+") do
+			inst = inst and inst:FindFirstChild(part)
+		end
+		if inst then
+			-- `original` is a pristine clone taken before the client ever sees this part, so
+			-- :StreamOut can rebuild a clean instance later even after the running client has
+			-- mutated the live one (added a ProximityPrompt, a SurfaceGui, ...) - a real
+			-- stream-out/in cycle replaces the instance with a fresh copy of the server's, not
+			-- with whatever the client attached to the one that just left.
+			self._stashed[path] = { parent = inst.Parent, instance = inst, original = inst:Clone() }
+			inst.Parent = nil
+		end
+	end
 	worldFolder.Parent = world.workspace
 	self.Config = Config
 	self.Build = Build
+end
+
+-- R2-STREAMING: parents a part stashed by options.lateWorldParts for the first time.
+function ClientHarness:StreamIn(path: string)
+	local stash = self._stashed and self._stashed[path]
+	assert(stash, "ClientHarness:StreamIn - no stashed world part: " .. path)
+	stash.instance.Parent = stash.parent
+end
+
+-- R2-STREAMING: destroys the current (possibly client-mutated) instance and parents a fresh
+-- clone of the pristine original in its place, the way a real stream-out/stream-in cycle gives
+-- the client a brand new Instance with none of its own additions; callers must look the
+-- replacement up again by name rather than reuse a reference captured before this call.
+function ClientHarness:StreamOut(path: string)
+	local stash = self._stashed and self._stashed[path]
+	assert(stash, "ClientHarness:StreamOut - no stashed world part: " .. path)
+	local fresh = stash.original:Clone()
+	stash.instance:Destroy()
+	stash.instance = fresh
+	fresh.Parent = stash.parent
 end
 
 function ClientHarness:_spawnCharacter()

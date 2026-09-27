@@ -29,6 +29,7 @@ local Theme = require(UI.Theme)
 local Button = require(UI.Components.Button)
 local Icon = require(UI.Components.Icon)
 local StoreKit = require(UI.Components.StoreKit)
+local Streaming = require(script.Parent.Parent.Visuals.Streaming)
 
 local C = Theme.Colors
 local Cfg = Config.Community
@@ -40,6 +41,7 @@ local Community = {
 
 local ctx
 local tricking = false
+local connections = {}
 
 local EmoteById = {}
 for _, emote in Cfg.Emotes do
@@ -186,18 +188,31 @@ local function addPrompt(part: BasePart, kind: string)
 	end)
 end
 
-local function findPads()
-	local world = workspace:WaitForChild("World", 30)
-	local hub = world and world:WaitForChild("Hub", 10)
-	if not hub then
-		return
-	end
+-- VipPad parts may stream in after Start (or stream out and back in later, as a fresh instance
+-- with no prompt of its own): scan on arrival and re-scan Hub whenever its tree changes.
+local function scanPads(hub: Instance)
 	for _, inst in hub:GetDescendants() do
 		local kind = inst:GetAttribute("VipPad")
-		if inst:IsA("BasePart") and (kind == "enter" or kind == "exit") then
+		if inst:IsA("BasePart") and (kind == "enter" or kind == "exit") and not inst:FindFirstChildOfClass("ProximityPrompt") then
 			addPrompt(inst, kind)
 		end
 	end
+end
+
+local function watchPads(hub: Instance)
+	scanPads(hub)
+	local rescan = Streaming.Debounce(0.5, function()
+		scanPads(hub)
+	end)
+	table.insert(connections, hub.DescendantAdded:Connect(rescan))
+end
+
+local function findPads()
+	local world = workspace:WaitForChild("World", 60)
+	if not world then
+		return
+	end
+	table.insert(connections, Streaming.OnChild(world, "Hub", watchPads))
 end
 
 -- Lifecycle ----------------------------------------------------------------------------------------
@@ -217,6 +232,14 @@ function Community.Start()
 		end
 	end)
 	task.spawn(findPads)
+end
+
+-- Not called by the kernel today; kept so the controller can be unplugged.
+function Community.Destroy()
+	for _, connection in connections do
+		connection:Disconnect()
+	end
+	table.clear(connections)
 end
 
 return Community

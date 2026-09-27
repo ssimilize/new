@@ -13,6 +13,7 @@ local Config = require(ReplicatedStorage.Shared.Config)
 
 local MonsterModel = require(script.Parent.Parent.Visuals.MonsterModel)
 local StoreKit = require(script.Parent.Parent.UI.Components.StoreKit)
+local Streaming = require(script.Parent.Parent.Visuals.Streaming)
 
 local Cfg = Config.Contests
 
@@ -26,6 +27,7 @@ local stageBody: BasePart? = nil
 local walker: Model? = nil
 local walkerKey = ""
 local announced = -1
+local connections = {}
 
 local function state()
 	return StoreKit.tbl(ctx.Store, "global.Contests")
@@ -53,7 +55,13 @@ local function update()
 		end
 	end
 	local entry = g.state == "runway" and type(g.entries) == "table" and g.entries[g.current or 0] or nil
-	if not entry or not stageBody or type(entry.appearance) ~= "table" or not Config.Species.ById[entry.appearance.line] then
+	if
+		not entry
+		or not stageBody
+		or not stageBody.Parent
+		or type(entry.appearance) ~= "table"
+		or not Config.Species.ById[entry.appearance.line]
+	then
 		clearWalker()
 		return
 	end
@@ -78,20 +86,60 @@ function Showtime.Init(context)
 	ctx = context
 end
 
+-- The stage (Workspace.World.Hub.Buildings.showStage.Body) may stream in after Start, or stream
+-- out and back in later (a new Body instance each time): chain Streaming.OnChild so it is found
+-- whenever it exists, and drop the stale reference (AncestryChanged) so it is not reused once gone.
+local function onBody(body: Instance)
+	if not body:IsA("BasePart") then
+		return
+	end
+	stageBody = body
+	table.insert(
+		connections,
+		body.AncestryChanged:Connect(function()
+			if body.Parent == nil and stageBody == body then
+				stageBody = nil
+				clearWalker()
+			end
+		end)
+	)
+	update()
+end
+
+local function onStage(stage: Instance)
+	table.insert(connections, Streaming.OnChild(stage, "Body", onBody))
+end
+
 function Showtime.Start()
 	ctx.Store:Observe("global.Contests", update)
 	task.spawn(function()
 		local world = workspace:WaitForChild("World", 60)
-		local hub = world and world:WaitForChild("Hub", 30)
-		local buildings = hub and hub:WaitForChild("Buildings", 30)
-		local stage = buildings and buildings:WaitForChild("showStage", 30)
-		local body = stage and stage:WaitForChild("Body", 30)
-		if body and body:IsA("BasePart") then
-			stageBody = body
-			update()
+		if not world then
+			return
 		end
+		table.insert(
+			connections,
+			Streaming.OnChild(world, "Hub", function(hub)
+				table.insert(
+					connections,
+					Streaming.OnChild(hub, "Buildings", function(buildings)
+						table.insert(connections, Streaming.OnChild(buildings, "showStage", onStage))
+					end)
+				)
+			end)
+		)
 	end)
 	update()
+end
+
+-- Not called by the kernel today; kept so the controller can be unplugged.
+function Showtime.Destroy()
+	for _, connection in connections do
+		connection:Disconnect()
+	end
+	table.clear(connections)
+	clearWalker()
+	stageBody = nil
 end
 
 return Showtime

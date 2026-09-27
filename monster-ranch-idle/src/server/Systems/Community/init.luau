@@ -105,6 +105,11 @@ local function characterPosition(player): { number }?
 end
 
 local function moveCharacter(player, to: { number }): boolean
+	-- R2-STREAMING: the VIP balcony is a short hop, but this keeps every server-driven character
+	-- move consistent (a no-op once the Hub's ModelStreamingMode is Persistent for everyone).
+	if ctx.Services.Players.RequestStreamAround then
+		ctx.Services.Players.RequestStreamAround(player, { x = to[1], y = to[2], z = to[3] }, 3)
+	end
 	local chars = ctx.Services.Characters
 	if chars and type(chars.MoveTo) == "function" then
 		local ok, moved = pcall(chars.MoveTo, player, to)
