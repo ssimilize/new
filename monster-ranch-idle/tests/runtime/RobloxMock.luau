@@ -379,7 +379,19 @@ end
 
 -- ─── Instances ──────────────────────────────────────────────────────────────────────
 
-local records = setmetatable({}, { __mode = "k" })
+-- records[proxy] is the proxy's record, kept in the proxy's own metatable (see newInstance) so it
+-- is collected with the proxy. A weak-keyed table cannot hold it: Luau has no ephemerons, and a
+-- record points back at its proxy and world, so every world a test built would live all run.
+local REC = {} -- private metatable key
+local records = setmetatable({}, {
+	__index = function(_, proxy)
+		local meta = getmetatable(proxy)
+		return if type(meta) == "table" then rawget(meta, REC) else nil
+	end,
+	__newindex = function()
+		error("records are created by newInstance")
+	end,
+})
 RobloxMock.records = records
 
 local function isInstance(value): boolean
@@ -696,7 +708,8 @@ local function newInstance(world, className: string)
 	if not info then
 		error(string.format("Unable to create an Instance of type %q", className), 3)
 	end
-	local proxy = setmetatable({}, instanceMeta)
+	local meta = table.clone(instanceMeta) -- one per proxy, carrying its record (see records)
+	local proxy = setmetatable({}, meta)
 	local rec = {
 		proxy = proxy,
 		class = info,
@@ -710,7 +723,7 @@ local function newInstance(world, className: string)
 		tags = {},
 		extra = {},
 	}
-	records[proxy] = rec
+	meta[REC] = rec
 	return proxy, rec
 end
 RobloxMock.newInstance = newInstance
