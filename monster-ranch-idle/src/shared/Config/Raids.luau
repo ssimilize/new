@@ -69,6 +69,38 @@ Raids.List = {
 		},
 		reward = { { kind = "egg", id = "leviathan", amount = 1 }, { kind = "gems", amount = 60 } },
 	},
+	-- R2-CLOCKWORK · Clockwork Canyon: no 4th raid-exclusive line was added (the packet scoped
+	-- three new lines total, all wild); the boss reuses Cogling's own Adult form, like a region's
+	-- stage bosses reuse their line's Adult form (Config.Regions "clockwork" stage 20). The gear
+	-- mechanic: three identical Gritcog adds (special = "taunt", Config.Species) keep re-taunting
+	-- every turn they act, so BattleSim's pickTarget (it returns the first living taunter in
+	-- list order) funnels every attack onto the first Gritcog, then the second, then the third,
+	-- in that order — the boss itself is hit far less than a boss with no taunting guards would
+	-- be. Verified with BattleSim.Simulate in Clockwork.spec, measured as a hit-rate (not a
+	-- cumulative-damage total, which would just favour whichever guard is tankier and so
+	-- survives for more turns of stray hits either way): a control line-up with a non-taunting
+	-- guard line lets ~68% of ally hits land on the boss (it is list[1], pickTarget's "front"
+	-- fallback, from turn one); the real Gritcog guards cut that to ~29% (never zero: BattleSim's
+	-- taunt ticks down between a guard's own turns, and the boss is still the "front" fallback in
+	-- the rare round nothing is currently taunting).
+	{
+		id = "clockwork",
+		name = "The Clockwork Sovereign",
+		order = 4,
+		desc = "Three gears guard its heart. Break them in order or it never stops shielding itself.",
+		opensAt = 1854543600, -- Sat 7 Oct 2028 15:00 UTC, with Clockwork Canyon
+		unlock = "raid_clockwork",
+		boss = { line = "cogling", form = "dynamowasp", level = 60, rarity = 6, stars = 5, statMult = 1, hpMult = 4 },
+		adds = {
+			{ line = "gritcog", form = "geartitan", level = 54, rarity = 5, stars = 4, statMult = 1 }, -- Gear One
+			{ line = "gritcog", form = "geartitan", level = 54, rarity = 5, stars = 4, statMult = 1 }, -- Gear Two
+			{ line = "gritcog", form = "geartitan", level = 54, rarity = 5, stars = 4, statMult = 1 }, -- Gear Three
+		},
+		-- No exclusive raid line to pay out (see the comment above), so the reward is a fat
+		-- stack of the region's own Clockwork Egg instead of the generic Raid Egg (whose "raid"
+		-- pool only hatches Titanling/Wyrmlet, not these lines) plus gems in line with Leviathan's.
+		reward = { { kind = "egg", id = "clockwork", amount = 3 }, { kind = "gems", amount = 50 } },
+	},
 }
 
 Raids.ById = {}

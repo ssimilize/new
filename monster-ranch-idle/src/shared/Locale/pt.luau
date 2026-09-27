@@ -2614,4 +2614,16 @@ return {
 	["What's new"] = "Novidades",
 	["Your ranch grew while you were away! Care for your monsters, decorate your ranch, browse the Codex, earn Ranch Mastery, fight Stampedes, race at the track and dive into the Deep Reef."] = "Seu rancho cresceu enquanto você esteve fora! Cuide dos seus monstros, decore seu rancho, veja o Codex, ganhe Maestria do Rancho, enfrente Debandadas, corra na pista e mergulhe no Recife Profundo.",
 	["New: {1} of {2}"] = "Novo: {1} de {2}",
+
+	-- R2-CLOCKWORK: Clockwork Canyon (appended block, see RULES)
+	["Clockwork Canyon"] = "Cânion da Relojoaria",
+	["Clockwork"] = "Relojoaria",
+	["The Gearwarden"] = "O Guardião das Engrenagens",
+	["The Sparking Sovereign"] = "O Soberano Faiscante",
+	["The Clockwork Sovereign"] = "O Soberano da Relojoaria",
+	["Clockwork Sovereign raid"] = "Incursão do Soberano da Relojoaria",
+	["Clockwork Egg"] = "Ovo da Relojoaria",
+	["Clockwork Gate"] = "Portão da Relojoaria",
+	["Three gears guard its heart. Break them in order or it never stops shielding itself."] = "Três engrenagens protegem seu coração. Quebre-as em ordem ou ele nunca vai parar de se proteger.",
+	["7 Oct"] = "7 out",
 }

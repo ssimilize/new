@@ -92,6 +92,9 @@ Unlocks.Features = {
 	weekly = 5,
 	-- 3.8 · Ranch Orders (Config/Orders)
 	orders = 10,
+	-- R2-CLOCKWORK · Clockwork Canyon (appended block, see RULES)
+	region_clockwork = 68,
+	raid_clockwork = 70,
 }
 
 -- Player-facing names for the level-up popup.
@@ -144,6 +147,9 @@ Unlocks.Names = {
 	jobs_slot_5 = "Job Board slot 5",
 	weekly = "Weekly goals",
 	orders = "Ranch Orders",
+	-- R2-CLOCKWORK · Clockwork Canyon (appended block, see RULES)
+	region_clockwork = "Clockwork Canyon",
+	raid_clockwork = "Clockwork Sovereign raid",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

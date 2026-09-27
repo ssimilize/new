@@ -733,6 +733,28 @@ SUBJECTS = {
     "more pearl spots.",
     "nacrehare": "Nacrehare: a majestic sea hare with tall iridescent frilly ears shimmering like mother-of-pearl, "
     "a pearl crest on its head, a pearly shimmering mane.",
+    # R2-CLOCKWORK: Clockwork Canyon, three Spark/Stone lines (appended block, see RULES).
+    # 88 cogling (bug, spark)
+    "cogling": "Cogling, a baby clockwork wasp: a small round brass shell body like a pocket watch case, two "
+    "thin wire antennae tipped with tiny sparks, four small stiff copper wings, tiny cog-shaped feet.",
+    "gearwing": "Gearwing: bigger etched brass wings with visible tiny cogs turning where they meet the body, "
+    "a longer segmented tail like a watch chain, brighter spark tips on the antennae.",
+    "dynamowasp": "Dynamowasp: large glowing wings edged in crackling blue-white sparks, an ornate brass "
+    "thorax with a glass window showing spinning gears inside, a long barbed lightning-rod tail.",
+    # 89 gritcog (golem, stone)
+    "gritcog": "Gritcog, a baby stone-and-brass golem: a small chunky boulder body bolted together with "
+    "brass plates and rivets, one round cog set in its chest like a belly button, stubby stone arms.",
+    "flywheel": "Flywheel: a bigger boulder body with a large exposed brass flywheel spinning slowly in its "
+    "chest, more rivets and plating, thicker stone arms with brass knuckle-plates.",
+    "geartitan": "Geartitan: a towering boulder body wrapped in overlapping brass armour plates, a huge "
+    "chest-mounted gear cluster with several cogs turning together, massive fists capped in brass gauntlets.",
+    # 90 brassling (fox, spark + stone)
+    "brassling": "Brassling, a baby clockwork fox automaton: a slim body of riveted brass plates over grey "
+    "stone joints, glowing spark-blue eyes, a short tail ending in a small spinning cog, brass ear-cups.",
+    "clockfox": "Clockfox: sleeker articulated brass plating with visible ticking joints at the shoulders and "
+    "hips, a longer tail with two small cogs, brighter spark-blue eye glow.",
+    "brassrunner": "Brassrunner: an elegant fully-armoured brass fox with etched clockwork patterns over every "
+    "plate, a tail like an ornate pocket-watch chain ending in a large glowing cog, piercing spark-blue eyes.",
 }
 
 
