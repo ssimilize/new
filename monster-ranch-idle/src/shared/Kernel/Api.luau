@@ -422,6 +422,12 @@ Api.Actions = {
 		rate = 6,
 		returns = "{ tile, find: { kind, fossil?, piece?, duplicate?, complete?, id?, amount? }?, hint, left, done, rewards: { Reward }, missed: { number }? }",
 	},
+	-- Trial Tower (3.12) · see Config/TrialTower and Logic/TrialTower ------------------------
+	["TrialTower.Fight"] = {
+		schema = T.none,
+		rate = 2,
+		returns = "{ win, floor, best, record, replay: BattleReplay, rewards: { Reward }, left, retries, spent: 'attempt' | 'retry' | nil }",
+	},
 
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
 	["Weekly.Claim"] = {
@@ -811,6 +817,7 @@ Api.State = {
 		Dojo = "{ training = false | { id, tech, lv, startedAt, readyAt }, trained }  -- 3.11: the Dojo mat (Logic/Dojo)",
 		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
 		DigSite = "{ day, digs, shovels, n, open = false | { id, left, tiles = { { t, hint?, kind?, fossil?, piece?, id?, amount?, duplicate? } } }, pieces = { [fossilId]: { [pieceId]: true } }, total }  -- 3.11 (secret is private)",
+		TrialTower = "{ week, best, record, day, used, retries, paid = { [floor]: true }, fights, cleared }  -- 3.12, see Logic/TrialTower",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",

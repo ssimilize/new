@@ -104,6 +104,8 @@ return {
 		"Seasons",
 		-- 3.11 · Dojo
 		"Dojo",
+		-- 3.12 · Trial Tower
+		"TrialTower",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

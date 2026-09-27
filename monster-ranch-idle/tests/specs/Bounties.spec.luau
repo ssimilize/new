@@ -33,7 +33,7 @@ return function(t)
 		end
 	end
 
-	local SYSTEMS = { "Currency", "Progression", "Rewards", "Monsters", "Expeditions", "Fishing", "DigSite" } -- 3.10: the bait reward, 3.11: shovels
+	local SYSTEMS = { "Currency", "Progression", "Rewards", "Monsters", "Expeditions", "Fishing", "DigSite", "TrialTower" } -- 3.10: the bait reward, 3.11: shovels, 3.12: Retry tokens
 
 	local function boot(extra: { string }?)
 		local eggs = {}

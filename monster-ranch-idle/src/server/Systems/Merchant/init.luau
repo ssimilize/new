@@ -21,8 +21,9 @@
 
 	Delivery: scroll (this section), seeds (Kitchen:AddSeeds), bait (Fishing:AddBait), shovels
 	(DigSite:AddShovels, only while DigSite is plugged in and `dig_site` is unlocked), decor and
-	egg (Rewards, source "merchant"). Kitchen, Fishing, DigSite and Ranch are optional and looked
-	up in Start; a missing one means its offers (and ways to pay) are refused.
+	egg (Rewards, source "merchant"), tower_retry (TrialTower:AddRetries, 3.12). Kitchen, Fishing,
+	DigSite, TrialTower and Ranch are optional and looked up in Start; a missing one means its
+	offers (and ways to pay) are refused.
 
 	Bus: publishes MerchantBought (player, { item, pay }) per purchase (Weekly goal "merchant_3").
 ]]
@@ -35,7 +36,7 @@ local Logic = require(Shared.Logic.Merchant)
 local Merchant = {
 	Name = "Merchant",
 	Dependencies = { "Currency", "Progression", "Monsters", "Rewards" },
-	OptionalDependencies = { "Kitchen", "Fishing", "DigSite", "Ranch" },
+	OptionalDependencies = { "Kitchen", "Fishing", "DigSite", "Ranch", "TrialTower" },
 }
 
 Merchant.Profile = {
@@ -54,7 +55,7 @@ local TICK = 5
 local ctx
 local Config, Rules
 local Currency, Progression, Monsters, Rewards
-local Kitchen, Fishing, DigSite, Ranch
+local Kitchen, Fishing, DigSite, Ranch, TrialTower
 
 local announced = {} -- [player] = the visit already announced
 
@@ -119,6 +120,10 @@ local function checkDelivery(player, s, slot)
 		if not digOpen(player) then
 			ctx:Fail("The Dig Site isn't open yet")
 		end
+	elseif slot.kind == "tower_retry" then
+		if not TrialTower then
+			ctx:Fail("The Trial Tower isn't open yet")
+		end
 	end
 end
 
@@ -150,6 +155,8 @@ local function deliver(player, s, slot): number?
 		return Fishing:AddBait(player, slot.amount)
 	elseif slot.kind == "shovels" then
 		return DigSite:AddShovels(player, slot.amount)
+	elseif slot.kind == "tower_retry" then
+		return TrialTower:AddRetries(player, slot.amount)
 	elseif slot.kind == "decor" or slot.kind == "egg" then
 		Rewards:Grant(player, { { kind = slot.kind, id = slot.item, amount = slot.amount } }, "merchant", { silent = true })
 	end
@@ -279,6 +286,7 @@ function Merchant.Start()
 	Kitchen = ctx:GetSystem("Kitchen")
 	Fishing = ctx:GetSystem("Fishing")
 	DigSite = ctx:GetSystem("DigSite")
+	TrialTower = ctx:GetSystem("TrialTower") -- 3.12: Retry tokens
 	Ranch = ctx:GetSystem("Ranch")
 end
 

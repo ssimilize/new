@@ -256,6 +256,19 @@ return {
 				ctx.Router:Open("Album", { region = region })
 			end,
 		})
+		-- 3.12: the Trial Tower (the weekly climb with this squad; Screens/TrialTower).
+		Button.new({
+			Name = "TowerButton",
+			Text = "Tower",
+			Color = Color3.fromHex("#8A8FA3"),
+			Size = UDim2.fromOffset(110, 44),
+			TextSize = Theme.TextSize.Body,
+			LayoutOrder = 3,
+			Parent = panel.HeaderRight,
+			OnClick = function()
+				ctx.Router:Open("TrialTower")
+			end,
+		})
 
 		local regionRow = New("Frame", {
 			Name = "Regions",

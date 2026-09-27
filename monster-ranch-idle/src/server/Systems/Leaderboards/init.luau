@@ -39,7 +39,18 @@ local ArenaLogic = require(Shared.Logic.Arena)
 local Leaderboards = {
 	Name = "Leaderboards",
 	Dependencies = {},
-	OptionalDependencies = { "Monsters", "Boss", "HallOfFame", "Expeditions", "Racing", "Mastery", "Visits", "Arena", "Fishing" },
+	OptionalDependencies = {
+		"Monsters",
+		"Boss",
+		"HallOfFame",
+		"Expeditions",
+		"Racing",
+		"Mastery",
+		"Visits",
+		"Arena",
+		"Fishing",
+		"TrialTower",
+	},
 }
 
 Leaderboards.Profile = {
@@ -156,6 +167,11 @@ local VALUES = {
 			return 0
 		end
 		return Fishing:WeekBest(player)
+	end,
+	-- 3.12: the highest Trial Tower floor cleared this week.
+	tower = function(player)
+		local TrialTower = ctx:GetSystem("TrialTower")
+		return if TrialTower then TrialTower:Best(player) else 0
 	end,
 	-- 3.8: this arena season's rating.
 	arena = function(player)

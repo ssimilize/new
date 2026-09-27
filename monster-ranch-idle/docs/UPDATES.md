@@ -3,6 +3,49 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.12 · Honey & stars
+
+### Trial Tower
+
+**For players**
+- From Ranch Level 26 a tall stone tower stands in the Market Square, east of the plaza between
+  the paths to plots 3 and 4 (across from the Workshop). Its prompt opens the Trial Tower; the
+  Expeditions screen has a "Tower" button in its header too.
+- Climb floor after floor with your Expeditions squad (Dojo techniques fight here too). Every
+  floor is one fight, replayed on the battle stage. Enemies get stronger each floor and every
+  10th floor is a boss. Everyone meets the same enemies that week; the screen previews the next
+  floor (names, levels, BOSS badge).
+- 3 attempts a UTC day: a loss uses one, a win uses none. With none left, a loss spends a Retry
+  token. Tokens: +1 from every Expedition Bounty, and the Travelling Merchant sells a Retry Token
+  (30 gems or 20 min of ranch income, 2 a visit).
+- The climb starts over every Saturday at 15:00 UTC with the leaderboards. Milestones every 5
+  floors pay once a week: 10 min of ranch income and 3 Stardust per 5 floors (floor 20: 40 min,
+  12 Stardust), plus 60 gems at floor 25 and 150 gems at floor 50. The first time ever you reach
+  each 10th floor pays 40 gems.
+- New weekly board "Highest Floor" (this week's best floor) and weekly goal "Clear 10 Trial
+  Tower floors".
+
+**In the code**
+- `Config/TrialTower`, `Logic/TrialTower` (floor enemies, seeds, milestones), `Systems/TrialTower`
+  (action `TrialTower.Fight`; API `AddRetries`, `Best`, `Record`, `AttemptsLeft`; publishes
+  `TowerFloorCleared`), screen `Screens/TrialTower`, Expeditions header button `TowerButton`.
+- Enemies: floor f is fought in region `Regions.List[ceil(f / 10)]` (the last region after that)
+  on a stage seeded by ("tower", week, f), built by `BattleSim.BuildEnemies` (boss floors: one of
+  the region's bosses). Each enemy's `statMult` is set so its power is `190 × 1.07^(f − 1)` (a boss
+  × 1.8); levels and rarities are the stage's own. A fight's seed is (userId, week, floor, fights
+  so far). Balance (`TrialTowerBalance.spec`): three Lv 24-28 Common-Rare Adults stop around floors
+  11-16; five Lv 90 Mythic/Legendary Adults with techniques pass floor 40.
+- World: `Config.World.Hub` entry `trialTower` at { 112, 0, 0 }, size 16 × 44 × 16, `style =
+  "tower"` (`World/Build.luau`: slate body, battlement ledge, lit window slits, no gable roof);
+  scenery keeps off it like every hub building.
+- Rewards kind `tower_retry` (label "N Retry tokens", icon drawn in code in `Components/Icon`);
+  `Config.Bounties.Reward` gains 1 token; `Config.Merchant` offer `tower_retry` (kind
+  `tower_retry`, unlock `trial_tower`, `TrialTower` an optional Merchant dependency).
+- Leaderboards board `tower` (period week, count, unit floors) fed by `TrialTower:Best`; weekly
+  goal `tower_10` (family `tower`). No Calendar source: the existing weekly "reset" row already
+  marks the turnover.
+- Tests: `TrialTower.spec`, `TrialTowerClient.spec`, `TrialTowerBalance.spec`.
+
 ## 3.11 · Seasons & secrets
 
 ### Dig Site & Fossils

@@ -142,6 +142,15 @@ Weekly.Pool = {
 		filter = { seasonal = true },
 		unlock = "fishing",
 	},
+	-- 3.12 · Trial Tower: floors cleared (the climb starts over with the week)
+	{
+		id = "tower_10",
+		family = "tower",
+		text = "Clear 10 Trial Tower floors",
+		topic = "TowerFloorCleared",
+		target = 10,
+		unlock = "trial_tower",
+	},
 }
 
 Weekly.ById = {}

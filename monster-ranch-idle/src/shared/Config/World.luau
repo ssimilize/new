@@ -137,6 +137,18 @@ table.insert(World.Hub, {
 	screen = "Workshop",
 })
 
+-- Update 3.12: the Trial Tower, east of the plaza between the paths to plots 3 and 4 (mirroring
+-- the Workshop). A tall stone tower (Systems/World/Build: style "tower" = battlements, no roof).
+table.insert(World.Hub, {
+	id = "trialTower",
+	name = "Trial Tower",
+	position = { 112, 0, 0 },
+	size = { 16, 44, 16 },
+	color = "#8A8FA3",
+	screen = "TrialTower",
+	style = "tower",
+})
+
 -- Glow-up O: the Codex Museum and the Hall of Fame plaza (client-built, Config/Codex) south of the
 -- Market Square, either side of the path to plot 5. Scenery keeps off them (keepOut below).
 World.CodexGrounds = {

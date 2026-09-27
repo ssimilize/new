@@ -226,6 +226,8 @@ function Util.rewardText(item): string
 		return string.format("%s Amber", Format.short(amount))
 	elseif kind == "shovel" then
 		return string.format("%s Shovels", Format.short(amount))
+	elseif kind == "tower_retry" then
+		return string.format("%s Retry tokens", Format.short(amount))
 	end
 	return Format.short(amount)
 end

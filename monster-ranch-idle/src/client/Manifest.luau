@@ -110,6 +110,7 @@ return {
 		"DigSite", -- 3.11 · Dig Site (opened from the sand pit's prompt)
 		"Merchant", -- 3.11 · Travelling Merchant (the caravan's prompt, the Events screen)
 		"Dojo", -- 3.11 · Dojo (from Monster Detail)
+		"TrialTower", -- 3.12 · Trial Tower (the tower's prompt, the Expeditions header)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",
