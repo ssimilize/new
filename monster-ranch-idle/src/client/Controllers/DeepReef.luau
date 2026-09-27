@@ -50,8 +50,11 @@ local hex = Color3.fromHex
 
 local DeepReef = {
 	Name = "DeepReef",
-	Dependencies = { "Weather" },
+	Dependencies = { "Weather", "Gamepad" },
 }
+
+-- One whole string (translations match whole displayed strings): shown only while swimming.
+local LEGEND = "Left Stick Swim · R2 Ascend · L2 Descend · Ⓧ Swim up"
 
 local PRIORITY = Enum.ContextActionPriority.High.Value
 local VERTICAL_KEYS = { Enum.KeyCode.Space, Enum.KeyCode.ButtonR2, Enum.KeyCode.LeftControl, Enum.KeyCode.ButtonL2 }
@@ -63,6 +66,7 @@ local life = nil
 local lowGraphics = false
 local built = false
 
+local scopeRoot: Frame? = nil -- parented under ctx.UI; scopes the pad while swimming (no screen)
 local swimming = false
 local state = { x = 0, y = 0, z = 0, vx = 0, vy = 0, vz = 0 }
 local heading = 0
@@ -264,6 +268,8 @@ local function onVertical(_, inputState: Enum.UserInputState, input: InputObject
 	return if swimming then Enum.ContextActionResult.Sink else Enum.ContextActionResult.Pass
 end
 
+local surface -- forward declaration: dive() hands it to Gamepad.SetScope as the B/close action
+
 local function dive()
 	if not unlocked() then
 		ctx:Toast(string.format("The Deep Reef opens at Ranch Level %d", Config.Unlocks.Features[Cfg.Unlock]), "info")
@@ -288,6 +294,10 @@ local function dive()
 	ContextActionService:BindActionAtPriority("DeepReefVertical", onVertical, false, PRIORITY, table.unpack(VERTICAL_KEYS))
 	buildTrail(root)
 	ctx:Sound("ReefDive", { at = at })
+	local gamepad = ctx:GetController("Gamepad")
+	if gamepad and scopeRoot then
+		gamepad.SetScope(scopeRoot, surface)
+	end
 end
 
 -- Ends a swim however it ends (Swim up, a lost or respawned character): the light always comes back.
@@ -297,9 +307,13 @@ local function stopSwimming()
 	held.up, held.down = false, false
 	giveLightBack()
 	destroyTrail()
+	local gamepad = ctx:GetController("Gamepad")
+	if gamepad then
+		gamepad.SetScope(nil)
+	end
 end
 
-local function surface()
+function surface()
 	if not swimming then
 		return
 	end
@@ -408,6 +422,18 @@ function DeepReef.Init(context)
 end
 
 function DeepReef.Start()
+	-- Invisible: only carries GamepadLegend and stands in for a screen while swimming (there
+	-- is no screen to scope the pad to).
+	local ui = ctx.UI
+	if ui then
+		scopeRoot = Instance.new("Frame")
+		scopeRoot.Name = "DeepReefScope"
+		scopeRoot.BackgroundTransparency = 1
+		scopeRoot.Size = UDim2.fromOffset(0, 0)
+		scopeRoot.Visible = false
+		scopeRoot.Parent = ui.Overlay
+		scopeRoot:SetAttribute("GamepadLegend", LEGEND)
+	end
 	UserInputService.InputChanged:Connect(function(input: InputObject)
 		if input.KeyCode == Enum.KeyCode.Thumbstick1 then
 			stickY = input.Position.Y

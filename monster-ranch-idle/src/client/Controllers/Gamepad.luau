@@ -32,6 +32,13 @@
 	A scope root with a string attribute GamepadLegend (Racing and Surf while a run is on) has
 	no cursor: the selection is cleared so A and the D-pad reach the minigame, and the legend
 	shows that string instead.
+	external scope  a mode with no Router screen or Focus modal of its own (Live Race's HUD,
+	                Deep Reef swimming) calls Gamepad.SetScope(root, close?) with a GuiObject to
+	                scope (carrying GamepadLegend like any other scope root) and an optional close
+	                function that B runs, same as a Focus modal's `close`. SetScope(nil) drops it.
+	                Ranked between a Focus modal (which still wins) and the open Router screen.
+	                One global slot: a caller must only call SetScope on its own on/off edge (not
+	                every frame it isn't active), else it would blank out another mode's scope.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -90,6 +97,7 @@ local savedImage = nil -- PlayerGui.SelectionImageObject before activation
 local openOrder = {} -- Router screen names, most recently opened last
 local syncQueued = false
 local runShown = false -- the legend shows a screen's GamepadLegend
+local externalScope = nil -- { root, close } set by Gamepad.SetScope for a non-screen mode
 
 -- Scope ------------------------------------------------------------------------------------
 
@@ -116,11 +124,15 @@ local function openScreen(): string?
 	return nil
 end
 
--- Returns the scope root and either its Focus entry (modal) or its screen name.
+-- Returns the scope root and either its Focus entry (modal), an external scope, or its screen
+-- name. A Focus modal still wins over an external scope; an external scope wins over the screen.
 local function currentScope(): (GuiObject?, any, string?)
 	local modal = Focus.top()
 	if modal then
 		return modal.root, modal, nil
+	end
+	if externalScope and externalScope.root.Parent then
+		return externalScope.root, externalScope, nil
 	end
 	local name = openScreen()
 	local root = name and screenRoot(name)
@@ -265,6 +277,14 @@ local function queueSync()
 		syncQueued = true
 		task.defer(sync, true)
 	end
+end
+
+-- Public: a non-screen mode (Live Race's HUD, Deep Reef swimming) scopes the pad to `root`
+-- (which carries GamepadLegend like any screen); `close` runs when B is pressed, same as a
+-- Focus modal. SetScope(nil) drops it and hands the pad back to whatever Router screen is open.
+function Gamepad.SetScope(root: GuiObject?, close: (() -> ())?)
+	externalScope = if root then { root = root, close = close } else nil
+	queueSync()
 end
 
 -- Keeps the selected control inside the visible part of every ScrollingFrame around it.

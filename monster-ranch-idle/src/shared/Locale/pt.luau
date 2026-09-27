@@ -2426,4 +2426,10 @@ return {
 	["You haven't earned that gear yet"] = "Você ainda não conquistou esse equipamento",
 	["You're already in this race"] = "Você já está nesta corrida",
 	["boost"] = "turbo",
+
+	-- R2-LEGENDS: controller legends for Live Race, Decorate and Deep Reef swimming.
+	["Left Stick Steer · Ⓐ Jump · RT Boost · Ⓑ Leave"] = "Analógico esquerdo Guiar · Ⓐ Pular · RT Turbo · Ⓑ Sair",
+	["D-pad Move · Ⓧ Rotate · Ⓐ Place · R1 Pick up · Ⓨ Stash · Ⓑ Leave"] = "Direcional Mover · Ⓧ Girar · Ⓐ Colocar · R1 Escolher · Ⓨ Guardar · Ⓑ Sair",
+	["Left Stick Swim · R2 Ascend · L2 Descend · Ⓧ Swim up"] = "Analógico esquerdo Nadar · R2 Subir · L2 Descer · Ⓧ Voltar à superfície",
+	["You don't have any decor to place"] = "Você não tem nenhuma decoração para colocar",
 }

@@ -43,8 +43,13 @@ local STICK_DEADZONE = 0.25
 
 local LiveRace = {
 	Name = "LiveRace",
-	Dependencies = { "Riding" },
+	Dependencies = { "Riding", "Gamepad" },
 }
+
+-- One whole string (translations match whole displayed strings): the real bindings, read off
+-- Start's InputBegan wiring below. Shown only while countdown or running has the character
+-- under this controller's control; the lobby banner gets the generic scope legend instead.
+local LEGEND = "Left Stick Steer · Ⓐ Jump · RT Boost · Ⓑ Leave"
 
 local ctx
 local player = Players.LocalPlayer
@@ -61,6 +66,8 @@ local stickX = 0
 local hud = {}
 local podiumUntil = 0
 local lastResultSeen = false
+local padScoped = false -- Gamepad.SetScope is a single global slot; only touch it on the edge,
+-- else every heartbeat here would blank out another mode's scope (Deep Reef's, say).
 
 local function session()
 	return StoreKit.tbl(ctx.Store, "session.LiveRace")
@@ -340,6 +347,20 @@ local function refreshHud()
 	hud.countdown.Visible = inHeat and g.state == "countdown"
 	hud.race.Visible = inHeat and g.state == "running" and not sess.dq
 	hud.podium.Visible = not hud.race.Visible and type(sess.result) == "table" and os.clock() < podiumUntil
+
+	-- While in a heat, the Gamepad controller scopes the pad to this HUD (B leaves the heat
+	-- through leaveHeat, same as the Leave button); the legend with the real bindings shows
+	-- only for countdown / running, matching the character actually being under our control.
+	-- SetScope only runs on the inHeat edge: it is a single global slot, and calling it every
+	-- heartbeat while not in a heat would blank out another mode's scope (Deep Reef's, say).
+	local gamepad = ctx:GetController("Gamepad")
+	if gamepad and inHeat ~= padScoped then
+		padScoped = inHeat
+		gamepad.SetScope(if inHeat then hud.root else nil, leaveHeat)
+	end
+	if inHeat then
+		hud.root:SetAttribute("GamepadLegend", if g.state == "countdown" or g.state == "running" then LEGEND else nil)
+	end
 
 	if hud.banner.Visible then
 		local left = math.max(0, math.ceil((g.lobbyEndsAt or 0) - ctx:Now()))
