@@ -3,6 +3,71 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.8 · Reasons to come back
+
+### Arena seasons
+
+Season 1 runs from Saturday 3 October to Saturday 28 November 2026, 15:00 UTC. Seasons are 8
+arena weeks long, back to back.
+
+**For players**
+- **Seasons:** the Champions Arena now runs in 8-week seasons on top of its weekly rewards,
+  which are unchanged.
+- **Soft reset:** when a new season starts, every rating moves halfway back to 1,000 (a 1,600
+  Champion starts the next season at 1,300). It happens the first time your record is used in
+  the new season, whether you play or someone fights your defense team.
+- **Fresh matchmaking:** you only meet players who have fought or set a defense this season.
+- **Featured lines:** each season features 3 species lines, the same on every server. Featured
+  monsters fight at +10% stats, on both sides of the fight.
+- **Season rewards:** your best tier of the season pays once, the first time you join or use the
+  arena after the season ends (Welcome Back mentions it):
+
+  | Best tier | Reward |
+  |---|---|
+  | Bronze | nothing |
+  | Silver | title "Arena Silver" + 100 gems |
+  | Gold | title "Arena Gold" + 200 gems + Gold Arena Cup |
+  | Crystal | title "Arena Crystal" + 400 gems + Crystal Arena Cup |
+  | Champion | title "Arena Champion" + 800 gems + Champion Arena Cup + Champion's Crown Aura |
+
+  - Titles and the aura are Mastery cosmetics, worn at once if you wear none of that kind.
+  - The cups are decor that is never sold.
+- **Season tab** in the Arena screen shows:
+  - the season and an ends-in countdown (before season 1: "Season 1 starts in ...");
+  - the featured lines;
+  - your season best;
+  - the reward track;
+  - the season top 10 and your rank.
+
+**In the code**
+- **Config and rules:**
+  - `Config/Arena.Season`, `SeasonRewards` and `SeasonItems`. The season items are merged into
+    `Config/Mastery.Rewards`.
+  - Aura Vfx: `Config/Vfx.Mastery.championsCrown`.
+  - Cups: `Config/Decor` (`price = nil`, `reward = "arena"`), built by the `cup` model in `Config/DecorArt`.
+  - The Store skips decor with no price.
+  - `Logic/Arena`: `SeasonAt`, `SeasonStartsAt`, `SeasonEndsAt`, `Featured`, `FeaturedSet`,
+    `SoftReset` and `Reseason`. `Normalize(fighter, featured?)` sets `statMult`, and
+    `Fight(attack, defense, seed, season?)` passes the season's featured set.
+- **The Arena system:**
+  - Profile v2 adds `seasonOf`, `seasonBest` and `seasonPaid`.
+  - Records carry `season`.
+  - `Arena:SeasonRating(player)`.
+  - Mastery is an optional dependency, looked up when a reward is paid. Without it the gems and
+    cups still pay.
+  - A record from an older season takes one soft reset per season it missed.
+- **The ratings index:** the adapter keeps one index per season
+  (`Services.Arena.IndexName(season)`: `MonsterRanch_ArenaRatings_s<N>`; season 0 keeps
+  `_v1`). `Index` and `Near` take the season as a last argument.
+- **Leaderboards:**
+  - Boards have a `period` ("week" or "season").
+  - The new "arena" board is a season board: `Key("arena", n)` = `arena_s<N>`, and its value is
+    the current season rating.
+  - It has no weekly champion or title.
+  - `Config.Leaderboards.Weekly` lists the weekly boards for the Leaderboards screen, the hub
+    board and nameplates.
+- **Tests:** `ArenaSeasons.spec`, `ArenaSeasonsClient.spec`.
+
 ## 3.7 · Ranch Jobs + Luck
 
 Like 3.6, no launch date of its own: the Job Board and Luck work as soon as the update is published.

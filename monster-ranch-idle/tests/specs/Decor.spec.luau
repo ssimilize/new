@@ -53,7 +53,8 @@ return function(t)
 				if def.kind == "toy" then
 					expect(def.spot).toBe("toy")
 				end
-				expect(def.price ~= nil).toBe(true)
+				-- 3.8: reward-only pieces (arena season cups) are the only ones never sold.
+				expect(def.price ~= nil or def.reward ~= nil).toBe(true)
 			end
 			expect(new >= 60).toBe(true)
 		end)
@@ -68,7 +69,7 @@ return function(t)
 				if def.event then
 					byEvent[def.event] = (byEvent[def.event] or 0) + 1
 					expect(def.price.token ~= nil).toBe(true)
-				elseif def.price.coins or def.price.friendship then
+				elseif def.price and (def.price.coins or def.price.friendship) then
 					free[def.kind] = true
 				end
 			end

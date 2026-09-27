@@ -8,9 +8,14 @@
 	         → Arena.SetDefense), with a note on how stats are normalized.
 	Rewards  tiers and their weekly rewards, this week's best tier, and "Claim" for the week
 	         that just ended (Arena.ClaimWeekly).
+	Season   (3.8) the arena season and its ends-in countdown (or "Season 1 starts in"), the
+	         season's featured lines (+FeaturedBoost), your season best tier, the season reward
+	         track (Config.Arena.SeasonRewards) and the season board's top 10 with your rank
+	         (global.Leaderboards, board "arena"), or your rating and tier when you're not on it.
 	Header: your rating and tier, battles left today. Opened from the Champions Arena.
 
-	Reads: session.Arena, profile.Arena, profile.Monsters.list, profile.Progression.level.
+	Reads: session.Arena, profile.Arena, profile.Monsters.list, profile.Progression.level,
+	global.Leaderboards.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,6 +23,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
+local ArenaLogic = require(Shared.Logic.Arena)
+local Appearance = require(Shared.Logic.Appearance)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -70,7 +77,12 @@ return {
 		end
 
 		Widgets.Tabs({
-			Tabs = { { id = "battle", text = "Battle" }, { id = "defense", text = "Defense" }, { id = "rewards", text = "Rewards" } },
+			Tabs = {
+				{ id = "battle", text = "Battle" },
+				{ id = "defense", text = "Defense" },
+				{ id = "rewards", text = "Rewards" },
+				{ id = "season", text = "Season" },
+			},
 			Selected = tab,
 			Parent = panel.Body,
 			OnChanged = function(id)
@@ -339,6 +351,215 @@ return {
 			})
 		end
 
+		-- Season (3.8) ------------------------------------------------------------------------
+		local countdown = nil -- the ends-in label, ticked every second while the tab is open
+
+		local function countdownText(): string
+			local now = ctx:Now()
+			local season = ArenaLogic.SeasonAt(now)
+			if season <= 0 then
+				return string.format("Season %d starts in %s", 1, Format.duration(ArenaLogic.SeasonStartsAt(1) - now))
+			end
+			return string.format("Arena Season %d · ends in %s", season, Format.duration(ArenaLogic.SeasonEndsAt(season) - now))
+		end
+
+		local function drawSeason()
+			local p = prof()
+			local s = sess()
+			local season = ArenaLogic.SeasonAt(ctx:Now())
+			local rating = tonumber(s.rating) or Cfg.StartRating
+
+			-- Left: the season, its countdown, featured lines and your season best.
+			local info = Util.card({ Name = "SeasonInfo", Size = UDim2.new(0.34, -6, 1, 0), Parent = content })
+			countdown = Util.text({
+				Name = "SeasonCountdown",
+				Text = countdownText(),
+				Font = Theme.Fonts.Display,
+				TextSize = Theme.TextSize.Body,
+				TextWrapped = true,
+				Position = UDim2.fromOffset(12, 8),
+				Size = UDim2.new(1, -24, 0, 56),
+				Parent = info,
+			})
+			Util.text({
+				Text = string.format("Featured lines fight at +%d%%", math.floor(Cfg.Season.FeaturedBoost * 100 + 0.5)),
+				TextColor3 = C.TextMuted,
+				TextSize = Theme.TextSize.Small,
+				Position = UDim2.fromOffset(12, 66),
+				Size = UDim2.new(1, -24, 0, 24),
+				Parent = info,
+			})
+			local featured = New("Frame", {
+				Name = "Featured",
+				BackgroundTransparency = 1,
+				Position = UDim2.fromOffset(12, 94),
+				Size = UDim2.new(1, -24, 0, 118),
+				Parent = info,
+			}, { Create.List("x", 8, Enum.HorizontalAlignment.Center) })
+			for i, line in ArenaLogic.Featured(math.max(1, season)) do
+				local cell = New("Frame", {
+					Name = "Featured_" .. line,
+					BackgroundColor3 = C.PanelDeep,
+					Size = UDim2.fromOffset(92, 118),
+					LayoutOrder = i,
+					Parent = featured,
+				}, { Create.Corner(10) })
+				local adults = Config.Species.ById[line].forms[3]
+				local ok, look = pcall(Appearance.Preview, line, 3, adults[1].id, Cfg.Normal.rarity)
+				if ok then
+					local icon = MonsterIcon.new(look, 64)
+					icon.AnchorPoint = Vector2.new(0.5, 0)
+					icon.Position = UDim2.new(0.5, 0, 0, 4)
+					icon.Parent = cell
+				end
+				Util.text({
+					Text = Config.Species.Form(line, 1).name,
+					TextSize = Theme.TextSize.Small,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Position = UDim2.fromOffset(2, 68),
+					Size = UDim2.new(1, -4, 0, 22),
+					Parent = cell,
+				})
+				Util.text({
+					Text = string.format("+%d%%", math.floor(Cfg.Season.FeaturedBoost * 100 + 0.5)),
+					Font = Theme.Fonts.Display,
+					TextColor3 = C.Green,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Position = UDim2.fromOffset(2, 90),
+					Size = UDim2.new(1, -4, 0, 24),
+					Parent = cell,
+				})
+			end
+			local best = if season > 0 and p.seasonOf == season and p.seasonBest and p.seasonBest ~= "" then tierDef(p.seasonBest) else nil
+			Util.text({
+				Name = "SeasonBest",
+				Text = if best then string.format("Season best: %s", best.name) else "Season best: none yet",
+				Font = Theme.Fonts.Display,
+				TextColor3 = if best then Color3.fromHex(best.color) else C.TextMuted,
+				Position = UDim2.fromOffset(12, 220),
+				Size = UDim2.new(1, -24, 0, 30),
+				Parent = info,
+			})
+			Util.text({
+				Text = string.format(
+					"Your best tier this season pays once the season ends. A new season moves every rating halfway back to %s.",
+					Format.commas(Cfg.StartRating)
+				),
+				TextColor3 = C.TextMuted,
+				TextSize = Theme.TextSize.Small,
+				TextWrapped = true,
+				TextYAlignment = Enum.TextYAlignment.Top,
+				Position = UDim2.fromOffset(12, 254),
+				Size = UDim2.new(1, -24, 1, -262),
+				Parent = info,
+			})
+
+			-- Middle: the reward track by tier.
+			local track = Widgets.List({
+				Name = "SeasonTrack",
+				Position = UDim2.new(0.34, 6, 0, 0),
+				Size = UDim2.new(0.36, -12, 1, 0),
+				Padding = 6,
+				Parent = content,
+			})
+			for i, t in Cfg.Tiers do
+				local reward = Cfg.SeasonRewards[t.id]
+				if reward then
+					local row = New("Frame", {
+						Name = "Track_" .. t.id,
+						BackgroundColor3 = if best and best.id == t.id then C.Gold else C.PanelDeep,
+						Size = UDim2.new(1, -6, 0, 86),
+						LayoutOrder = i,
+						Parent = track,
+					}, { Create.Corner(10) })
+					Util.text({
+						Text = t.name,
+						Font = Theme.Fonts.Display,
+						TextColor3 = Color3.fromHex(t.color),
+						Position = UDim2.fromOffset(10, 2),
+						Size = UDim2.fromOffset(110, 28),
+						Parent = row,
+					})
+					local title = Config.Mastery.ItemById[reward.titleId]
+					local aura = reward.auraId and Config.Mastery.ItemById[reward.auraId]
+					Util.text({
+						Text = if aura
+							then string.format("Title: %s · Aura: %s", title.name, aura.name)
+							else string.format("Title: %s", title.name),
+						TextSize = Theme.TextSize.Small,
+						TextWrapped = true,
+						Position = UDim2.fromOffset(120, 2),
+						Size = UDim2.new(1, -126, 0, 28),
+						Parent = row,
+					})
+					Util.rewardRow(
+						reward.items,
+						row,
+						{ Position = UDim2.fromOffset(10, 36), Size = UDim2.new(1, -20, 0, 42), IconSize = 24 }
+					)
+				end
+			end
+
+			-- Right: the season board's top 10 and you.
+			local side = Util.card({
+				Name = "SeasonBoard",
+				Title = "Season top 10",
+				Position = UDim2.new(0.7, 0, 0, 0),
+				Size = UDim2.new(0.3, 0, 1, 0),
+				Parent = content,
+			})
+			local G = ctx.Store:Get("global.Leaderboards")
+			local rows = type(G) == "table" and type(G.global) == "table" and G.global.arena or nil
+			if type(rows) ~= "table" or #rows == 0 then
+				rows = type(G) == "table" and type(G.server) == "table" and G.server.arena or nil
+			end
+			rows = if season > 0 and type(rows) == "table" then rows else {}
+			local list = Widgets.List({ Position = UDim2.fromOffset(8, 40), Size = UDim2.new(1, -16, 1, -96), Padding = 2, Parent = side })
+			local me = ctx.Player.UserId
+			local myRank = nil
+			for rank, r in rows do
+				if rank > 10 then
+					break
+				end
+				if r.userId == me then
+					myRank = rank
+				end
+				local label = Util.text({
+					Name = "Rank" .. rank,
+					Text = string.format("%d. %s · %s", rank, tostring(r.name or "Rancher"), Format.commas(tonumber(r.value) or 0)),
+					TextSize = Theme.TextSize.Small,
+					TextColor3 = if r.userId == me then C.Gold else C.Text,
+					Size = UDim2.new(1, -6, 0, 24),
+					LayoutOrder = rank,
+					Parent = list,
+				})
+				label:SetAttribute("Localize", false)
+			end
+			if #rows == 0 then
+				Util.text({
+					Text = if season > 0 then "No one is on the season board yet." else "The season board opens with Season 1.",
+					TextColor3 = C.TextMuted,
+					TextSize = Theme.TextSize.Small,
+					TextWrapped = true,
+					Size = UDim2.new(1, -6, 0, 48),
+					Parent = list,
+				})
+			end
+			Util.text({
+				Name = "SeasonYou",
+				Text = if myRank
+					then string.format("You: #%d · %s", myRank, Format.commas(rating))
+					else string.format("Your rating: %s · %s tier", Format.commas(rating), tierDef(s.tier).name),
+				Font = Theme.Fonts.Display,
+				TextSize = Theme.TextSize.Small,
+				TextWrapped = true,
+				AnchorPoint = Vector2.new(0, 1),
+				Position = UDim2.new(0, 10, 1, -6),
+				Size = UDim2.new(1, -20, 0, 48),
+				Parent = side,
+			})
+		end
+
 		local lockOverlay = nil
 		local function draw()
 			if not isOpen then
@@ -348,10 +569,13 @@ return {
 			local rating = tonumber(s.rating) or Cfg.StartRating
 			ratingPill:SetText(Format.commas(rating))
 			Util.clear(content)
+			countdown = nil
 			if tab == "defense" then
 				drawDefense()
 			elseif tab == "rewards" then
 				drawRewards()
+			elseif tab == "season" then
+				drawSeason()
 			else
 				drawBattle()
 			end
@@ -373,7 +597,21 @@ return {
 				for _, path in { "session.Arena", "profile.Arena", "profile.Monsters.list", "profile.Progression.level" } do
 					bag.add(ctx.Store:Observe(path, refresh))
 				end
+				bag.add(ctx.Store:Observe("global.Leaderboards", function()
+					if tab == "season" then
+						refresh()
+					end
+				end))
 				refresh()
+				-- 3.8: the season countdown ticks every second while the Season tab is showing.
+				task.spawn(function()
+					while isOpen do
+						task.wait(1)
+						if isOpen and countdown and countdown.Parent then
+							countdown.Text = countdownText()
+						end
+					end
+				end)
 			end,
 			Close = function()
 				isOpen = false
