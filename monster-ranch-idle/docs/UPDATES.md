@@ -3,6 +3,43 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.8 · Reasons to come back
+
+### Weekly goals
+
+**For players**
+- **Weekly goals** (Ranch Level 5): every week you get 5 goals, like "Hatch 15 eggs", "Collect
+  coin jars 40 times" or "Run 8 races". They're sized to finish in about 5 to 7 days of casual play.
+  - The goals come from the features you have unlocked, one per area, so you never get two egg
+    goals or two Arena goals in one week.
+  - A new set arrives every Saturday at 15:00 UTC, with the weekly leaderboards.
+- **The weekly chest** has three steps, each claimable as soon as you reach it:
+  - 1 goal: 20 minutes of coins + 15 gems.
+  - 3 goals: 1 hour of coins + 40 gems + 10 random food.
+  - 5 goals: 2 hours of coins + 100 gems + a Crystal egg (a Royal egg from Ranch Level 25).
+  - Forgot to claim? Any step you reached is paid automatically when the week ends, and Welcome
+    Back says "Your weekly chest paid out".
+- The Quests screen has a new **Weekly** tab (goals, chest and the reset countdown), and the HUD's
+  Quests badge counts chest steps ready to claim.
+
+**In the code**
+- `Config.Weekly`: `Unlock` ("weekly", Ranch Level 5 in `Config.Unlocks`), `GoalCount`, `RoyalLevel`,
+  the `Pool` (21 goals `{ id, family, text, topic, target, filter?, unlock? }`, counted from existing
+  bus topics) and the three-step `Chest`.
+- `Logic/Weekly`: `Pick` (seeded by `Rng.seed("weekly", userId, week)`, unlock-filtered, one goal per
+  family), `Done`, `Reached`, `Claimed`, `Unclaimed`, `ChestReward` (the Royal swap).
+- `Logic/Objectives`: moved from `Systems/Quests/Objectives` (which now re-exports it) so Quests and
+  Weekly share `Matches`, `Amount` and `Target`.
+- `Systems/Weekly`:
+  - Save section `{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }`.
+  - Action `Weekly.Claim { step }`; rewards through `Rewards:Grant` with source "weekly".
+  - The week is `Config.Leaderboards.Week`. The draw happens once, the first time the player is
+    unlocked in that week, and then stays fixed. Rollover is lazy (join, goal topics, LevelUp and
+    a 30 s sweep): unclaimed reached steps are paid and a `WelcomeItem` (kind "weekly") is published.
+- UI: a Weekly tab in `Screens/Quests`; `Hud` adds claimable chest steps to the Quests badge;
+  Welcome Back shows the "weekly" line with a gem icon.
+- Tests: `Weekly.spec`, `WeeklyClient.spec`.
+
 ## 3.7 · Ranch Jobs + Luck
 
 Like 3.6, no launch date of its own: the Job Board and Luck work as soon as the update is published.

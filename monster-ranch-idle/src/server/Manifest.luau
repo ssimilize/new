@@ -84,6 +84,8 @@ return {
 		"RaceGear",
 		-- 3.7 · Ranch Jobs
 		"Jobs",
+		-- 3.8 · Weekly goals
+		"Weekly",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

@@ -13,6 +13,7 @@ local Config = {
 	Traits = require(script.Traits),
 	Genetics = require(script.Genetics),
 	Jobs = require(script.Jobs),
+	Weekly = require(script.Weekly), -- 3.8 · Weekly goals
 	Mutations = require(script.Mutations),
 	Weather = require(script.Weather),
 	Eggs = require(script.Eggs),

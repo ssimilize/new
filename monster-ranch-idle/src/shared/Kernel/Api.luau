@@ -364,6 +364,13 @@ Api.Actions = {
 		returns = "{ rewards: { Reward } }  -- the forager's stored food, paid before the change",
 	},
 
+	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
+	["Weekly.Claim"] = {
+		schema = T.struct({ step = T.integer(1, #Config.Weekly.Chest) }),
+		rate = 2,
+		returns = "{ rewards: { Reward } }",
+	},
+
 	-- Social (S5) ------------------------------------------------------------------
 	["Social.Pet"] = { schema = T.struct({ owner = T.userId, id = id }), rate = 4, returns = "{ friendship: number, left: number }" },
 	["Social.Like"] = { schema = T.struct({ owner = T.userId }), rate = 2, returns = "{ likes: number }" },
@@ -668,6 +675,7 @@ Api.State = {
 		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id } }",
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
+		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true }, pass, passCredit }",
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true }, vip = { day, opened } }",

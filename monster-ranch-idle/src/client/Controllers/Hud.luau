@@ -37,6 +37,7 @@ local Formulas = require(Shared.Logic.Formulas)
 local Appearance = require(Shared.Logic.Appearance)
 local Vip = require(Shared.Logic.Vip)
 local LoginStreak = require(Shared.Logic.LoginStreak)
+local WeeklyLogic = require(Shared.Logic.Weekly)
 local MasteryLogic = require(Shared.Logic.Mastery)
 local CodexLogic = require(Shared.Logic.Codex) -- glow-up O: claimable milestones badge
 local JobsLogic = require(Shared.Logic.Jobs)
@@ -329,6 +330,11 @@ local function refreshBadges()
 	local done = StoreKit.finishedExpeditions(ctx.Store, now)
 	buttons.Expeditions.badge:Set(if done > 0 then tostring(done) else nil)
 	local claim = StoreKit.claimableQuests(ctx.Store)
+	-- 3.8: weekly chest steps reached and not claimed (this week only; the server pays old ones).
+	local weekly = StoreKit.tbl(ctx.Store, "profile.Weekly")
+	if weekly.week == Config.Leaderboards.Week(now) then
+		claim += #WeeklyLogic.Unclaimed(weekly)
+	end
 	buttons.Quests.badge:Set(if claim > 0 then tostring(claim) else nil)
 	buttons.Monsters.badge:Set(if growReady > 0 then "!" else nil)
 	if buttons.Store and buttons.Store.badge then
@@ -924,6 +930,7 @@ function Hud.Init(context)
 	ctx.Store:Observe("global.Weather", refreshWeather)
 	ctx.Store:Observe("profile.Monsters.list", refreshMonsters)
 	ctx.Store:Observe("profile.Quests", refreshBadges)
+	ctx.Store:Observe("profile.Weekly", refreshBadges)
 	ctx.Store:Observe("profile.Expeditions.slots", refreshBadges)
 	ctx.Store:Observe("profile.Eggs.slots", refreshBadges)
 	ctx.Store:Observe("profile.LoginStreak", refreshBadges)
