@@ -311,6 +311,16 @@ function ClientHarness:require(moduleScript)
 	return result
 end
 
+-- Substitute(moduleScript, file): run `file` (a path under the repo root, read now) as that
+-- ModuleScript's source from the next require on. Compat specs run a verbatim old controller
+-- (tests/runtime/Old*.luau) in its place, so `script.Parent` resolves as it did. Before Boot.
+function ClientHarness:Substitute(moduleScript, file: string)
+	local path = ROOT .. "/" .. file
+	FILES[path] = FILES[path] or fs.readFile(path)
+	RobloxMock.records[moduleScript].extra.source = path
+	self._modules[path] = nil
+end
+
 function ClientHarness:_env(scriptInstance)
 	local env = table.clone(self.globals)
 	env.script = scriptInstance
