@@ -1,0 +1,18 @@
+{
+  "foundry": {
+    "commit": "c89b49f",
+    "syncedAt": "2026-09-27T21:30:05+00:00"
+  },
+  "game": "monster-ranch",
+  "packages": {
+    "Contract": {
+      "version": "0.1.0",
+      "files": {
+        "Contract.luau": "e53312ebd394b8b9afa1f774d1891ada0d68fe1f4ca721c251d32fff3534f69f"
+      }
+    }
+  },
+  "generated": {
+    "Game/Game.luau": "0c0ba2cae32f28912b674d1aac3720e4afa1eee12eb00ea218d7b370cfc7dac8"
+  }
+}
