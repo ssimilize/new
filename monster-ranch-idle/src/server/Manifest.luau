@@ -102,6 +102,8 @@ return {
 		"Merchant",
 		-- 3.11 · Ranch Seasons
 		"Seasons",
+		-- 3.11 · Dojo
+		"Dojo",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

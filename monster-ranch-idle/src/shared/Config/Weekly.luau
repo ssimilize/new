@@ -87,6 +87,14 @@ Weekly.Pool = {
 		unlock = "gene_lab",
 	},
 	{
+		id = "dojo_3",
+		family = "dojo",
+		text = "Train 3 techniques at the Dojo",
+		topic = "SkillTrained",
+		target = 3,
+		unlock = "dojo",
+	},
+	{
 		id = "bounty_3",
 		family = "bounties",
 		text = "Defeat 3 bounties",

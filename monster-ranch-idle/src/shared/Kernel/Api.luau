@@ -456,6 +456,22 @@ Api.Actions = {
 		returns = "{ trait: number, old: number, scrolls: number }",
 	},
 
+	-- Dojo (3.11) · see Config/Techniques and Logic/Dojo ------------------------------------------
+	-- Train: an owned, free Adult learns (lv 1) or levels up a technique of its element(s).
+	["Dojo.Train"] = {
+		schema = T.struct({ id = id, tech = T.enum(Config.Techniques.Ids) }),
+		rate = 2,
+		returns = "{ tech: string, lv: number, cost: number, readyAt: number }",
+	},
+	-- Forget: drops a learned technique (no refund).
+	["Dojo.Forget"] = {
+		schema = T.struct({ id = id, tech = T.enum(Config.Techniques.Ids) }),
+		rate = 2,
+		returns = "{ tech: string }",
+	},
+	-- Collect: the finished training lands on the monster's `tech`.
+	["Dojo.Collect"] = { schema = T.none, rate = 2, returns = "{ id: string, tech: string, lv: number }" },
+
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
 		schema = T.struct({ index = T.integer(1, Config.Orders.PerDay + 1), id = T.optional(id) }), -- 3.9: PerDay + 1 is the favourite buyer order
@@ -792,6 +808,7 @@ Api.State = {
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true }, target = { stat, grade } | false, milestones = { [stat]: grade } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
 		GeneLab = "{ day, tunes, attempts }  -- 3.10: tunes used on UTC `day`, lifetime attempts (the roll seed)",
+		Dojo = "{ training = false | { id, tech, lv, startedAt, readyAt }, trained }  -- 3.11: the Dojo mat (Logic/Dojo)",
 		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
 		DigSite = "{ day, digs, shovels, n, open = false | { id, left, tiles = { { t, hint?, kind?, fossil?, piece?, id?, amount?, duplicate? } } }, pieces = { [fossilId]: { [pieceId]: true } }, total }  -- 3.11 (secret is private)",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
@@ -922,6 +939,7 @@ Api.Topics = {
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
 	GeneTuned = "(player, { stat: string, success: boolean })  -- 3.10: every Gene Lab tune, success or not",
+	SkillTrained = "(player, { monsterId: string, skill: string, level: number })  -- 3.11: a Dojo training collected",
 	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
 	TouristVisited = "(player, { stars: number })  -- 3.10: one Ranch Tourist visited (online or while away)",
 	DishCooked = "(player, { dish: string, count: number })  -- 3.10: dishes collected from the Kitchen into the Pantry",

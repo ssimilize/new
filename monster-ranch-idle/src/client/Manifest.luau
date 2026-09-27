@@ -109,6 +109,7 @@ return {
 		"Fishing", -- 3.10 · Fishing Pond (opened from the pond's prompt)
 		"DigSite", -- 3.11 · Dig Site (opened from the sand pit's prompt)
 		"Merchant", -- 3.11 · Travelling Merchant (the caravan's prompt, the Events screen)
+		"Dojo", -- 3.11 · Dojo (from Monster Detail)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

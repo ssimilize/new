@@ -428,7 +428,7 @@ function BattleStage.play(ctx, opts, fallback: () -> any)
 				arena:Bolt(ev.actor, target, flight)
 			end
 			if kind == "special" then
-				local skill = ev.skill and Config.Species.Skills[ev.skill]
+				local skill = ev.skill and (Config.Species.Skills[ev.skill] or Config.Techniques.ById[ev.skill]) -- 3.11: Dojo techniques
 				showCallout(string.format("%s used %s!", names[ev.actor] or "?", if skill then skill.name else "a special"), C.Gold)
 			end
 			if ev.mult and ev.mult > 1 then

@@ -29,6 +29,11 @@
 	Rules (GDD "Battle rules"):
 	  • A turn is one round: every living unit acts once, fastest SPD first.
 	  • Each unit's third action is its Special (Species.Skills); the others are basic hits.
+	  • 3.11 Dojo: a unit whose record has `tech` (Logic/Dojo) fires a technique every
+	    Techniques.Charge-th action of its own (alternating two), on a charge separate from the
+	    Special. It replaces that action; a Special due on the same action waits one action.
+	    Logged as kind "special" with skill = the technique id. A fight with no `tech` draws
+	    and logs exactly what it did before 3.11.
 	  • The front living unit of a side draws 50% of attacks, the rest share the other 50%.
 	    A taunting unit draws every attack.
 	  • dmg = ATK × power × elementMult × 100 / (100 + DEF) × rand(0.9, 1.1); crits ×1.5.
@@ -44,12 +49,14 @@ local Config = require(script.Parent.Parent.Config)
 local Formulas = require(script.Parent.Formulas)
 local Appearance = require(script.Parent.Appearance)
 local Rng = require(script.Parent.Rng)
+local Dojo = require(script.Parent.Dojo)
 
 local Species = Config.Species
 local Elements = Config.Elements
 local Traits = Config.Traits
 local Regions = Config.Regions
 local Economy = Config.Economy
+local Techniques = Config.Techniques
 
 local BattleSim = {}
 
@@ -116,6 +123,9 @@ local function buildUnit(m, side: string, slot: number, opts)
 		glows = def.glows == true, -- R2-ABYSS: keeps the lights on past the boss's phase2 switch
 		phase2 = m.phase2, -- R2-ABYSS: only ever set on a raid boss record (Systems/Raids.raidRecord)
 		charge = 0,
+		techs = Dojo.ForBattle(m.tech), -- 3.11: nil without learned techniques
+		techCharge = 0,
+		techNext = 1,
 		shield = 0,
 		stunned = false,
 		taunt = 0,
@@ -290,6 +300,54 @@ function BattleSim.Simulate(allies, enemies, seed: number, options)
 		return amount
 	end
 
+	-- One Special-style effect. `kind` picks the shape; `fx` holds its numbers (a Species.Skills
+	-- entry, or a technique's level from Logic/Dojo.Effect); `id` is logged as the skill.
+	local function effect(unit, id: string, kind: string, fx)
+		if kind == "blast" then
+			for _, target in living(opposite(unit.side)) do
+				strike(unit, target, fx.power, "special", id)
+			end
+		elseif kind == "heal" then
+			log(unit, false, "special", 0, unit.hp, nil, id)
+			for _, ally in living(unit.side) do
+				local healed = healUnit(ally, ally.maxHp * fx.heal)
+				if healed > 0 then
+					log(unit, ally, "heal", healed, ally.hp)
+				end
+			end
+		elseif kind == "shield" then
+			log(unit, false, "special", 0, unit.hp, nil, id)
+			for _, ally in living(unit.side) do
+				local cap = math.floor(ally.maxHp * BattleSim.MaxShieldPct)
+				local add = math.min(math.floor(ally.maxHp * fx.shield), math.max(0, cap - ally.shield))
+				ally.shield += add
+				log(unit, ally, "shield", add, ally.hp)
+			end
+		elseif kind == "taunt" then
+			-- Ticks down at the start of the taunter's own actions.
+			unit.taunt = fx.turns or 2
+			unit.defUp = fx.defUp or 0
+			log(unit, unit, "special", 0, unit.hp, nil, id)
+		else
+			-- Single-target damage: strike, drain, stun.
+			local target = pickTarget(unit)
+			if not target then
+				return
+			end
+			local dealt = strike(unit, target, fx.power or 1, "special", id)
+			if fx.lifesteal and dealt > 0 and unit.hp > 0 then
+				local healed = healUnit(unit, dealt * fx.lifesteal)
+				if healed > 0 then
+					log(unit, unit, "heal", healed, unit.hp)
+				end
+			end
+			if fx.stunChance and target.hp > 0 and rng:Chance(fx.stunChance) then
+				target.stunned = true
+				log(unit, target, "stun", 0, target.hp)
+			end
+		end
+	end
+
 	local function useSpecial(unit)
 		local id = unit.special
 		local skill = Skills[id]
@@ -300,49 +358,23 @@ function BattleSim.Simulate(allies, enemies, seed: number, options)
 			end
 			return
 		end
-		if id == "blast" then
-			for _, target in living(opposite(unit.side)) do
-				strike(unit, target, skill.power, "special", id)
-			end
-		elseif id == "heal" then
-			log(unit, false, "special", 0, unit.hp, nil, id)
-			for _, ally in living(unit.side) do
-				local healed = healUnit(ally, ally.maxHp * skill.heal)
-				if healed > 0 then
-					log(unit, ally, "heal", healed, ally.hp)
-				end
-			end
-		elseif id == "shield" then
-			log(unit, false, "special", 0, unit.hp, nil, id)
-			for _, ally in living(unit.side) do
-				local cap = math.floor(ally.maxHp * BattleSim.MaxShieldPct)
-				local add = math.min(math.floor(ally.maxHp * skill.shield), math.max(0, cap - ally.shield))
-				ally.shield += add
-				log(unit, ally, "shield", add, ally.hp)
-			end
-		elseif id == "taunt" then
-			-- Ticks down at the start of the taunter's own actions.
-			unit.taunt = skill.turns or 2
-			unit.defUp = skill.defUp or 0
-			log(unit, unit, "special", 0, unit.hp, nil, id)
-		else
-			-- Single-target damage specials: strike, drain, stun.
-			local target = pickTarget(unit)
-			if not target then
-				return
-			end
-			local dealt = strike(unit, target, skill.power or 1, "special", id)
-			if skill.lifesteal and dealt > 0 and unit.hp > 0 then
-				local healed = healUnit(unit, dealt * skill.lifesteal)
-				if healed > 0 then
-					log(unit, unit, "heal", healed, unit.hp)
-				end
-			end
-			if skill.stunChance and target.hp > 0 and rng:Chance(skill.stunChance) then
-				target.stunned = true
-				log(unit, target, "stun", 0, target.hp)
-			end
+		effect(unit, id, if id == "blast" or id == "heal" or id == "shield" or id == "taunt" then id else "strike", skill)
+	end
+
+	-- 3.11 Dojo: every Techniques.Charge-th action fires the unit's next technique instead.
+	local function useTechnique(unit): boolean
+		if not unit.techs then
+			return false
 		end
+		unit.techCharge += 1
+		if unit.techCharge < Techniques.Charge then
+			return false
+		end
+		unit.techCharge = 0
+		local fx = unit.techs[unit.techNext]
+		unit.techNext = unit.techNext % #unit.techs + 1
+		effect(unit, fx.id, fx.kind, fx)
+		return true
 	end
 
 	local function act(unit)
@@ -361,7 +393,10 @@ function BattleSim.Simulate(allies, enemies, seed: number, options)
 			return
 		end
 		unit.charge += 1
-		if unit.charge >= BattleSim.SpecialCharge then
+		if useTechnique(unit) then
+			-- A Special due on this action waits for the next one.
+			unit.charge = math.min(unit.charge, BattleSim.SpecialCharge - 1)
+		elseif unit.charge >= BattleSim.SpecialCharge then
 			unit.charge = 0
 			useSpecial(unit)
 		else

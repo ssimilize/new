@@ -323,6 +323,20 @@ return {
 								Parent = content,
 							})
 						end
+						for i, entry in (if type(item.tech) == "table" then item.tech else {}) do -- 3.11 Dojo
+							local tech = Config.Techniques.ById[entry.id]
+							if tech then
+								Util.text({
+									Name = "Tech_" .. tech.id,
+									Text = string.format("Technique: %s · Lv %d", tech.name, entry.lv),
+									TextXAlignment = Enum.TextXAlignment.Center,
+									AutomaticSize = Enum.AutomaticSize.Y,
+									Size = UDim2.new(1, 0, 0, 20),
+									LayoutOrder = 3 + i,
+									Parent = content,
+								})
+							end
+						end
 					else
 						local icon = MonsterIcon.egg(item.egg or "meadow", 130)
 						icon.LayoutOrder = 1

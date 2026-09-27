@@ -44,6 +44,7 @@ local GeneGrades = require(UI.Components.GeneGrades)
 local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local WalkToggle = require(script.Parent.Parts.WalkToggle) -- glow-up T
 local BondBadge = require(script.Parent.Parts.BondBadge)
+local DojoLogic = require(Shared.Logic.Dojo) -- 3.11
 local FamilyTree = require(script.Parent.Parts.FamilyTree) -- 3.9
 local Util = require(script.Parent.Parts.Util) -- 3.10: the Pantry button
 local ShowpieceChips = require(script.Parent.Parts.ShowpieceChips) -- glow-up W
@@ -64,6 +65,7 @@ local BUSY_TEXT = {
 	expedition = "Away on an expedition",
 	breeding = "In the Breeding Barn",
 	job = "Working on the Job Board",
+	dojo = "Training at the Dojo", -- 3.11
 	trade = "Offered in a trade",
 }
 
@@ -248,7 +250,7 @@ function MonsterDetail.Build(ctx)
 		TextColor3 = C.TextMuted,
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.fromScale(0, 0.5),
-		Size = UDim2.new(1, -112, 0, 20),
+		Size = UDim2.new(1, -206, 0, 20),
 		Parent = genesRow,
 	})
 	local geneLabButton = Button.new({
@@ -263,6 +265,22 @@ function MonsterDetail.Build(ctx)
 		OnClick = function()
 			if currentId and ctx.Router:Has("GeneLab") then
 				ctx.Router:Open("GeneLab", { id = currentId })
+			end
+		end,
+	})
+	-- 3.11: the Dojo button sits beside it (shown once the Dojo unlocks, Adults only).
+	local dojoButton = Button.new({
+		Name = "Dojo",
+		Text = "Dojo",
+		Color = C.Orange,
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -112, 0.5, 0),
+		Size = UDim2.fromOffset(90, 26),
+		TextSize = Theme.TextSize.Small,
+		Parent = genesRow,
+		OnClick = function()
+			if currentId and ctx.Router:Has("Dojo") then
+				ctx.Router:Open("Dojo", { id = currentId })
 			end
 		end,
 	})
@@ -870,6 +888,10 @@ function MonsterDetail.Build(ctx)
 		geneLabButton:SetVisible(
 			stage >= 3 and (tonumber(store:Get("profile.Progression.level")) or 1) >= (Config.Unlocks.Features[Config.GeneLab.Unlock] or 1)
 		)
+		dojoButton:SetVisible(
+			stage >= 3
+				and (tonumber(store:Get("profile.Progression.level")) or 1) >= (Config.Unlocks.Features[Config.Techniques.Unlock] or 1)
+		)
 
 		-- Traits
 		Tiles.clear(traitsRow)
@@ -882,6 +904,21 @@ function MonsterDetail.Build(ctx)
 					ctx:Toast(t.name .. ": " .. t.desc, "info")
 				end)
 			end
+		end
+		-- 3.11: learned Dojo techniques (Logic/Dojo), after the traits.
+		for i, entry in DojoLogic.Known(m) do
+			local tech = Config.Techniques.ById[entry.id]
+			local chip = Widgets.Chip({
+				Text = string.format("%s · Lv %d", tech.name, entry.lv),
+				Color = C.Orange,
+				TextSize = Theme.TextSize.Small,
+				LayoutOrder = 20 + i,
+				Parent = traitsRow,
+			})
+			chip.Name = "Tech_" .. tech.id
+			Tiles.tap(chip, function()
+				ctx:Toast(string.format("%s: %s", tech.name, Config.Techniques.KindText[tech.kind] or ""), "info")
+			end)
 		end
 		local hidden = Config.Traits.ById[m.hidden or 0]
 		if stage >= 3 and hidden then

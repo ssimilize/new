@@ -23,6 +23,7 @@ local Config = {
 	DigSite = require(script.DigSite), -- 3.11: Dig Site & Fossils
 	Merchant = require(script.Merchant), -- 3.11: the Travelling Merchant
 	Seasons = require(script.Seasons), -- 3.11: Ranch Seasons
+	Techniques = require(script.Techniques), -- 3.11: Dojo techniques
 	Mutations = require(script.Mutations),
 	Weather = require(script.Weather),
 	Eggs = require(script.Eggs),
