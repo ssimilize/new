@@ -164,6 +164,26 @@ return function(t)
 			expect(h:Reject(p, "DigSite.Tap", { dig = start.dig, tile = 1 })).toBe("That dig is over. Start a new one!")
 		end)
 
+		it("keeps a dig going while a find is still buried under the first tile", function()
+			-- Found by CI: the "everything dug up?" check measured from tile 1, so a find ON tile 1
+			-- (distance 0) read as none left and ended the dig after the first tap.
+			local h = boot()
+			local p = digger(h)
+			local finds = rigDig(h, p, function(list)
+				for _, f in list do
+					if f.tile == 1 then
+						return true
+					end
+				end
+				return false
+			end)
+			local miss = emptyTile(finds)
+			local res = h:Call(p, "DigSite.Tap", { dig = h:Section(p, "DigSite").open.id, tile = miss })
+			expect(res.done).toBe(false)
+			expect(res.left).toBe(Cfg.Taps - 1)
+			expect(h:Section(p, "DigSite").open ~= false).toBe(true)
+		end)
+
 		it("ends after Taps taps and names the finds left buried; never rerolls on reopening", function()
 			local h = boot()
 			local p = digger(h)

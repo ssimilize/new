@@ -213,7 +213,15 @@ local function tap(player, payload)
 	if not hit then
 		entry.hint = hint
 	end
-	local done = open.left <= 0 or Logic.Hint(finds, found, 1) == 0
+	-- Done when the taps run out or every find is dug up (counted, not measured from a tile: a
+	-- find sitting on that tile has distance 0 and would read as none left).
+	local buried = 0
+	for _, f in finds do
+		if not found[f.tile] then
+			buried += 1
+		end
+	end
+	local done = open.left <= 0 or buried == 0
 	local missed = nil
 	if done then
 		missed = {}
