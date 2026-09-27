@@ -15,6 +15,7 @@
 	  shovel                                  → DigSite:AddShovels (3.11)
 	  honey (id = honey kind)                 → Apiary:AddHoney (3.12)
 	  tower_retry                             → TrialTower:AddRetries (3.12)
+	  map_piece                               → TreasureMaps:AddPieces (3.13)
 
 	Public API:
 	  Rewards:Grant(player, items, source, options?) -> resolvedItems
@@ -25,7 +26,18 @@
 local Rewards = {
 	Name = "Rewards",
 	Dependencies = { "Currency", "Progression" },
-	OptionalDependencies = { "Eggs", "Shop", "Monsters", "Ranch", "Accessories", "Fishing", "DigSite", "Apiary", "TrialTower" },
+	OptionalDependencies = {
+		"Eggs",
+		"Shop",
+		"Monsters",
+		"Ranch",
+		"Accessories",
+		"Fishing",
+		"DigSite",
+		"Apiary",
+		"TrialTower",
+		"TreasureMaps",
+	},
 }
 
 local ctx
@@ -123,6 +135,13 @@ function Rewards:Grant(player, items, source: string, options: { silent: boolean
 			local TrialTower = ctx:GetSystem("TrialTower")
 			if TrialTower then
 				TrialTower:AddRetries(player, item.amount)
+			else
+				ok = false
+			end
+		elseif item.kind == "map_piece" then
+			local TreasureMaps = ctx:GetSystem("TreasureMaps")
+			if TreasureMaps then
+				TreasureMaps:AddPieces(player, item.amount)
 			else
 				ok = false
 			end

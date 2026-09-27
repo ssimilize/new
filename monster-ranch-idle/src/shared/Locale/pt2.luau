@@ -578,4 +578,10 @@ return {
 	["Pick a squad on the Expeditions screen first"] = "Primeiro escolha uma equipe na tela de expedições",
 	["Leaderboard"] = "Classificação",
 	["{1} Retry tokens"] = "{1} fichas de nova tentativa",
+	-- 3.13 · Wild things: unlock names
+	["Stray Monsters"] = "Monstros errantes",
+	["Bug Catching Meadow"] = "Campo de insetos",
+	["Treasure Maps"] = "Mapas do tesouro",
+	["Hot Springs & Spa"] = "Fontes termais e spa",
+	["Spa pool 3"] = "Piscina 3 do spa",
 }
