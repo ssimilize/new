@@ -535,6 +535,68 @@ function ClientHarness:Click(button)
 	self:Settle()
 end
 
+-- The GuiButton a mouse press at `point` (screen pixels) lands on, the way the engine routes
+-- it: the topmost shown, Active, Interactable button under the point takes the click, and
+-- Frames and labels let it through. Draw order is DisplayOrder across ScreenGuis, then Sibling
+-- ZIndex (ties by tree order), later on top; a ClipsDescendants ancestor cuts off what lies
+-- outside it. Rounded corners are ignored, and so are list and grid layouts (see RobloxMock's
+-- layout pass), so pick points whose owner does not depend on one.
+function ClientHarness:HitAt(point: Vector2)
+	local function inside(gui): boolean
+		local pos, size = gui.AbsolutePosition, gui.AbsoluteSize
+		return point.X >= pos.X and point.X < pos.X + size.X and point.Y >= pos.Y and point.Y < pos.Y + size.Y
+	end
+	local function sorted(children, key)
+		local list = {}
+		for i, child in children do
+			table.insert(list, { child = child, key = key(child), i = i })
+		end
+		table.sort(list, function(a, b)
+			if a.key ~= b.key then
+				return a.key < b.key
+			end
+			return a.i < b.i
+		end)
+		return list
+	end
+	local function zIndex(child): number
+		return if child:IsA("GuiObject") then child.ZIndex else 0
+	end
+	local function displayOrder(child): number
+		return if child:IsA("ScreenGui") then child.DisplayOrder else -math.huge
+	end
+	local hit = nil
+	local function visit(node)
+		for _, entry in sorted(node:GetChildren(), zIndex) do
+			local child = entry.child
+			if child:IsA("GuiObject") and child.Visible then
+				local over = inside(child)
+				if over and child:IsA("GuiButton") and child.Active and child.Interactable then
+					hit = child
+				end
+				if over or not child.ClipsDescendants then
+					visit(child)
+				end
+			end
+		end
+	end
+	for _, entry in sorted(self.playerGui:GetChildren(), displayOrder) do
+		if entry.child:IsA("ScreenGui") and entry.child.Enabled then
+			visit(entry.child)
+		end
+	end
+	return hit
+end
+
+-- Presses the mouse at `point` and clicks whatever HitAt finds there; returns that button.
+function ClientHarness:ClickAt(point: Vector2)
+	local button = self:HitAt(point)
+	if button then
+		self:Click(button)
+	end
+	return button
+end
+
 function ClientHarness:Type(box, text: string, enter: boolean?)
 	box.Text = text
 	RobloxMock.fire(box, "FocusLost", enter == true, nil)

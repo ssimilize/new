@@ -41,6 +41,19 @@ function Panel.new(props: {
 		Position = props.Position or UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = props.AnchorPoint or Vector2.new(0.5, 0.5),
 	})
+	-- Frames let a click through to the Router's full-screen Dim button (which closes the
+	-- screen), so an invisible button behind the card takes clicks on the panel's bare parts.
+	-- It does nothing, and a gamepad cursor never lands on it.
+	New("TextButton", {
+		Name = "ClickSink",
+		Text = "",
+		AutoButtonColor = false,
+		BackgroundTransparency = 1,
+		Selectable = false,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 0,
+		Parent = root,
+	})
 	New("Frame", {
 		Name = "Shadow",
 		BackgroundColor3 = Color3.new(0, 0, 0),
