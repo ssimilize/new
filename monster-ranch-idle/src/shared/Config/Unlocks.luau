@@ -88,6 +88,8 @@ Unlocks.Features = {
 	jobs_slot_3 = 20,
 	jobs_slot_4 = 35,
 	jobs_slot_5 = 50,
+	-- 3.8 · Ranch Orders (Config/Orders)
+	orders = 10,
 }
 
 -- Player-facing names for the level-up popup.
@@ -138,6 +140,7 @@ Unlocks.Names = {
 	jobs_slot_3 = "Job Board slot 3",
 	jobs_slot_4 = "Job Board slot 4",
 	jobs_slot_5 = "Job Board slot 5",
+	orders = "Ranch Orders",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

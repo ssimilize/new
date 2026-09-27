@@ -47,6 +47,7 @@ local KIND_ICONS = {
 	friendship = "friendship",
 	stardust = "stardust",
 	jobs = "coin", -- 3.7: the Job Board
+	orders = "gem", -- 3.8: Ranch Orders
 }
 
 local function itemIcon(item, size: number): GuiObject
