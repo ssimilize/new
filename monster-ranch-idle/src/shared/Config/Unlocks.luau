@@ -94,6 +94,8 @@ Unlocks.Features = {
 	orders = 10,
 	-- 3.9 · Expedition Bounties (Config/Bounties)
 	bounties = 6,
+	-- 3.10 · Gene Lab (Config/GeneLab)
+	gene_lab = 21,
 }
 
 -- Player-facing names for the level-up popup.
@@ -147,6 +149,7 @@ Unlocks.Names = {
 	weekly = "Weekly goals",
 	orders = "Ranch Orders",
 	bounties = "Bounties",
+	gene_lab = "Gene Lab",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

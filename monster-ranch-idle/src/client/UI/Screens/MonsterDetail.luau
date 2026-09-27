@@ -8,7 +8,8 @@
 	  middle   level bar (lv / Formulas.LevelCap), stat bars (Formulas.Stats; bars show how far
 	           each stat is from its value at this stage's level cap) with a gene grade beside HP,
 	           ATK, DEF and SPD (tap: the gene pair), gene points and generation (tap: the family
-	           tree, Parts/FamilyTree, update 3.9, with how genes work), power, traits (hidden
+	           tree, Parts/FamilyTree, update 3.9, with how genes work; 3.10: the Gene Lab button
+           beside it for an Adult once the Lab unlocks), power, traits (hidden
 	           trait is "???" until Adult), Feed (flavour picker with owned food), Level up ×1 /
 	           ×N (Economy.LevelCost), Grow (Formulas.CanGrow reason) or grow countdown
 	  right    diet meter for this stage, evolution path with branches
@@ -238,13 +239,31 @@ function MonsterDetail.Build(ctx)
 			})
 		end
 	end
+	-- 3.10: the genes line also holds the Gene Lab button (shown once the Lab unlocks).
+	local genesRow = Tiles.frame({ Name = "GenesRow", Size = UDim2.new(1, 0, 0, 26), LayoutOrder = 8, Parent = middle })
 	local genesLabel = Tiles.label({
 		Text = "",
 		TextSize = Theme.TextSize.Small,
 		TextColor3 = C.TextMuted,
-		Size = UDim2.new(1, 0, 0, 20),
-		LayoutOrder = 8,
-		Parent = middle,
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.fromScale(0, 0.5),
+		Size = UDim2.new(1, -112, 0, 20),
+		Parent = genesRow,
+	})
+	local geneLabButton = Button.new({
+		Name = "GeneLab",
+		Text = "Gene Lab",
+		Color = C.Purple,
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.fromScale(1, 0.5),
+		Size = UDim2.fromOffset(108, 26),
+		TextSize = Theme.TextSize.Small,
+		Parent = genesRow,
+		OnClick = function()
+			if currentId and ctx.Router:Has("GeneLab") then
+				ctx.Router:Open("GeneLab", { id = currentId })
+			end
+		end,
 	})
 	local openFamily -- set below, once the popup exists
 	Tiles.tap(genesLabel, function()
@@ -768,6 +787,9 @@ function MonsterDetail.Build(ctx)
 			end)
 		end
 		genesLabel.Text = string.format("Genes %d/%d · Gen %d", Genetics.Total(m.genes), Genetics.MaxTotal, tonumber(m.gen) or 0)
+		geneLabButton:SetVisible(
+			stage >= 3 and (tonumber(store:Get("profile.Progression.level")) or 1) >= (Config.Unlocks.Features[Config.GeneLab.Unlock] or 1)
+		)
 
 		-- Traits
 		Tiles.clear(traitsRow)

@@ -16,6 +16,7 @@ local Config = {
 	Weekly = require(script.Weekly), -- 3.8 · Weekly goals
 	Orders = require(script.Orders), -- 3.8: Ranch Orders
 	Bounties = require(script.Bounties), -- 3.9: Expedition Bounties
+	GeneLab = require(script.GeneLab), -- 3.10: the Gene Lab
 	Mutations = require(script.Mutations),
 	Weather = require(script.Weather),
 	Eggs = require(script.Eggs),

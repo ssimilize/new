@@ -94,6 +94,7 @@ return {
 		"Expeditions",
 		"Breeding",
 		"Jobs", -- 3.7 · Ranch Jobs
+		"GeneLab", -- 3.10 · Gene Lab (from Monster Detail and the Breeding Barn)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",
