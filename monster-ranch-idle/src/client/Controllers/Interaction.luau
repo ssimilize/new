@@ -271,15 +271,21 @@ function Interaction.Start()
 	-- keyed only on data (ranchKey/likeKey above) can land before a plot's Pens/Barn/Gate parts
 	-- have streamed in and never retry once the geometry catches up, since the data did not
 	-- change. Any change under World's tree forces one (debounced; ranchKey/likeKey reset so the
-	-- unchanged-data guards do not skip it).
+	-- unchanged-data guards do not skip it). Only geometry counts: the rebuild's own anchors and
+	-- prompts land under World too, and reacting to them rebuilt every prompt twice a second.
 	local rescan = Streaming.Debounce(0.5, function()
 		buildHubPrompts()
 		ranchKey = ""
 		likeKey = ""
 		onPlots(latestPlots or {})
 	end)
-	table.insert(connections, world.DescendantAdded:Connect(rescan))
-	table.insert(connections, world.DescendantRemoving:Connect(rescan))
+	local function onGeometry(descendant: Instance)
+		if descendant:IsA("BasePart") or descendant:IsA("Model") then
+			rescan()
+		end
+	end
+	table.insert(connections, world.DescendantAdded:Connect(onGeometry))
+	table.insert(connections, world.DescendantRemoving:Connect(onGeometry))
 end
 
 -- Tears everything down (not called by the kernel today; kept so the controller can be unplugged).
