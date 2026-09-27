@@ -80,6 +80,38 @@ function State:_isPrivate(parts: { any }): boolean
 	return false
 end
 
+-- Removes a section's Private keys from a copy about to replicate. A patch for a whole section
+-- ("profile.DigSite", from ctx:Dirty(player) with no key) or the whole profile carries them
+-- otherwise: _isPrivate only sees a key when the path names one.
+function State:_stripPrivate(parts: { any }, value: any): any
+	if parts[1] ~= "profile" or #parts > 2 or type(value) ~= "table" then
+		return value
+	end
+	local function strip(name: string, section: any)
+		local system = self._kernel:_systemEntry(name)
+		local spec = system and system.module.Profile
+		if spec and type(section) == "table" then
+			for _, key in spec.Private or {} do
+				section[key] = nil
+			end
+		end
+	end
+	if #parts == 2 then
+		strip(parts[2], value)
+	else
+		for name, section in value do
+			local system = self._kernel:_systemEntry(name)
+			local spec = system and system.module.Profile
+			if spec and spec.Replicate == false then
+				value[name] = nil
+			else
+				strip(name, section)
+			end
+		end
+	end
+	return value
+end
+
 function State:_valueAt(player: any, parts: { any }): any
 	local root = parts[1]
 	if root == "profile" then
@@ -129,7 +161,7 @@ function State:TakePatches(player: any, includeGlobal: boolean?): { { any } }
 	for _, path in collapse(set) do
 		local parts = TableUtil.splitPath(path)
 		if not self:_isPrivate(parts) then
-			table.insert(patches, { path, TableUtil.deepCopy(self:_valueAt(player, parts)) })
+			table.insert(patches, { path, self:_stripPrivate(parts, TableUtil.deepCopy(self:_valueAt(player, parts))) })
 		end
 	end
 	return patches
