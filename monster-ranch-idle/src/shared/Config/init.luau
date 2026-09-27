@@ -22,6 +22,7 @@ local Config = {
 	Fishing = require(script.Fishing), -- 3.10: Fishing Pond
 	DigSite = require(script.DigSite), -- 3.11: Dig Site & Fossils
 	Merchant = require(script.Merchant), -- 3.11: the Travelling Merchant
+	Apiary = require(script.Apiary), -- 3.12: Apiary & Honey
 	Seasons = require(script.Seasons), -- 3.11: Ranch Seasons
 	Techniques = require(script.Techniques), -- 3.11: Dojo techniques
 	Mutations = require(script.Mutations),

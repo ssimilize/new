@@ -142,6 +142,16 @@ Weekly.Pool = {
 		filter = { seasonal = true },
 		unlock = "fishing",
 	},
+	-- 3.12 · Apiary & Honey: honey only (Royal Jelly is published with honey = false)
+	{
+		id = "honey_40",
+		family = "apiary",
+		text = "Collect 40 honey from your beehives",
+		topic = "HoneyCollected",
+		target = 40,
+		filter = { honey = true },
+		unlock = "apiary",
+	},
 }
 
 Weekly.ById = {}

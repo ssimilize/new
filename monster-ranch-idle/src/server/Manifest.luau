@@ -100,6 +100,8 @@ return {
 		"DigSite",
 		-- 3.11 · Travelling Merchant
 		"Merchant",
+		-- 3.12 · Apiary & Honey
+		"Apiary",
 		-- 3.11 · Ranch Seasons
 		"Seasons",
 		-- 3.11 · Dojo

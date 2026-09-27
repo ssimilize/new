@@ -777,7 +777,7 @@ Quests.Codes = {
 Quests.GroupId = 0 -- the Roblox group id: shows the "Join our group" reward row (docs/GO_LIVE.md)
 
 -- Topics whose detail carries a count (progress += detail[field]); every other topic counts 1.
-Quests.CountField = { EggBought = "amount", AccessoryGained = "amount", DishCooked = "count" }
+Quests.CountField = { EggBought = "amount", AccessoryGained = "amount", DishCooked = "count", HoneyCollected = "amount" }
 
 -- Scripted first-session rain (Flags.TutorialScriptedRain): when `step` becomes current the
 -- server starts `weather` for `seconds` if the sky is clear, and guarantees `mutation`.

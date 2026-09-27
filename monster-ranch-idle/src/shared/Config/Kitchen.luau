@@ -13,6 +13,10 @@
 	              bond   +1 Bond heart
 	              job    +JobBoost.pct Job Board output for JobBoost.hours hours (that monster)
 	              loot   +LootPct loot on that monster's next expedition
+	              royal  (3.12) +1 Bond heart and Mood to the maximum
+	  Honey     (3.12 · Apiary & Honey) `honey = { [kind] = n }` in a recipe's cost is spent from the
+	            Apiary's store (Config.Apiary kinds, Royal Jelly included); without the Apiary system a
+	            honey recipe can't be cooked. Honey recipes cook in every season.
 	  Seasonal  (3.11 · Ranch Seasons) a recipe with `season` cooks only in that season
 	            (Logic/Seasons.At) and needs at least one `seasonFish` (that season's fish, Config.Fishing)
 	            among its `fish`. Dishes already cooked keep working all year.
@@ -45,6 +49,7 @@ Kitchen.Effects = {
 	bond = { id = "bond", desc = "+1 Bond heart" },
 	job = { id = "job", desc = "+20% Job Board output for 2 hours" },
 	loot = { id = "loot", desc = "+5% loot on its next expedition" },
+	royal = { id = "royal", desc = "+1 Bond heart and fills Mood" }, -- 3.12
 }
 
 -- icon: plate + food shape ("round", "wide", "bowl", "stack"), color, topping color.
@@ -157,6 +162,48 @@ Kitchen.Recipes = {
 		season = "winter",
 		seasonFish = "frost_char",
 		icon = { shape = "bowl", color = "#DCEBF2", top = "#E5484D" },
+	},
+	-- 3.12 · Apiary & Honey: one per honey kind (every season) and Royal Jelly (appended; never reorder)
+	{
+		id = "blossom_honey_bun",
+		name = "Blossom Honey Bun",
+		cost = { honey = { blossom = 3 }, sweet = 3 },
+		minutes = 10,
+		effect = "meals",
+		flavor = "sweet",
+		icon = { shape = "round", color = "#E8B872", top = "#F4A6C6" },
+	},
+	{
+		id = "clover_honey_tea",
+		name = "Clover Honey Tea",
+		cost = { honey = { clover = 3 }, sour = 3 },
+		minutes = 10,
+		effect = "mood",
+		icon = { shape = "bowl", color = "#F2E3B5", top = "#F2C230" },
+	},
+	{
+		id = "heather_honey_roast",
+		name = "Heather Honey Roast",
+		cost = { honey = { heather = 3 }, savory = 3 },
+		minutes = 15,
+		effect = "job",
+		icon = { shape = "wide", color = "#A0703D", top = "#C7743A" },
+	},
+	{
+		id = "frost_honey_drops",
+		name = "Frost Honey Drops",
+		cost = { honey = { frost = 3 }, spicy = 3 },
+		minutes = 15,
+		effect = "loot",
+		icon = { shape = "stack", color = "#BFE3F2", top = "#FFFFFF" },
+	},
+	{
+		id = "royal_jelly_tart",
+		name = "Royal Jelly Tart",
+		cost = { honey = { royal_jelly = 1 }, sweet = 4 },
+		minutes = 30,
+		effect = "royal",
+		icon = { shape = "round", color = "#F2C230", top = "#FFF4D6" },
 	},
 }
 
