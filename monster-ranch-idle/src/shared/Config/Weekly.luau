@@ -205,6 +205,9 @@ Weekly.Pool = {
 		target = 5,
 		unlock = "spa",
 	},
+	},
+	-- 3.13 · Bug Catching Meadow
+	{ id = "bugs_15", family = "bugs", text = "Catch 15 bugs", topic = "BugCaught", target = 15, unlock = "bug_meadow" },
 }
 
 Weekly.ById = {}

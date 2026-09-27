@@ -106,6 +106,8 @@ return {
 		"Apiary",
 		-- 3.13 · Hot Springs & Spa (after Apiary, Bond and Jobs: registers with them in Start)
 		"Spa",
+		-- 3.13 · Bug Catching Meadow
+		"Bugs",
 		-- 3.11 · Ranch Seasons
 		"Seasons",
 		-- 3.12 · Observatory & Star Charts

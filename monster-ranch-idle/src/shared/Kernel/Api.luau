@@ -452,6 +452,23 @@ Api.Actions = {
 		rate = 2,
 		returns = "{ success: boolean, why: string?, chart: string, progress: number, charted: boolean, left: number }",
 	},
+	-- Bug Catching Meadow (3.13) · see Config/Bugs and Logic/Bugs --------------------------
+	["Bugs.Start"] = {
+		schema = T.none,
+		rate = 2,
+		returns = "{ id: number, path: { delay, duration, twist, freq, bob, phase, total }, left: number, lure: number }",
+	},
+	["Bugs.Submit"] = {
+		schema = T.struct({ id = T.integer(1), t = T.number(0, Config.Bugs.MaxT) }),
+		rate = 2,
+		returns = "{ caught: boolean, bug: string?, rarity: number?, first: boolean, left: number }",
+	},
+	["Bugs.Lure"] = { schema = T.none, rate = 2, returns = "{ lure: number }" },
+	["Bugs.Sell"] = {
+		schema = T.struct({ bug = T.key(Config.Bugs.ById), amount = T.integer(1, 9999) }),
+		rate = 4,
+		returns = "{ coins: number }",
+	},
 	-- Trial Tower (3.12) · see Config/TrialTower and Logic/TrialTower ------------------------
 	["TrialTower.Fight"] = {
 		schema = T.none,
@@ -905,6 +922,7 @@ Api.State = {
 		DigSite = "{ day, digs, shovels, n, open = false | { id, left, tiles = { { t, hint?, kind?, fossil?, piece?, id?, amount?, duplicate? } } }, pieces = { [fossilId]: { [pieceId]: true } }, total }  -- 3.11 (secret is private)",
 		Observatory = "{ night, used, n, charts = { [chartId]: observations }, seen }  -- 3.12 (secret is private)",
 		Strays = "{ tried, seen, day, adopted, met = { [lineId]: n }, friends = { [lineId]: n }, total }  -- 3.13: Stray Monsters (secret is private)",
+		Bugs = "{ day, swings, n, lure, jar = { [bugId]: n }, log = { [bugId]: n }, total }  -- 3.13 (secret is private)",
 		Exhibits = "{ filled = { [setId]: { [itemId]: true } }, paid = { [setId]: step } }  -- 3.12: Museum Exhibits",
 		TrialTower = "{ week, best, record, day, used, retries, paid = { [floor]: true }, fights, cleared }  -- 3.12, see Logic/TrialTower",
 		TreasureMaps = "{ pieces, maps = { { id, region, stage, seed } }, made, rolls, digs, opened }  -- 3.13, see Logic/TreasureMaps",
@@ -1098,7 +1116,7 @@ Api.Topics = {
 	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
-	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish'|'fossil' })  -- glow-up O (fish: 3.10, fossil: 3.11)",
+	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish'|'fossil'|'bug' })  -- glow-up O (fish: 3.10, fossil: 3.11, bug: 3.13)",
 	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
 	-- R2-ONBOARDING · republished by Quests.Signal for a tutorial chapter two step with no

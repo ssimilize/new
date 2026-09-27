@@ -237,6 +237,17 @@ local function buildDisplay(ped): Model
 			model,
 			Enum.PartType.Cylinder
 		)
+	elseif ped.set == "insects" then
+		-- 3.13: a pinned bug under a glass dome.
+		local dome =
+			deco("Dome", Vector3.new(1.4, 1.4, 1.4), at * CFrame.new(0, 0.7, 0), Color3.fromHex("#DDF3FF"), model, Enum.PartType.Ball)
+		dome.Transparency = 0.7
+		deco("Body", Vector3.new(0.35, 0.3, 0.7), at * CFrame.new(0, 0.6, 0), c1, model, Enum.PartType.Ball)
+		for side = -1, 1, 2 do
+			local wing =
+				deco("Wing", Vector3.new(0.6, 0.08, 0.4), at * CFrame.new(side * 0.35, 0.65, -0.05), Color3.fromHex("#F4FBFF"), model)
+			wing.Transparency = 0.3
+		end
 	else
 		deco("Globe", Vector3.new(1.2, 1.2, 1.2), at * CFrame.new(0, 0.8, 0), Color3.fromHex("#2B2250"), model, Enum.PartType.Ball)
 		local star = deco("Star", Vector3.new(0.45, 0.45, 0.45), at * CFrame.new(0.3, 1.1, -0.45), c1, model, Enum.PartType.Ball)

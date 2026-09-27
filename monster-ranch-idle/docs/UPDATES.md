@@ -100,6 +100,28 @@ players get and where it lives in the code.
   graphics or with reduced motion. A soaking pool shows a ring of bubbles.
 - Specs: `Spa.spec`, `SpaClient.spec`; `LevelSeventy.spec` checks the spa's footprint.
 
+### Bug Catching Meadow
+
+- **Where:** a wildflower meadow west of the Market Square (`Config.World.BugMeadow`, centre (-120, 44), radius 22, a
+  scenery keep-out circle), built on the client from Parts by `Controllers/BugMeadow`: grass, flowers, tall grass tufts,
+  a few fluttering bugs (2 in low graphics, none with Reduced motion) and a signpost whose "Catch bugs" prompt opens the
+  Bugs screen. From Ranch Level 17 (`bug_meadow`).
+- **The net:** 12 free swings a UTC day. `Bugs.Start` rolls the bug on the server (seed = userId, day, swing n and a
+  private secret) and sends only its flight path; the bug crosses the field and the player taps Swing once while it is
+  inside the net. `Bugs.Submit { id, t }` replays the path (`Logic/Bugs.Hit`, 0.06 s grace either side of the window),
+  checks the server clock agrees and that the id is the open, one-shot swing. Rarer bugs fly faster and dart more, so
+  their window is narrower (about 0.5 s common, 0.2 s legendary).
+- **Bugs:** 20 in `Config/Bugs` (4 rarities): 13 always out, one per season (`Logic/Seasons.At`) and 3 night bugs (the
+  Weather night phase). Icons drawn in code (`Parts/BugIcon`).
+- **Honey lure:** "Use honey lure" spends 3 honey (`Apiary:SpendAnyHoney`, hidden without the Apiary); the next 5 swings
+  roll with better rarity weights.
+- **Uses:** sell bugs from the jar for coins (seconds of ranch income, 45 to 1000 by bug); the Codex's Bug Log tab
+  (counts, rarity, Season / Night badges, milestones at 5 / 10 / 20 kinds via `Codex.Claim`); the Museum's Insect Hall
+  (`Config/Exhibits` set `insects`, fills itself on a species' first catch without using the bug up, back-filled on
+  join from `Bugs:Caught`; the wing now seats 10 pedestals a row). Weekly goal `bugs_15`; publishes `BugCaught`.
+- Code: `Config/Bugs`, `Logic/Bugs`, `Systems/Bugs`, `Controllers/BugMeadow`, `Screens/Bugs`, `Parts/BugLog`,
+  `Parts/BugIcon`; specs `Bugs.spec`, `BugsClient.spec`.
+
 ## 3.12 · Honey & stars
 
 ### Observatory & Star Charts

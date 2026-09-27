@@ -37,6 +37,7 @@ Codex.Gems = {
 	complete = 100,
 	fish = { 10, 30, 75 }, -- 3.10: per FishSteps entry (3.11: 20 kinds)
 	fossil = { 20, 40, 100 }, -- 3.11: per FossilSteps entry
+	bug = { 10, 30, 75 }, -- 3.13: per BugSteps entry
 }
 
 -- Update 3.10 · Fish Log (the Codex screen's Fish Log tab): kinds of fish caught at the Fishing
@@ -46,6 +47,10 @@ Codex.FishSteps = { 5, 10, 20 } -- 3.11: 20 kinds with the four seasonal fish
 -- Update 3.11 · Fossils (the Codex screen's Fossils tab): fossils completed at the Dig Site
 -- (Config/DigSite, all four pieces). Claimed through Codex.Claim (Logic/Codex.FossilMilestones).
 Codex.FossilSteps = { 2, 4, 6 }
+
+-- Update 3.13 · Bug Log (the Codex screen's Bug Log tab): kinds of bug caught in the Bug Catching
+-- Meadow (Config/Bugs). Claimed through Codex.Claim (Logic/Codex.BugMilestones).
+Codex.BugSteps = { 5, 10, 20 }
 
 -- Titles per element completed (Codex.Items) and for the overall steps.
 Codex.ElementTitles = {

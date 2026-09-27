@@ -12,7 +12,8 @@
 	3.11: a Fossils tab (Parts/FossilLog): fossils completed at the Dig Site and their milestones.
 	3.12: an Exhibits header button opens the Museum Exhibits screen.
 	3.13: a Stray Log tab (Parts/StrayLog): strays met and befriended per line.
-	Open params: { tab = "milestones" | "fishlog" | "fossils" | "strays" }.
+	3.13: a Bug Log tab (Parts/BugLog): bugs caught in the Bug Catching Meadow and their milestones.
+	Open params: { tab = "milestones" | "fishlog" | "fossils" | "strays" | "buglog" }.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -36,6 +37,7 @@ local CodexMilestones = require(script.Parent.Parts.CodexMilestones)
 local FishLog = require(script.Parent.Parts.FishLog)
 local FossilLog = require(script.Parent.Parts.FossilLog)
 local StrayLog = require(script.Parent.Parts.StrayLog)
+local BugLog = require(script.Parent.Parts.BugLog)
 
 local New = Create.New
 local C = Theme.Colors
@@ -101,6 +103,8 @@ function Codex.Build(ctx)
 	fossilLog.Root.Visible = false
 	local strayLog = StrayLog.new(ctx, panel.Body, UDim2.fromOffset(944, 400))
 	strayLog.Root.Visible = false
+	local bugLog = BugLog.new(ctx, panel.Body, UDim2.fromOffset(944, 400))
+	bugLog.Root.Visible = false
 	local tab = "species"
 	local tabs = Widgets.Tabs({
 		Tabs = {
@@ -109,8 +113,9 @@ function Codex.Build(ctx)
 			{ id = "fishlog", text = "Fish Log", width = 110 },
 			{ id = "fossils", text = "Fossils", width = 100 },
 			{ id = "strays", text = "Stray Log", width = 110 }, -- 3.13
+			{ id = "buglog", text = "Bug Log", width = 100 },
 		},
-		Size = UDim2.fromOffset(584, 44),
+		Size = UDim2.fromOffset(690, 44),
 		OnChanged = function(id)
 			tab = id
 			list.Visible = id == "species"
@@ -119,6 +124,7 @@ function Codex.Build(ctx)
 			fishLog.Root.Visible = id == "fishlog"
 			fossilLog.Root.Visible = id == "fossils"
 			strayLog.Root.Visible = id == "strays"
+			bugLog.Root.Visible = id == "buglog"
 			if id == "milestones" then
 				milestones.Refresh()
 			elseif id == "fishlog" then
@@ -127,6 +133,8 @@ function Codex.Build(ctx)
 				fossilLog.Refresh()
 			elseif id == "strays" then
 				strayLog.Refresh()
+			elseif id == "buglog" then
+				bugLog.Refresh()
 			end
 		end,
 	})
@@ -467,6 +475,7 @@ function Codex.Build(ctx)
 		"profile.Fishing.log",
 		"profile.DigSite.pieces",
 		"profile.Strays",
+		"profile.Bugs.log",
 	}, function()
 		refresh()
 		if tab == "milestones" then
@@ -477,6 +486,8 @@ function Codex.Build(ctx)
 			fossilLog.Refresh()
 		elseif tab == "strays" then
 			strayLog.Refresh()
+		elseif tab == "buglog" then
+			bugLog.Refresh()
 		end
 	end)
 
@@ -486,7 +497,7 @@ function Codex.Build(ctx)
 			local want = "species"
 			if
 				type(params) == "table"
-				and (params.tab == "milestones" or params.tab == "fishlog" or params.tab == "fossils" or params.tab == "strays")
+				and (params.tab == "milestones" or params.tab == "fishlog" or params.tab == "fossils" or params.tab == "strays" or params.tab == "buglog")
 			then
 				want = params.tab
 			end
@@ -500,6 +511,8 @@ function Codex.Build(ctx)
 				fossilLog.Refresh()
 			elseif tab == "strays" then
 				strayLog.Refresh()
+			elseif tab == "buglog" then
+				bugLog.Refresh()
 			end
 		end,
 		Close = function()

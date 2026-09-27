@@ -79,6 +79,10 @@ function Exhibits.Items(Config, setId: string)
 		if jelly then
 			table.insert(out, jelly)
 		end
+	elseif setId == "insects" then
+		for _, b in (type(Config.Bugs.List) == "table" and Config.Bugs.List) or {} do
+			table.insert(out, { id = b.id, name = b.name, color = b.color })
+		end
 	elseif setId == "stars" then
 		for _, chart in (type(Config.Observatory.Charts) == "table" and Config.Observatory.Charts) or {} do
 			local entry = kindEntry(chart, set.color)
