@@ -34,8 +34,11 @@ HEADER = """--[[
 	tools/blender/lowpoly.py's output the same way; empty/absent until a form has one). It reuses
 	`texture` (the low mesh's UVs survive the decimate, so no separate upload). MeshMonster builds it
 	instead of `mesh` on Low graphics or in a crowd-capped fight; a form without one is unaffected.
+
+	One entry per line (this file is parsed line by line), so StyLua leaves the table alone.
 ]]
 
+-- stylua: ignore
 return {
 """
 

@@ -73,8 +73,9 @@ return function(t)
 			local Assets = c:require(c.clientFolder.Visuals.MeshMonsterAssets)
 			local Quality = c:require(c.clientFolder.Visuals.Quality)
 			local formA, lineA, stageA = pickForm(MeshMonster)
-			local formB, lineB, stageB = pickForm(MeshMonster, { [formA] = true }) -- kept without a lowMesh id
+			local formB, lineB, stageB = pickForm(MeshMonster, { [formA] = true })
 			Assets[formA].lowMesh = "rbxassetid://9999999"
+			Assets[formB].lowMesh = "" -- every published form has a low mesh now: take formB's away
 
 			Quality.SetAuto(1)
 			expect(Quality.IsLow()).toBe(true)
@@ -146,6 +147,39 @@ return function(t)
 			MeshMonster.Pose(model, "idle", 0.1, true)
 			expect(MeshMonster.BoneCFrame(model, "root") ~= nil).toBe(true) -- every rig has one
 			model:Destroy()
+			expectClean(c)
+		end)
+		it("draws the full mesh, not the placeholder, when a low mesh fails to load", function()
+			local h = TestKernel.new({ systems = allSystems() })
+			local c = ClientHarness.new(h, h:Join(), { noBoot = true })
+			local MeshMonster = c:require(c.clientFolder.Visuals.MeshMonster)
+			local calls = {}
+			MeshMonster.SetMeshSource(function(form, cheap)
+				local key = form .. ":" .. tostring(cheap == true)
+				calls[key] = (calls[key] or 0) + 1
+				if cheap then
+					error("asset is not approved for the requester") -- a live server refusing the burner's mesh
+				end
+				local part = c.Instance.new("MeshPart")
+				part.Size = Vector3.new(1, 1, 1)
+				return part
+			end)
+			c:Boot()
+			local MonsterModel = c:require(c.clientFolder.Visuals.MonsterModel)
+			local Assets = c:require(c.clientFolder.Visuals.MeshMonsterAssets)
+			local form, line, stage = pickForm(MeshMonster)
+			Assets[form].lowMesh = "rbxassetid://9999996"
+			local ap = Appearance.Preview(line, stage)
+
+			local first = MonsterModel.Build(ap, { crowded = true })
+			expect(first:FindFirstChild("Mesh") ~= nil).toBe(true)
+			expect(first:GetAttribute("LowPoly")).toBe(false)
+			local second = MonsterModel.Build(ap, { crowded = true })
+			expect(second:FindFirstChild("Mesh") ~= nil).toBe(true)
+			expect(calls[form .. ":true"]).toBe(1) -- tried once, then dropped for the session
+			expect(calls[form .. ":false"]).toBe(1)
+			first:Destroy()
+			second:Destroy()
 			expectClean(c)
 		end)
 	end)

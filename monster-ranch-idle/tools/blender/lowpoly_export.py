@@ -2,7 +2,7 @@
 to a low triangle budget for Low-graphics and crowd-capped fights, and writes a mesh.json in the same
 shape export_roblox.py writes (so MeshMonster's loader needs no new code path).
 
-  blender -b art/rigs/<form>/rig.blend --python tools/blender/lowpoly_export.py -- <form> <out dir> <target tris>
+  blender -b art/rigs/<form>/rig.blend --python tools/blender/lowpoly_export.py -- <form> <out dir> <target tris> [fbx]
 
 rig.blend is opened and never saved: the decimated mesh lives only in a duplicate object, on a copy of
 the scene, discarded when Blender exits. The duplicate's Decimate modifier (Collapse, applied) is the
@@ -14,6 +14,13 @@ re-bake, no new upload, MeshMonsterAssets.<form>.lowMesh reuses .texture.
 
 Writes <out dir>/<form>/mesh.json (same fields as art/rigs/<form>/mesh.json: positions, normals, uvs,
 tris, skin, bones) and prints "[lowpoly] <form>: A -> B tris (ratio), C KB" for pipeline.py's summary.
+
+With a 4th argument `fbx` it also writes <out dir>/<form>/mesh.fbx: the armature and the decimated mesh,
+for an Open Cloud "Model" upload from the burner account (tools/blender/upload_lowmesh.py), since
+publish_meshes.luau can only publish as Studio's signed-in account. The FBX axes are the same turn as C
+below (Z up -> Y up, then 180 degrees about Y), so the imported mesh and bones sit in the frame the
+MeshMonsters/<form> rig module and mesh.json already use. Checked on cindlet 2026-09-27 against the
+uploaded model: bone positions within 0.00001 studs, rolls fixed by secondary_bone_axis below.
 """
 
 import base64
@@ -27,6 +34,8 @@ from mathutils import Matrix
 
 ARGS = sys.argv[sys.argv.index("--") + 1 :]
 FORM, OUT, TARGET_TRIS = ARGS[0], Path(ARGS[1]).resolve(), int(ARGS[2])
+WRITE_FBX = len(ARGS) > 3 and ARGS[3] == "fbx"
+FBX_SCALE = 0.01  # the FBX is in centimetres to Roblox's importer: 1 Blender unit -> 1 stud
 OUT.mkdir(parents=True, exist_ok=True)
 C = Matrix(((-1, 0, 0), (0, 0, 1), (0, 1, 0)))
 C4 = C.to_4x4()
@@ -126,6 +135,32 @@ def main():
     path = form_dir / "mesh.json"
     path.write_text(json.dumps(mesh_json), encoding="utf-8")
     kb = path.stat().st_size // 1024
+    if WRITE_FBX:
+        bpy.ops.object.select_all(action="DESELECT")
+        arm.select_set(True)
+        dup.select_set(True)
+        bpy.context.view_layer.objects.active = arm
+        bpy.ops.export_scene.fbx(
+            filepath=str(form_dir / "mesh.fbx"),
+            use_selection=True,
+            object_types={"ARMATURE", "MESH"},
+            global_scale=FBX_SCALE,
+            apply_unit_scale=True,
+            apply_scale_options="FBX_SCALE_NONE",
+            axis_forward="Z",
+            axis_up="Y",
+            add_leaf_bones=False,
+            # Roblox imports every bone rolled 180 degrees about its own length (Y) with the default
+            # secondary axis X; -X rolls it back, so the bind pose matches the rig module's bones.
+            primary_bone_axis="Y",
+            secondary_bone_axis="-X",
+            use_armature_deform_only=False,
+            bake_anim=False,
+            use_mesh_modifiers=False,
+            mesh_smooth_type="OFF",
+            path_mode="STRIP",
+            embed_textures=False,
+        )
     print(f"[lowpoly] {FORM}: {before} -> {after} tris (ratio {ratio:.3f}), {len(verts)} verts, {kb} KB", flush=True)
 
     bpy.data.objects.remove(dup, do_unlink=True)

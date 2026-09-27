@@ -16,7 +16,8 @@
 	output is published) - a decimated mesh on the same rig (same bones, same clips, same texture: its
 	UVs survive the decimate, so no separate texture id). `cheap` (Low graphics, or a fight that caps its
 	crowd) builds that instead when the form has one; a form without one keeps building the full mesh, as
-	before. Both variants are cached and cloned per form (one CreateMeshPartAsync each, at most), so a
+	before, and so does a form whose low mesh fails to load (it is dropped for the session). The low
+	meshes are uploaded from the burner account (tools/blender/upload_lowmesh.py). Both variants are cached and cloned per form (one CreateMeshPartAsync each, at most), so a
 	scene that mixes them (a crowd-capped fight while the ranch behind it is not) never rebuilds either.
 	Nothing about Has() changes: a form with only a full mesh is still "has a mesh" even when `cheap` is
 	asked for. Animation is unaffected either way - MonsterAnimator already throttles pose updates by
@@ -231,6 +232,12 @@ local function template(form: string, data: Data, cheap: boolean): (MeshPart, bo
 	end)
 	loading[key] = nil
 	if not ok then
+		if useLow then
+			-- The low mesh would not load (a refused permission, a moderation hold): drop it for this
+			-- session and draw the full mesh instead, never MonsterModel's placeholder.
+			data.lowMesh = ""
+			return template(form, data, false)
+		end
 		error(made)
 	end
 	made.TextureID = data.texture
