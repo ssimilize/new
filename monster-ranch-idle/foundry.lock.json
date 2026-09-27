@@ -1,7 +1,7 @@
 {
   "foundry": {
-    "commit": "2365180",
-    "syncedAt": "2026-09-27T23:18:48+00:00"
+    "commit": "2f30042",
+    "syncedAt": "2026-09-27T23:31:46+00:00"
   },
   "game": "monster-ranch",
   "packages": {
@@ -69,6 +69,40 @@
         "EffectGraph.luau": "b871f59b305b71e54267ab3a24f97fbc827c08f5b2f466583e72e1b4e5eb0a65",
         "library/guildhall.luau": "93bf0187f24c2487ee746f02ddf3dd3b94e9c30313d8e1a81a3ccd7ab3848fb5",
         "library/monster-ranch.luau": "a7800450602bdacdb2e9e8685abf54d0af5b99f517d9b20c2b16012eb428fe40"
+      }
+    },
+    "Atelier": {
+      "version": "0.1.0",
+      "files": {
+        "Atelier.luau": "d846d2055e1a84041c6a1dea034bcbdae04954dd806036d7aff15fafe8bb5209",
+        "Bodies.luau": "4cbc1af142934ca5c762dc19279d75599d261fb3707af8c738e67f700f509ed9",
+        "Colour.luau": "7cdb894c0c56e813fa9e3b323207b99e393943bd80803cdbf04cf4c61524472f",
+        "Faces.luau": "d9c2485c8b8bb18479935ddb69b5ac7eef4b88c2e8572b5a3b534156a55f2009",
+        "looks/guildhall.luau": "3033f038df785dcd604eae4ea853ab2ddc19b608a856a2765d669998ece4c2a0",
+        "looks/monster-ranch.luau": "0919abd0a235640676b2498fbd644b8263632e87731dae8936be0d95182be081",
+        "Wardrobe.luau": "760b6f4a1eb17484a7367504bc83d0475fa9f87dfa2402eaea1ca60a3a42ee29"
+      }
+    },
+    "Motion": {
+      "version": "0.1.0",
+      "files": {
+        "Base64.luau": "7bb929a38750c673033870aba10da5133c183df50dc2c70cde9baa1514ceb244",
+        "bindings/guildhall.luau": "5beb3aa17beb9cccb8f8218d23d9465f0455df8c77af8889cf022ac51a4240f6",
+        "bindings/monster-ranch.luau": "312df0cc46b5865163986f8dce569f9c5548ff9ce1c758582dbe41bb2140d87c",
+        "Convert.luau": "b77107f498fda31d8e0402703fe7a00dc8e1de20113aab6e63b2dc35644a6d71",
+        "Ease.luau": "1466d944ebb29578d6275b3ca735926bf36197d71fb4ca2ca72659ac5e1a9b75",
+        "library/authored.luau": "0cac2d7cb6d12a3b6f5b04d931a5482891308cf0cb3b98a83a5d1c59a2dd363b",
+        "library/Library.luau": "837438da731146ca02690ccf63057553bd6621bade034b8925521089a8b8a859",
+        "library/reused.luau": "40710f3b92203f43f8d39e739841a723da0f462142341aaf14a5156cd59c0c45",
+        "Markers.luau": "b2c7185d47a2fc8300a6b23447812f629f0b88ae07eac145439ec9abe38c18ee",
+        "Math.luau": "df10030141869b0d739f0b8b71d931df33bedd3a0594ee81894c9921c109d791",
+        "Motion.luau": "54b09e8978389a2797b02489970895238b7c63d8f9dfb4aa6921365781b42286",
+        "Procedural.luau": "ab8837a93105507051091512219c79c0a945166e31991ff8317f30e228782c5b",
+        "Rig.luau": "8b5cbb3ae732c1e8bda0cab89a7afed9c3e07c30120da87a915923b578d28852",
+        "rules/monster-ranch.luau": "af527e0923146f20fdf224a8b5a06d6918fbc437b357a36092bba0cec3b1f95b",
+        "tables/guildhall/init.luau": "87716817d8032e5a43f4132c8206c1fa841b698a01de30974b5be4dfdf4b2fc4",
+        "tables/guildhall/part1.luau": "993c83adb277cc932100b41af2ccfc90e0a0e933d9ab32ccab7642dc1088ec34",
+        "tables/guildhall/part2.luau": "fcd3d0b0b3b6a019626e277acb86c93baedc703f4c8ad6dcd0b939c138d614f2"
       }
     }
   },

@@ -47,6 +47,16 @@
 	A skinned model's "Body" (it has none) is never squashed or hue-cycled: its Rainbow look is a
 	static texture (MonsterLooks). When it wears accessories, MeshMonster.Follow moves them onto the
 	new pose right after each Pose, so they get the same distance LOD as the clip.
+
+	Foundry Motion (wave 1f, data only): markers beside the bone clips (foot.l / foot.r on walk, hit
+	on attack) from rules.Motion["monster-ranch"], phases of a clip's length per Species archetype.
+	The clips stay the Blender generator's. Nothing plays on a marker yet: Markers has no caller, so
+	no animator, pose, sound or effect changes (MotionMarkers.spec).
+	  MonsterAnimator.UseMotion(foundry) -> boolean   wire ctx.Foundry (Quality controller Init); without
+	                                                  the Motion package it warns once and Markers is {}
+	  MonsterAnimator.Markers(archetype, clip, length, t0, t1, loop?) -> { { name, t, clipT } }
+	                                                  markers a step of clip play time (t0, t1] crosses
+	  MonsterAnimator.NotAdopted                      what stays off the package, and why
 ]]
 
 local RunService = game:GetService("RunService")
@@ -552,6 +562,64 @@ function MonsterAnimator.SkinnedClip(
 		return "idle", t + phase, true, true -- procedural over idle (no clip is authored for these)
 	end
 	return "idle", t + phase, true, false
+end
+
+-- Foundry Motion markers (data only) ---------------------------------------------------------
+
+MonsterAnimator.NotAdopted = {
+	clips = "the bone clips stay the Blender generator's MeshMonsterClips; Motion only reads beside them",
+	footsteps = "no footstep dust or sound plays on foot.l / foot.r: that would be a new visible and audible effect",
+	hitMoment = "the hurt flash and hit spark keep their battle-timeline moments, not the attack clip's hit marker",
+}
+
+local motion: { markers: (any, number, number, boolean?) -> { any }, archetypes: { [string]: any } }? = nil
+local motionWarned = false
+local markerDocs: { [string]: any } = {}
+
+function MonsterAnimator.UseMotion(foundry: any): boolean
+	local pkg = foundry and foundry.packages and foundry.packages.Motion
+	local rules = foundry and foundry.rules and foundry.rules.Motion
+	local ranch = rules and rules["monster-ranch"]
+	markerDocs = {}
+	if
+		type(pkg) == "table"
+		and type(pkg.markers) == "function"
+		and type(ranch) == "table"
+		and ranch.phase == true
+		and type(ranch.archetypes) == "table"
+	then
+		motion = { markers = pkg.markers, archetypes = ranch.archetypes }
+		return true
+	end
+	motion = nil
+	if not motionWarned then
+		motionWarned = true
+		warn("[MonsterAnimator] the Foundry Motion package is not vendored; clips carry no markers")
+	end
+	return false
+end
+
+function MonsterAnimator.Markers(archetype: string, clip: string, length: number, t0: number, t1: number, loop: boolean?): { any }
+	local m = motion
+	if not m or not (length > 0) then
+		return {}
+	end
+	local clips = m.archetypes[archetype]
+	local phases = clips and clips[clip]
+	if type(phases) ~= "table" then
+		return {}
+	end
+	local key = archetype .. "/" .. clip .. "/" .. length
+	local doc = markerDocs[key]
+	if not doc then
+		local list = {}
+		for _, p in phases do
+			table.insert(list, { t = p.t * length, name = p.name })
+		end
+		doc = { length = length, loop = clip == "walk", markers = list }
+		markerDocs[key] = doc
+	end
+	return m.markers(doc, t0, t1, loop)
 end
 
 function step(dt: number)

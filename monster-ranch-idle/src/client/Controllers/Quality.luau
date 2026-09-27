@@ -11,6 +11,8 @@
 	  Visuals/Vfx        starts the particle budget loop (Vfx.StartBudget)
 	  Visuals/VfxPresets the effect presets from the Foundry EffectGraph library (ctx.Foundry, at
 	                     Init; Config/Vfx when it is not vendored)
+	  Visuals/MonsterAnimator the Foundry Motion markers (ctx.Foundry, at Init; data only, no clip
+	                     plays on them yet)
 
 	Studio only: a perf overlay (median frame time, level, live particles, animated models) in the
 	top-left corner while Config.Quality.Overlay.enabled or the Workspace attribute PerfOverlay is
@@ -27,6 +29,7 @@ local Client = script.Parent.Parent
 local Quality = require(Client.Visuals.Quality)
 local Vfx = require(Client.Visuals.Vfx)
 local VfxPresets = require(Client.Visuals.VfxPresets)
+local MonsterAnimator = require(Client.Visuals.MonsterAnimator)
 local Create = require(Client.UI.Create)
 
 local QualityController = {
@@ -119,6 +122,7 @@ end
 function QualityController.Init(context)
 	ctx = context
 	VfxPresets.Use(ctx.Foundry)
+	MonsterAnimator.UseMotion(ctx.Foundry)
 	stepper = Logic.NewStepper(ctx.Config.Quality.Auto, os.clock())
 end
 
