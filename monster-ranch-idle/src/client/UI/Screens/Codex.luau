@@ -11,7 +11,8 @@
 	3.10: a Fish Log tab (Parts/FishLog): fish caught at the Fishing Pond and their milestones.
 	3.11: a Fossils tab (Parts/FossilLog): fossils completed at the Dig Site and their milestones.
 	3.12: an Exhibits header button opens the Museum Exhibits screen.
-	Open params: { tab = "milestones" | "fishlog" | "fossils" }.
+	3.13: a Stray Log tab (Parts/StrayLog): strays met and befriended per line.
+	Open params: { tab = "milestones" | "fishlog" | "fossils" | "strays" }.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -34,6 +35,7 @@ local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local CodexMilestones = require(script.Parent.Parts.CodexMilestones)
 local FishLog = require(script.Parent.Parts.FishLog)
 local FossilLog = require(script.Parent.Parts.FossilLog)
+local StrayLog = require(script.Parent.Parts.StrayLog)
 
 local New = Create.New
 local C = Theme.Colors
@@ -97,6 +99,8 @@ function Codex.Build(ctx)
 	fishLog.Root.Visible = false
 	local fossilLog = FossilLog.new(ctx, panel.Body, UDim2.fromOffset(944, 400))
 	fossilLog.Root.Visible = false
+	local strayLog = StrayLog.new(ctx, panel.Body, UDim2.fromOffset(944, 400))
+	strayLog.Root.Visible = false
 	local tab = "species"
 	local tabs = Widgets.Tabs({
 		Tabs = {
@@ -104,8 +108,9 @@ function Codex.Build(ctx)
 			{ id = "milestones", text = "Milestones", width = 130 },
 			{ id = "fishlog", text = "Fish Log", width = 110 },
 			{ id = "fossils", text = "Fossils", width = 100 },
+			{ id = "strays", text = "Stray Log", width = 110 }, -- 3.13
 		},
-		Size = UDim2.fromOffset(470, 44),
+		Size = UDim2.fromOffset(584, 44),
 		OnChanged = function(id)
 			tab = id
 			list.Visible = id == "species"
@@ -113,12 +118,15 @@ function Codex.Build(ctx)
 			milestones.Root.Visible = id == "milestones"
 			fishLog.Root.Visible = id == "fishlog"
 			fossilLog.Root.Visible = id == "fossils"
+			strayLog.Root.Visible = id == "strays"
 			if id == "milestones" then
 				milestones.Refresh()
 			elseif id == "fishlog" then
 				fishLog.Refresh()
 			elseif id == "fossils" then
 				fossilLog.Refresh()
+			elseif id == "strays" then
+				strayLog.Refresh()
 			end
 		end,
 	})
@@ -452,26 +460,34 @@ function Codex.Build(ctx)
 		renderDetail()
 	end
 
-	local watch = StoreKit.watch(
-		store,
-		{ "profile.Monsters.codex", "profile.Breeding.discovered", "profile.Codex", "profile.Fishing.log", "profile.DigSite.pieces" },
-		function()
-			refresh()
-			if tab == "milestones" then
-				milestones.Refresh()
-			elseif tab == "fishlog" then
-				fishLog.Refresh()
-			elseif tab == "fossils" then
-				fossilLog.Refresh()
-			end
+	local watch = StoreKit.watch(store, {
+		"profile.Monsters.codex",
+		"profile.Breeding.discovered",
+		"profile.Codex",
+		"profile.Fishing.log",
+		"profile.DigSite.pieces",
+		"profile.Strays",
+	}, function()
+		refresh()
+		if tab == "milestones" then
+			milestones.Refresh()
+		elseif tab == "fishlog" then
+			fishLog.Refresh()
+		elseif tab == "fossils" then
+			fossilLog.Refresh()
+		elseif tab == "strays" then
+			strayLog.Refresh()
 		end
-	)
+	end)
 
 	return {
 		Root = panel.Root,
 		Open = function(params)
 			local want = "species"
-			if type(params) == "table" and (params.tab == "milestones" or params.tab == "fishlog" or params.tab == "fossils") then
+			if
+				type(params) == "table"
+				and (params.tab == "milestones" or params.tab == "fishlog" or params.tab == "fossils" or params.tab == "strays")
+			then
 				want = params.tab
 			end
 			if want ~= tab then
@@ -482,6 +498,8 @@ function Codex.Build(ctx)
 				fishLog.Refresh()
 			elseif tab == "fossils" then
 				fossilLog.Refresh()
+			elseif tab == "strays" then
+				strayLog.Refresh()
 			end
 		end,
 		Close = function()

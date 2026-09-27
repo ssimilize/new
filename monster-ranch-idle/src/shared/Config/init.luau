@@ -29,6 +29,7 @@ local Config = {
 	Techniques = require(script.Techniques), -- 3.11: Dojo techniques
 	TrialTower = require(script.TrialTower), -- 3.12: the Trial Tower
 	TreasureMaps = require(script.TreasureMaps), -- 3.13: Treasure Maps
+	Strays = require(script.Strays), -- 3.13: Stray Monsters
 	Mutations = require(script.Mutations),
 	Weather = require(script.Weather),
 	Eggs = require(script.Eggs),

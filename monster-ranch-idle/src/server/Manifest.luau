@@ -114,6 +114,8 @@ return {
 		"TrialTower",
 		-- 3.13 · Treasure Maps
 		"TreasureMaps",
+		-- 3.13 · Stray Monsters
+		"Strays",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

@@ -187,6 +187,15 @@ Weekly.Pool = {
 		target = 2,
 		unlock = "treasure_maps",
 	},
+	-- 3.13 · Stray Monsters: strays befriended (and adopted)
+	{
+		id = "strays_3",
+		family = "strays",
+		text = "Befriend 3 stray monsters",
+		topic = "StrayBefriended",
+		target = 3,
+		unlock = "strays",
+	},
 }
 
 Weekly.ById = {}

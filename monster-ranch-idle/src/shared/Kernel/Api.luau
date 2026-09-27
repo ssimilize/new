@@ -533,6 +533,21 @@ Api.Actions = {
 		returns = "{ coins: number }",
 	},
 
+	-- Stray Monsters (3.13) · see Config/Strays and Logic/Strays ----------------------------------
+	["Strays.Start"] = {
+		schema = T.struct({ slot = T.integer(0) }),
+		rate = 2,
+		returns = "{ slot: number, line: string, rarity: number, favourite: string, hints: { string } }  -- uses the stray's one attempt",
+	},
+	["Strays.Submit"] = {
+		schema = T.struct({
+			slot = T.integer(0),
+			choices = T.array(T.enum({ "wait", table.unpack(Config.Food.Ids) }), Config.Strays.Rounds, Config.Strays.Rounds),
+		}),
+		rate = 2,
+		returns = "{ befriended: boolean, correct: number, answers: { string }, line: string, rarity: number, id: string?, gene: string? }",
+	},
+
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
 		schema = T.struct({ index = T.integer(1, Config.Orders.PerDay + 1), id = T.optional(id) }), -- 3.9: PerDay + 1 is the favourite buyer order
@@ -873,6 +888,7 @@ Api.State = {
 		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
 		DigSite = "{ day, digs, shovels, n, open = false | { id, left, tiles = { { t, hint?, kind?, fossil?, piece?, id?, amount?, duplicate? } } }, pieces = { [fossilId]: { [pieceId]: true } }, total }  -- 3.11 (secret is private)",
 		Observatory = "{ night, used, n, charts = { [chartId]: observations }, seen }  -- 3.12 (secret is private)",
+		Strays = "{ tried, seen, day, adopted, met = { [lineId]: n }, friends = { [lineId]: n }, total }  -- 3.13: Stray Monsters (secret is private)",
 		Exhibits = "{ filled = { [setId]: { [itemId]: true } }, paid = { [setId]: step } }  -- 3.12: Museum Exhibits",
 		TrialTower = "{ week, best, record, day, used, retries, paid = { [floor]: true }, fights, cleared }  -- 3.12, see Logic/TrialTower",
 		TreasureMaps = "{ pieces, maps = { { id, region, stage, seed } }, made, rolls, digs, opened }  -- 3.13, see Logic/TreasureMaps",
@@ -921,6 +937,7 @@ Api.State = {
 		Jobs = "{ slotCount }",
 		Kitchen = "{ slotCount, fish, fishing }  -- 3.10: fish = Fishing:FishCount (0 without Fishing); fishing = Fishing is plugged in",
 		Apiary = "{ hives, extra }  -- 3.12: open beehives; extra storage hours (Observatory perk hive_hours)",
+		Strays = "{ unlocked, nextAt, left, stray = false | { slot, line, rarity, arriveAt, leavesAt, tried } }  -- 3.13: the stray on the plot now (never its mood)",
 		Merchant = "{ shovels }  -- 3.11: the Dig Site is plugged in and unlocked (the merchant's shovel offers)",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
