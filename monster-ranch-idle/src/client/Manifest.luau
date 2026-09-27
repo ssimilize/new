@@ -89,6 +89,8 @@ return {
 		"CuratorWing",
 		-- 3.12: the beehives on the own plot's north strip and their "Tend" prompt
 		"Apiary",
+		-- 3.13: the stray wandering on the own plot and its "Befriend" prompt
+		"Strays",
 		-- R2-CLOCKWORK: Clockwork Canyon's gear landmark and walk-in area (appended, see RULES)
 		"ClockworkCanyon",
 		-- R2-ABYSS: the Sunken Abyss's descent and walk-in area (appended, see RULES)
@@ -118,6 +120,7 @@ return {
 		"Apiary", -- 3.12 · Apiary & Honey (the beehives' "Tend" prompt, the Kitchen header)
 		"Dojo", -- 3.11 · Dojo (from Monster Detail)
 		"TrialTower", -- 3.12 · Trial Tower (the tower's prompt, the Expeditions header)
+		"Strays", -- 3.13 · Stray Monsters (the stray's "Befriend" prompt)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

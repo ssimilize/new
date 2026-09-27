@@ -3,6 +3,39 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.13 · Wild things
+
+### Stray Monsters
+
+**For players**
+- From Ranch Level 10, while you play, a stray monster wanders onto your ranch about every 45
+  minutes and paces the middle aisle near your gate for 20 minutes (a toast says "A stray
+  Blazefang is wandering near your gate!"). Only you see your stray. It is always an existing
+  monster of a line your eggs can hatch; at night strays tend to be rarer. Strays missed while
+  you are away are simply gone.
+- Its "Befriend" prompt opens the befriend game: Approach, then three rounds. Each round the
+  stray shows a hint ("It sniffs the air... something spicy?" or "It looks nervous... maybe just
+  wait quietly"); offer a treat of a food flavour you own (1 food each) or wait quietly. Two right
+  answers out of three befriend it; otherwise it runs off. One try per stray.
+- A befriended stray joins your ranch as an Adult of its line and rarity, with one stat gene
+  raised a grade. Up to 3 a day (UTC); not when your barn is full.
+- The Codex has a Stray Log tab: every line you met a stray of, how many you met and befriended.
+- New weekly goal: befriend 3 stray monsters.
+
+**In the code**
+- `Config/Strays` (45 min interval, 20 min stay, 3 rounds / 2 to win, 3 a day, day and night
+  rarity odds, 40% "wait" moods, element -> favourite flavour, hints, the aisle path),
+  `Logic/Strays` (slots with a per-player offset like Tourists, the seeded stray from
+  (userId, slot, private secret), the line pool from buyable unlocked eggs, hints, score, cost,
+  `GeneBonus`), `Systems/Strays` (`Strays.Start { slot }` uses the one attempt and returns the
+  hints; `Strays.Submit { slot, choices }` is one-shot, charges the treats, adopts through
+  `Monsters:Create` source `stray`, publishes `StrayBefriended`), `Controllers/Strays` (the
+  owner-only stray from `Visuals/MonsterModel` with a "?" bubble; standing still on Low
+  graphics or reduced motion), `UI/Screens/Strays`, `UI/Screens/Parts/StrayLog` (Codex tab),
+  weekly goal `strays_3`. Specs: `Strays.spec`, `StraysClient.spec`.
+- The gene bonus: one random stat's pair is raised to the next grade's points (the lower gene
+  first, each capped at 10); an S-grade stat gets +1 on its lower gene when it can.
+
 ## 3.12 · Honey & stars
 
 ### Observatory & Star Charts
