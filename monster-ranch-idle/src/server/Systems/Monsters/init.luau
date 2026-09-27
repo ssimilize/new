@@ -12,7 +12,8 @@
 
 	Public API (other systems):
 	  Monsters:Create(player, spec, source, force?) -> record?, err?   -- spec: see Logic/MonsterGen
-	  Monsters:Insert(player, record, source) -> record                -- trade receive (new id)
+	  Monsters:Insert(player, record, source) -> record                -- trade receive (new id; 3.9:
+	                                                                      the pedigree is deep-copied)
 	  Monsters:Get(player, id) -> record?                               -- live table: call Changed after edits
 	  Monsters:All(player) -> { [id]: record }
 	  Monsters:Count(player) -> number
@@ -47,6 +48,7 @@ local MonsterGen = require(Shared.Logic.MonsterGen)
 local Mutation = require(Shared.Logic.Mutation)
 local Appearance = require(Shared.Logic.Appearance)
 local Genetics = require(Shared.Logic.Genetics)
+local Pedigree = require(Shared.Logic.Pedigree)
 local Rng = require(Shared.Logic.Rng)
 
 local Monsters = {
@@ -275,6 +277,7 @@ function Monsters:Insert(player, record, source: string)
 	copy.muts = table.clone(record.muts or {})
 	copy.traits = table.clone(record.traits or {})
 	copy.meals = table.clone(record.meals or {})
+	copy.ped = Pedigree.Copy(record.ped) -- 3.9: its own table, never shared with the giver
 	-- A record escrowed before genetics (a Market listing) arrives without genes, or before 3.7
 	-- without a Luck pair: keep what it has, roll what it lacks.
 	copy.genes = Genetics.Fill(record.genes, ctx.Rng)

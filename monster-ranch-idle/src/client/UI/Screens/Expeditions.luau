@@ -1,5 +1,5 @@
 --[[
-	Expeditions screen (C3). Params: { region? }.
+	Expeditions screen (C3). Params: { region?, tab? = "stages" | "caravans" | "bounties" }.
 
 	Stages tab: region tabs, the stage path (cleared / current / locked / boss), the squad
 	panel (Monsters pick mode → Expeditions.SetSquad), squad power vs recommended power, an
@@ -7,6 +7,9 @@
 	battle replay viewer) and "Start expedition" (Expeditions.Start), plus the expedition
 	slots list (Claim, Claim all, Recall).
 	Caravans tab: open / join / leave / launch co-op lobbies from global.Expeditions.caravans.
+	Bounties tab (3.9): this week's wanted posters from profile.Expeditions.bounty (Config/Bounties);
+	"Hunt" switches to the stages view on the bounty's region and fights its stage. Stage nodes
+	with an undone bounty carry a small "Bounty" marker.
 
 	Reads: profile.Expeditions, session.Expeditions, global.Expeditions, profile.Monsters.list,
 	profile.Progression.level (all tolerated nil).
@@ -18,6 +21,7 @@ local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config)
 local Format = require(Shared.Logic.Format)
 local Formulas = require(Shared.Logic.Formulas)
+local Appearance = require(Shared.Logic.Appearance)
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -37,6 +41,8 @@ local New = Create.New
 local C = Theme.Colors
 local Regions = Config.Regions
 local Elements = Config.Elements
+local BountyCfg = Config.Bounties
+local POSTER_WIDTH = 316 -- three wanted posters across the 1060 px panel
 
 local DURATION_TEXT = { [900] = "15m", [3600] = "1h", [14400] = "4h", [28800] = "8h" }
 
@@ -201,12 +207,33 @@ return {
 			return nil
 		end
 
+		-- This week's bounties (an old week's list reads as empty until the server rolls it over).
+		local function bountyState()
+			local b = exp().bounty
+			if type(b) ~= "table" or b.week ~= Config.Leaderboards.Week(ctx:Now()) then
+				return { list = {}, count = 0 }
+			end
+			return { list = if type(b.list) == "table" then b.list else {}, count = tonumber(b.count) or 0 }
+		end
+		local function bountyAt(regionId: string, stageNumber: number)
+			for _, b in bountyState().list do
+				if type(b) == "table" and b.region == regionId and b.stage == stageNumber and not b.done then
+					return b
+				end
+			end
+			return nil
+		end
+
 		-- Layout --------------------------------------------------------------------------
 
 		local modeTabs = Widgets.Tabs({
-			Tabs = { { id = "stages", text = "Stages" }, { id = "caravans", text = "Caravans" } },
+			Tabs = {
+				{ id = "stages", text = "Stages", width = 116 },
+				{ id = "caravans", text = "Caravans", width = 126 },
+				{ id = "bounties", text = "Bounties", width = 126 },
+			},
 			Selected = "stages",
-			Size = UDim2.fromOffset(280, 44),
+			Size = UDim2.fromOffset(384, 44),
 			Parent = panel.HeaderRight,
 			OnChanged = function(id)
 				mode = id
@@ -249,6 +276,15 @@ return {
 			BackgroundTransparency = 1,
 			Position = UDim2.fromOffset(0, 54),
 			Size = UDim2.new(1, 0, 1, -54),
+			Visible = false,
+			Parent = panel.Body,
+		})
+
+		-- 3.9: the Bounties tab has the whole body (no region row).
+		local bountyView = New("Frame", {
+			Name = "Bounties",
+			BackgroundTransparency = 1,
+			Size = UDim2.fromScale(1, 1),
 			Visible = false,
 			Parent = panel.Body,
 		})
@@ -511,7 +547,7 @@ return {
 				rewards = res.rewards,
 				title = string.format("%s · Stage %d", if r then r.name else region, stageNumber),
 				stage = region,
-				winText = string.format("Stage %d cleared!", stageNumber),
+				winText = if type(res.bounty) == "string" then "Bounty defeated!" else string.format("Stage %d cleared!", stageNumber),
 				retryText = if adsLeft then string.format("Retry +20%% (ad, %d left)", adsLeft) else "Retry with +20% (ad)",
 				onRetry = if adsLeft == nil or adsLeft > 0
 					then function()
@@ -687,6 +723,22 @@ return {
 				end)
 				if s == cur and unlocked then
 					Anim.pulse(node, 0.18)
+				end
+				if bountyAt(r.id, s) then
+					-- 3.9: a wanted monster waits on this stage.
+					New("TextLabel", {
+						Name = "Bounty",
+						Text = "!",
+						Font = Theme.Fonts.Display,
+						TextSize = Theme.TextSize.Small,
+						TextColor3 = C.White,
+						BackgroundColor3 = C.Red,
+						AnchorPoint = Vector2.new(0.5, 0.5),
+						Position = UDim2.new(1, -4, 0, 4),
+						Size = UDim2.fromOffset(22, 22),
+						ZIndex = 4,
+						Parent = node,
+					}, { Create.Round(), Create.Stroke(2, C.Ink) })
 				end
 			end
 		end
@@ -1345,6 +1397,170 @@ return {
 			end
 		end
 
+		-- Bounties (3.9) ----------------------------------------------------------------------------
+
+		local function hunt(b)
+			local r = Regions.ById[b.region]
+			if not r or not regionUnlocked(r) then
+				ctx:Toast(if r then regionLockText(r) else "", "error")
+				return
+			end
+			region = b.region
+			selectedStage = b.stage
+			modeTabs:Select("stages")
+			if #squadIds() == 0 then
+				ctx:Toast("Add monsters to your squad first", "error")
+				return
+			end
+			fight(b.stage)
+		end
+
+		local function poster(b, index: number, width: number)
+			local r = Regions.ById[b.region]
+			local card = Util.card({
+				Name = "Bounty" .. index,
+				Color = if b.done then C.PanelDeep else Color3.fromHex("#FFF3D6"),
+				Size = UDim2.new(0, width, 1, 0),
+				LayoutOrder = index,
+				Parent = bountyView:FindFirstChild("Posters"),
+			})
+			Util.text({
+				Text = "WANTED",
+				Font = Theme.Fonts.Display,
+				TextSize = Theme.TextSize.Header,
+				TextColor3 = if b.done then C.TextMuted else C.Red,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Position = UDim2.fromOffset(10, 6),
+				Size = UDim2.new(1, -20, 0, 34),
+				Parent = card,
+			})
+			local ok, ap = pcall(function()
+				local _, rarity = (Util.logic("BattleSim") :: any).StageScaling(b.region, b.stage)
+				return Appearance.Preview(b.line, 3, nil, rarity)
+			end)
+			if ok and ap then
+				local icon = MonsterIcon.new(ap, 104)
+				icon.AnchorPoint = Vector2.new(0.5, 0)
+				icon.Position = UDim2.new(0.5, 0, 0, 42)
+				icon.Parent = card
+			end
+			Util.text({
+				Name = "Target",
+				Text = b.name or "",
+				Font = Theme.Fonts.Display,
+				TextSize = Theme.TextSize.Body + 1,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Position = UDim2.fromOffset(8, 150),
+				Size = UDim2.new(1, -16, 0, 26),
+				Parent = card,
+			})
+			Util.text({
+				Text = string.format("%s · Stage %d", if r then r.name else b.region, b.stage or 1),
+				TextColor3 = C.TextMuted,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Position = UDim2.fromOffset(8, 178),
+				Size = UDim2.new(1, -16, 0, 22),
+				Parent = card,
+			})
+			local items = table.clone(BountyCfg.Reward)
+			local egg = r and r.eggs and r.eggs[1] and r.eggs[1].egg
+			if egg then
+				table.insert(items, { kind = "egg", id = egg, amount = 1 })
+			end
+			Util.rewardRow(items, card, {
+				Position = UDim2.fromOffset(8, 206),
+				Size = UDim2.new(1, -16, 0, 40),
+				Align = Enum.HorizontalAlignment.Center,
+			})
+			Util.text({
+				Text = string.format("Egg chance: up to %d%%", math.floor(BountyCfg.EggChanceMax * 100 + 0.5)),
+				TextColor3 = C.TextMuted,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Position = UDim2.fromOffset(8, 250),
+				Size = UDim2.new(1, -16, 0, 22),
+				Parent = card,
+			})
+			local button = Button.new({
+				Name = "Hunt",
+				Text = if b.done then "Defeated" else "Hunt",
+				Color = if b.done then C.Gray else C.Green,
+				Size = UDim2.fromOffset(180, 52),
+				TextSize = Theme.TextSize.Body,
+				AnchorPoint = Vector2.new(0.5, 1),
+				Position = UDim2.new(0.5, 0, 1, -10),
+				Disabled = b.done == true,
+				Parent = card,
+			})
+			button:SetOnClick(function()
+				if not b.done then
+					hunt(b)
+				end
+			end)
+		end
+
+		local function drawBounties()
+			Util.clear(bountyView)
+			local state = bountyState()
+			local weekEnds = Config.Leaderboards.WeekEndsAt(Config.Leaderboards.Week(ctx:Now()))
+			Util.text({
+				Text = "Wanted this week",
+				Font = Theme.Fonts.Display,
+				TextSize = Theme.TextSize.Body + 2,
+				Position = UDim2.fromOffset(6, 4),
+				Size = UDim2.new(0.4, 0, 0, 30),
+				Parent = bountyView,
+			})
+			local clock = Util.text({
+				Name = "Reset",
+				Text = "",
+				TextColor3 = C.TextMuted,
+				TextXAlignment = Enum.TextXAlignment.Right,
+				AnchorPoint = Vector2.new(1, 0),
+				Position = UDim2.new(1, -6, 0, 8),
+				Size = UDim2.new(0.55, 0, 0, 24),
+				Parent = bountyView,
+			})
+			Widgets.Countdown(clock, function()
+				return weekEnds
+			end, function(left)
+				return string.format("New bounties in %s", Format.duration(left))
+			end)
+			Util.text({
+				Text = string.format("Bounties defeated this week: %d", state.count),
+				TextColor3 = C.TextMuted,
+				Position = UDim2.fromOffset(6, 34),
+				Size = UDim2.new(1, -12, 0, 22),
+				Parent = bountyView,
+			})
+			local posters = New("Frame", {
+				Name = "Posters",
+				BackgroundTransparency = 1,
+				Position = UDim2.fromOffset(0, 62),
+				Size = UDim2.new(1, 0, 1, -62),
+				Parent = bountyView,
+			}, { Create.List("x", 14, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Top) })
+			if #state.list == 0 then
+				Util.text({
+					Name = "Empty",
+					Text = "No bounties yet. Clear a stage in any region and wanted monsters will show up here.",
+					TextSize = Theme.TextSize.Body,
+					TextColor3 = C.TextMuted,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Size = UDim2.new(0.8, 0, 0, 80),
+					Parent = posters,
+				})
+			end
+			local width = POSTER_WIDTH
+			for i, b in state.list do
+				if type(b) == "table" then
+					poster(b, i, width)
+				end
+			end
+			if not Util.unlocked(ctx, BountyCfg.Unlock) then
+				Util.lockOverlay(bountyView, Util.unlockText(BountyCfg.Unlock))
+			end
+		end
+
 		-- Refresh ----------------------------------------------------------------------------------
 
 		local function drawRegions()
@@ -1382,9 +1598,15 @@ return {
 			end
 			local r = Regions.ById[region] or Regions.List[1]
 			region = r.id
-			drawRegions()
+			regionRow.Visible = mode ~= "bounties"
 			stagesView.Visible = mode == "stages"
 			caravanView.Visible = mode == "caravans"
+			bountyView.Visible = mode == "bounties"
+			if mode == "bounties" then
+				drawBounties()
+				return
+			end
+			drawRegions()
 			if mode == "caravans" then
 				drawCaravans()
 				return
@@ -1478,7 +1700,7 @@ return {
 						end
 						region = params.region
 					end
-					if params.tab == "caravans" or params.tab == "stages" then
+					if params.tab == "caravans" or params.tab == "stages" or params.tab == "bounties" then
 						modeTabs:Select(params.tab)
 					end
 				else

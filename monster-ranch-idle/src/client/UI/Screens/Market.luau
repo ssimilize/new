@@ -147,6 +147,9 @@ local function itemDetail(listing): string
 	if type(item.genes) == "table" then
 		table.insert(parts, string.format("Genes %d/%d", Genetics.Total(item.genes), Genetics.MaxTotal))
 	end
+	if type(item.parents) == "table" and item.parents[1] and item.parents[2] then -- 3.9 pedigree
+		table.insert(parts, string.format("Parents: %s × %s", tostring(item.parents[1]), tostring(item.parents[2])))
+	end
 	return table.concat(parts, " · ")
 end
 

@@ -78,6 +78,14 @@ Weekly.Pool = {
 		filter = { won = true },
 		unlock = "arena",
 	},
+	{
+		id = "bounty_3",
+		family = "bounties",
+		text = "Defeat 3 bounties",
+		topic = "BountyDefeated",
+		target = 3,
+		unlock = "bounties",
+	},
 	{ id = "raids_5", family = "raids", text = "Finish 5 raids", topic = "RaidFinished", target = 5, unlock = "raids" },
 	{
 		id = "crystals_10",

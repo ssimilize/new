@@ -15,7 +15,8 @@
 	    mine = boolean, state, item = ItemView }
 	  ItemView = { appearance = Appearance | false, egg = eggType | false, name, rarity, variant,
 	               stage, lv, stars, weight, muts = { string }, traits = { traitId },
-	               genes = Genes | false }   -- stat genes (Logic/Genetics), false for an egg
+	               genes = Genes | false,    -- stat genes (Logic/Genetics), false for an egg
+	               parents = { nameA, nameB } | false }  -- 3.9: a bred monster's parents' names
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -23,6 +24,7 @@ local Config = require(Shared.Config)
 local Appearance = require(Shared.Logic.Appearance)
 local Formulas = require(Shared.Logic.Formulas)
 local Genetics = require(Shared.Logic.Genetics)
+local Pedigree = require(Shared.Logic.Pedigree)
 
 local Cfg = Config.Market
 
@@ -45,8 +47,10 @@ function Listing.ItemView(kind: string, record)
 			muts = {},
 			traits = {},
 			genes = false,
+			parents = false,
 		}
 	end
+	local parentA, parentB = Pedigree.ParentNames(record.ped)
 	return {
 		appearance = Appearance.Of(record),
 		egg = false,
@@ -60,6 +64,7 @@ function Listing.ItemView(kind: string, record)
 		muts = table.clone(record.muts or {}),
 		traits = table.clone(record.traits or {}),
 		genes = if type(record.genes) == "table" then Genetics.Copy(record.genes) else false,
+		parents = if parentA and parentB then { parentA, parentB } else false,
 	}
 end
 

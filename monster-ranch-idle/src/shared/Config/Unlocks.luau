@@ -92,6 +92,8 @@ Unlocks.Features = {
 	weekly = 5,
 	-- 3.8 · Ranch Orders (Config/Orders)
 	orders = 10,
+	-- 3.9 · Expedition Bounties (Config/Bounties)
+	bounties = 6,
 }
 
 -- Player-facing names for the level-up popup.
@@ -144,6 +146,7 @@ Unlocks.Names = {
 	jobs_slot_5 = "Job Board slot 5",
 	weekly = "Weekly goals",
 	orders = "Ranch Orders",
+	bounties = "Bounties",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

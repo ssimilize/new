@@ -312,6 +312,17 @@ return {
 						icon.LayoutOrder = 1
 						icon.Parent = content
 						Util.tagChips(item.appearance, content, 2)
+						if type(item.parents) == "table" and item.parents[1] and item.parents[2] then -- 3.9 pedigree
+							Util.text({
+								Name = "Parents",
+								Text = string.format("Parents: %s × %s", tostring(item.parents[1]), tostring(item.parents[2])),
+								TextXAlignment = Enum.TextXAlignment.Center,
+								AutomaticSize = Enum.AutomaticSize.Y,
+								Size = UDim2.new(1, 0, 0, 20),
+								LayoutOrder = 3,
+								Parent = content,
+							})
+						end
 					else
 						local icon = MonsterIcon.egg(item.egg or "meadow", 130)
 						icon.LayoutOrder = 1
