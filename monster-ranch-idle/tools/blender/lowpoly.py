@@ -17,7 +17,8 @@ Target triangles: 1,500. The full models this pipeline already ships run 6,000-1
 keeps a full 40-monster raid under 60,000 triangles instead of a quarter million. Run
 lowpoly_export.py's Decimate (Collapse, applied to a duplicate; rig.blend itself is never saved) below
 that floor and small forms lose their silhouette (ears, wings, stingers), so --tris can raise it for a
-form that reads badly; there is no per-form override file yet.
+form that reads badly, and TRIS_BY_FORM below keeps the forms that needed it (their decimate at 1,500
+cut into the outline: tidecrusher by 20.7%, elderoak by 8%; at these budgets 0.9% and 3.2%).
 
   python tools/blender/lowpoly.py --all      # every form already published (MeshMonsterAssets.luau),
                                               # one Blender process each (~10-20 s apiece)
@@ -39,6 +40,7 @@ RIGS = ROOT / "art" / "rigs" if (ROOT / "art" / "rigs").is_dir() else MAIN_ART /
 DEFAULT_OUT = Path(r"C:\Users\sim\AppData\Local\Temp\claude\C--Users-sim-Desktop-claude\fbd1627e-c44a-4365-a5c9-c053ed02dcd9\scratchpad\r2\lowq")
 ASSETS = ROOT / "src" / "client" / "Visuals" / "MeshMonsterAssets.luau"
 TARGET_TRIS = 1500
+TRIS_BY_FORM = {"tidecrusher": 2500, "elderoak": 3000}  # used unless --tris is given
 
 
 def published_forms() -> list:
@@ -78,7 +80,7 @@ def main() -> None:
     forms = published_forms() if sys.argv[1] == "--all" else [f for f in sys.argv[1].split(",") if f]
     out.mkdir(parents=True, exist_ok=True)
     for form in forms:
-        run(form, out, target)
+        run(form, out, target if "--tris" in flags else TRIS_BY_FORM.get(form, target))
 
 
 if __name__ == "__main__":
