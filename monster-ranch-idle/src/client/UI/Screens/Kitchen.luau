@@ -8,6 +8,8 @@
 	           recipe: its dish, ingredient chips (food colours, fish, golden), its effect, the
 	           cook time and Cook (Kitchen.Cook; the server picks the first free slot). Fish
 	           recipes without the Fishing system say "Needs fish from the Fishing Pond".
+	           3.12: honey recipes show a chip in the honey's colour and how much of that
+	           honey the player has; without the Apiary they say "Needs honey from the Apiary".
 	  Pantry   one card per dish with how many are stored, the effect and Serve: Monsters pick
 	           mode with the monsters that can eat it (Logic/Kitchen.ServeProblem) -> Kitchen.Serve.
 	           The Golden seeds bar plants a seed in the first empty Feed Garden plot
@@ -17,7 +19,8 @@
 	directly (from Monster Detail).
 
 	Reads: profile.Kitchen, session.Kitchen, profile.Currency.food, profile.Monsters.list,
-	profile.Progression.level, profile.Ranch.garden, profile.Bond.list (all tolerated nil).
+	profile.Progression.level, profile.Ranch.garden, profile.Bond.list, profile.Apiary.store (3.12)
+	(all tolerated nil).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -150,7 +153,10 @@ return {
 			-- 3.11: the bucket by kind, for the seasonal recipes' own fish
 			local bucket = ctx.Store:Get("profile.Fishing.fish")
 			local kinds = if type(bucket) == "table" then bucket else {}
-			return { food = food, fish = fishHave(), golden = tonumber(kitchen().golden) or 0, kinds = kinds }
+			-- 3.12: the Apiary's honey store (absent without the Apiary system)
+			local apiary = ctx.Store:Get("profile.Apiary")
+			local honey = if type(apiary) == "table" and type(apiary.store) == "table" then apiary.store else {}
+			return { food = food, fish = fishHave(), golden = tonumber(kitchen().golden) or 0, kinds = kinds, honey = honey }
 		end
 		local function hearts(id: string): number
 			local list = ctx.Store:Get("profile.Bond.list")
@@ -313,6 +319,7 @@ return {
 			}, { Create.Grid(Vector2.new(218, 184), 8) })
 			local stock = have()
 			local fishing = type(ctx.Store:Get("session.Kitchen")) == "table" and ctx.Store:Get("session.Kitchen").fishing
+			local apiaryOpen = type(ctx.Store:Get("profile.Apiary")) == "table" and Util.unlocked(ctx, Config.Apiary.Unlock)
 			for i, recipe in Rules.Recipes do
 				local card =
 					Util.card({ Name = "Recipe_" .. recipe.id, Size = UDim2.fromOffset(218, 184), LayoutOrder = i, Parent = scroll })
@@ -336,7 +343,15 @@ return {
 					Parent = card,
 				}, { Create.List("x", 2) })
 				local food, fish, golden = KitchenLogic.Split(recipe)
+				local honey = KitchenLogic.Honey(recipe)
+				local honeyKind = next(honey)
 				local order = 0
+				for _, kind in Config.Apiary.AllIds do
+					if honey[kind] then
+						order += 1
+						chip(chips, Color3.fromHex(Config.Apiary.ById[kind].color), honey[kind], order)
+					end
+				end
 				if golden > 0 then
 					order += 1
 					chip(chips, Color3.fromHex(Rules.Golden.color), golden, order)
@@ -357,7 +372,7 @@ return {
 					TextSize = Theme.TextSize.Small,
 					TextWrapped = true,
 					Position = UDim2.fromOffset(8, 82),
-					Size = UDim2.new(1, -16, 0, if recipe.season then 30 else 40),
+					Size = UDim2.new(1, -16, 0, if recipe.season or honeyKind then 30 else 40),
 					Parent = card,
 				})
 				-- 3.11: seasonal recipes say when they can be cooked.
@@ -373,7 +388,30 @@ return {
 						Parent = card,
 					})
 				end
-				if fish > 0 and not fishing then
+				if honeyKind then
+					local def = Config.Apiary.ById[honeyKind]
+					Util.text({
+						Name = "HoneyHave",
+						Text = string.format("You have %d %s", tonumber(stock.honey[honeyKind]) or 0, if def then def.name else honeyKind),
+						TextColor3 = C.TextMuted,
+						TextSize = Theme.TextSize.Small,
+						Position = UDim2.fromOffset(8, 112),
+						Size = UDim2.new(1, -16, 0, 22),
+						Parent = card,
+					})
+				end
+				if honeyKind and not apiaryOpen then
+					Util.text({
+						Name = "NeedsHoney",
+						Text = "Needs honey from the Apiary",
+						TextColor3 = C.Red,
+						TextSize = Theme.TextSize.Small,
+						TextWrapped = true,
+						Position = UDim2.fromOffset(8, 136),
+						Size = UDim2.new(1, -16, 0, 40),
+						Parent = card,
+					})
+				elseif fish > 0 and not fishing then
 					Util.text({
 						Name = "NeedsFish",
 						Text = "Needs fish from the Fishing Pond",
@@ -577,6 +615,7 @@ return {
 						"profile.Monsters.list",
 						"profile.Progression.level",
 						"profile.Bond.list",
+						"profile.Apiary.store",
 					}
 				do
 					bag.add(ctx.Store:Observe(path, refresh))

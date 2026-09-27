@@ -9,8 +9,10 @@
 	  Kitchen.EmptySlot() -> Slot
 	  Kitchen.SlotCount(isUnlocked: (key) -> boolean) -> number
 	  Kitchen.Split(recipe) -> (food: { [flavor]: n }, fish: number, golden: number)
-	  Kitchen.Missing(recipe, have: { food = { [flavor]: n }, fish, golden, kinds? }) -> key?
+	  Kitchen.Honey(recipe) -> { [kind]: n }   3.12: the recipe's honey cost (empty when none)
+	  Kitchen.Missing(recipe, have: { food = { [flavor]: n }, fish, golden, kinds?, honey? }) -> key?
 	                                        "fish", "golden" or a flavour id the player is short of;
+	                                        3.12: "honey" when have.honey = { [kind]: n } is short;
 	                                        3.11: "seasonFish" when kinds = { [fishId]: n } lacks the
 	                                        recipe's seasonFish
 	  Kitchen.SeasonNote(recipe, seasonId) -> (text?, inSeason)
@@ -64,7 +66,9 @@ end
 function Kitchen.Split(recipe)
 	local food, fish, golden = {}, 0, 0
 	for key, n in recipe.cost do
-		if key == "fish" then
+		if key == "honey" then
+			continue -- 3.12: Kitchen.Honey
+		elseif key == "fish" then
 			fish = n
 		elseif key == Rules.Golden.id then
 			golden = n
@@ -75,8 +79,19 @@ function Kitchen.Split(recipe)
 	return food, fish, golden
 end
 
+function Kitchen.Honey(recipe): { [string]: number }
+	local honey = type(recipe) == "table" and type(recipe.cost) == "table" and recipe.cost.honey
+	return if type(honey) == "table" then table.clone(honey) else {}
+end
+
 function Kitchen.Missing(recipe, have): string?
 	local food, fish, golden = Kitchen.Split(recipe)
+	local store = if type(have.honey) == "table" then have.honey else {}
+	for kind, n in Kitchen.Honey(recipe) do
+		if n > (tonumber(store[kind]) or 0) then
+			return "honey"
+		end
+	end
 	if fish > (have.fish or 0) then
 		return "fish"
 	end
@@ -172,6 +187,12 @@ function Kitchen.ServeProblem(recipe, m, info): string?
 	elseif effect == "bond" then
 		if (info and info.hearts or 0) >= Config.Bond.MaxHearts then
 			return string.format("%s already has every Bond heart", name)
+		end
+	elseif effect == "royal" then
+		-- 3.12: a heart and full Mood; refused only when it would do neither.
+		local fullMood = (m.mood or Config.Economy.Mood.start) >= Config.Economy.Mood.max
+		if fullMood and (info and info.hearts or 0) >= Config.Bond.MaxHearts then
+			return string.format("%s already has every Bond heart and full Mood", name)
 		end
 	elseif effect == "job" then
 		if (m.stage or 1) < Config.Jobs.MinStage then

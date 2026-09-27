@@ -3,7 +3,7 @@
 	Market Square for Config.Merchant.Stay seconds out of every Cycle (the client draws it and its
 	"Trade" prompt, Controllers/Merchant). Each visit sells the same Slots offers to everyone
 	(Logic/Merchant.Stock); each player may buy an offer up to its limit per visit, paying one of
-	its ways to pay (coins, gems, amber, fish or Pantry dishes), all or nothing.
+	its ways to pay (coins, gems, amber, fish, Pantry dishes or 3.12 honey), all or nothing.
 
 	Save section (profile.Merchant), version 1:
 	  visit   = the visit `bought` counts (a new visit clears it)
@@ -35,7 +35,7 @@ local Logic = require(Shared.Logic.Merchant)
 local Merchant = {
 	Name = "Merchant",
 	Dependencies = { "Currency", "Progression", "Monsters", "Rewards" },
-	OptionalDependencies = { "Kitchen", "Fishing", "DigSite", "Ranch" },
+	OptionalDependencies = { "Kitchen", "Fishing", "DigSite", "Ranch", "Apiary" },
 }
 
 Merchant.Profile = {
@@ -54,7 +54,7 @@ local TICK = 5
 local ctx
 local Config, Rules
 local Currency, Progression, Monsters, Rewards
-local Kitchen, Fishing, DigSite, Ranch
+local Kitchen, Fishing, DigSite, Ranch, Apiary
 
 local announced = {} -- [player] = the visit already announced
 
@@ -133,6 +133,11 @@ local function charge(player, pay, amount: number)
 	elseif pay.kind == "dishes" then
 		if not Kitchen or not Kitchen:SpendDishes(player, amount) then
 			ctx:Fail("Not enough Pantry dishes")
+		end
+	elseif pay.kind == "honey" then
+		-- 3.12: any honey but Royal Jelly, the most plentiful kind first (Apiary:SpendAnyHoney).
+		if not Apiary or not Apiary:SpendAnyHoney(player, amount) then
+			ctx:Fail("Not enough honey")
 		end
 	else
 		ctx:Fail("That way to pay isn't offered")
@@ -280,6 +285,7 @@ function Merchant.Start()
 	Fishing = ctx:GetSystem("Fishing")
 	DigSite = ctx:GetSystem("DigSite")
 	Ranch = ctx:GetSystem("Ranch")
+	Apiary = ctx:GetSystem("Apiary")
 end
 
 function Merchant.PlayerAdded(player)

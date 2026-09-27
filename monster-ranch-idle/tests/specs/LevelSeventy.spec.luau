@@ -430,6 +430,9 @@ return function(t)
 			-- 3.12: the Observatory (base, dome and telescope step).
 			local ob = World.Observatory
 			table.insert(list, box("observatory", ob.offset[1], ob.offset[3], ob.size[1], ob.size[2]))
+			-- 3.12: the Apiary's beehive stands (built by the client, Controllers/Apiary).
+			local ap = Config.Apiary.World
+			table.insert(list, box("apiary", ap.offset[1], ap.offset[3], ap.size[1], ap.size[2]))
 			-- The gate posts on the front edge (see World/Build.luau).
 			table.insert(list, box("gate", World.PlotSize[1] / 2 - 2, 0, 2, 18))
 			return list

@@ -25,7 +25,7 @@
 	  Kitchen.PlantGolden { plot }     a Golden seed into an empty Feed Garden plot -> { readyAt }
 
 	Effects (Config.Kitchen.Effects): meals (Monsters:AddMeals + MonsterFed per meal + feed Mood),
-	mood (to the max), bond (Bond:AddHeart), job (Jobs:RegisterOutputBoost "kitchen"), loot
+	mood (to the max), bond (Bond:AddHeart), royal (3.12: Bond:AddHeart + Mood to the max), job (Jobs:RegisterOutputBoost "kitchen"), loot
 	(Expeditions:RegisterLootModifier "kitchen", spent when a run with that monster is claimed).
 
 	Public API (3.11, for the Travelling Merchant):
@@ -35,7 +35,8 @@
 	                                               all or nothing
 
 	Optional systems, looked up in Start: Fishing (FishCount / SpendFish; absent = 0 fish), Bond,
-	Jobs, Expeditions, Ranch (golden crop + harvest hook).
+	Jobs, Expeditions, Ranch (golden crop + harvest hook), Apiary (3.12: Have / SpendHoney for
+	honey recipes; absent = honey recipes refused).
 
 	Bus: publishes DishCooked (player, { dish, count }) per collected slot; WelcomeItem when dishes
 	finished cooking while the player was away.
@@ -49,7 +50,7 @@ local Seasons = require(Shared.Logic.Seasons)
 local Kitchen = {
 	Name = "Kitchen",
 	Dependencies = { "Currency", "Progression", "Monsters" },
-	OptionalDependencies = { "Fishing", "Bond", "Jobs", "Expeditions", "Ranch" },
+	OptionalDependencies = { "Fishing", "Bond", "Jobs", "Expeditions", "Ranch", "Apiary" },
 }
 
 local HOUR = 3600
@@ -57,7 +58,7 @@ local HOUR = 3600
 local ctx
 local Config, Rules
 local Currency, Progression, Monsters
-local Fishing, Bond
+local Fishing, Bond, Apiary
 
 local announced = {} -- [player] = { [slot] = readyAt } finished slots already toasted
 
@@ -221,6 +222,19 @@ local function cook(player, payload)
 	if golden > (s.golden or 0) then
 		ctx:Fail(string.format("Not enough %s", Rules.Golden.name))
 	end
+	-- 3.12: honey from the Apiary's store (a honey recipe needs the Apiary).
+	local honey = Logic.Honey(recipe)
+	if next(honey) ~= nil then
+		if not Apiary then
+			ctx:Fail("Needs honey from the Apiary")
+		end
+		for kind, n in honey do
+			if Apiary:Have(player, kind) < n then
+				local def = Config.Apiary.ById[kind]
+				ctx:Fail(string.format("Not enough %s", if def then def.name else kind))
+			end
+		end
+	end
 	local cost = {}
 	for flavor, n in food do
 		cost["food." .. flavor] = n
@@ -237,6 +251,9 @@ local function cook(player, payload)
 	end
 	if not Currency:Spend(player, cost, "kitchen") then
 		ctx:Fail("Not enough food")
+	end
+	for kind, n in honey do
+		Apiary:SpendHoney(player, kind, n)
 	end
 	if golden > 0 then
 		s.golden -= golden
@@ -340,6 +357,12 @@ local function serve(player, payload)
 		if not Bond or not Bond:AddHeart(player, m.id, "dish") then
 			ctx:Fail(string.format("%s already has every Bond heart", Formulas.DisplayName(m)))
 		end
+	elseif effect == "royal" then
+		-- 3.12: +1 Bond heart (when there is one to give) and Mood to the maximum.
+		if Bond and Bond:Hearts(player, m.id) < Config.Bond.MaxHearts then
+			Bond:AddHeart(player, m.id, "dish")
+		end
+		Monsters:AddMood(player, m.id, Config.Economy.Mood.max)
 	elseif effect == "job" then
 		local entry = boostOf(player, m.id, true)
 		entry.job = Logic.AddWindow(entry.job, now, Rules.JobBoost.hours * HOUR)
@@ -451,6 +474,7 @@ end
 function Kitchen.Start()
 	Fishing = ctx:GetSystem("Fishing")
 	Bond = ctx:GetSystem("Bond")
+	Apiary = ctx:GetSystem("Apiary")
 	local Jobs = ctx:GetSystem("Jobs")
 	if Jobs and Jobs.RegisterOutputBoost then
 		Jobs:RegisterOutputBoost("kitchen", function(player, id)

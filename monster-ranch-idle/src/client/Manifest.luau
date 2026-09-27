@@ -87,6 +87,8 @@ return {
 		"Merchant",
 		-- 3.12: the Curator wing of Museum Exhibits beside the Codex Museum
 		"CuratorWing",
+		-- 3.12: the beehives on the own plot's north strip and their "Tend" prompt
+		"Apiary",
 		-- R2-CLOCKWORK: Clockwork Canyon's gear landmark and walk-in area (appended, see RULES)
 		"ClockworkCanyon",
 		-- R2-ABYSS: the Sunken Abyss's descent and walk-in area (appended, see RULES)
@@ -113,6 +115,7 @@ return {
 		"Observatory", -- 3.12 · Observatory & Star Charts (opened from the telescope's prompt)
 		"Merchant", -- 3.11 · Travelling Merchant (the caravan's prompt, the Events screen)
 		"Exhibits", -- 3.12 · Museum Exhibits (the Curator desk's prompt, the Codex screen)
+		"Apiary", -- 3.12 · Apiary & Honey (the beehives' "Tend" prompt, the Kitchen header)
 		"Dojo", -- 3.11 · Dojo (from Monster Detail)
 		"Events", -- 3.8 · Events calendar
 		"Trade",

@@ -14,6 +14,8 @@
 	Pay: { kind, amount?, seconds? }  one way to pay, all or nothing:
 	  coins (`seconds` of ranch income, at least MinCoins) · gems · amber · fish (Fishing:SpendFish)
 	  · dishes (Kitchen pantry dishes, the most plentiful first)
+	  · honey (3.12: Apiary honey of any kind but Royal Jelly, the most plentiful kind first,
+	    Apiary:SpendAnyHoney; refused without the Apiary)
 ]]
 
 local Merchant = {}
@@ -138,6 +140,28 @@ Merchant.Offers = {
 		weight = 3,
 		limit = 1,
 		pay = { { kind = "gems", amount = 150 }, { kind = "amber", amount = 20 } },
+	},
+	-- 3.12 · Apiary & Honey: honey barter (appended; never reorder)
+	{
+		id = "honey_seeds",
+		kind = "seeds",
+		name = "Golden Seed Jar",
+		desc = "Two Golden seeds for the Feed Garden.",
+		amount = 2,
+		weight = 8,
+		limit = 2,
+		unlock = "apiary",
+		pay = { { kind = "coins", seconds = 1500 }, { kind = "honey", amount = 8 } },
+	},
+	{
+		id = "honey_eggs",
+		kind = "egg",
+		eggs = { { id = "grove", weight = 3 }, { id = "crystal", weight = 2 } },
+		amount = 1,
+		weight = 6,
+		limit = 1,
+		unlock = "apiary",
+		pay = { { kind = "gems", amount = 60 }, { kind = "honey", amount = 20 } },
 	},
 }
 

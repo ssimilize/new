@@ -72,6 +72,43 @@ players get and where it lives in the code.
 - Titles: `Config/Exhibits.Items`, appended to `Config/Mastery` Rewards like the Codex titles.
 - Tests: `Exhibits.spec`, `ExhibitsClient.spec`.
 
+### Apiary & Honey
+
+**For players**
+- From Ranch Level 14 three beehive stands sit in the north strip of every ranch, between the
+  pens and the Fishing Pond. Hive 1 opens at Level 14, hive 2 at 27 and hive 3 at 42 (a locked
+  hive is an empty stand). The "Tend" prompt at the sign opens the Apiary.
+- Each hive is tended by one Adult from the barn (busy while it tends; Unassign gives it back and
+  collects its honey). Honey an hour = 6 × √(SPD power), the Job Board's forager formula (about
+  6 an hour for an average worker, 35 for a maxed Mythic); Sprout monsters make 25% more.
+- A hive holds 8 hours of honey (more with the Observatory's hive perk), made online and offline,
+  then stops until collected. Honey takes the season it was made in: Blossom (spring), Clover
+  (summer), Heather (autumn), Frost (winter); a stretch across the Saturday turnover pays both.
+- Collect all takes every hive's honey. Each hive collect with honey has a 2% chance of a Royal
+  Jelly. Sell honey for 45 seconds of ranch income each, Royal Jelly for 20 minutes.
+- Five new Kitchen recipes: Blossom Honey Bun (3 growth meals), Clover Honey Tea (full Mood),
+  Heather Honey Roast (Job Board boost), Frost Honey Drops (expedition loot), all cooked in any
+  season, and the Royal Jelly Tart (new effect: +1 Bond heart and full Mood).
+- The Travelling Merchant takes honey (any kind but Royal Jelly, the most plentiful first) for two
+  new offers: a Golden Seed Jar (2 seeds, 8 honey) and an egg basket (20 honey). New weekly goal:
+  Collect 40 honey from your beehives.
+
+**In the code**
+- `Config/Apiary`, `Logic/Apiary` (rate, cap, season-split settle, Royal Jelly seed
+  `("apiary", userId, collect n)`), `Systems/Apiary` (actions `Apiary.Assign`, `Apiary.Unassign`,
+  `Apiary.Collect`, `Apiary.Sell`; API `Honey`, `Have`, `AddHoney`, `SpendHoney`, `HoneyCount`,
+  `SpendAnyHoney`; publishes `HoneyCollected` per kind with `honey = false` for Royal Jelly; busy
+  tag `apiary`; optional `Observatory:Perk(player, "hive_hours")`).
+- Client: `Controllers/Apiary` builds the hives from Parts in `Workspace.Apiary` on the own plot
+  (bees off on Low graphics or reduced motion), screen `Screens/Apiary`; honey icons drawn in code
+  (`Components/Icon` kinds `honey_<kind>`, `royal_jelly`); Rewards card text for kind `honey`.
+- Kitchen: recipe cost `honey = { [kind] = n }` (`Logic/Kitchen.Honey`, Missing -> "honey"),
+  effect `royal`; Merchant pay kind `honey`; weekly goal `honey_40` (filter `honey = true`,
+  `Config.Quests.CountField.HoneyCollected = "amount"`).
+- World: `Config.Apiary.World` (plot-local (-8, 0, -47), footprint 22 × 10), Decor keep-out
+  `{ -8, -47, 12, 6 }`, checked by the LevelSeventy plot-layout test.
+- Tests: `Apiary.spec`, `ApiaryClient.spec`.
+
 ## 3.11 · Seasons & secrets
 
 ### Dig Site & Fossils

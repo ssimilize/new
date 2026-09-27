@@ -102,6 +102,8 @@ return {
 		"Merchant",
 		-- 3.12 · Museum Exhibits
 		"Exhibits",
+		-- 3.12 · Apiary & Honey
+		"Apiary",
 		-- 3.11 · Ranch Seasons
 		"Seasons",
 		-- 3.12 · Observatory & Star Charts

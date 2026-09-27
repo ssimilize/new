@@ -226,6 +226,10 @@ function Util.rewardText(item): string
 		return string.format("%s Amber", Format.short(amount))
 	elseif kind == "shovel" then
 		return string.format("%s Shovels", Format.short(amount))
+	elseif kind == "honey" then
+		-- 3.12 · Apiary: id = the honey kind (or royal_jelly)
+		local def = item.id and Config.Apiary.ById[item.id]
+		return string.format("%s %s", Format.short(amount), if def then def.name else "Honey")
 	end
 	return Format.short(amount)
 end
@@ -238,6 +242,9 @@ function Util.rewardIcon(item, size: number): GuiObject
 		if ok then
 			return MonsterIcon.new(ap, size)
 		end
+	end
+	if item.kind == "honey" and type(item.id) == "string" then
+		return Icon.new(if item.id == "royal_jelly" then item.id else "honey_" .. item.id, size)
 	end
 	return Icon.new(Icon.forReward(item.kind), size)
 end
