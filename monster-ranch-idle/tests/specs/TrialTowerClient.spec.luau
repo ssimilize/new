@@ -8,6 +8,8 @@ return function(t)
 	local describe, it, expect = t.describe, t.it, t.expect
 	local TestKernel, ClientHarness = t.TestKernel, t.ClientHarness
 	local Config = t.Shared("Config")
+	local TowerLogic = t.Shared("Logic.TrialTower")
+	local Format = t.Shared("Logic.Format")
 
 	local function allSystems()
 		local list = {}
@@ -79,6 +81,18 @@ return function(t)
 			expect(c:HasText("Next milestone: floor 5", screen)).toBe(true)
 			expect(c:HasText("Your Expeditions squad: 3 monsters", screen)).toBe(true)
 			expect(screen:FindFirstChild("Enemy1", true) ~= nil).toBe(true)
+			-- Each enemy shows the power its floor scales it to (levels come from a random stage).
+			local power = TowerLogic.Preview(h:Section(p, "TrialTower").week, 1).list[1].power
+			expect(screen:FindFirstChild("Enemy1", true):FindFirstChild("EnemyPower").Text).toBe(
+				string.format("Power %s", Format.short(power))
+			)
+			-- The three buttons fit their row (fixed widths ran Leaderboard past the card in Studio).
+			local actions = screen:FindFirstChild("Actions", true)
+			local used = 2 * 12
+			for _, name in { "Fight", "Squad", "Board" } do
+				used += actions:FindFirstChild(name).AbsoluteSize.X
+			end
+			expect(used <= actions.AbsoluteSize.X).toBe(true)
 
 			local Battle = c:require(c.clientFolder.UI.Screens.Parts.Battle)
 			Battle.SetMode("2d")

@@ -83,7 +83,8 @@ end
 function TrialTower.Preview(week: number, floor: number)
 	local list = {}
 	local boss = false
-	for _, record in TrialTower.Enemies(week, floor) do
+	local enemies = TrialTower.Enemies(week, floor)
+	for _, record in enemies do
 		boss = boss or record.boss == true
 		local name = record.name
 		if name == nil or name == "" then
@@ -97,6 +98,9 @@ function TrialTower.Preview(week: number, floor: number)
 			lv = record.lv,
 			rarity = record.rarity,
 			boss = record.boss == true,
+			-- The power each enemy is scaled to. Its level comes from a random stage of the
+			-- floor's region, so levels go up and down while the power only climbs: show this.
+			power = math.floor(Formulas.MonsterPower(record) * (record.statMult or 1) + 0.5),
 		})
 	end
 	return { boss = boss, region = TrialTower.Region(floor), list = list }

@@ -382,6 +382,7 @@ function Util.card(props)
 		BackgroundColor3 = props.Color or C.Card,
 		Size = props.Size or UDim2.fromScale(1, 1),
 		Position = props.Position or UDim2.new(),
+		AnchorPoint = props.AnchorPoint or Vector2.zero,
 		LayoutOrder = props.LayoutOrder or 0,
 		Parent = props.Parent,
 	}, { Create.Corner(Theme.Radius.Card), Create.Stroke(Theme.Stroke.Card) })

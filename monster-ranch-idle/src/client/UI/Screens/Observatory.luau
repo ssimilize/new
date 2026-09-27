@@ -288,7 +288,7 @@ return {
 			local row = New("Frame", {
 				Name = "Chart_" .. def.id,
 				BackgroundColor3 = C.Card,
-				Size = UDim2.new(1, -8, 0, 64),
+				Size = UDim2.new(1, -8, 0, 84),
 				LayoutOrder = def.order,
 			}, { Create.Corner(10), Create.Stroke(2) })
 			row:SetAttribute("Progress", progress)
@@ -306,8 +306,11 @@ return {
 				Text = string.format("Progress %d / %d · %s", progress, Cfg.Observations, Logic.PerkText(def.perk.key, def.perk.value)),
 				TextSize = Theme.TextSize.Small,
 				TextColor3 = C.TextMuted,
+				-- Two lines: the perk text ("3% better odds of rare fish") ran past one in Studio.
+				TextWrapped = true,
+				TextYAlignment = Enum.TextYAlignment.Top,
 				Position = UDim2.fromOffset(12, 32),
-				Size = UDim2.new(1, -170, 0, 26),
+				Size = UDim2.new(1, -170, 0, 46),
 				Parent = row,
 			})
 			local text, can = "Observe", isNight and left > 0 and run == nil

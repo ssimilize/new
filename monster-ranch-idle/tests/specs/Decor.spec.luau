@@ -21,11 +21,12 @@ return function(t)
 		return { id = id, x = x, z = z, rot = rot or 0 }
 	end
 
-	-- A free outdoor spot row along the plot's back (z = -25 grid = -50 studs), clear of pens.
+	-- A free outdoor spot row along the plot's back (z = -25 grid = -50 studs), clear of pens and
+	-- in the gap between the 3.12 Observatory (x -58..-42 studs) and the Apiary (x -20..4).
 	local function row(id, n)
 		local list = {}
 		for i = 1, n do
-			table.insert(list, e(id, -30 + (i - 1) * 3, -25))
+			table.insert(list, e(id, -18 + (i - 1) * 3, -25))
 		end
 		return list
 	end
@@ -108,7 +109,7 @@ return function(t)
 		end)
 
 		it("keeps pieces inside the plot and off the aisle, gate, pad, barn, statues and garden", function()
-			expect(Layout.Check(e("barrel", -30, -25))).toBeNil()
+			expect(Layout.Check(e("barrel", -18, -25))).toBeNil()
 			expect(Layout.Check(e("barrel", 37, -25))).toBe("That spot is outside your ranch")
 			expect(Layout.Check(e("barrel", 0, 28))).toBe("That spot is outside your ranch")
 			expect(Layout.Check(e("barrel", 0, -1))).toBe("That spot is blocked") -- the aisle
@@ -126,7 +127,7 @@ return function(t)
 			expect(Layout.PenOf(inside)).toBe(1)
 			expect(Layout.Check(e("barrel", -19, -19))).toBe("Keep decor clear of the pen fences") -- on the rail
 			expect(Layout.Check(e("barrel", -19, -11))).toBe("That spot is blocked") -- the habitat spot
-			expect(Layout.PenOf(e("barrel", -30, -25))).toBeNil()
+			expect(Layout.PenOf(e("barrel", -18, -25))).toBeNil()
 		end)
 
 		it("rotation can make a piece fit or not", function()
@@ -136,11 +137,11 @@ return function(t)
 		end)
 
 		it("finds overlaps, but flat paths only meet flat pieces", function()
-			local a, b = e("barrel", -30, -25), e("barrel", -30, -25)
+			local a, b = e("barrel", -18, -25), e("barrel", -18, -25)
 			expect(Layout.Overlaps(a, b)).toBe(true)
-			expect(Layout.Overlaps(e("barrel", -30, -25), e("barrel", -29, -25))).toBe(false) -- touching
-			expect(Layout.Overlaps(e("stone_path", -30, -25), e("park_bench", -30, -25))).toBe(false)
-			expect(Layout.Overlaps(e("stone_path", -30, -25), e("brick_path", -29, -25))).toBe(true)
+			expect(Layout.Overlaps(e("barrel", -18, -25), e("barrel", -17, -25))).toBe(false) -- touching
+			expect(Layout.Overlaps(e("stone_path", -18, -25), e("park_bench", -18, -25))).toBe(false)
+			expect(Layout.Overlaps(e("stone_path", -18, -25), e("brick_path", -17, -25))).toBe(true)
 			local problems = Layout.Problems({ a, b, e("barrel", 0, 0) })
 			expect(problems[1]).toBe("Decorations can't overlap")
 			expect(problems[3]).toBe("That spot is blocked")
@@ -154,7 +155,9 @@ return function(t)
 			expect(err).toBe("You don't own enough of that decor")
 			local many = {}
 			for i = 1, 21 do
-				table.insert(many, e("barrel", -34 + ((i - 1) % 11) * 3, if i > 11 then -23 else -26))
+				-- Barrels are one grid square wide: ten a row in the gap between the Observatory
+				-- and the Apiary (3.12).
+				table.insert(many, e("barrel", -20 + (i - 1) % 10, -26 + (i - 1) // 10 * 2))
 			end
 			ok, err = Layout.Validate(many, 1, { barrel = 30 })
 			expect(ok).toBe(false)
@@ -196,7 +199,7 @@ return function(t)
 			local other = h:Join()
 			local Shop = h:System("Shop")
 			Shop:AddDecor(p, "swing_set", 1)
-			local layout = { e("swing_set", -22, -15, 1), e("park_bench", -30, -25, 0) }
+			local layout = { e("swing_set", -22, -15, 1), e("park_bench", -18, -25, 0) }
 			expect(h:Call(p, "Decor.Save", { layout = layout }).count).toBe(2)
 			expect(Shop:DecorCount(p, "swing_set")).toBe(0)
 			expect(Shop:DecorCount(p, "park_bench")).toBe(Config.Decor.ById.park_bench.starter - 1)
@@ -208,7 +211,7 @@ return function(t)
 
 			-- Moving a piece keeps the count; removing puts it back in storage.
 			h:Advance(3)
-			h:Call(p, "Decor.Save", { layout = { e("swing_set", -30, -24, 0) } })
+			h:Call(p, "Decor.Save", { layout = { e("swing_set", -18, -24, 0) } })
 			expect(Shop:DecorCount(p, "swing_set")).toBe(0)
 			expect(Shop:DecorCount(p, "park_bench")).toBe(Config.Decor.ById.park_bench.starter)
 			h:Advance(3)
@@ -217,16 +220,16 @@ return function(t)
 
 			-- A rejoin keeps the layout.
 			h:Advance(3)
-			h:Call(p, "Decor.Save", { layout = { e("swing_set", -30, -24, 3) } })
+			h:Call(p, "Decor.Save", { layout = { e("swing_set", -18, -24, 3) } })
 			local back = h:Rejoin(p)
-			expect(h:Section(back, "Decor").layout).toEqual({ e("swing_set", -30, -24, 3) })
+			expect(h:Section(back, "Decor").layout).toEqual({ e("swing_set", -18, -24, 3) })
 		end)
 
 		it("refuses unowned pieces, bad spots, overlaps, the cap, bad payloads and spam", function()
 			local h = boot()
 			local p = h:Join()
 			local Shop = h:System("Shop")
-			expect(h:Reject(p, "Decor.Save", { layout = { e("garden_fountain", -30, -25) } })).toBe("You don't own enough of that decor")
+			expect(h:Reject(p, "Decor.Save", { layout = { e("garden_fountain", -18, -25) } })).toBe("You don't own enough of that decor")
 			h:Advance(3)
 			local fences = Config.Decor.ById.picket_fence.starter
 			expect(h:Reject(p, "Decor.Save", { layout = row("picket_fence", fences + 1) })).toBe("You don't own enough of that decor")
@@ -238,19 +241,21 @@ return function(t)
 			h:Advance(3)
 			expect(h:Reject(p, "Decor.Save", { layout = { e("barrel", 0, 0) } })).toBe("That spot is blocked")
 			h:Advance(3)
-			expect(h:Reject(p, "Decor.Save", { layout = { e("barrel", -30, -25), e("barrel", -30, -25) } })).toBe(
+			expect(h:Reject(p, "Decor.Save", { layout = { e("barrel", -18, -25), e("barrel", -18, -25) } })).toBe(
 				"Decorations can't overlap"
 			)
 			h:Advance(3)
 			local many = {}
 			for i = 1, 21 do
-				table.insert(many, e("barrel", -34 + ((i - 1) % 11) * 3, if i > 11 then -23 else -26))
+				-- Barrels are one grid square wide: ten a row in the gap between the Observatory
+				-- and the Apiary (3.12).
+				table.insert(many, e("barrel", -20 + (i - 1) % 10, -26 + (i - 1) // 10 * 2))
 			end
 			expect(h:Reject(p, "Decor.Save", { layout = many })).toContain("up to 20")
 			expect(Shop:DecorCount(p, "barrel")).toBe(40) -- failures change nothing
 			expect(h:Section(p, "Decor").layout).toEqual({})
 			h:Advance(3)
-			h:Reject(p, "Decor.Save", { layout = { e("barrel", -30, -25, 8) } })
+			h:Reject(p, "Decor.Save", { layout = { e("barrel", -18, -25, 8) } })
 			h:Advance(3)
 			h:Reject(p, "Decor.Save", { layout = { { id = "barrel", x = 1.5, z = 0, rot = 0 } } })
 			h:Advance(3)
@@ -276,7 +281,7 @@ return function(t)
 			local p = h:Join()
 			local Shop = h:System("Shop")
 			Shop:AddDecor(p, "hay_bale", 2)
-			h:Call(p, "Decor.Save", { layout = { e("hay_bale", -30, -25) } })
+			h:Call(p, "Decor.Save", { layout = { e("hay_bale", -18, -25) } })
 			-- A piece saved before 3.10 on the spot the Kitchen now stands on.
 			local covered = e("hay_bale", 7, 22)
 			expect(Layout.Check(covered)).toBe("That spot is blocked")
@@ -289,7 +294,7 @@ return function(t)
 			local back = h:Rejoin(p)
 			local layout = h:Section(back, "Decor").layout
 			expect(#layout).toBe(1)
-			expect(layout[1].x).toBe(-30)
+			expect(layout[1].x).toBe(-18)
 			expect(h:System("Shop"):DecorCount(back, "hay_bale")).toBe(stored + 1)
 			local said = false
 			for _, item in welcome do
@@ -300,7 +305,7 @@ return function(t)
 			end
 			expect(said).toBe(true)
 			-- Saving works again, and a clean layout says nothing next time.
-			expect(h:Call(back, "Decor.Save", { layout = { e("hay_bale", -30, -25), e("hay_bale", -27, -25) } }).count).toBe(2)
+			expect(h:Call(back, "Decor.Save", { layout = { e("hay_bale", -18, -25), e("hay_bale", -15, -25) } }).count).toBe(2)
 			table.clear(welcome)
 			local again = h:Rejoin(back)
 			expect(#h:Section(again, "Decor").layout).toBe(2)

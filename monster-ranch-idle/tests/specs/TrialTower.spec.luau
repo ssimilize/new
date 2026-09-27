@@ -278,6 +278,22 @@ return function(t)
 			end
 			expect(differs).toBe(true)
 		end)
+
+		it("previews each floor's enemies at a power that only climbs (their levels do not)", function()
+			local week = Boards.Week(START)
+			local last = 0
+			for floor = 1, 30 do
+				local preview = Logic.Preview(week, floor)
+				local low = math.huge
+				for _, e in preview.list do
+					low = math.min(low, e.power)
+				end
+				if not preview.boss then
+					expect(low > last).toBe(true)
+					last = low
+				end
+			end
+		end)
 	end)
 
 	describe("TrialTower sources and hooks", function()

@@ -7,7 +7,7 @@
 	            attempts left today, Retry tokens, the next milestone and its rewards, and the time
 	            to the weekly reset (ticks once a second).
 	Right card  the next floor's enemies (Logic/TrialTower.Preview: the same for everyone this
-	            week; names, levels, a BOSS badge on boss floors), the squad in use (the
+	            week; names, powers, a BOSS badge on boss floors), the squad in use (the
 	            Expeditions squad), "Fight" (TrialTower.Fight → the replay on the battle stage,
 	            Parts/Battle) and a link to the "tower" leaderboard.
 	Locked below Ranch Level 26 (a lock overlay).
@@ -227,10 +227,22 @@ return {
 				}, { Create.Corner(UDim.new(0, 10)) })
 				Util.text({
 					Name = "EnemyName",
-					Text = string.format("%s · Lv %d", e.name, e.lv or 1),
+					Text = e.name,
 					TextSize = Theme.TextSize.Body,
 					Position = UDim2.fromOffset(12, 0),
-					Size = UDim2.new(1, -24, 1, 0),
+					Size = UDim2.new(0.6, -12, 1, 0),
+					Parent = row,
+				})
+				-- Power, not level: a floor's enemies are scaled to its power, and their levels
+				-- (from a random stage of the region) would go down between floors.
+				Util.text({
+					Name = "EnemyPower",
+					Text = string.format("Power %s", Format.short(e.power or 0)),
+					TextSize = Theme.TextSize.Small,
+					TextColor3 = C.TextMuted,
+					TextXAlignment = Enum.TextXAlignment.Right,
+					Position = UDim2.new(0.6, 0, 0, 0),
+					Size = UDim2.new(0.4, -12, 1, 0),
 					Parent = row,
 				})
 			end
@@ -254,6 +266,8 @@ return {
 				})
 			end
 			local row = New("Frame", {
+				-- Buttons share the card's width (fixed widths ran the Leaderboard button past the
+				-- card's edge on a 1914 px Studio screen).
 				Name = "Actions",
 				BackgroundTransparency = 1,
 				AnchorPoint = Vector2.new(0, 1),
@@ -265,7 +279,7 @@ return {
 				Name = "Fight",
 				Text = "Fight",
 				Color = if canFight then C.Orange else C.Gray,
-				Size = UDim2.fromOffset(180, 56),
+				Size = UDim2.new(0.36, -8, 0, 56),
 				LayoutOrder = 1,
 				Parent = row,
 				OnClick = function()
@@ -280,7 +294,7 @@ return {
 				Name = "Squad",
 				Text = "Squad",
 				Color = C.Blue,
-				Size = UDim2.fromOffset(130, 56),
+				Size = UDim2.new(0.28, -8, 0, 56),
 				LayoutOrder = 2,
 				Parent = row,
 				OnClick = function()
@@ -291,7 +305,7 @@ return {
 				Name = "Board",
 				Text = "Leaderboard",
 				Color = C.Purple,
-				Size = UDim2.fromOffset(170, 56),
+				Size = UDim2.new(0.36, -8, 0, 56),
 				LayoutOrder = 3,
 				Parent = row,
 				OnClick = function()

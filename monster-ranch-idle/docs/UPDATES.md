@@ -112,8 +112,8 @@ players get and where it lives in the code.
 ### Trial Tower
 
 **For players**
-- From Ranch Level 26 a tall stone tower stands in the Market Square, east of the plaza between
-  the paths to plots 3 and 4 (across from the Workshop). Its prompt opens the Trial Tower; the
+- From Ranch Level 26 a tall stone tower stands just east of the Market Square, on the way to
+  plot 3 and clear of the Stampede Arena's ground. Its prompt opens the Trial Tower; the
   Expeditions screen has a "Tower" button in its header too.
 - Climb floor after floor with your Expeditions squad (Dojo techniques fight here too). Every
   floor is one fight, replayed on the battle stage. Enemies get stronger each floor and every
@@ -139,7 +139,7 @@ players get and where it lives in the code.
   × 1.8); levels and rarities are the stage's own. A fight's seed is (userId, week, floor, fights
   so far). Balance (`TrialTowerBalance.spec`): three Lv 24-28 Common-Rare Adults stop around floors
   11-16; five Lv 90 Mythic/Legendary Adults with techniques pass floor 40.
-- World: `Config.World.Hub` entry `trialTower` at { 112, 0, 0 }, size 16 × 44 × 16, `style =
+- World: `Config.World.Hub` entry `trialTower` at { 106, 0, -44 }, size 16 × 44 × 16, `style =
   "tower"` (`World/Build.luau`: slate body, battlement ledge, lit window slits, no gable roof);
   scenery keeps off it like every hub building.
 - Rewards kind `tower_retry` (label "N Retry tokens", icon drawn in code in `Components/Icon`);

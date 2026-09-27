@@ -66,6 +66,11 @@ return function(t)
 			c:Advance(1)
 			local screen, model = openByPrompt(c)
 			expect(model:FindFirstChild("Hive1"):GetAttribute("Open")).toBe(true)
+			-- The honey store sits inside the panel at its right edge (Studio: Util.card dropped
+			-- the AnchorPoint and the store, with its Sell buttons, hung past the panel).
+			local view, store = screen:FindFirstChild("View", true), screen:FindFirstChild("Store", true)
+			local right = view.AbsolutePosition.X + view.AbsoluteSize.X
+			expect(math.abs(store.AbsolutePosition.X + store.AbsoluteSize.X - right) < 1).toBe(true)
 			expect(model:FindFirstChild("Hive1"):GetAttribute("Tended")).toBe(false)
 
 			c:Click(screen:FindFirstChild("Hive1", true):FindFirstChild("Assign", true))

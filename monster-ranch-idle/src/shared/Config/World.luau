@@ -141,12 +141,13 @@ table.insert(World.Hub, {
 	screen = "Workshop",
 })
 
--- Update 3.12: the Trial Tower, east of the plaza between the paths to plots 3 and 4 (mirroring
--- the Workshop). A tall stone tower (Systems/World/Build: style "tower" = battlements, no roof).
+-- Update 3.12: the Trial Tower, east of the plaza on the way to plot 3, clear of the Stampede
+-- Arena's open ground (StampedeArena below, 40 round (150, 0)). A tall stone tower
+-- (Systems/World/Build: style "tower" = battlements, no roof).
 table.insert(World.Hub, {
 	id = "trialTower",
 	name = "Trial Tower",
-	position = { 112, 0, 0 },
+	position = { 106, 0, -44 },
 	size = { 16, 44, 16 },
 	color = "#8A8FA3",
 	screen = "TrialTower",
