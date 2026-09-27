@@ -365,6 +365,7 @@ Decor.Layout = {
 		{ 58, 43, 9, 9 }, -- the barn and its door
 		{ -35.5, 44, 27.5, 3.5 }, -- the Hall of Fame statue row
 		{ 42, 44, 6, 5 }, -- the Feed Garden
+		{ 14, 43, 10, 8 }, -- the Kitchen and its door (3.10)
 	},
 	-- Legacy pen slots (pen-local fractions of the half extents) the migration puts old decor on.
 	legacySpots = { { -0.62, -0.55 }, { 0.62, -0.55 }, { 0, -0.62 } },

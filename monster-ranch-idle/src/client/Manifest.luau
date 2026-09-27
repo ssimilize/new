@@ -94,6 +94,7 @@ return {
 		"Expeditions",
 		"Breeding",
 		"Jobs", -- 3.7 · Ranch Jobs
+		"Kitchen", -- 3.10 · Kitchen & Pantry
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

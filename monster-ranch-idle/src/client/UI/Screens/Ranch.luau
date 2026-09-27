@@ -209,7 +209,8 @@ function Ranch.Build(ctx)
 
 	local function openPlantPicker(plot: number)
 		popup:SetTitle(string.format("Plant in plot %d", plot))
-		popup:SetSize(UDim2.fromOffset(460, 330))
+		local seeds = tonumber(store:Get("profile.Kitchen.seeds")) or 0 -- 3.10: Golden seeds (Kitchen)
+		popup:SetSize(UDim2.fromOffset(460, if seeds > 0 then 390 else 330))
 		Tiles.clear(popup.Body)
 		local list = Tiles.col({ Size = UDim2.fromScale(1, 1), Parent = popup.Body }, 8)
 		for i, flavor in Config.Food.List do
@@ -237,6 +238,45 @@ function Ranch.Build(ctx)
 				Parent = row,
 				OnClick = function()
 					local ok = StoreKit.request(ctx, "Ranch.Plant", { plot = plot, flavor = flavor.id })
+					if ok then
+						popup:Hide()
+					end
+				end,
+			})
+		end
+		if seeds > 0 then
+			local golden = Config.Kitchen.Golden
+			local row = Tiles.frame({ Size = UDim2.new(1, 0, 0, 52), LayoutOrder = #Config.Food.List + 1, Parent = list })
+			New("Frame", {
+				BackgroundColor3 = Color3.fromHex(golden.color),
+				AnchorPoint = Vector2.new(0, 0.5),
+				Position = UDim2.new(0, 0, 0.5, 0),
+				Size = UDim2.fromOffset(28, 28),
+				Parent = row,
+			}, { Create.Round(), Create.Stroke(2) })
+			Tiles.label({
+				Text = string.format(
+					"%s ×%d · +%d in %s",
+					golden.seedName,
+					seeds,
+					Config.Kitchen.GoldenYield,
+					Format.duration(Config.Kitchen.GoldenGrowMinutes * 60)
+				),
+				TextSize = Theme.TextSize.Body,
+				Position = UDim2.fromOffset(38, 0),
+				Size = UDim2.new(1, -160, 1, 0),
+				Parent = row,
+			})
+			Button.new({
+				Name = "PlantGolden",
+				Text = "Plant",
+				Color = C.Gold,
+				Size = UDim2.fromOffset(110, 46),
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, 0, 0.5, 0),
+				Parent = row,
+				OnClick = function()
+					local ok = StoreKit.request(ctx, "Kitchen.PlantGolden", { plot = plot })
 					if ok then
 						popup:Hide()
 					end
@@ -616,7 +656,10 @@ function Ranch.Build(ctx)
 				Size = UDim2.new(1, 0, 0, 20),
 				Parent = card,
 			})
-			local flavor = type(p) == "table" and p.flavor and Config.Food.ById[p.flavor]
+			-- 3.10: a Golden seed (Kitchen) grows golden produce in a plot like a food.
+			local flavor = type(p) == "table"
+				and p.flavor
+				and (Config.Food.ById[p.flavor] or (p.flavor == Config.Kitchen.Golden.id and Config.Kitchen.Golden))
 			if not flavor then
 				Tiles.label({
 					Text = "Empty",
@@ -641,7 +684,7 @@ function Ranch.Build(ctx)
 			else
 				local readyAt = tonumber(p.readyAt) or 0
 				New("Frame", {
-					BackgroundColor3 = Theme.Food(flavor.id),
+					BackgroundColor3 = if Config.Food.ById[flavor.id] then Theme.Food(flavor.id) else Color3.fromHex(flavor.color),
 					AnchorPoint = Vector2.new(0.5, 0),
 					Position = UDim2.new(0.5, 0, 0, 28),
 					Size = UDim2.fromOffset(36, 36),

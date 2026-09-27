@@ -373,6 +373,20 @@ Api.Actions = {
 		returns = "{ rewards: { Reward } }  -- the forager's stored food, paid before the change",
 	},
 
+	-- Kitchen & Pantry (3.10) · see Config/Kitchen and Logic/Kitchen -------------------
+	["Kitchen.Cook"] = {
+		schema = T.struct({ recipe = T.key(Config.Kitchen.ById), slot = T.optional(T.integer(1, Config.Kitchen.MaxSlots)) }),
+		rate = 3,
+		returns = "{ slot: number, readyAt: number }",
+	},
+	["Kitchen.Collect"] = { schema = T.none, rate = 2, returns = "{ dishes: { [dishId]: number } }" },
+	["Kitchen.Serve"] = {
+		schema = T.struct({ id = id, dish = T.key(Config.Kitchen.ById) }),
+		rate = 4,
+		returns = "{ effect: 'meals'|'mood'|'bond'|'job'|'loot' }",
+	},
+	["Kitchen.PlantGolden"] = { schema = T.struct({ plot = T.integer(1, 8) }), rate = 3, returns = "{ readyAt: number }" },
+
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
 	["Weekly.Claim"] = {
 		schema = T.struct({ step = T.integer(1, #Config.Weekly.Chest) }),
@@ -692,6 +706,7 @@ Api.State = {
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true }, target = { stat, grade } | false, milestones = { [stat]: grade } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
+		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true }, pass, passCredit }",
@@ -727,6 +742,7 @@ Api.State = {
 		Ranch = "{ income, rates = { [pen]: coinsPerSec }, caps = { [pen]: seconds }, capacity, used }",
 		Breeding = "{ podCount, breedsPerDay }",
 		Jobs = "{ slotCount }",
+		Kitchen = "{ slotCount, fish, fishing }  -- 3.10: fish = Fishing:FishCount (0 without Fishing); fishing = Fishing is plugged in",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
 		WelcomeBack = "{ pending: boolean, awaySeconds, coins, items = { { kind, text, icon? } } }",
@@ -807,6 +823,7 @@ Api.Topics = {
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
 	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
+	DishCooked = "(player, { dish: string, count: number })  -- 3.10: dishes collected from the Kitchen into the Pantry",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",

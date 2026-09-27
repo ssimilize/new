@@ -36,6 +36,11 @@
 	  Ranch:ResetForRebirth(player, theme?)                   -- one fresh pen, tiers 1, decor back to storage
 	  Ranch:PublicPens(player) -> { { theme, decor = { decorId }, monsters = { id }, capacity, jarTier } }
 	  Ranch:PublicGarden(player) -> { tier, plots = { { flavor, readyAt } } }?   -- glow-up R
+	  Ranch:RegisterCrop(flavor, fn(player, plotIndex))       -- 3.10: a non-food crop (Kitchen's golden
+	                                                             produce); its harvest calls fn instead
+	                                                             of paying food
+	  Ranch:RegisterHarvestHook(key, fn(player, flavor, plotIndex))  -- 3.10: after each food plot harvest
+	  Ranch:PlantCrop(player, plotIndex, flavor, seconds) -> readyAt?, err?  -- 3.10: plants a registered crop
 	  Ranch:TakePenDecor(player) -> { [pen] = { decorId } }  -- glow-up Z: empties the old pen slots
 	                                                          (Decor moves them onto the plot layout)
 	Mood aura: a pen's slot decor plus the mood pieces standing in it on the Decor layout (glow-up Z).
@@ -67,6 +72,8 @@ local rateModifiers = {} -- [key] = fn(player, elements) -> pct
 local monsterModifiers = {} -- [key] = fn(player, monster) -> pct (glow-up Q: one monster's own bonus)
 local jarBonuses = {} -- [key] = fn(player) -> seconds
 local rateMultipliers = {} -- [key] = fn(player) -> factor (> 0)
+local crops = {} -- [flavor] = fn(player, plotIndex): 3.10 non-food garden crops
+local harvestHooks = {} -- [key] = fn(player, flavor, plotIndex): 3.10, after a food plot's harvest
 local joined = {} -- [player] = true once PlayerAdded finished (offline accrual applied)
 local quiet = {} -- [player] = true while a batch of monster changes is applied
 local holdAuto = {} -- [player] = true while WelcomeBack is waiting for its claim
@@ -650,12 +657,51 @@ local function harvest(player, s, index: number, food: { [string]: number }): bo
 	if not plot or not plot.flavor or ctx:Now() < plot.readyAt then
 		return false
 	end
-	local yield = Economy.Garden.yield
-	Currency:Add(player, "food." .. plot.flavor, yield, "garden")
-	food[plot.flavor] = (food[plot.flavor] or 0) + yield
+	local flavor = plot.flavor
 	plot.flavor = false
 	plot.readyAt = 0
+	local crop = crops[flavor]
+	if crop then
+		local ok, err = pcall(crop, player, index)
+		if not ok then
+			warn(string.format("[Ranch] crop %s failed: %s", tostring(flavor), tostring(err)))
+		end
+		return true
+	end
+	local yield = Economy.Garden.yield
+	Currency:Add(player, "food." .. flavor, yield, "garden")
+	food[flavor] = (food[flavor] or 0) + yield
+	for key, fn in harvestHooks do
+		local ok, err = pcall(fn, player, flavor, index)
+		if not ok then
+			warn(string.format("[Ranch] harvest hook %s failed: %s", key, tostring(err)))
+		end
+	end
 	return true
+end
+
+function Ranch:RegisterCrop(flavor: string, fn)
+	crops[flavor] = fn
+end
+
+function Ranch:RegisterHarvestHook(key: string, fn)
+	harvestHooks[key] = fn
+end
+
+function Ranch:PlantCrop(player, index: number, flavor: string, seconds: number): (number?, string?)
+	local s = section(player)
+	local plot = s and s.garden.plots[index]
+	if not plot then
+		return nil, "That plot is locked. Upgrade the garden!"
+	end
+	if plot.flavor then
+		return nil, "Something is already growing there"
+	end
+	plot.flavor = flavor
+	plot.readyAt = ctx:Now() + seconds
+	ctx:Dirty(player, "garden")
+	ctx.Bus:Publish("PlotChanged", player, {})
+	return plot.readyAt
 end
 
 -- Upgrades ---------------------------------------------------------------------------------
@@ -885,10 +931,11 @@ function Ranch.Init(context)
 				ctx:Fail("That crop isn't ready yet")
 			end
 		else
+			local any = false
 			for i in s.garden.plots do
-				harvest(player, s, i, food)
+				any = harvest(player, s, i, food) or any
 			end
-			if next(food) == nil then
+			if not any then
 				ctx:Fail("Nothing is ready to harvest")
 			end
 		end

@@ -24,7 +24,9 @@
 	  best   = { { id, hearts, form, variant, name } },   -- up to BestFriends, the ranch gate
 	  plates = { { id, hearts, name } },                  -- from NameplateHearts, up to MaxPlates
 	} }
-	Public: Bond:Hearts(player, id) -> number, Bond:Points(player, id) -> number.
+	Public: Bond:Hearts(player, id) -> number, Bond:Points(player, id) -> number,
+	        Bond:AddHeart(player, id, kind) -> hearts?   -- 3.10 Kitchen dishes: up to the next heart
+	                                                        (nil: no such monster or all hearts)
 	Bus: publishes BondRaised (player, { id, hearts, points, kind, heartUp }).
 ]]
 
@@ -239,6 +241,32 @@ end
 
 function Bond:Hearts(player, id: string): number
 	return Logic.Hearts(self:Points(player, id), Cfg)
+end
+
+function Bond:AddHeart(player, id: string, kind: string): number?
+	local s = ctx:Section(player)
+	if not s or not Monsters:Get(player, id) then
+		return nil
+	end
+	local entry = s.list[id]
+	local before = Logic.Hearts(entry and entry.pts or 0, Cfg)
+	local need = Cfg.HeartAt[before + 1]
+	if before >= Cfg.MaxHearts or not need then
+		return nil
+	end
+	if not entry then
+		entry = { pts = 0 }
+		s.list[id] = entry
+	end
+	entry.pts = math.max(entry.pts, need)
+	local hearts = Logic.Hearts(entry.pts, Cfg)
+	ctx:Dirty(player, "list", id)
+	if Logic.IncomePct(hearts, Cfg) ~= Logic.IncomePct(before, Cfg) then
+		refreshIncome(player)
+	end
+	publish(player)
+	ctx.Bus:Publish("BondRaised", player, { id = id, hearts = hearts, points = entry.pts, kind = kind, heartUp = true })
+	return hearts
 end
 
 return Bond

@@ -94,6 +94,9 @@ Unlocks.Features = {
 	orders = 10,
 	-- 3.9 · Expedition Bounties (Config/Bounties)
 	bounties = 6,
+	-- 3.10 · Kitchen & Pantry (Config/Kitchen)
+	kitchen = 9,
+	kitchen_slot_3 = 30,
 }
 
 -- Player-facing names for the level-up popup.
@@ -147,6 +150,8 @@ Unlocks.Names = {
 	weekly = "Weekly goals",
 	orders = "Ranch Orders",
 	bounties = "Bounties",
+	kitchen = "Kitchen",
+	kitchen_slot_3 = "Kitchen slot 3",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

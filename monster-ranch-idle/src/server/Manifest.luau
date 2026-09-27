@@ -88,6 +88,8 @@ return {
 		"Weekly",
 		-- 3.8 · Ranch Orders
 		"Orders",
+		-- 3.10 · Kitchen & Pantry
+		"Kitchen",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},
