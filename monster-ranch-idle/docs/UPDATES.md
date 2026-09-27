@@ -40,6 +40,43 @@ players get and where it lives in the code.
   Welcome Back shows the "weekly" line with a gem icon.
 - Tests: `Weekly.spec`, `WeeklyClient.spec`.
 
+### Ranch Orders
+
+**For players**
+- **Ranch Orders** (Ranch Level 10): buyers post 3 orders every day (UTC) on the Job Board's new
+  **Orders** tab. The HUD button is now called **Board**.
+- **Monster orders** ask for a Teen or Adult with good genes:
+  - **Easy**: one stat at grade C or better. **Medium**: one stat at grade B or better.
+  - **Hard** (Ranch Level 20+): one stat at grade A, or two stats at grade B, or a gene total of
+    60 or more (of 100).
+  - Pay: 3 times the monster's sell price in coins, plus 5 / 10 / 25 gems and 2 / 5 / 10 Ribbons.
+    A Hard order may also carry an egg (1 in 4): a Crystal Egg, or from Ranch Level 25 sometimes a
+    Royal Egg. The card shows it.
+  - "Choose monster" lists the Teens and Adults that meet it, not busy or locked, cheapest first.
+    A confirm names the monster, which leaves the ranch for good. Your last monster can't go.
+- **Goods orders** ask for 150–400 food of one flavour (more at higher levels) and pay 10–20
+  gems and 5–10 Treats. At most one a day.
+- **Reroll:** once a day, replace one unfilled order for free.
+- Rejoining never changes the day's orders. Welcome Back mentions new orders.
+
+**In the code**
+- `Config.Orders` (difficulties, pay, egg chance and weights, goods amounts, buyers) and
+  `Logic/Orders`:
+  - `Draw(userId, day, level)`: the day's orders from `Rng.seed("orders", userId, day)`; each
+    order rolls everything from its own seed (goods chance 20%, at most one goods order).
+    Difficulty weights: Easy 60 / Medium 40 below Lv 20; Easy 35 / Medium 40 / Hard 25 from 20.
+  - A reroll draws from `Rng.seed("orders", userId, day, "reroll", n)`. It can't draw goods while
+    another order of the day is goods.
+  - Goods pay comes from `Rng.seed(order.seed, "pay")`. Coins are `CoinMult × Formulas.SellPrice`,
+    read before the monster leaves.
+- `Systems/Orders` (save `profile.Orders = { day, list, rerolls }`):
+  - `Orders.Fill { index, id? }` and `Orders.Reroll { index }`.
+  - The list is drawn on join, on the minute timer, on any action and on reaching Lv 10.
+  - Monsters leave through `Monsters:Remove(player, id, "order")`. Publishes `OrderFilled`.
+- `Screens/Jobs` has "Jobs" / "Orders" tabs (params `{ tab }`). The picker uses Monsters pick
+  mode with `sortBy = -SellPrice`. The HUD side button keeps its Name "Jobs".
+- Tests: `Orders.spec`, `OrdersClient.spec`.
+
 ## 3.7 · Ranch Jobs + Luck
 
 Like 3.6, no launch date of its own: the Job Board and Luck work as soon as the update is published.

@@ -370,6 +370,13 @@ Api.Actions = {
 		rate = 2,
 		returns = "{ rewards: { Reward } }",
 	},
+	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
+	["Orders.Fill"] = {
+		schema = T.struct({ index = T.integer(1, Config.Orders.PerDay), id = T.optional(id) }),
+		rate = 2,
+		returns = "{ rewards: { Reward } }  -- id: the monster a monster order takes",
+	},
+	["Orders.Reroll"] = { schema = T.struct({ index = T.integer(1, Config.Orders.PerDay) }), rate = 1, returns = "nil" },
 
 	-- Social (S5) ------------------------------------------------------------------
 	["Social.Pet"] = { schema = T.struct({ owner = T.userId, id = id }), rate = 4, returns = "{ friendship: number, left: number }" },
@@ -676,6 +683,7 @@ Api.State = {
 		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
+		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, filled } }, rerolls }  -- see Logic/Orders",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true }, pass, passCredit }",
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true }, vip = { day, opened } }",
@@ -768,7 +776,7 @@ Api.Topics = {
 	RanchXP = "(player, { amount: number, reason: string })",
 	LevelUp = "(player, { level: number })",
 	MonsterCreated = "(player, { id: string, source: 'hatch'|'breed'|'trade'|'reward'|'starter' })",
-	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth', acc: { [slot]: accessoryId }?, line: string?, rarity: number? })",
+	MonsterRemoved = "(player, { id: string, reason: 'sell'|'retire'|'fuse'|'trade'|'market'|'rebirth'|'order', acc: { [slot]: accessoryId }?, line: string?, rarity: number? })",
 	MonsterChanged = "(player, { id: string, fields: { string }? })",
 	MonsterFed = "(player, { id: string, flavor: string })",
 	MonsterLeveled = "(player, { id: string, lv: number })",
@@ -789,6 +797,7 @@ Api.Topics = {
 	TitanDamage = "(player, { damage: number, won: boolean })  -- per participant when a titan invasion ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
+	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
 	Retired = "(player, { rarity: number, element: string })",

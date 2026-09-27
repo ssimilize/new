@@ -14,6 +14,7 @@ local Config = {
 	Genetics = require(script.Genetics),
 	Jobs = require(script.Jobs),
 	Weekly = require(script.Weekly), -- 3.8 · Weekly goals
+	Orders = require(script.Orders), -- 3.8: Ranch Orders
 	Mutations = require(script.Mutations),
 	Weather = require(script.Weather),
 	Eggs = require(script.Eggs),

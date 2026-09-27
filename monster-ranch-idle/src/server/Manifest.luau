@@ -86,6 +86,8 @@ return {
 		"Jobs",
 		-- 3.8 · Weekly goals
 		"Weekly",
+		-- 3.8 · Ranch Orders
+		"Orders",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},
