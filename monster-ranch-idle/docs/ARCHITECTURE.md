@@ -749,3 +749,24 @@ remember ids → SaveNow → ack). See the header of `Systems/Market/init.luau`.
 - Entry points: the HUD (make room in the left stack by moving Settings to a small gear button
   next to the level bar) and the `market` hub building (`Config.World.Hub`, screen `Market`).
 - Show `Market.MailCollected` as a toast ("Your Blazefang sold for 12K!").
+
+### R2: Design Weeks (Workshop)
+- A rotating theme, one `Config.Leaderboards.Week` long: `Config.Workshop.ThemeForWeek(week)`
+  picks from `Config.Workshop.Themes`. Entries and votes reuse `Services.Designs` (no new
+  adapter): entering adds `record.weekEntry = { week, theme, votes, voters, enteredAt }`
+  (replaced whole on re-entry) and indexes the id (`Services.Designs.EnterWeek/WeekEntries`,
+  a small id list per week key in the same feed store as `recent`/`reported`). Voting is an
+  atomic `Designs.Update` incrementing `weekEntry.votes` and recording the voter, exactly like
+  likes, so votes from any server add up.
+- Rollover ranks a finished week's entries by votes and writes the top `Winners` through
+  `Services.Designs.Rollover(week, transform) -> ok, result` (an atomic write keyed by week,
+  `Services.Designs.Results(week) -> ok, result?` to read it back) — a second server running
+  the same rollover sees a result already there and the transform returns nil (no side
+  effects run twice). Winners get `record.featured = week + 1` and are buyable in the Gallery
+  at `Config.Workshop.FeaturedPrice` through the existing `Workshop.Buy`, which already pays
+  royalty. The designer is notified (`ctx:Notify`) immediately if online, or the next time
+  their Workshop session loads elsewhere (`record.featuredNotified`, checked in
+  `Workshop.PlayerAdded`) — there is no separate Mail/Notifications system to plug into.
+- Actions `Workshop.Enter { design } -> { design, theme }`, `Workshop.Vote { design } -> { votes }`,
+  `Workshop.Theme -> { count }` (fills `session.Workshop.theme` + `.featured`). Save section
+  additions: `profile.Workshop.designWeek = { week, entered }`, `.votesToday = { day, n }`.
