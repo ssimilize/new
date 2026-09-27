@@ -17,11 +17,20 @@
 	WindGust now and then up on the islands. Monster chatter: the closest few pen monsters
 	(Audio/Voices), fewer and nearer with lowGraphics.
 
+	Which music and which beds (and the fountain's level) come from the vendored Foundry packages
+	Score and Soundscape (ctx.Foundry.packages, run through Logic/Audio.FoundrySound); without them
+	it warns once and stays on Logic/Audio.MusicChain / Beds. The Audio kit still owns every Sound,
+	the fades, the scatter beds, one-shots and the Settings volumes: see Soundscape.NotAdopted.
+
 	Studio only (RunService:IsStudio()): registers the SoundCheck screen and a small "Sound Check"
 	button in the top layer, so the owner can audition every key. Not reachable in live games.
 
 	  Soundscape.Context() -> state          the last context worked out
 	  Soundscape.Preview(state?)             force a context (Sound Check); nil = live again
+	  Soundscape.Wire(foundry?)              (re)build the Foundry path from a ctx.Foundry; nil = the
+	                                         Logic/Audio path (Init wires ctx.Foundry; specs rewire)
+	  Soundscape.Adopted() -> boolean        music and beds run on the Foundry packages
+	  Soundscape.Legacy                      the fallback's MusicChain / Beds (Logic/Audio)
 ]]
 
 local Players = game:GetService("Players")
@@ -47,6 +56,17 @@ local RAINY = { rain = true, thunderstorm = true }
 local CHATTER = { count = 3, range = 50 }
 local CHATTER_LOW = { count = 1, range = 28 }
 
+-- What stays on the Audio kit and this controller, and why (Foundry.spec-style check in SoundCompat.spec).
+Soundscape.NotAdopted = {
+	fades = "the kit's per-frame linear ramps (music 2.5 s, beds 3 s, overlapping crossfade, a muted group fading to 0); Score waits for bars or hands off sequentially and Soundscape fades over command time, so every frame's volume would move",
+	scatterBeds = "birds and crickets stay the kit's scatter beds (math.random gaps and camera-relative spots); Soundscape one-shots are seeded time slots, so the chirps would land elsewhere. Their levels do come from the scape",
+	oneShots = "WindGust on the islands, RainStart, Thunder after lightning and monster chatter are game events timed by math.random and the bus, not ambience layers",
+	stingers = "ducking under a sting stays Audio.Duck (a shallower sting extends a deeper one's hold); the Score's stingers refuse it instead",
+	placement = "the fountain's position and rolloff (12..70) stay the kit's positional loop; only its level comes from the scape",
+}
+
+Soundscape.Legacy = Logic
+
 local ctx
 local weather = { id = "clear", night = false }
 local lowGraphics = Quality.IsLow() -- Visuals/Quality (glow-up P)
@@ -54,6 +74,15 @@ local state = {}
 local preview = nil
 local nextGustAt = 0
 local chatterAcc = 0
+local foundry = nil -- Logic/Audio.FoundrySound runner; nil = the Logic/Audio path
+local warned = false
+
+local function warnOnce(message: string)
+	if not warned then
+		warned = true
+		warn("[Soundscape] " .. message)
+	end
+end
 
 local function fountainPosition(): Vector3?
 	local f = Config.World.Fountain
@@ -117,14 +146,32 @@ local function computeState()
 	}
 end
 
+-- The chain for Audio.SetMusic, the bed levels and the fountain's level for this context.
+local function decide(s)
+	if foundry then
+		local ok, chain, beds, fountainLevel = pcall(function()
+			local beds, fountainLevel = foundry.Beds(s, TICK)
+			return foundry.Music(s), beds, fountainLevel
+		end)
+		if ok then
+			return chain, beds, fountainLevel
+		end
+		foundry = nil
+		warnOnce("Foundry Score / Soundscape failed, back on Logic/Audio: " .. tostring(chain))
+	end
+	local legacy = Soundscape.Legacy
+	return legacy.MusicChain(s), legacy.Beds(s), if s.sky or s.reef then 0 else 1
+end
+
 local function apply(s)
-	Audio.SetMusic(Logic.MusicChain(s))
-	for key, level in Logic.Beds(s) do
+	local chain, beds, fountainLevel = decide(s)
+	Audio.SetMusic(chain)
+	for key, level in beds do
 		Audio.SetLoop(key, level)
 	end
 	local fountain = fountainPosition()
 	if fountain then
-		Audio.SetLoop("AmbienceFountain", if s.sky or s.reef then 0 else 1, fountain)
+		Audio.SetLoop("AmbienceFountain", fountainLevel, fountain)
 	end
 end
 
@@ -203,8 +250,30 @@ function Soundscape.Preview(s)
 	tick()
 end
 
+function Soundscape.Wire(source)
+	foundry = nil
+	local packages = if type(source) == "table" and type(source.packages) == "table" then source.packages else nil
+	local Score = packages and packages.Score
+	local Scape = packages and packages.Soundscape
+	if not (Score and Scape and type(source.adapter) == "function") then
+		warnOnce("Foundry Score / Soundscape are not vendored: music and beds stay on Logic/Audio")
+		return
+	end
+	local runner, err = Logic.FoundrySound(Score, Scape, source.adapter("Soundscape"))
+	if not runner then
+		warnOnce("Foundry Score / Soundscape refused the Ranch's rules, staying on Logic/Audio: " .. tostring(err))
+		return
+	end
+	foundry = runner
+end
+
+function Soundscape.Adopted(): boolean
+	return foundry ~= nil
+end
+
 function Soundscape.Init(context)
 	ctx = context
+	Soundscape.Wire(ctx.Foundry)
 	if RunService:IsStudio() then
 		addStudioTools()
 	end
