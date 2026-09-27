@@ -3,6 +3,7 @@
 	sheet (UI/Art/Icons, once uploaded), from Theme.Images (a single uploaded image), or with shapes.
 	Kinds: coin · gem · food · treat · stardust · friendship · token · ribbon · xp · egg · star · lock · trophy
 	       · amber · shovel (3.11, Dig Site) · honey · honey_<kind> · royal_jelly (3.12, Apiary)
+	       · amber · shovel (3.11, Dig Site) · tower_retry (3.12, a Trial Tower Retry token)
 	Any icon name from art/ui/ICONS.md also works as a kind ("food_sweet", "decor_hay_bale", ...).
 
 		Icon.new("coin", 28)       -- returns a Frame (size × size)
@@ -273,6 +274,30 @@ function Icon.new(kind: string, size: number?): Frame
 			Position = UDim2.fromScale(0.56, 0.26),
 			Parent = frame,
 		}, { Create.Round() })
+	elseif kind == "tower_retry" then
+		-- 3.12 · Trial Tower Retry token: a stone tower with battlements on a silver disc.
+		local d = disc(Color3.fromHex("#C9CED8"))
+		local stroke = math.max(1, px / 20)
+		New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#6F7486"),
+			Size = UDim2.fromScale(0.34, 0.46),
+			Position = UDim2.fromScale(0.33, 0.34),
+			Parent = d,
+		}, { Create.Stroke(stroke) })
+		for i = 0, 2 do
+			New("Frame", {
+				BackgroundColor3 = Color3.fromHex("#6F7486"),
+				Size = UDim2.fromScale(0.1, 0.12),
+				Position = UDim2.fromScale(0.3 + i * 0.15, 0.22),
+				Parent = d,
+			}, { Create.Stroke(stroke) })
+		end
+		New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#FFD98A"),
+			Size = UDim2.fromScale(0.08, 0.14),
+			Position = UDim2.fromScale(0.46, 0.46),
+			Parent = d,
+		})
 	elseif kind == "lock" then
 		local d = disc(C.Gray)
 		glyph(d, "🔒", C.White, 0.6)

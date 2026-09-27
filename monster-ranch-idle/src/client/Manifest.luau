@@ -117,6 +117,7 @@ return {
 		"Exhibits", -- 3.12 · Museum Exhibits (the Curator desk's prompt, the Codex screen)
 		"Apiary", -- 3.12 · Apiary & Honey (the beehives' "Tend" prompt, the Kitchen header)
 		"Dojo", -- 3.11 · Dojo (from Monster Detail)
+		"TrialTower", -- 3.12 · Trial Tower (the tower's prompt, the Expeditions header)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

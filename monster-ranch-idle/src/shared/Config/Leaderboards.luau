@@ -54,6 +54,16 @@ Leaderboards.Boards = {
 		format = "weight",
 		color = "#3FA7D6",
 	},
+	-- Update 3.12: the highest Trial Tower floor cleared this week (TrialTower:Best).
+	{
+		id = "tower",
+		name = "Highest Floor",
+		short = "Tower",
+		title = "Tower Champion",
+		format = "count",
+		unit = "floors",
+		color = "#8A8FA3",
+	},
 	-- Update 3.8: arena rating this arena season (Arena:SeasonRating). Shown in the Arena screen.
 	{ id = "arena", name = "Arena Season", short = "Arena", format = "count", color = "#FF7AC8", period = "season" },
 }

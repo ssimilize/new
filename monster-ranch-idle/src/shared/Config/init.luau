@@ -27,6 +27,7 @@ local Config = {
 	Apiary = require(script.Apiary), -- 3.12: Apiary & Honey
 	Seasons = require(script.Seasons), -- 3.11: Ranch Seasons
 	Techniques = require(script.Techniques), -- 3.11: Dojo techniques
+	TrialTower = require(script.TrialTower), -- 3.12: the Trial Tower
 	Mutations = require(script.Mutations),
 	Weather = require(script.Weather),
 	Eggs = require(script.Eggs),

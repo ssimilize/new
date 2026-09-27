@@ -37,6 +37,7 @@ local KIND_COLOR = {
 	seeds = "#F4C43A",
 	bait = "#4FB6F2",
 	shovels = "#A0703D",
+	tower_retry = "#8A8FA3",
 	decor = "#EF6FA8",
 	egg = "#43B649",
 }

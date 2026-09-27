@@ -148,6 +148,44 @@ local function gableRoof(parent: Instance, cframe: CFrame, size: Vector3, color:
 	newPart("WedgePart", "RoofBack", roofSize, cframe * CFrame.new(0, y, depth / 2) * CFrame.Angles(0, math.pi, 0), color, parent)
 end
 
+-- 3.12 · Trial Tower: a stone tower's top (a ledge ringed with battlements) and window slits up
+-- its front, in place of a gable roof (World.Hub `style = "tower"`).
+local function towerTop(parent: Instance, cframe: CFrame, size: Vector3, color: Color3)
+	local stone = { Material = Enum.Material.Slate }
+	local dark = color:Lerp(Color3.new(0, 0, 0), 0.3)
+	local ledgeY = size.Y / 2 + 0.6
+	block("Ledge", Vector3.new(size.X + 2.4, 1.2, size.Z + 2.4), cframe * CFrame.new(0, ledgeY, 0), dark, parent, stone)
+	local m = 2.4
+	local hx, hz = (size.X + 2.4 - m) / 2, (size.Z + 2.4 - m) / 2
+	local n = 0
+	for _, fx in { -1, 0, 1 } do
+		for _, fz in { -1, 0, 1 } do
+			if fx ~= 0 or fz ~= 0 then
+				n += 1
+				block(
+					"Merlon" .. n,
+					Vector3.new(m, 2.6, m),
+					cframe * CFrame.new(fx * hx, ledgeY + 0.6 + 1.3, fz * hz),
+					color,
+					parent,
+					stone
+				)
+			end
+		end
+	end
+	local glow = Color3.fromHex("#FFD98A")
+	for i, y in { 0.05, 0.3 } do
+		block(
+			"Window" .. i,
+			Vector3.new(1.4, 4, 0.3),
+			cframe * CFrame.new(0, size.Y * y, -size.Z / 2 - 0.1),
+			glow,
+			parent,
+			{ Material = Enum.Material.Neon, CanCollide = false }
+		)
+	end
+end
+
 local function surfaceSign(part: BasePart, text: string, background: Color3, textColor: Color3)
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "SignGui"
@@ -230,7 +268,12 @@ local function buildBuildings(defs, buildings: Instance, y: number)
 		local cf = if (toHub - center).Magnitude > 0.1 then CFrame.lookAt(center, toHub) else CFrame.new(center)
 
 		local body = block("Body", size, cf, color, model)
-		gableRoof(model, cf, size, color:Lerp(Color3.new(0, 0, 0), 0.35), 0.4)
+		if def.style == "tower" then
+			body.Material = Enum.Material.Slate
+			towerTop(model, cf, size, color)
+		else
+			gableRoof(model, cf, size, color:Lerp(Color3.new(0, 0, 0), 0.35), 0.4)
+		end
 		local sign = block(
 			"Sign",
 			Vector3.new(size.X * 0.75, math.min(3.4, size.Y * 0.22), 0.4),

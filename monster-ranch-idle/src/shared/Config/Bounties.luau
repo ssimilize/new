@@ -30,6 +30,7 @@ Bounties.Reward = {
 	{ kind = "gems", amount = 20 },
 	{ kind = "bait", amount = 3 }, -- 3.10: casts at the Fishing Pond
 	{ kind = "shovel", amount = 2 }, -- 3.11: digs at the Dig Site
+	{ kind = "tower_retry", amount = 1 }, -- 3.12: a Trial Tower Retry token
 }
 
 -- Harvested by Locale.spec (a table named *Names): each one is translated like a boss name.

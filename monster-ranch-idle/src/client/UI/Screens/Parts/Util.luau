@@ -230,6 +230,8 @@ function Util.rewardText(item): string
 		-- 3.12 · Apiary: id = the honey kind (or royal_jelly)
 		local def = item.id and Config.Apiary.ById[item.id]
 		return string.format("%s %s", Format.short(amount), if def then def.name else "Honey")
+	elseif kind == "tower_retry" then
+		return string.format("%s Retry tokens", Format.short(amount))
 	end
 	return Format.short(amount)
 end
