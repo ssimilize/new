@@ -1162,6 +1162,7 @@ return {
 	["Review"] = "Revisar",
 	["Rewards"] = "Recompensas",
 	["Rewards!"] = "Recompensas!",
+	["Amber"] = "Âmbar",
 	["Ribbons"] = "Fitas",
 	["Ride"] = "Montar",
 	["Ride one of your monsters"] = "Monte um dos seus monstros",

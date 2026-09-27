@@ -28,7 +28,7 @@ local Rewards = {
 local ctx
 local Currency, Progression
 
-local SIMPLE = { coins = true, gems = true, stardust = true, friendship = true, treats = true, ribbons = true }
+local SIMPLE = { coins = true, gems = true, stardust = true, friendship = true, treats = true, ribbons = true, amber = true }
 
 function Rewards.Init(context)
 	ctx = context
