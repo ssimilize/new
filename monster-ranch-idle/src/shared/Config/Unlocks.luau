@@ -208,7 +208,7 @@ Unlocks.Names = {
 	strays = "Stray Monsters",
 	bug_meadow = "Bug Catching Meadow",
 	treasure_maps = "Treasure Maps",
-	spa = "Hot Springs & Spa",
+	spa = "Hot Springs", -- no "&": the "{1} & {2}" template would split "Unlocked: …" at it
 	spa_pool_3 = "Spa pool 3",
 }
 

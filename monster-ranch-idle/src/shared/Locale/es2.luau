@@ -582,6 +582,6 @@ return {
 	["Stray Monsters"] = "Monstruos callejeros",
 	["Bug Catching Meadow"] = "Pradera de insectos",
 	["Treasure Maps"] = "Mapas del tesoro",
-	["Hot Springs & Spa"] = "Aguas termales y spa",
+	["Hot Springs"] = "Aguas termales",
 	["Spa pool 3"] = "Piscina 3 del spa",
 }
