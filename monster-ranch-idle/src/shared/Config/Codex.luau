@@ -36,11 +36,16 @@ Codex.Gems = {
 	total = { 10, 20, 40, 60 }, -- per TotalSteps entry
 	complete = 100,
 	fish = { 10, 25, 60 }, -- 3.10: per FishSteps entry
+	fossil = { 20, 40, 100 }, -- 3.11: per FossilSteps entry
 }
 
 -- Update 3.10 · Fish Log (the Codex screen's Fish Log tab): kinds of fish caught at the Fishing
 -- Pond (Config/Fishing). Claimed through Codex.Claim like every milestone (Logic/Codex.FishMilestones).
 Codex.FishSteps = { 4, 8, 16 }
+
+-- Update 3.11 · Fossils (the Codex screen's Fossils tab): fossils completed at the Dig Site
+-- (Config/DigSite, all four pieces). Claimed through Codex.Claim (Logic/Codex.FossilMilestones).
+Codex.FossilSteps = { 2, 4, 6 }
 
 -- Titles per element completed (Codex.Items) and for the overall steps.
 Codex.ElementTitles = {

@@ -415,6 +415,18 @@ return function(t)
 			local so, row = World.StatueRowOffset, World.StatueRow
 			local length = (row.count - 1) * row.spacing
 			table.insert(list, box("statue row", so[1] + length / 2, so[3], length + row.pedestal, row.pedestal))
+			-- 3.10: the Fishing Pond with its rim and dock; 3.11: the Dig Site (pit, posts and rack).
+			local po, pond = World.Pond.offset, World.Pond
+			local pondW = pond.size[1] + pond.rim * 2
+			table.insert(list, {
+				name = "fishing pond",
+				x1 = po[1] - pondW / 2,
+				z1 = po[3] - pond.size[2] / 2 - pond.rim,
+				x2 = po[1] + pondW / 2 + pond.dock[1],
+				z2 = po[3] + pond.size[2] / 2 + pond.rim,
+			})
+			local dg = World.DigSite
+			table.insert(list, box("dig site", dg.offset[1], dg.offset[3], dg.size[1], dg.size[2]))
 			-- The gate posts on the front edge (see World/Build.luau).
 			table.insert(list, box("gate", World.PlotSize[1] / 2 - 2, 0, 2, 18))
 			return list

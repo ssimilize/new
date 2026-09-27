@@ -411,6 +411,17 @@ Api.Actions = {
 		returns = "{ coins: number }",
 	},
 	["Fishing.SetBuddy"] = { schema = T.struct({ id = id }), rate = 2, returns = "nil" },
+	-- Dig Site (3.11) · see Config/DigSite and Logic/DigSite ------------------------------
+	["DigSite.Start"] = {
+		schema = T.none,
+		rate = 2,
+		returns = "{ dig: number, left: number, tiles: { DugTile }, digs: number, shovels: number, resumed: boolean }",
+	},
+	["DigSite.Tap"] = {
+		schema = T.struct({ dig = T.integer(1), tile = T.integer(1, Config.DigSite.Tiles) }),
+		rate = 6,
+		returns = "{ tile, find: { kind, fossil?, piece?, duplicate?, complete?, id?, amount? }?, hint, left, done, rewards: { Reward }, missed: { number }? }",
+	},
 
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
 	["Weekly.Claim"] = {
@@ -769,6 +780,7 @@ Api.State = {
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
 		GeneLab = "{ day, tunes, attempts }  -- 3.10: tunes used on UTC `day`, lifetime attempts (the roll seed)",
 		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
+		DigSite = "{ day, digs, shovels, n, open = false | { id, left, tiles = { { t, hint?, kind?, fossil?, piece?, id?, amount?, duplicate? } } }, pieces = { [fossilId]: { [pieceId]: true } }, total }  -- 3.11 (secret is private)",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
@@ -897,6 +909,8 @@ Api.Topics = {
 	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
 	TouristVisited = "(player, { stars: number })  -- 3.10: one Ranch Tourist visited (online or while away)",
 	DishCooked = "(player, { dish: string, count: number })  -- 3.10: dishes collected from the Kitchen into the Pantry",
+	FossilFound = "(player, { fossil: string, piece: string, complete: boolean })  -- 3.11: a new fossil piece dug up at the Dig Site",
+	DigFinished = "(player, { finds: number })  -- 3.11: a dig at the Dig Site ended (taps used up or every find dug up)",
 	FishCaught = "(player, { fish: string, rarity: string, weight: number })  -- 3.10: a catch at the Fishing Pond (weight in kg)",
 	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
@@ -937,7 +951,7 @@ Api.Topics = {
 	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
-	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish' })  -- glow-up O (fish: 3.10)",
+	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish'|'fossil' })  -- glow-up O (fish: 3.10, fossil: 3.11)",
 	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
 	-- R2-ONBOARDING · republished by Quests.Signal for a tutorial chapter two step with no
@@ -947,7 +961,7 @@ Api.Topics = {
 
 -- Shared shapes (documentation) -----------------------------------------------------
 Api.Shapes = {
-	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'ribbons'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster'|'accessory'|'bait', id: string?, amount: number, rarity: number? }",
+	Reward = "{ kind: 'coins'|'gems'|'food'|'treats'|'stardust'|'ribbons'|'friendship'|'token'|'egg'|'xp'|'decor'|'monster'|'accessory'|'bait'|'amber'|'shovel', id: string?, amount: number, rarity: number? }",
 	Monster = "see ARCHITECTURE.md → Monster record",
 	Listing = "see ARCHITECTURE.md §8 → Listing (client view)",
 	Appearance = "see Logic/Appearance.luau",

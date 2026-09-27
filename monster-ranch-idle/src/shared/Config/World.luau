@@ -52,6 +52,11 @@ World.KitchenSize = { 16, 9, 10 } -- x, height, z (3.10; the door faces plot-loc
 -- fences at z -38). `size` is the water ({ x, z }); a stone rim of `rim` studs rings it and a dock
 -- `dock` = { length, width } runs east from the water onto the grass (its end holds the "Go fishing" prompt).
 World.Pond = { offset = { 30, 0, -47 }, size = { 20, 12 }, rim = 1, dock = { 9, 3 } }
+-- Update 3.11: the Dig Site in the north strip east of the Pond's dock (the strip west of the Pond
+-- stays free for decor). `size` is the whole footprint ({ x, z }, rope posts and tool rack
+-- included); `pit` is the roped-off sand ({ x, z }) at the footprint's east end; the tool rack (its
+-- "Dig" prompt) stands at the west end, facing the pond's dock.
+World.DigSite = { offset = { 62, 0, -47 }, size = { 22, 12 }, pit = { 16, 10 } }
 
 -- Hub buildings (Market Square), relative to the origin.
 World.Hub = {

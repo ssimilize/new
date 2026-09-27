@@ -343,6 +343,21 @@ local FISHED = { reward = "fishing" }
 add("old_boot", "Old Boot", "fun", "old_boot", { 2, 2 }, nil, "#6B4424", "#5FAF4B", FISHED)
 add("sunken_chest", "Sunken Chest", "fun", "sunken_chest", { 3, 2 }, nil, "#8A5A2B", "#F5C630", FISHED)
 
+-- Update 3.11 · Dig Site: never sold. Relics are rare finds (Config.DigSite.Relics); a skeleton
+-- display is granted once when its fossil's four pieces are complete (Config.DigSite.Fossils).
+local DUG = { reward = "digsite" }
+add("ancient_urn", "Ancient Urn", "statue", "ancient_urn", { 2, 2 }, nil, "#B8643A", "#3A2A1C", DUG)
+add("stone_tablet", "Stone Tablet", "statue", "stone_tablet", { 3, 1 }, nil, "#8E8A83", "#5E5A54", DUG)
+local function skeleton(pose: string)
+	return { reward = "digsite", pose = pose }
+end
+add("fossil_raptor", "Raptor Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#EFE6D2", "#8A6A4A", skeleton("raptor"))
+add("fossil_trihorn", "Trihorn Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#E3D5B8", "#8A6A4A", skeleton("trihorn"))
+add("fossil_longneck", "Longneck Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#F2EBDD", "#8A6A4A", skeleton("longneck"))
+add("fossil_sabre_cat", "Sabre Cat Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#E8DCC4", "#8A6A4A", skeleton("sabre_cat"))
+add("fossil_woolly_tusk", "Woolly Tusk Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#DCCDB0", "#8A6A4A", skeleton("woolly_tusk"))
+add("fossil_sky_wing", "Sky Wing Skeleton", "statue", "fossil_skeleton", { 4, 2 }, nil, "#F4EEE2", "#8A6A4A", skeleton("sky_wing"))
+
 for _, d in Decor.List do
 	d.mesh = d.mesh or ""
 	d.kind = d.kind or "fun"
@@ -373,6 +388,7 @@ Decor.Layout = {
 		{ 68, 16, 3.5, 3.5 }, -- 3.10: the Guestbook stand beside the gate (Config.Tourists.World.stand)
 		{ 14, 43, 10, 8 }, -- the Kitchen and its door (3.10)
 		{ 31.5, -47, 13.5, 7.5 }, -- 3.10: the Fishing Pond and its dock (Config.World.Pond)
+		{ 62, -47, 12, 7 }, -- 3.11: the Dig Site's sand pit and tool rack (Config.World.DigSite)
 	},
 	-- Legacy pen slots (pen-local fractions of the half extents) the migration puts old decor on.
 	legacySpots = { { -0.62, -0.55 }, { 0.62, -0.55 }, { 0, -0.62 } },

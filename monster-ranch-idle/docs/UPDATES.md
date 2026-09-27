@@ -3,6 +3,37 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.11 · Seasons & secrets
+
+### Dig Site & Fossils
+
+**For players**
+- From Ranch Level 16 a roped-off sand pit with a tool rack sits in the north strip of every ranch,
+  east of the Fishing Pond. Its "Dig" prompt opens the Dig Site.
+- A dig is a 5 × 5 field of covered tiles and 5 taps. Each empty tile tells you how close the
+  nearest buried find is (Hot!, Warm, Cool, Cold). Every dig hides 1 find, or 2 (40%).
+- 6 free digs a UTC day, then one Shovel each. Expedition Bounties now pay 2 Shovels; the
+  Travelling Merchant can sell them too.
+- Finds: fossil pieces (6 fossils × skull, ribs, legs, tail; a piece you already have becomes
+  5 Amber), Amber (3-8), rare relic decor (Ancient Urn, Stone Tablet) and the rare Amber Egg (never
+  sold; hatches the Stone, Sprout and Gloom lines with better odds than the shop eggs).
+- All four pieces complete a fossil and give its skeleton display to place on the ranch (it adds
+  to decor and tourist Appeal like any decor).
+- The Codex has a Fossils tab: every fossil's pieces and milestones at 2 / 4 / 6 fossils
+  (20 / 40 / 100 gems). New weekly goal: Finish 10 digs.
+
+**In the code**
+- `Config/DigSite`, `Logic/DigSite` (seeded layout, distance hints), `Systems/DigSite` (actions
+  `DigSite.Start`, `DigSite.Tap`; API `AddShovels`, `FossilsComplete`; publishes `FossilFound` and
+  `DigFinished`), screen `Screens/DigSite`, Codex tab `Parts/FossilLog`.
+- The layout is seeded by (userId, dig number, a private per-player secret), never stored or sent;
+  the open dig's dug tiles live in `profile.DigSite.open`, so reopening resumes it (no reroll).
+- World: `Config.World.DigSite` (built in `World/Build.luau`, Decor keep-out `{ 62, -47, 12, 7 }`).
+- Rewards kind `shovel`; `amber` and `shovel` icons drawn in code (`Components/Icon`).
+- Amber Egg (`Config/Eggs`, order 23, pool `amber` on the 9 common Stone/Sprout/Gloom lines);
+  decor `ancient_urn`, `stone_tablet`, `fossil_<id>` (DecorArt `fossil_skeleton` posed per fossil).
+- Tests: `DigSite.spec`, `DigSiteClient.spec`.
+
 ## 3.10 · Ranch life
 
 ### Ranch Tourists

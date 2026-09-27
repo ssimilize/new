@@ -2,6 +2,7 @@
 	Icon: small currency/resource icons. Each kind is drawn, in order of preference, from the icon
 	sheet (UI/Art/Icons, once uploaded), from Theme.Images (a single uploaded image), or with shapes.
 	Kinds: coin · gem · food · treat · stardust · friendship · token · ribbon · xp · egg · star · lock · trophy
+	       · amber · shovel (3.11, Dig Site)
 	Any icon name from art/ui/ICONS.md also works as a kind ("food_sweet", "decor_hay_bale", ...).
 
 		Icon.new("coin", 28)       -- returns a Frame (size × size)
@@ -189,6 +190,55 @@ function Icon.new(kind: string, size: number?): Frame
 			Position = UDim2.fromScale(0.25, 0.76),
 			Parent = frame,
 		}, { Create.Corner(px / 10), Create.Stroke(stroke) })
+	elseif kind == "amber" then
+		-- 3.11 · Dig Site amber: a rounded honey-gold drop with a shine and a speck inside.
+		local stroke = math.max(1.5, px / 14)
+		local d = New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#F2A93B"),
+			Size = UDim2.fromScale(0.7, 0.7),
+			Position = UDim2.fromScale(0.5, 0.56),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Rotation = 45,
+			Parent = frame,
+		}, { Create.Corner(UDim.new(0.45, 0)), Create.Stroke(stroke) })
+		local g = Instance.new("UIGradient")
+		g.Color = ColorSequence.new(Color3.fromHex("#FFD98A"), Color3.fromHex("#C8661E"))
+		g.Rotation = 90
+		g.Parent = d
+		New("Frame", {
+			BackgroundColor3 = C.White,
+			BackgroundTransparency = 0.35,
+			Size = UDim2.fromScale(0.22, 0.22),
+			Position = UDim2.fromScale(0.22, 0.2),
+			Parent = d,
+		}, { Create.Round() })
+		New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#5A3410"),
+			Size = UDim2.fromScale(0.14, 0.14),
+			Position = UDim2.fromScale(0.55, 0.55),
+			Parent = d,
+		}, { Create.Round() })
+	elseif kind == "shovel" then
+		-- 3.11 · Dig Site shovel: a wooden handle with a grip and a steel blade.
+		local stroke = math.max(1.5, px / 14)
+		New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#A0703D"),
+			Size = UDim2.fromScale(0.14, 0.62),
+			Position = UDim2.fromScale(0.43, 0.02),
+			Parent = frame,
+		}, { Create.Corner(px / 12), Create.Stroke(stroke) })
+		New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#A0703D"),
+			Size = UDim2.fromScale(0.36, 0.12),
+			Position = UDim2.fromScale(0.32, 0.02),
+			Parent = frame,
+		}, { Create.Corner(px / 12), Create.Stroke(stroke) })
+		New("Frame", {
+			BackgroundColor3 = Color3.fromHex("#B8C0C8"),
+			Size = UDim2.fromScale(0.44, 0.38),
+			Position = UDim2.fromScale(0.28, 0.58),
+			Parent = frame,
+		}, { Create.Corner(UDim.new(0.4, 0)), Create.Stroke(stroke) })
 	elseif kind == "lock" then
 		local d = disc(C.Gray)
 		glyph(d, "🔒", C.White, 0.6)

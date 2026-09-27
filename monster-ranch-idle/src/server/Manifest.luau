@@ -96,6 +96,8 @@ return {
 		"GeneLab",
 		-- 3.10 · Fishing Pond
 		"Fishing",
+		-- 3.11 · Dig Site & Fossils
+		"DigSite",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

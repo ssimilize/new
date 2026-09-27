@@ -12,6 +12,7 @@
 	  monster (id = line id, rarity)          → Monsters
 	  accessory (id = accessory id)           → Accessories (1.5)
 	  bait                                    → Fishing:AddBait (3.10)
+	  shovel                                  → DigSite:AddShovels (3.11)
 
 	Public API:
 	  Rewards:Grant(player, items, source, options?) -> resolvedItems
@@ -22,7 +23,7 @@
 local Rewards = {
 	Name = "Rewards",
 	Dependencies = { "Currency", "Progression" },
-	OptionalDependencies = { "Eggs", "Shop", "Monsters", "Ranch", "Accessories", "Fishing" },
+	OptionalDependencies = { "Eggs", "Shop", "Monsters", "Ranch", "Accessories", "Fishing", "DigSite" },
 }
 
 local ctx
@@ -99,6 +100,13 @@ function Rewards:Grant(player, items, source: string, options: { silent: boolean
 			local Fishing = ctx:GetSystem("Fishing")
 			if Fishing then
 				Fishing:AddBait(player, item.amount)
+			else
+				ok = false
+			end
+		elseif item.kind == "shovel" then
+			local DigSite = ctx:GetSystem("DigSite")
+			if DigSite then
+				DigSite:AddShovels(player, item.amount)
 			else
 				ok = false
 			end

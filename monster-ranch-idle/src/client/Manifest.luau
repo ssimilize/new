@@ -104,6 +104,7 @@ return {
 		"Kitchen", -- 3.10 · Kitchen & Pantry
 		"GeneLab", -- 3.10 · Gene Lab (from Monster Detail and the Breeding Barn)
 		"Fishing", -- 3.10 · Fishing Pond (opened from the pond's prompt)
+		"DigSite", -- 3.11 · Dig Site (opened from the sand pit's prompt)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

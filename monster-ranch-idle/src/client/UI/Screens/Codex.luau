@@ -9,7 +9,8 @@
 	Glow-up O: a Species / Milestones tab pair; Milestones (Parts/CodexMilestones) shows the
 	milestone tracks with progress bars and Claim buttons (profile.Codex.claimed).
 	3.10: a Fish Log tab (Parts/FishLog): fish caught at the Fishing Pond and their milestones.
-	Open params: { tab = "milestones" | "fishlog" }.
+	3.11: a Fossils tab (Parts/FossilLog): fossils completed at the Dig Site and their milestones.
+	Open params: { tab = "milestones" | "fishlog" | "fossils" }.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -30,6 +31,7 @@ local Tiles = require(UI.Components.Tiles)
 local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local CodexMilestones = require(script.Parent.Parts.CodexMilestones)
 local FishLog = require(script.Parent.Parts.FishLog)
+local FossilLog = require(script.Parent.Parts.FossilLog)
 
 local New = Create.New
 local C = Theme.Colors
@@ -91,24 +93,30 @@ function Codex.Build(ctx)
 	milestones.Root.Visible = false
 	local fishLog = FishLog.new(ctx, panel.Body, UDim2.fromOffset(944, 400))
 	fishLog.Root.Visible = false
+	local fossilLog = FossilLog.new(ctx, panel.Body, UDim2.fromOffset(944, 400))
+	fossilLog.Root.Visible = false
 	local tab = "species"
 	local tabs = Widgets.Tabs({
 		Tabs = {
-			{ id = "species", text = "Species", width = 120 },
-			{ id = "milestones", text = "Milestones", width = 140 },
-			{ id = "fishlog", text = "Fish Log", width = 120 },
+			{ id = "species", text = "Species", width = 110 },
+			{ id = "milestones", text = "Milestones", width = 130 },
+			{ id = "fishlog", text = "Fish Log", width = 110 },
+			{ id = "fossils", text = "Fossils", width = 100 },
 		},
-		Size = UDim2.fromOffset(396, 44),
+		Size = UDim2.fromOffset(470, 44),
 		OnChanged = function(id)
 			tab = id
 			list.Visible = id == "species"
 			detail.Visible = id == "species"
 			milestones.Root.Visible = id == "milestones"
 			fishLog.Root.Visible = id == "fishlog"
+			fossilLog.Root.Visible = id == "fossils"
 			if id == "milestones" then
 				milestones.Refresh()
 			elseif id == "fishlog" then
 				fishLog.Refresh()
+			elseif id == "fossils" then
+				fossilLog.Refresh()
 			end
 		end,
 	})
@@ -431,13 +439,15 @@ function Codex.Build(ctx)
 
 	local watch = StoreKit.watch(
 		store,
-		{ "profile.Monsters.codex", "profile.Breeding.discovered", "profile.Codex", "profile.Fishing.log" },
+		{ "profile.Monsters.codex", "profile.Breeding.discovered", "profile.Codex", "profile.Fishing.log", "profile.DigSite.pieces" },
 		function()
 			refresh()
 			if tab == "milestones" then
 				milestones.Refresh()
 			elseif tab == "fishlog" then
 				fishLog.Refresh()
+			elseif tab == "fossils" then
+				fossilLog.Refresh()
 			end
 		end
 	)
@@ -446,7 +456,7 @@ function Codex.Build(ctx)
 		Root = panel.Root,
 		Open = function(params)
 			local want = "species"
-			if type(params) == "table" and (params.tab == "milestones" or params.tab == "fishlog") then
+			if type(params) == "table" and (params.tab == "milestones" or params.tab == "fishlog" or params.tab == "fossils") then
 				want = params.tab
 			end
 			if want ~= tab then
@@ -455,6 +465,8 @@ function Codex.Build(ctx)
 			watch.Start()
 			if tab == "fishlog" then
 				fishLog.Refresh()
+			elseif tab == "fossils" then
+				fossilLog.Refresh()
 			end
 		end,
 		Close = function()
