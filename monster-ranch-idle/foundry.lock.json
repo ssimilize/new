@@ -1,7 +1,7 @@
 {
   "foundry": {
-    "commit": "c89b49f",
-    "syncedAt": "2026-09-27T21:30:05+00:00"
+    "commit": "df77c0e",
+    "syncedAt": "2026-09-27T22:46:53+00:00"
   },
   "game": "monster-ranch",
   "packages": {
@@ -9,6 +9,36 @@
       "version": "0.1.0",
       "files": {
         "Contract.luau": "e53312ebd394b8b9afa1f774d1891ada0d68fe1f4ca721c251d32fff3534f69f"
+      }
+    },
+    "Almanac": {
+      "version": "0.1.0",
+      "files": {
+        "Almanac.luau": "190c74701936812c4ae61a4f6afafcdc7be518d9086c595060db40ace0845282",
+        "rules/guildhall.luau": "c217a28f3d47d7039a131db4ed637add403c0f159cba376d9c4cb75b18a1c4c0",
+        "rules/monster-ranch.luau": "cd9ba1febfd375a8df4600f2e4c5ee9ea1d66bf93a86c6d17dbace3d1ad801cb"
+      }
+    },
+    "Lamplighter": {
+      "version": "0.1.0",
+      "files": {
+        "Flicker.luau": "cd13f4f535683b77287a57283dabdfaee75bbc137a8b120012fa8fc42d868abe",
+        "Kinds.luau": "b3c65d4723d86329c84af7a713df947cb73b17940710fc91da27466f37d2974e",
+        "Lamplighter.luau": "21275c1942f42728f595f9f8380dac9752c8e69dbf5e7c89dfaf9ac3516f823f",
+        "rules/guildhall.luau": "0b08c3b5b0f7f36d298b23dd27b9f26e8663dc37725fc50eec28088232e71cad",
+        "rules/monster-ranch.luau": "3d634f9cb433b64a710773346830586f335edb37bc613d78ce0243d3d78f2210",
+        "Windows.luau": "90882aaee378aa6813f740e85e05bf992f3790f9fe003b5a3f19a099d0c80036"
+      }
+    },
+    "Wildlife": {
+      "version": "0.1.0",
+      "files": {
+        "Flock.luau": "9e0b5c5dc4e31c3bbfd50253f4aac923d5524d2ff53bf97d6dd63ccdd9d48eba",
+        "Rules.luau": "1ab5b9a47085726c0636a85e5c2ab1427a8399f94b98600c459a1d874b09126a",
+        "Stray.luau": "c3bb8a7f4d08afb4ea1b52fc8f35cd5a7832231f8b3172c6fc4a8870ededb726",
+        "tables/guildhall.luau": "f503ba23080fdd899deb301b1bd6efd052bc0a6c2b42ecbd18242107b567b43b",
+        "tables/monster-ranch.luau": "25174fbd9e5381ea2442a2879d34a5e5b128e74609b32bc4f68867cfc7c666d6",
+        "Wildlife.luau": "c271f84b6133c3b0694173a8160d9206899501c0f876594b9870cab8313c8bdd"
       }
     }
   },
