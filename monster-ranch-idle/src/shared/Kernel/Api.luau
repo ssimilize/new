@@ -616,6 +616,11 @@ Api.Actions = {
 		rate = 3,
 		returns = "nil",
 	},
+
+	-- R2 Design Weeks (Systems/Workshop/DesignWeek.luau) -------------------------------------
+	["Workshop.Enter"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 0.5, returns = "{ design: string, theme: string }" },
+	["Workshop.Vote"] = { schema = T.struct({ design = T.string(40, 3) }), rate = 2, returns = "{ votes: number }" },
+	["Workshop.Theme"] = { schema = T.none, rate = 1, returns = "{ count: number }" },
 }
 
 --[[
@@ -696,6 +701,8 @@ Api.State = {
 		Visits = "{ day, liked = { ['u'..userId]: true }, paidCount, got, week, weekLikes, received }  -- glow-up Y (paid private)",
 		Decor = "{ layout = { { id, x, z, rot } }, migrated, starter }  -- glow-up Z: plot-local grid units, rot × 45°",
 		RaceGear = "{ owned = { [gearId]: true }, equipped = { saddle, trail, banner }, races, live, podiums, wins, duels }  -- glow-up LR",
+		-- R2 Design Weeks: added to profile.Workshop (see Api.State.profile.Workshop above).
+		Workshop_DesignWeek = "profile.Workshop also has: designWeek = { week, entered: designId|false }, votesToday = { day, n }",
 	},
 	session = {
 		Eggs = "{ slotCount, speed }",
@@ -720,6 +727,8 @@ Api.State = {
 		Reminders = "{ available: boolean, prompt: boolean }  -- prompt = show Roblox's notification opt-in now",
 		Visits = "{ showcase: RanchSnapshot | false }  -- glow-up Y: the friend's ranch in this player's Visiting Showcase (Logic/Visits)",
 		LiveRace = "{ heat: number|false, meter, lap, progress, strikes, finished, dq, result = { place, time, finished, field, rewards, cup, dq }|false }  -- glow-up LR",
+		-- R2 Design Weeks: added to session.Workshop (see Api.State.session.Workshop above).
+		Workshop_DesignWeek = "session.Workshop also has: theme = { id, name, endsAt, entered: designId|false, votesLeft, entries = { { id, name, creatorName, shape, slot, color, color2, votes, mine, voted } } }, featured = { DesignView + featured: true }",
 	},
 	global = {
 		Shop = "{ window, endsAt, stock = { [eggType]: n } }",

@@ -941,6 +941,43 @@ function Adapters.Roblox()
 			end
 			return true, ids
 		end,
+		-- Design Week (R2): which design ids entered a given week (feedStore key "dw_<week>").
+		EnterWeek = function(week: number, id: string): boolean
+			return (
+				atomic(feedStore, "dw_" .. tostring(week), function(current)
+					local list = if type(current) == "table" then current else {}
+					if table.find(list, id) then
+						return nil
+					end
+					table.insert(list, id)
+					return list
+				end)
+			)
+		end,
+		WeekEntries = function(week: number): (boolean, { string })
+			if not feedStore then
+				return false, {}
+			end
+			local ok, list = pcall(function()
+				return feedStore:GetAsync("dw_" .. tostring(week))
+			end)
+			return ok, if ok and type(list) == "table" then list else {}
+		end,
+		-- Design Week rollover: an atomic write to feedStore key "dwr_<week>" so two servers
+		-- finalizing the same week at once only apply the side effects once (the transform
+		-- returns nil, meaning "no change", once a result already exists).
+		Rollover = function(week: number, transform): (boolean, any)
+			return atomic(feedStore, "dwr_" .. tostring(week), transform)
+		end,
+		Results = function(week: number): (boolean, any)
+			if not feedStore then
+				return false, nil
+			end
+			local ok, record = pcall(function()
+				return feedStore:GetAsync("dwr_" .. tostring(week))
+			end)
+			return ok, if ok then record else nil
+		end,
 	}
 
 	-- Titan invasions (glow-up TT): one MemoryStore hash map entry per scheduled invasion (key =

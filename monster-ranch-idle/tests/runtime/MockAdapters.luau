@@ -48,6 +48,8 @@ function MockAdapters.network()
 		reported = {}, -- design ids hidden by reports, oldest first (3.0.1)
 		designReads = 0, -- Designs.Get calls, to check caching (3.0.1)
 		designsDown = false,
+		designWeekEntries = {}, -- [week] = { designId } (R2 Design Weeks)
+		designWeekResults = {}, -- [week] = { week, theme, winners = { designId }, finalizedAt } | nil
 		titan = {}, -- Titan invasion pool records by key (glow-up TT)
 		titanDown = false,
 	}
@@ -537,6 +539,43 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 				ids[i] = network.designFeed[i]
 			end
 			return true, ids
+		end,
+		-- Design Week (R2), shared through options.network.
+		EnterWeek = function(week, id)
+			if network.designsDown then
+				return false
+			end
+			local list = network.designWeekEntries[week]
+			if not list then
+				list = {}
+				network.designWeekEntries[week] = list
+			end
+			if not table.find(list, id) then
+				table.insert(list, id)
+			end
+			return true
+		end,
+		WeekEntries = function(week)
+			if network.designsDown then
+				return false, {}
+			end
+			return true, deepCopy(network.designWeekEntries[week] or {})
+		end,
+		Rollover = function(week, transform)
+			if network.designsDown then
+				return false, nil
+			end
+			local result = transform(deepCopy(network.designWeekResults[week]))
+			if result ~= nil then
+				network.designWeekResults[week] = deepCopy(result)
+			end
+			return true, deepCopy(result)
+		end,
+		Results = function(week)
+			if network.designsDown then
+				return false, nil
+			end
+			return true, deepCopy(network.designWeekResults[week])
 		end,
 	}
 
