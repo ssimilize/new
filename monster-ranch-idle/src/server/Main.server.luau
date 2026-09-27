@@ -22,6 +22,17 @@ end
 kernel:Start()
 
 -- Studio only: the QA bridge (ServerStorage.QABridge) for staged checks, see Kernel/QABridge.
-if game:GetService("RunService"):IsStudio() then
+if kernel.Adapters.IsStudio then
 	require(script.Parent.Kernel.QABridge).Attach(kernel)
+
+	-- Launch checklist (R2-LAUNCH): warn once about owner-created ids still unset (game
+	-- passes, products, badges, the group, reminder templates/secret). Never on a live
+	-- server; see docs/GO_LIVE.md.
+	local Shared = game:GetService("ReplicatedStorage").Shared
+	local LaunchCheck = require(Shared.Logic.LaunchCheck)
+	local Config = require(Shared.Config)
+	local missing = LaunchCheck.Missing(Config)
+	if #missing > 0 then
+		warn("[Main] " .. LaunchCheck.Summary(missing))
+	end
 end
