@@ -288,6 +288,9 @@ local function dive()
 	ContextActionService:BindActionAtPriority("DeepReefVertical", onVertical, false, PRIORITY, table.unpack(VERTICAL_KEYS))
 	buildTrail(root)
 	ctx:Sound("ReefDive", { at = at })
+	-- R2-ONBOARDING: completes the "reef_intro" chapter-two tutorial step (no gameplay bus
+	-- topic fits a dive; fire-and-forget, like other best-effort client signals).
+	ctx.Net:Request("Quests.Signal", { id = "dive" })
 end
 
 -- Ends a swim however it ends (Swim up, a lost or respawned character): the light always comes back.

@@ -2426,4 +2426,22 @@ return {
 	["You haven't earned that gear yet"] = "Aún no has ganado ese equipo",
 	["You're already in this race"] = "Ya estás en esta carrera",
 	["boost"] = "turbo",
+
+	-- R2-ONBOARDING: tutorial chapter two, first-time screen cards, What's new
+	["Give one of your monsters some Care. Pet, brush or play to raise its bond."] = "Dale Cuidado a uno de tus monstruos. Acarícialo, cepíllalo o juega con él para subir su vínculo.",
+	["Build your ranch! Open Decorate and place some scenery."] = "¡Construye tu rancho! Abre Decorar y coloca algo de decoración.",
+	["Check the Codex. It tracks every monster line, form and variant you've found."] = "Revisa el Códice. Registra cada línea, forma y variante de monstruo que has encontrado.",
+	["Earn Ranch Mastery from battles and levels. It unlocks perks for your whole ranch."] = "Gana Maestría del Rancho con batallas y niveles. Desbloquea mejoras para todo tu rancho.",
+	["A Stampede is here! Join the fight for big rewards."] = "¡Hay una Estampida! Únete a la pelea por grandes recompensas.",
+	["Race your monster at the Race Track and finish a lap."] = "Corre con tu monstruo en la Pista de Carreras y termina una vuelta.",
+	["Dive into the Deep Reef at the Dive Dock and explore underwater."] = "Sumérgete en el Arrecife Profundo desde el Muelle de Buceo y explora bajo el agua.",
+	["Care"] = "Cuidado",
+	["Pet, brush or play with a monster to raise its bond. A closer bond earns more coins and can teach it tricks."] = "Acaricia, cepilla o juega con un monstruo para subir su vínculo. Un vínculo más fuerte gana más monedas y puede enseñarle trucos.",
+	["Decorate"] = "Decorar",
+	["Place paths, plants and props around your ranch. Decor is just for looks, so have fun with it."] = "Coloca caminos, plantas y objetos por tu rancho. La decoración es solo estética, así que diviértete con ella.",
+	["Every monster line, form and variant you've found is tracked here. Claim milestones for rewards."] = "Aquí se registra cada línea, forma y variante de monstruo que has encontrado. Reclama hitos por recompensas.",
+	["When a Stampede boss appears, everyone on the ranch can join the fight. Deal damage for a share of the loot."] = "Cuando aparece un jefe de Estampida, todos en el rancho pueden unirse a la pelea. Haz daño para llevarte parte del botín.",
+	["What's new"] = "Novedades",
+	["Your ranch grew while you were away! Care for your monsters, decorate your ranch, browse the Codex, earn Ranch Mastery, fight Stampedes, race at the track and dive into the Deep Reef."] = "¡Tu rancho creció mientras no estabas! Cuida a tus monstruos, decora tu rancho, explora el Códice, gana Maestría del Rancho, pelea contra Estampidas, corre en la pista y sumérgete en el Arrecife Profundo.",
+	["New: {1} of {2}"] = "Nuevo: {1} de {2}",
 }
