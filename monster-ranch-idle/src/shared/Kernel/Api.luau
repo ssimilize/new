@@ -307,7 +307,7 @@ Api.Actions = {
 	["Expeditions.Fight"] = {
 		schema = T.struct({ region = regionId, stage = stage, retry = T.optional(T.boolean) }),
 		rate = 1,
-		returns = "{ win: boolean, replay: BattleReplay, rewards: { Reward } }",
+		returns = "{ win: boolean, replay: BattleReplay, rewards: { Reward }, bounty: string? }",
 	},
 	["Expeditions.Start"] = {
 		schema = T.struct({ slot = T.integer(1, 4), region = regionId, stage = stage, duration = duration, squad = squad }),
@@ -346,9 +346,18 @@ Api.Actions = {
 	["Breeding.Claim"] = {
 		schema = T.struct({ pod = T.integer(1, 2) }),
 		rate = 2,
-		returns = "{ monster: Monster, hybridDiscovered: boolean, surges: number }",
+		returns = "{ monster: Monster, hybridDiscovered: boolean, surges: number, targetMet: boolean }",
 	},
 	["Breeding.Cancel"] = { schema = T.struct({ pod = T.integer(1, 2) }), rate = 1, returns = "nil  -- fee is not refunded" },
+	-- 3.9: the planner's goal; no stat clears it (grades C/B/A/S, checked by the handler too)
+	["Breeding.SetTarget"] = {
+		schema = T.struct({
+			stat = T.optional(T.enum(Config.Genetics.Stats)),
+			grade = T.optional(T.enum(Config.Breeding.TargetGrades)),
+		}),
+		rate = 2,
+		returns = "{ target: { stat, grade } | false }",
+	},
 
 	-- Ranch Jobs (3.7) · see Config/Jobs and Logic/Jobs ---------------------------------
 	["Jobs.Assign"] = {
@@ -377,7 +386,7 @@ Api.Actions = {
 	},
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
-		schema = T.struct({ index = T.integer(1, Config.Orders.PerDay), id = T.optional(id) }),
+		schema = T.struct({ index = T.integer(1, Config.Orders.PerDay + 1), id = T.optional(id) }), -- 3.9: PerDay + 1 is the favourite buyer order
 		rate = 2,
 		returns = "{ rewards: { Reward } }  -- id: the monster a monster order takes",
 	},
@@ -707,11 +716,11 @@ Api.State = {
 		Eggs = "{ list = { [id]: { type, source, t } }, slots = { { egg: id|false, type: string|false, startedAt, endsAt } }, nextId, pity = { starlit, royal } }",
 		Shop = "{ window, bought = { [eggType]: n }, decor = { [decorId]: n owned }, themes = { [themeId]: true } }",
 		Ranch = "{ pens = { Pen }, incubatorTier, barnTier, garden = { tier, plots = { { flavor|false, readyAt } } } }",
-		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id } }",
-		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true } }",
+		Expeditions = "{ cleared = { [regionId]: highestStage }, slots = { Slot }, squad = { id }, bounty = { week, list = { { region, stage, name, line, seed, done } }, count } }",
+		Breeding = "{ pods = { Pod }, daily = { day, counts = { [monsterId]: n } }, discovered = { [lineId]: true }, target = { stat, grade } | false, milestones = { [stat]: grade } }",
 		Jobs = "{ slots = { { job, monster, since, carry, rolled, flavor, seed } } }  -- see Logic/Jobs",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
-		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, filled } }, rerolls }  -- see Logic/Orders",
+		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
 		Social = "{ day, petsGiven, likesGiven = { ['u'..userId]: true }, likes }",
 		Quests = "{ tutorial = { step, progress }, daily = { day, list = { { id, progress, claimed } } }, achievements = { [id]: { progress, claimed } }, codes = { [code]: true }, pass, passCredit }",
 		Monetization = "{ ads = { day, counts = { [placement]: n } }, once = { [productKey]: true }, vip = { day, opened } }",
@@ -829,7 +838,8 @@ Api.Topics = {
 	TitanDamage = "(player, { damage: number, won: boolean })  -- per participant when a titan invasion ends",
 	Bred = "(player, { id: string, hybrid: boolean, discovery: boolean })",
 	JobsCollected = "(player, { rewards: { Reward } })  -- 3.7: what the Job Board paid out",
-	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
+	BountyDefeated = "(player, { region: string, stage: number })  -- 3.9: an Expedition Bounty's first win",
+	OrderFilled = "(player, { index: number, kind: 'monster'|'goods', difficulty: string, buyer: string, monster: string?, rewards: { Reward } })  -- 3.8: Ranch Orders",
 	Mutated = "(player, { id: string, mutation: string })",
 	WeatherChanged = "(nil, { id: string })",
 	Retired = "(player, { rarity: number, element: string })",

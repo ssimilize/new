@@ -583,7 +583,7 @@ function BattleArena:_buildUnit(unit, spot)
 		return nil
 	end
 	local natural = MonsterModel.ScaleFor(appearance)
-	local size = Plan.Size(natural, spot.boss, Tuning)
+	local size = Plan.Size(natural, spot.boss, Tuning, spot.bounty)
 	local vfx = not self.low
 	local key = modelKey(appearance, size, vfx)
 	local model = takeModel(key)

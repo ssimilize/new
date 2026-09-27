@@ -11,6 +11,13 @@
 
 	Reads: profile.Breeding, session.Breeding, profile.Monsters.list, profile.Currency.coins,
 	profile.Progression.level (all tolerated nil).
+
+	Planner (update 3.9): each gene stat shows the baby's chance of the target grade or better
+	(Logic/Genetics.AtLeast, exact odds from the parents' genes, never the pod's seed), or of
+	Config.Breeding.PlanGrade or better with no target; tap a stat for its full grade spread.
+	The target chip opens a picker (Breeding.SetTarget); with a target set the parent picker
+	sorts best-for-target first (the chance with the other chosen parent, else the candidate's
+	own points in that stat).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -112,6 +119,21 @@ local function outcomes(a, b)
 	return estimateOutcomes(a, b)
 end
 
+-- A planner chance (0..1) for display: never "0%" for a possible grade, never "100%" for an
+-- uncertain one.
+local function chanceText(p: number): string
+	if p <= 0 then
+		return "0%"
+	elseif p >= 1 then
+		return "100%"
+	elseif p < 0.01 then
+		return Format.percent(math.max(p, 0.001), 1)
+	elseif p > 0.99 then
+		return "99%"
+	end
+	return Format.percent(p)
+end
+
 -- pct values may be 0..1 or 0..100; normalise to 0..100 for display.
 local function pctText(p: number, total: number): string
 	local value = if total <= 1.001 then p * 100 else p
@@ -166,6 +188,18 @@ return {
 		local function isRunning(p): boolean
 			return p ~= nil and p ~= false and p.state == "running"
 		end
+		-- The breeding target (3.9): { stat, grade } or nil.
+		local function target()
+			local tg = data().target
+			if type(tg) == "table" and Config.Genetics.StatNames[tg.stat] and Genetics.GradeMin(tg.grade) then
+				return tg
+			end
+			return nil
+		end
+		local function planGrade(): string
+			local tg = target()
+			return if tg then tg.grade else BreedingConfig.PlanGrade
+		end
 
 		-- Layout -------------------------------------------------------------------------------
 
@@ -200,9 +234,21 @@ return {
 
 		local function pickParent(which: string)
 			local other = if which == "a" then selB else selA
+			local tg = target()
+			local partner = other and Util.monsters(ctx)[other]
 			Util.pick(ctx, {
-				title = "Choose a parent",
+				title = if tg then "Choose a parent (best for target first)" else "Choose a parent",
 				max = 1,
+				-- Best for target (3.9): the chance with the chosen partner, else the candidate's own
+				-- points in the target stat.
+				sortBy = if tg
+					then function(m)
+						if partner then
+							return Genetics.AtLeast(Genetics.GradeOdds(m.genes, partner.genes, tg.stat), tg.grade)
+						end
+						return Genetics.Points(m.genes, tg.stat)
+					end
+					else nil,
 				filter = function(m)
 					return m.stage == 3 and not m.busy and m.id ~= other and breedsLeft(m.id) > 0
 				end,
@@ -218,6 +264,123 @@ return {
 					end
 				end,
 			})
+		end
+
+		local function openTargetPicker()
+			local tg = target()
+			local chosen = if tg then tg.stat else Config.Genetics.Stats[1]
+			Dialog.show(ctx.UI.Top, {
+				Title = "Breeding target",
+				Color = C.Pink,
+				Size = Vector2.new(620, 340),
+				Text = "Pick a gene stat, then the grade you hope for. The planner shows your chance of that grade or better.",
+				Build = function(content, close)
+					local statRow = New("Frame", {
+						Name = "Stats",
+						BackgroundTransparency = 1,
+						Size = UDim2.new(1, 0, 0, 48),
+						LayoutOrder = 2,
+						Parent = content,
+					}, { Create.List("x", 8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center) })
+					local statButtons = {}
+					local function paint()
+						for stat, button in statButtons do
+							button:SetColor(if stat == chosen then C.Gold else C.Blue)
+						end
+					end
+					for i, stat in Config.Genetics.Stats do
+						statButtons[stat] = Button.new({
+							Text = Config.Genetics.StatNames[stat] or stat,
+							Color = C.Blue,
+							Size = UDim2.fromOffset(100, 44),
+							TextSize = Theme.TextSize.Body,
+							LayoutOrder = i,
+							Parent = statRow,
+							OnClick = function()
+								chosen = stat
+								paint()
+							end,
+						})
+						statButtons[stat].Root.Name = "Stat_" .. stat
+					end
+					paint()
+					local gradeRow = New("Frame", {
+						Name = "Grades",
+						BackgroundTransparency = 1,
+						Size = UDim2.new(1, 0, 0, 48),
+						LayoutOrder = 3,
+						Parent = content,
+					}, { Create.List("x", 8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center) })
+					for i, grade in BreedingConfig.TargetGrades do
+						local button = Button.new({
+							Text = string.format("%s or better", grade),
+							Color = GeneGrades.color(Genetics.GradeMin(grade) or 0),
+							Size = UDim2.fromOffset(128, 44),
+							TextSize = Theme.TextSize.Body,
+							LayoutOrder = i,
+							Parent = gradeRow,
+							OnClick = function()
+								local ok = Util.requestOnce(ctx, "Breeding.SetTarget", { stat = chosen, grade = grade })
+								if ok then
+									close()
+								end
+							end,
+						})
+						button.Root.Name = "Grade_" .. grade
+					end
+				end,
+				Buttons = {
+					{
+						Text = "Clear target",
+						Color = C.Gray,
+						OnClick = function()
+							Util.requestOnce(ctx, "Breeding.SetTarget", {})
+						end,
+					},
+				},
+			})
+		end
+
+		-- The chip and the chance with this pair (a and b may be nil).
+		local function targetRow(parent: Instance, order: number, a, b)
+			local row = New("Frame", {
+				Name = "Target",
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 44),
+				LayoutOrder = order,
+				Parent = parent,
+			})
+			local tg = target()
+			local statName = if tg then Config.Genetics.StatNames[tg.stat] or tg.stat else ""
+			Button.new({
+				Name = "TargetChip",
+				Text = if tg then string.format("Target: %s %s or better", statName, tg.grade) else "Set a target",
+				Color = if tg then C.Gold else C.Blue,
+				Size = UDim2.fromOffset(236, 44),
+				TextSize = Theme.TextSize.Small,
+				Parent = row,
+				OnClick = openTargetPicker,
+			})
+			local text
+			if tg and a and b then
+				text = string.format(
+					"Chance with this pair: %s",
+					chanceText(Genetics.AtLeast(Genetics.GradeOdds(a.genes, b.genes, tg.stat), tg.grade))
+				)
+			elseif a and b then
+				text = string.format("Stats show the chance of %s or better", planGrade())
+			else
+				text = "Aim for a gene grade and sort parents by it"
+			end
+			Util.text({
+				Name = "Chance",
+				Text = text,
+				TextColor3 = if tg and a and b then C.Text else C.TextMuted,
+				Position = UDim2.fromOffset(246, 0),
+				Size = UDim2.new(1, -246, 1, 0),
+				Parent = row,
+			})
+			return row
 		end
 
 		local function claim(i: number)
@@ -505,16 +668,18 @@ return {
 					LayoutOrder = 2,
 					Parent = content,
 				})
+				targetRow(content, 3)
 				return
 			end
 
 			local o = outcomes(a, b)
 			local discovered = data().discovered or {}
-			title("Possible offspring", 1)
+			-- The planner row (3.9) takes the title's place: the offspring cells speak for themselves.
+			targetRow(content, 1, a, b)
 
 			local speciesRow = New("Frame", {
 				BackgroundTransparency = 1,
-				Size = UDim2.new(1, 0, 0, 112),
+				Size = UDim2.new(1, 0, 0, 104),
 				LayoutOrder = 2,
 				Parent = content,
 			}, { Create.List("x", 12, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
@@ -525,7 +690,7 @@ return {
 			for i, sp in o.species or {} do
 				local cell = New("Frame", {
 					BackgroundColor3 = C.PanelDeep,
-					Size = UDim2.fromOffset(110, 110),
+					Size = UDim2.fromOffset(110, 102),
 					LayoutOrder = i,
 					Parent = speciesRow,
 				}, { Create.Corner(Theme.Radius.Card), Create.Stroke(2, if sp.hybrid then C.Purple else C.Line) })
@@ -547,7 +712,7 @@ return {
 					})
 				end
 				icon.AnchorPoint = Vector2.new(0.5, 0)
-				icon.Position = UDim2.new(0.5, 0, 0, 4)
+				icon.Position = UDim2.new(0.5, 0, 0, 2)
 				icon.Parent = cell
 				Util.text({
 					Text = string.format("%s %s", if known then lineName(sp.line) else "Hybrid", pctText(sp.pct or 0, total)),
@@ -629,47 +794,71 @@ return {
 			end
 			Util.text({ Text = mutText, Size = UDim2.new(1, 0, 0, 20), LayoutOrder = 5, Parent = content })
 
-			-- Genes (update 3.6): the baby's bonus per stat before surges, three stats a line
-			-- (five since Luck got a gene in 3.7), in fixed-width cells so the columns line up.
+			-- Genes (3.9 planner): each stat's chance of the plan grade or better, one line of five
+			-- fixed-width cells; the target's stat is outlined. Tap a stat for its grade spread.
 			local genes = o.genes or Genetics.Preview(a.genes, b.genes)
-			local PER_LINE, CELL_W, LINE_H = 3, 112, 22
-			local lineCount = math.max(1, math.ceil(#(genes.stats or {}) / PER_LINE))
+			local grade = planGrade()
+			local tg = target()
+			local TITLE_W, LINE_H = 64, 26
 			local genesRow = New("Frame", {
 				Name = "Genes",
 				BackgroundTransparency = 1,
-				Size = UDim2.new(1, 0, 0, lineCount * LINE_H + (lineCount - 1) * 4),
+				Size = UDim2.new(1, 0, 0, LINE_H),
 				LayoutOrder = 6,
 				Parent = content,
 			})
-			local genesTitle = Util.text({ Text = "Genes", Size = UDim2.new(0, 90, 0, LINE_H), Parent = genesRow })
+			local genesTitle = Util.text({ Text = "Genes", Size = UDim2.new(0, TITLE_W, 0, LINE_H), Parent = genesRow })
 			local cells = New("Frame", {
 				BackgroundTransparency = 1,
-				Position = UDim2.fromOffset(90, 0),
-				Size = UDim2.new(1, -90, 1, 0),
+				Position = UDim2.fromOffset(TITLE_W, 0),
+				Size = UDim2.new(1, -TITLE_W, 1, 0),
 				Parent = genesRow,
-			}, { Create.Grid(Vector2.new(CELL_W, LINE_H), 4) })
-			local pct = Config.Genetics.PctPerPoint * 100
-			for i, g in genes.stats or {} do
+			}, { Create.List("x", 4, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center) })
+			for i, stat in Config.Genetics.Stats do
+				local odds = Genetics.GradeOdds(a.genes, b.genes, stat)
+				local chance = Genetics.AtLeast(odds, grade)
+				local statName = Config.Genetics.StatNames[stat] or stat
+				local isTarget = tg ~= nil and tg.stat == stat
 				local cell = New("Frame", {
-					BackgroundTransparency = 1,
+					Name = "Plan_" .. stat,
+					BackgroundColor3 = C.PanelDeep,
+					BackgroundTransparency = if isTarget then 0 else 1,
+					Size = UDim2.fromOffset(84, LINE_H),
 					LayoutOrder = i,
 					Parent = cells,
-				})
+				}, if isTarget then { Create.Corner(6), Create.Stroke(2, C.Gold) } else nil)
 				Util.text({
-					Text = Config.Genetics.StatNames[g.stat] or g.stat,
+					Text = statName,
 					TextColor3 = C.TextMuted,
 					TextWrapped = false,
-					Size = UDim2.new(0, 40, 1, 0),
+					Position = UDim2.fromOffset(4, 0),
+					Size = UDim2.new(0, 42, 1, 0),
 					Parent = cell,
 				})
 				Util.text({
-					Text = string.format("+%d–%d%%", math.floor(g.lo * pct + 0.5), math.floor(g.hi * pct + 0.5)),
-					TextColor3 = GeneGrades.color(g.hi),
+					Name = "Chance",
+					Text = chanceText(chance),
+					TextColor3 = if chance >= 0.5 then GeneGrades.color(Genetics.GradeMin(grade) or 0) else C.Text,
 					TextWrapped = false,
-					Position = UDim2.fromOffset(42, 0),
-					Size = UDim2.new(1, -42, 1, 0),
+					TextXAlignment = Enum.TextXAlignment.Right,
+					Position = UDim2.fromOffset(40, 0),
+					Size = UDim2.new(1, -44, 1, 0),
 					Parent = cell,
 				})
+				Tiles.tap(cell, function()
+					ctx:Toast(
+						string.format(
+							"%s grade chances: S %s · A %s · B %s · C %s · D %s",
+							statName,
+							chanceText(odds.S),
+							chanceText(odds.A),
+							chanceText(odds.B),
+							chanceText(odds.C),
+							chanceText(odds.D)
+						),
+						"info"
+					)
+				end)
 			end
 			Tiles.tap(genesTitle, function()
 				ctx:Toast(

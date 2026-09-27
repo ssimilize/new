@@ -21,7 +21,16 @@
 	  Goods           food amount: Base + PerLevel for each level past the unlock, plus a random
 	                  0..Spread steps of Step, rounded to Step and kept within Min..Max; pays gems
 	                  and treats in the given ranges
-	  Buyers          who posts an order (picked from the order's seed)
+	  Buyers          who posts an order (picked from the order's seed); BuyerIds are their stable
+	                  ids in the same order (3.9), BuyerById[id] = { id, name, index, decor }
+	  Rep (3.9)       buyer reputation: filling an order earns its buyer Points[difficulty];
+	                  Levels are the point thresholds of levels 1..#Levels. Perks by level:
+	                    CoinBonus[level]  extra coins on that buyer's monster orders (fraction)
+	                    EggLevel          from this level their Hard orders roll eggs at EggChance
+	                    FavLevel          the highest such buyer posts one extra order a day
+	                    Gifts             one-time gifts on reaching a level (decor = the buyer's
+	                                      piece in Config.Decor, never sold)
+	                    Perks[level]      the perk in words, for the Buyers panel
 ]]
 
 local Orders = {}
@@ -73,6 +82,45 @@ Orders.Buyers = {
 	"Collector Juno",
 	"Ranger Tam",
 	"Professor Hale",
+}
+
+-- 3.9 · Buyer reputation --------------------------------------------------------------------
+
+Orders.BuyerIds = { "rosa", "pip", "milo", "wren", "ada", "juno", "tam", "hale" }
+
+local BUYER_DECOR = {
+	rosa = "rep_scarecrow",
+	pip = "rep_stove",
+	milo = "rep_bread_oven",
+	wren = "rep_anchor",
+	ada = "rep_medicine_cabinet",
+	juno = "rep_display_case",
+	tam = "rep_lookout_sign",
+	hale = "rep_telescope",
+}
+
+Orders.BuyerById = {}
+for i, id in Orders.BuyerIds do
+	Orders.BuyerById[id] = { id = id, name = Orders.Buyers[i], index = i, decor = BUYER_DECOR[id] }
+end
+
+Orders.Rep = {
+	Points = { easy = 1, medium = 2, hard = 4, goods = 2 },
+	Levels = { 5, 15, 35, 70 },
+	CoinBonus = { 0.10, 0.10, 0.25, 0.25 },
+	EggLevel = 2,
+	EggChance = 0.40,
+	FavLevel = 3,
+	Gifts = {
+		{ level = 2, gems = 20, food = 20 },
+		{ level = 4, decor = true },
+	},
+	Perks = {
+		"+10% coins on their monster orders",
+		"40% egg chance on their Hard orders, and a thank-you gift",
+		"+25% coins, and a daily favourite buyer order",
+		"A thank-you decor piece",
+	},
 }
 
 return Orders

@@ -17,7 +17,10 @@
 	                  (not busy, not locked), cheapest first, then a confirm naming the monster
 	                  that leaves → Orders.Fill { index, id }
 	  goods orders    "Hand over" → Orders.Fill { index }
-	Params: { tab? = "jobs" | "orders" }.
+		3.9 buyer reputation: each card shows its buyer's level (and "Favourite" on the extra
+	favourite buyer order); the header's "Buyers" button swaps the cards for the Buyers panel:
+	the 8 buyers with their level, a bar to the next level and the next perk.
+Params: { tab? = "jobs" | "orders" }.
 
 	Reads: profile.Jobs.slots, session.Jobs.slotCount, profile.Monsters.list,
 	profile.Progression.level, profile.Orders, profile.Currency.food (all tolerated nil).
@@ -103,6 +106,7 @@ return {
 		local lockOverlay = nil
 		local ordersLock = nil
 		local tab = "jobs"
+		local showBuyers = false -- 3.9: the Orders tab shows the Buyers panel instead of the cards
 
 		local collectAll = Button.new({
 			Name = "CollectAll",
@@ -113,6 +117,17 @@ return {
 			LayoutOrder = 1,
 			Parent = panel.HeaderRight,
 		})
+
+		local buyersButton = Button.new({
+			Name = "BuyersToggle",
+			Text = "Buyers",
+			Color = C.Purple,
+			Size = UDim2.fromOffset(170, 44),
+			TextSize = Theme.TextSize.Body,
+			LayoutOrder = 2,
+			Parent = panel.HeaderRight,
+		})
+		buyersButton:SetVisible(false)
 
 		local tabs = Widgets.Tabs({
 			Tabs = { { id = "jobs", text = "Jobs" }, { id = "orders", text = "Orders" } },
@@ -168,6 +183,13 @@ return {
 			Size = UDim2.fromScale(1, 1),
 			Parent = ordersView,
 		}, { Create.List("x", 10) })
+		local buyersView = New("Frame", {
+			Name = "Buyers",
+			BackgroundTransparency = 1,
+			Size = UDim2.fromScale(1, 1),
+			Visible = false,
+			Parent = ordersView,
+		})
 
 		local function slots()
 			local list = ctx.Store:Get("profile.Jobs.slots")
@@ -212,6 +234,12 @@ return {
 			local ok, res = Util.requestOnce(ctx, "Jobs.Collect")
 			if ok and type(res) == "table" and (type(res.rewards) ~= "table" or #res.rewards == 0) then
 				ctx:Toast("Nothing to collect yet", "info")
+			end
+		end)
+		buyersButton:SetOnClick(function()
+			showBuyers = not showBuyers
+			if refresh then
+				refresh()
 			end
 		end)
 
@@ -385,12 +413,22 @@ return {
 			return if type(p) == "table" then p else {}
 		end
 
+		local function repPoints()
+			local rep = orders().rep
+			return if type(rep) == "table" then rep else {}
+		end
+
+		-- The order's buyer's reputation level (3.9).
+		local function buyerLevel(order): number
+			return OrdersLogic.RepLevel(repPoints()[OrdersLogic.BuyerId(order)])
+		end
+
 		-- A monster the picker may offer for `order`.
 		local function eligible(order, m): boolean
 			return type(m) == "table" and not m.busy and not m.locked and OrdersLogic.Qualifies(order, m)
 		end
 
-		local function confirmHandOver(index: number, id: string)
+		local function confirmHandOver(index: number, id: string, level: number)
 			local m = Util.monsters(ctx)[id]
 			if not m then
 				return
@@ -400,7 +438,7 @@ return {
 				Text = string.format(
 					"%s leaves your ranch for good. The buyer pays %s coins.",
 					Formulas.DisplayName(m),
-					Format.commas(OrdersLogic.Coins(m))
+					Format.commas(OrdersLogic.Coins(m, level))
 				),
 				ConfirmText = "Hand over",
 				ConfirmColor = C.Orange,
@@ -434,15 +472,16 @@ return {
 				returnTo = "Jobs",
 				returnParams = { tab = "orders" },
 				onPick = function(ids)
-					confirmHandOver(index, ids[1])
+					confirmHandOver(index, ids[1], buyerLevel(order))
 				end,
 			})
 		end
 
-		local function drawOrder(index: number, order, rerollsLeft: number)
+		local function drawOrder(index: number, order, rerollsLeft: number, count: number)
+			local level = buyerLevel(order)
 			local root = Util.card({
 				Name = "Order" .. index,
-				Size = UDim2.new(1 / OrderRules.PerDay, -7, 1, 0),
+				Size = UDim2.new(1 / count, -(10 * (count - 1)) / count, 1, 0),
 				LayoutOrder = index,
 				Parent = ordersRow,
 			})
@@ -468,6 +507,10 @@ return {
 				Parent = col,
 			}, { Create.List("x", 4, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center) })
 			Widgets.Chip({ Text = d.name, Color = Color3.fromHex(d.color), Parent = chips })
+			Widgets.Chip({ Name = "BuyerLevel", Text = string.format("Level %d", level), Color = C.Purple, LayoutOrder = 2, Parent = chips })
+			if order.favourite then
+				Widgets.Chip({ Name = "Favourite", Text = "Favourite", Color = C.Gold, LayoutOrder = 3, Parent = chips })
+			end
 			Util.text({
 				Name = "Requirement",
 				Text = OrdersLogic.RequirementText(order),
@@ -509,8 +552,12 @@ return {
 			end
 			Util.rewardRow(base, col, { LayoutOrder = 5, Align = Enum.HorizontalAlignment.Center })
 			if order.kind == "monster" then
+				local bonus = math.floor(OrdersLogic.CoinBonus(level) * 100 + 0.5)
 				Util.text({
-					Text = string.format("Plus coins: %d times its sell price", OrderRules.CoinMult),
+					Name = "Coins",
+					Text = if bonus > 0
+						then string.format("Plus coins: %d times its sell price +%d%%", OrderRules.CoinMult, bonus)
+						else string.format("Plus coins: %d times its sell price", OrderRules.CoinMult),
 					TextXAlignment = Enum.TextXAlignment.Center,
 					Size = UDim2.new(1, 0, 0, 20),
 					LayoutOrder = 6,
@@ -572,24 +619,103 @@ return {
 			})
 		end
 
+		-- 3.9: the Buyers panel, 4 x 2 cards: name, level, a bar to the next level, the next perk.
+		local function drawBuyers()
+			Util.clear(buyersView)
+			local rep = repPoints()
+			local ids = OrderRules.BuyerIds
+			local cols = 4
+			local rows = math.ceil(#ids / cols)
+			for i, id in ids do
+				local b = OrderRules.BuyerById[id]
+				local points = math.floor(tonumber(rep[id]) or 0)
+				local level, from, to = OrdersLogic.RepProgress(points)
+				local root = Util.card({
+					Name = "Buyer_" .. id,
+					Size = UDim2.new(1 / cols, -8, 1 / rows, -8),
+					Position = UDim2.new(((i - 1) % cols) / cols, 4, math.floor((i - 1) / cols) / rows, 4),
+					Parent = buyersView,
+				})
+				local col = New("Frame", {
+					BackgroundTransparency = 1,
+					Size = UDim2.fromScale(1, 1),
+					Parent = root,
+				}, { Create.Padding(8, 10, 8, 10), Create.List("y", 4, Enum.HorizontalAlignment.Center) })
+				Util.text({
+					Name = "BuyerName",
+					Text = b.name,
+					Font = Theme.Fonts.Display,
+					TextSize = Theme.TextSize.Body,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Size = UDim2.new(1, 0, 0, 24),
+					LayoutOrder = 1,
+					Parent = col,
+				})
+				Util.text({
+					Name = "Level",
+					Text = string.format("Level %d", level),
+					TextColor3 = C.Purple,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Size = UDim2.new(1, 0, 0, 20),
+					LayoutOrder = 2,
+					Parent = col,
+				})
+				Widgets.Bar({
+					Name = "RepBar",
+					Value = if to then (points - from) / (to - from) else 1,
+					Text = if to then string.format("%d / %d", points, to) else "Max level",
+					Color = C.Purple,
+					Size = UDim2.new(1, 0, 0, 20),
+					LayoutOrder = 3,
+					Parent = col,
+				})
+				local perk = OrderRules.Rep.Perks[level + 1]
+				Util.text({
+					Name = "NextPerk",
+					Text = if perk then string.format("Level %d: %s", level + 1, perk) else "All perks earned",
+					TextColor3 = C.TextMuted,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					TextYAlignment = Enum.TextYAlignment.Top,
+					Size = UDim2.new(1, 0, 1, -76),
+					LayoutOrder = 4,
+					Parent = col,
+				})
+			end
+		end
+
 		local function drawOrders()
 			Util.clear(ordersRow)
+			Util.clear(buyersView)
 			if ordersLock then
 				ordersLock:Destroy()
 				ordersLock = nil
 			end
-			if not Util.unlocked(ctx, OrderRules.Unlock) then
+			local unlocked = Util.unlocked(ctx, OrderRules.Unlock)
+			buyersButton:SetVisible(unlocked)
+			buyersButton:SetText(if showBuyers then "Show orders" else "Buyers")
+			ordersRow.Visible = not (unlocked and showBuyers)
+			buyersView.Visible = unlocked and showBuyers
+			if not unlocked then
 				ordersLock = Util.lockOverlay(ordersView, Util.unlockText(OrderRules.Unlock))
+				return
+			end
+			if showBuyers then
+				drawBuyers()
 				return
 			end
 			local p = orders()
 			local list = if type(p.list) == "table" then p.list else {}
 			local left = math.max(0, OrderRules.RerollsPerDay - (tonumber(p.rerolls) or 0))
-			for index = 1, OrderRules.PerDay do
-				local order = list[index]
-				if type(order) == "table" then
-					drawOrder(index, order, left)
+			-- PerDay orders, plus the favourite buyer order when one was posted (3.9).
+			local shown = {}
+			for index = 1, OrderRules.PerDay + 1 do
+				if type(list[index]) == "table" then
+					table.insert(shown, index)
 				end
+			end
+			for _, index in shown do
+				-- The favourite order can't be rerolled.
+				drawOrder(index, list[index], if index <= OrderRules.PerDay then left else 0, #shown)
 			end
 		end
 
@@ -601,6 +727,9 @@ return {
 			jobsView.Visible = onJobs
 			jobsIntro.Visible = onJobs
 			collectAll.Root.Visible = onJobs
+			if onJobs then
+				buyersButton:SetVisible(false)
+			end
 			ordersView.Visible = not onJobs
 			ordersIntro.Visible = not onJobs
 			if not onJobs then
@@ -639,6 +768,7 @@ return {
 			Root = panel.Root,
 			Open = function(params)
 				isOpen = true
+				showBuyers = false
 				bag.clean()
 				for _, path in
 					{

@@ -60,7 +60,7 @@ return {
 	},
 
 	layout = { front = 6, spacing = 4.4, rowDepth = 4, perRow = 4, bossBack = 3 },
-	scale = { unit = 1.15, min = 0.85, max = 1.2, boss = 1.9 },
+	scale = { unit = 1.15, min = 0.85, max = 1.2, boss = 1.9, bounty = 1.35 }, -- bounty: 3.9 wanted monsters
 
 	pace = { budget = 22, min = 0.14, max = 0.55, extra = 0.2, lead = 0.6, tail = 0.5, bolt = 0.3 },
 

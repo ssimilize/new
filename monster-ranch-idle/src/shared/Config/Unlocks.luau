@@ -98,6 +98,9 @@ Unlocks.Features = {
 	-- R2-ABYSS · Sunken Abyss (appended block, see RULES)
 	region_abyss = 70,
 	raid_abyss = 70,
+
+	-- 3.9 · Expedition Bounties (Config/Bounties)
+	bounties = 6,
 }
 
 -- Player-facing names for the level-up popup.
@@ -156,6 +159,8 @@ Unlocks.Names = {
 	-- R2-ABYSS · Sunken Abyss (appended block, see RULES)
 	region_abyss = "Sunken Abyss",
 	raid_abyss = "Trench Sovereign raid",
+
+	bounties = "Bounties",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

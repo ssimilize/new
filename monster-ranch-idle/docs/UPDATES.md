@@ -3,6 +3,144 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.9 · Family and fortune
+
+### Buyer reputation
+
+**For players**
+- Every Ranch Orders buyer now remembers you. Filling one of their orders earns them
+  reputation: Easy 1, Medium 2, Hard 4, Goods 2 points.
+- Each buyer has 4 levels, at 5, 15, 35 and 70 points. Their perks apply to their own orders:
+  - Level 1: +10% coins on their monster orders.
+  - Level 2: their Hard orders carry an egg 40% of the time (was 25%), plus a one-time
+    thank-you gift of 20 gems and 20 food.
+  - Level 3: +25% coins instead of +10%, and they can post a 4th "favourite buyer" order. Only
+    one favourite order a day, from your highest-reputation buyer at level 3 or higher.
+  - Level 4: a one-time decor piece in their style. Rosa's Scarecrow, Pip's Stove, Milo's Bread
+    Oven, Wren's Anchor, Ada's Medicine Cabinet, Juno's Display Case, Tam's Lookout Sign and
+    Hale's Telescope. These pieces are never sold.
+- A toast tells you when a buyer reaches a new level.
+- On the Orders tab, each card shows its buyer's level. The new **Buyers** button (top right)
+  shows all 8 buyers with their level, a bar to the next level and the next perk.
+
+**In the code**
+- `Config.Orders`: `BuyerIds` (rosa, pip, milo, wren, ada, juno, tam, hale, in `Buyers` order),
+  `BuyerById[id] = { id, name, index, decor }`, and `Rep` (`Points`, `Levels`, `CoinBonus` by level,
+  `EggLevel`/`EggChance`, `FavLevel`, `Gifts`, `Perks`).
+- `Logic/Orders`:
+  - Every drawn order stores `buyer`. It is the same buyer the 3.8 seed pick gave, so today's
+    orders don't change, and orders saved without an id still read it from the seed (`BuyerId`).
+  - `Make`/`Draw` take the reputation. A Hard order's egg compares the same roll with the
+    buyer's chance at draw time, so the draw's RNG sequence is unchanged.
+  - New: `RepPoints`, `RepLevel`, `RepProgress`, `CoinBonus`, `EggChanceAt`, `Favourite` (most
+    points at level 3+, ties by id), `FavSeed` (`Rng.seed("orders_fav", userId, day)`),
+    `DrawFavourite`, `GiftsBetween`, `GiftItems`. `Pay`/`Coins` take the buyer's level.
+- `Systems/Orders`:
+  - Profile v2 adds `rep`, `gifts` (highest level whose gift was paid) and `favDay`, via a
+    Migrate from v1.
+  - A fill pays the coin bonus of the buyer's level before the fill, then adds the points.
+  - A new level sends `ctx:Notify` ("{name} is now a level {n} buyer!") and pays any unpaid
+    gift once through `Rewards:Grant` (source "orders_rep"). The food flavour comes from its own
+    seed.
+  - The favourite order is `list[PerDay + 1]`. It is posted at the day's draw, or as soon as a
+    buyer reaches level 3 that day, at most once a day. It can be filled but not rerolled.
+  - `Orders.Fill` accepts index `PerDay + 1`. `OrderFilled` now carries `buyer`.
+- `Config.Decor` / `DecorArt`: 8 reward-only pieces (`price = nil`, `reward = "orders_rep"`), each
+  with its own part model in the style of the 3.8 arena cups.
+- UI (`Screens/Jobs`): a "Buyers" header button on the Orders tab toggles the Buyers panel (4 x 2
+  buyer cards). Order cards add a "Level n" chip, a "Favourite" chip, and the coin bonus on the
+  coins line. The confirm dialog's price includes the bonus.
+- Tests: `OrdersRep.spec`, `OrdersRepClient.spec`.
+
+### Pedigree & breeding planner
+
+**For players**
+- **Family tree:** tap the "Genes X/100 · Gen N" line on a monster's page to see it, its two
+  parents and its four grandparents. Each shows an icon, the name, a border in its rarity colour
+  and its five gene grades (HP · ATK · DEF · SPD · Luck). Ancestors from before this update read
+  "Unknown"; a hatched monster's parents read "Hatched".
+- Market listings and the trade log name a bred monster's parents ("Parents: A × B").
+- **Breeding planner:** the Breeding Barn now shows, for each stat, the baby's exact chance of
+  grade B or better (or of your target's grade) instead of the old "+lo–hi%" range. Tap a stat to
+  see its full S / A / B / C / D spread. Tapping "Genes" still explains surges.
+- **Breeding target:** the "Set a target" chip picks a stat and a grade (C, B, A or S). The card
+  then shows "Chance with this pair: X%", the stat is outlined, and choosing a parent lists the
+  best candidates for the target first. A baby that meets the target gets a celebration toast.
+- **Grade milestones:** the first time you breed a baby with grade A in a stat you get 10 Ribbons,
+  and again the first time with grade S in it: up to 10 awards (100 Ribbons), target or not.
+  A first high grade that is already an S pays both.
+
+**In the code**
+- Monster records: `ped = { a, b, aa?, ab?, ba?, bb? }` on bred babies only, snapshots
+  `{ line, form, rarity, variant?, name?, gen, grades }` (`grades` = "BACDS" in
+  `Config.Genetics.Stats` order); no ids, never deeper than grandparents. `Logic/Pedigree`
+  (`Snap`, `Build`, `Copy`, `Name`, `ParentNames`). `MonsterGen.New` keeps `spec.ped` (no draws),
+  `Monsters:Insert` deep-copies it (Trade and Market). No save migration.
+- `Logic/Genetics`: `Odds(a, b, stat)` (exact convolution of Inherit: pick 1/2, surge +2 / +1 /
+  +0, capped, a 10 never surges), `GradeOdds`, `AtLeast(odds, grade)`, `GradeMin`, `Grades`.
+  The planner never reads a pod's seed.
+- Breeding: `Profile.Version` 2 (Migrate adds `target = false`, `milestones = {}`);
+  `Breeding.SetTarget { stat?, grade? }` (no stat clears; grades `Config.Breeding.TargetGrades`);
+  Claim builds `ped`, pays milestones via `Rewards:Grant` source `"breeding_target"`
+  (`MilestoneGrades`, `MilestoneRibbons`), returns `targetMet` and Notifies on a hit.
+  No new `ctx.Rng` draws.
+- `Listing.ItemView.parents` and the trade log summary's `parents` carry names only.
+- Client: `Screens/Parts/FamilyTree` in a MonsterDetail InsetPopup; Breeding screen planner row,
+  target picker dialog and pick `sortBy`.
+- Tests: `Pedigree.spec` (incl. a 200k-roll Monte-Carlo check), `PedigreeClient.spec`.
+
+### Expedition Bounties
+
+**For players**
+- **Bounties** (Ranch Level 6): every week up to 3 wanted monsters hide in stages you have already
+  cleared, like "Grumbletooth the Fierce". Find them on the new **Bounties** tab of the Expeditions
+  screen.
+  - Each wanted poster shows the monster, its region and stage, and the reward. **Hunt** takes you
+    to that stage and starts the fight.
+  - The bounty leads its wave: 50% stronger than the enemies around it, a little bigger, and
+    wrapped in a red-gold sparkle.
+  - Bounties sit in different regions when you can reach several, on one of the last 10 stages you
+    cleared there, and never on a boss stage.
+  - A stage with a bounty has a red "!" marker on the stage map.
+- **The reward**, once per bounty: 30 minutes of coins + 20 gems, plus a chance at the region's
+  first egg (a Meadow egg in the Whispering Meadow). The chance is 25%, raised by your squad's
+  loot bonus (Lucky Paw, Treasure Nose, Luck and the rest), up to 50%.
+  - Lose the fight and nothing changes: try again. A defeated bounty's stage is a normal replay.
+- New bounties arrive every Saturday at 15:00 UTC with the weekly leaderboards.
+  - No stage cleared yet? The tab says so, and your first clear that week brings bounties.
+  - A rebirth keeps the week's bounties. One whose stage you haven't cleared again waits for you
+    to get back there, or ends with the week.
+- **Bounty Hunter**, a new weekly leaderboard: bounties defeated this week (title: *Bounty Hunter*).
+- A new weekly goal: "Defeat 3 bounties".
+
+**In the code**
+- `Config.Bounties`: `Unlock` ("bounties", Ranch Level 6 in `Config.Unlocks`, named "Bounties"),
+  `Count` 3, `Window` 10, `StatMult` 1.5, `Aura` "bounty", `Reward`, `EggChance` 0.25,
+  `EggChanceMax` 0.5, `Source` "bounty", and the `Names` × `Titles` the wanted names are made of.
+- `Logic/Bounties`: `Draw` (seeded by `Rng.seed("bounty", userId, week)`; eligible regions,
+  distinct regions first, a region repeats only when fewer than 3 are eligible), `Stages`, `Find`,
+  `Monster`, `Inject`, `Egg`, `EggChance`, `RollEgg` (from the bounty's own seed), `Rewards`.
+- `Systems/Expeditions`:
+  - Save section Version 2 adds `bounty = { week, list = { { region, stage, name, line, seed, done } }, count }`;
+    `Migrate` gives older saves an empty one.
+  - The draw is lazy (join, every Expeditions action, LevelUp, a first clear and a 30 s sweep) and
+    stays fixed for the week once it isn't empty.
+  - `Expeditions.Fight` puts the bounty in the front slot of its stage's wave. A win marks it done
+    and pays through `Rewards:Grant` (source "bounty", silent: the battle viewer shows it with the
+    fight's rewards). It also returns `bounty = name` and publishes the new `BountyDefeated`
+    topic `{ region, stage }`.
+  - Public: `Expeditions:Bounties(player)`, `Expeditions:BountyCount(player)`.
+- `Logic/BattleSim`: records may carry `bounty = true` (passed on to the unit views);
+  `BattleSim.EnemyRecord` builds a regular wave enemy. `Logic/BattleStage` and
+  `Visuals/BattleArena` draw a bounty `Config.BattleStage.scale.bounty` (1.35) times bigger in its
+  row spot; the 2D viewer uses a 100 px icon.
+- `Config.Vfx.Mastery.bounty`: the aura, drawn through the bounty's `look.aura`.
+- `Config.Leaderboards`: the weekly board "bounties", valued by `Expeditions:BountyCount`.
+  `Config.Weekly`: the goal `bounty_3` (family "bounties").
+- UI: a third **Bounties** mode tab on `Screens/Expeditions` (`Open({ tab = "bounties" })`),
+  poster cards `Bounty1..3` with a `Hunt` button, the reset countdown, the empty and locked states,
+  and a `Bounty` marker on stage map nodes.
+
 ## 3.8 · Reasons to come back
 
 ### Weekly goals

@@ -144,6 +144,11 @@ local VALUES = {
 		local Visits = ctx:GetSystem("Visits")
 		return if Visits then Visits:WeekLikes(player) else 0
 	end,
+	-- 3.9: Expedition Bounties defeated this week.
+	bounties = function(player)
+		local Expeditions = ctx:GetSystem("Expeditions")
+		return if Expeditions then Expeditions:BountyCount(player) else 0
+	end,
 	-- 3.8: this arena season's rating.
 	arena = function(player)
 		local Arena = ctx:GetSystem("Arena")

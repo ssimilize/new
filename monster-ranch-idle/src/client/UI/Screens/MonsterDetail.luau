@@ -7,8 +7,8 @@
 	           weight (+ HUGE), mood, base coin rate, busy state
 	  middle   level bar (lv / Formulas.LevelCap), stat bars (Formulas.Stats; bars show how far
 	           each stat is from its value at this stage's level cap) with a gene grade beside HP,
-	           ATK, DEF and SPD (tap: the gene pair), gene points and generation (tap: how genes
-	           work, update 3.6), power, traits (hidden
+	           ATK, DEF and SPD (tap: the gene pair), gene points and generation (tap: the family
+	           tree, Parts/FamilyTree, update 3.9, with how genes work), power, traits (hidden
 	           trait is "???" until Adult), Feed (flavour picker with owned food), Level up ×1 /
 	           ×N (Economy.LevelCost), Grow (Formulas.CanGrow reason) or grow countdown
 	  right    diet meter for this stage, evolution path with branches
@@ -43,6 +43,7 @@ local GeneGrades = require(UI.Components.GeneGrades)
 local MasteryBadge = require(script.Parent.Parts.MasteryBadge)
 local WalkToggle = require(script.Parent.Parts.WalkToggle) -- glow-up T
 local BondBadge = require(script.Parent.Parts.BondBadge)
+local FamilyTree = require(script.Parent.Parts.FamilyTree) -- 3.9
 local ShowpieceChips = require(script.Parent.Parts.ShowpieceChips) -- glow-up W
 
 local New = Create.New
@@ -245,14 +246,11 @@ function MonsterDetail.Build(ctx)
 		LayoutOrder = 8,
 		Parent = middle,
 	})
+	local openFamily -- set below, once the popup exists
 	Tiles.tap(genesLabel, function()
-		ctx:Toast(
-			string.format(
-				"Each stat has two genes, one from each parent. Every gene point adds %d%% to that stat, and a baby's genes can surge higher.",
-				math.floor(Config.Genetics.PctPerPoint * 100 + 0.5)
-			),
-			"info"
-		)
+		if openFamily then
+			openFamily()
+		end
 	end)
 	local traitsRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 10, Parent = middle }, 6)
 	local actionRow = Tiles.row({ Size = UDim2.new(1, 0, 0, 54), LayoutOrder = 11, Parent = middle }, 8)
@@ -443,6 +441,31 @@ function MonsterDetail.Build(ctx)
 			})
 		end
 		render()
+		popup:Show()
+	end
+
+	-- The family tree (3.9): the monster, its parents and grandparents, and how genes work.
+	openFamily = function()
+		local m = monster()
+		if not m then
+			return
+		end
+		popup:SetTitle("Family tree")
+		popup:SetSize(UDim2.fromOffset(760, 420))
+		Tiles.clear(popup.Body)
+		FamilyTree.build(popup.Body, m)
+		Tiles.label({
+			Name = "HowGenesWork",
+			Text = string.format(
+				"Each stat has two genes, one from each parent. Every gene point adds %d%% to that stat, and a baby's genes can surge higher.",
+				math.floor(Config.Genetics.PctPerPoint * 100 + 0.5)
+			),
+			TextSize = Theme.TextSize.Small,
+			TextColor3 = C.TextMuted,
+			Position = UDim2.fromOffset(0, 296),
+			Size = UDim2.new(1, 0, 0, 48),
+			Parent = popup.Body,
+		})
 		popup:Show()
 	end
 

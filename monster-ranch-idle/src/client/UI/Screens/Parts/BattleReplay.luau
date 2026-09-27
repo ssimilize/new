@@ -39,6 +39,7 @@ local BattleReplay = {}
 
 local ICON = 84
 local BOSS_ICON = 110
+local BOUNTY_ICON = 100 -- 3.9: a wanted monster, a little bigger than the rest of its wave
 
 local function hpColor(frac: number): Color3
 	if frac > 0.5 then
@@ -50,7 +51,7 @@ local function hpColor(frac: number): Color3
 end
 
 local function buildUnit(unit, parent: Instance, order: number)
-	local size = if unit.boss then BOSS_ICON else ICON
+	local size = if unit.boss then BOSS_ICON elseif unit.bounty then BOUNTY_ICON else ICON
 	local slot = New("Frame", {
 		Name = unit.key,
 		BackgroundTransparency = 1,

@@ -6,6 +6,8 @@
 	  slots   = { [1..4] = { state = "idle"|"running", region = string|false, stage, squad = { id },
 	                         startedAt, endsAt, duration, seed, caravan = string|false } }  -- always 4
 	  squad   = { id }                   -- the default squad (stage fights and the Stampede)
+	  bounty  = { week, list = { Bounty }, count }   -- 3.9 Expedition Bounties (Logic/Bounties);
+	            count = bounties defeated this week (Version 2)
 	Session (session.Expeditions): { slotCount, squadSize, caravan = CaravanLobby|false }
 	Global  (global.Expeditions):  { caravans = { [caravanId] = CaravanLobby } }  (see Caravans.luau)
 
@@ -21,6 +23,8 @@
 	  Expeditions:LootBonus(player, ids) -> pct        -- loot bonus a squad would get right now
 	  Expeditions:RegisterLootModifier(key, fn(player) -> pct)
 	  Expeditions:ResetForRebirth(player) -> boolean  -- clears region progress (Rebirth)
+	  Expeditions:Bounties(player) -> { Bounty }       -- this week's bounties (3.9)
+	  Expeditions:BountyCount(player) -> number        -- bounties defeated this week (the "bounties" board)
 
 	Rules:
 	  • Stage fights: region unlocked, stage ≤ cleared + 1, whole squad free. Simulated by
@@ -33,6 +37,16 @@
 	    + the squad's Luck (3.7, Loot.LuckBonus, ≤ +15%) + registered modifiers (+ Caravan bonus).
 	    Squad members are busy ("expedition").
 	  • Recall ends a run early: loot for the time spent, no duration bonus, no caravan bonus.
+	  • Expedition Bounties (3.9, Config/Bounties, Logic/Bounties): from the "bounties" unlock, up
+	    to Count wanted monsters a week (Config.Leaderboards.Week), drawn lazily on join, on every
+	    Expeditions action, on LevelUp and on a sweep, and then fixed for the week (an empty draw
+	    is tried again, so a player who clears a first stage later in the week still gets some).
+	    Fighting a bounty's stage puts it in the wave; the first win marks it done, pays
+	    Config.Bounties.Reward + the Luck-scaled egg (Rewards source "bounty", shown by the battle
+	    viewer with the fight's rewards) and publishes BountyDefeated. Losing changes nothing and
+	    a done bounty's stage is a normal replay. Rebirth keeps the week's list: a bounty whose
+	    stage is no longer cleared waits until the player reaches that stage again, or expires
+	    with the week.
 ]]
 
 local Shared = game:GetService("ReplicatedStorage").Shared
@@ -40,6 +54,7 @@ local Formulas = require(Shared.Logic.Formulas)
 local BattleSim = require(Shared.Logic.BattleSim)
 local Loot = require(Shared.Logic.Loot)
 local Format = require(Shared.Logic.Format)
+local BountyLogic = require(Shared.Logic.Bounties)
 local Caravans = require(script.Caravans)
 
 local Expeditions = {
@@ -51,6 +66,7 @@ local Expeditions = {
 local SLOT_COUNT = 4
 local BUSY_TAG = "expedition"
 local NOTIFY_EVERY = 5
+local BOUNTY_SWEEP = 30
 
 local function newSlot()
 	return {
@@ -66,14 +82,26 @@ local function newSlot()
 	}
 end
 
+local function newBounty()
+	return { week = 0, list = {}, count = 0 }
+end
+
 Expeditions.Profile = {
-	Version = 1,
+	Version = 2,
 	Default = function()
 		local slots = {}
 		for i = 1, SLOT_COUNT do
 			slots[i] = newSlot()
 		end
-		return { cleared = {}, slots = slots, squad = {} }
+		return { cleared = {}, slots = slots, squad = {}, bounty = newBounty() }
+	end,
+	Migrate = function(section, fromVersion)
+		-- v2 (update 3.9): Expedition Bounties. Older saves start with no draw (week 0), so the
+		-- week's bounties are drawn on the next join.
+		if fromVersion < 2 or type(section.bounty) ~= "table" then
+			section.bounty = newBounty()
+		end
+		return section
 	end,
 }
 
@@ -213,6 +241,54 @@ local function setSessionCaravan(player, lobby)
 	end
 end
 
+-- Bounties (3.9) -------------------------------------------------------------------------
+
+local function bountyOf(player)
+	local s = section(player)
+	if not s then
+		return nil
+	end
+	local b = s.bounty
+	if type(b) ~= "table" then
+		b = newBounty()
+		s.bounty = b
+	end
+	if type(b.list) ~= "table" then
+		b.list = {}
+	end
+	b.count = tonumber(b.count) or 0
+	return b
+end
+
+-- Rolls the section over to this week and draws the week's bounties once the feature is
+-- unlocked. A non-empty draw stays fixed for the week (rebirth and new clears leave it alone).
+local function ensureBounties(player)
+	local b = bountyOf(player)
+	if not b then
+		return nil
+	end
+	local now = ctx:Now()
+	local week = Config.Leaderboards.Week(now)
+	if b.week ~= week then
+		b.week = week
+		b.list = {}
+		b.count = 0
+		ctx:Dirty(player, "bounty")
+	end
+	if #b.list == 0 and Progression:IsUnlocked(player, Config.Bounties.Unlock) then
+		local list = BountyLogic.Draw(player.UserId, week, function(region)
+			return Regions.IsOpen(region, now) and Progression:IsUnlocked(player, region.unlock)
+		end, function(regionId)
+			return Expeditions:Cleared(player, regionId)
+		end)
+		if #list > 0 then
+			b.list = list
+			ctx:Dirty(player, "bounty")
+		end
+	end
+	return b
+end
+
 local function remaining(seconds: number): string
 	return Format.duration(math.max(1, math.ceil(seconds)))
 end
@@ -258,6 +334,19 @@ function Expeditions:ResetForRebirth(player): boolean
 	ctx:Dirty(player, "cleared")
 	ctx:Dirty(player, "squad")
 	return true
+end
+
+function Expeditions:Bounties(player)
+	local b = ensureBounties(player)
+	return if b then b.list else {}
+end
+
+function Expeditions:BountyCount(player): number
+	local b = bountyOf(player)
+	if not b or b.week ~= Config.Leaderboards.Week(ctx:Now()) then
+		return 0
+	end
+	return b.count
 end
 
 function Expeditions:SlotCount(player): number
@@ -466,6 +555,7 @@ function Expeditions.Init(context)
 
 	ctx.Net:Handle("Expeditions.Fight", function(player, payload)
 		local s = section(player)
+		local bounties = ensureBounties(player)
 		local region = requireRegion(player, payload.region)
 		local stage = payload.stage
 		requireStage(player, payload.region, stage)
@@ -499,9 +589,14 @@ function Expeditions.Init(context)
 		local seed = ctx.Rng:Int(1, 2147483646)
 		local isBoss = BattleSim.IsBossStage(payload.region, stage)
 		local enemies = BattleSim.BuildEnemies(payload.region, stage, seed)
+		local bountyIndex, bounty = BountyLogic.Find(bounties and bounties.list, payload.region, stage)
+		if bounty then
+			enemies = BountyLogic.Inject(enemies, bounty, payload.region, stage)
+		end
 		local replay = BattleSim.Simulate(members, enemies, seed, { night = isNight(), boss = isBoss, statBonus = statBonus })
 
 		local rewards = {}
+		local bountyName = nil
 		if replay.win then
 			lastLoss[player] = nil
 			local first = stage > cleared
@@ -517,15 +612,32 @@ function Expeditions.Init(context)
 				rewards = Rewards:Grant(player, items, "stage_clear", { silent = true })
 				ctx.Bus:Publish("RanchXP", player, { amount = Config.Unlocks.XP.stageClearBase + stage, reason = "stage_clear" })
 			end
+			if bounty and bounties and bountyIndex then
+				bounty.done = true
+				bounties.count += 1
+				ctx:Dirty(player, "bounty")
+				bountyName = bounty.name
+				local items = BountyLogic.Rewards(bounty, Expeditions:LootBonus(player, ids))
+				for _, item in Rewards:Grant(player, items, Config.Bounties.Source, { silent = true }) do
+					table.insert(rewards, item)
+				end
+				ctx.Bus:Publish("BountyDefeated", player, { region = payload.region, stage = stage })
+				ctx.Analytics.Custom(player, "bounty_defeated", stage, { region = region.id })
+			end
 			ctx.Bus:Publish("StageCleared", player, { region = payload.region, stage = stage, first = first, squad = table.clone(ids) })
 			ctx.Analytics.Custom(player, "stage_clear", stage, { region = region.id, first = tostring(first) })
+			if first then
+				-- A first clear may be what a still-empty week's draw was waiting for.
+				ensureBounties(player)
+			end
 		else
 			lastLoss[player] = key
 		end
-		return { win = replay.win, replay = replay, rewards = rewards }
+		return { win = replay.win, replay = replay, rewards = rewards, bounty = bountyName }
 	end)
 
 	ctx.Net:Handle("Expeditions.Start", function(player, payload)
+		ensureBounties(player)
 		Progression:Require(player, "expeditions")
 		local index = payload.slot
 		if index > Expeditions:SlotCount(player) then
@@ -554,6 +666,7 @@ function Expeditions.Init(context)
 	end)
 
 	ctx.Net:Handle("Expeditions.Claim", function(player, payload)
+		ensureBounties(player)
 		local slot = slotsOf(player)[payload.slot]
 		if slot.state ~= "running" then
 			ctx:Fail("Nothing to claim in that slot")
@@ -566,6 +679,7 @@ function Expeditions.Init(context)
 	end)
 
 	ctx.Net:Handle("Expeditions.ClaimAll", function(player)
+		ensureBounties(player)
 		local ready = {}
 		local now = ctx:Now()
 		for i, slot in slotsOf(player) do
@@ -602,6 +716,7 @@ function Expeditions.Init(context)
 	ctx.Bus:Subscribe("LevelUp", function(player)
 		if ctx:IsReady(player) then
 			refreshSession(player)
+			ensureBounties(player)
 		end
 	end)
 	ctx.Bus:Subscribe("PassesChanged", function(player)
@@ -623,6 +738,15 @@ function Expeditions.Init(context)
 
 	ctx:Every(1, function()
 		Caravans.Tick(ctx:Now())
+	end)
+
+	-- Bounties roll over for players who stay online across the weekly reset.
+	ctx:Every(BOUNTY_SWEEP, function()
+		for _, player in ctx:Players() do
+			if section(player) then
+				ensureBounties(player)
+			end
+		end
 	end)
 
 	-- Tell online players when a run comes back.
@@ -699,6 +823,7 @@ function Expeditions.PlayerAdded(player, info)
 	local session = ctx:Session(player)
 	session.caravan = false
 	refreshSession(player)
+	ensureBounties(player)
 end
 
 function Expeditions.PlayerRemoving(player)

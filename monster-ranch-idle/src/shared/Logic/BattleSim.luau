@@ -9,6 +9,7 @@
 	    statMult = n   multiplies HP/ATK/DEF/SPD (enemy bosses, see BuildEnemies)
 	    hpMult = n     multiplies HP only (raid bosses: long fights that don't one-shot)
 	    boss = true    drawn as a boss by the client
+	    bounty = true  drawn a little bigger by the client (3.9 Expedition Bounties, Logic/Bounties)
 	    look = Appearance  drawn instead of the record's own look (Arena's normalized fighters)
 	    phase2 = { hpThreshold, accuracyPenalty }  (R2-ABYSS, Config.Raids "abyss") once this
 	      unit's HP falls to or below `hpThreshold` of its max, every ally attack gets an
@@ -22,6 +23,7 @@
 	    maxAllies = number?,   -- defaults to BattleSim.MaxAllies (Raids field up to 8)
 	  }
 	BattleSim.BuildEnemies(regionId, stage, seed) -> { enemy records }
+	BattleSim.EnemyRecord(lineId, level, rarity, formId?) -> enemy record (a regular wave enemy)
 	BattleSim.RecommendedPower(regionId, stage) -> number (comparable with squad power)
 
 	Rules (GDD "Battle rules"):
@@ -97,6 +99,7 @@ local function buildUnit(m, side: string, slot: number, opts)
 		name = Formulas.DisplayName(m),
 		appearance = m.look or Appearance.Of(m),
 		boss = m.boss == true,
+		bounty = m.bounty == true,
 		elements = def.elements,
 		special = def.special,
 		passive = passive,
@@ -408,6 +411,7 @@ function BattleSim.Simulate(allies, enemies, seed: number, options)
 			appearance = u.appearance,
 			maxHp = u.maxHp,
 			boss = u.boss,
+			bounty = if u.bounty then true else nil,
 		})
 	end
 
@@ -482,6 +486,11 @@ local function bossRecord(boss, level: number, rarity: number)
 	record.boss = true
 	record.name = boss.name
 	return record
+end
+
+-- A regular wave enemy of this line (3.9: Logic/Bounties builds its wanted monster from one).
+function BattleSim.EnemyRecord(lineId: string, level: number, rarity: number, formId: string?)
+	return enemyRecord(lineId, level, rarity, formId)
 end
 
 function BattleSim.IsBossStage(regionId: string, stage: number): boolean

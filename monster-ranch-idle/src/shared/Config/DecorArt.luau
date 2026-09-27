@@ -635,6 +635,94 @@ Art.Models = {
 			P("block", { 1.82, 0.12, 0.3 }, { 0, 0.35, -0.8 }, "SmoothPlastic", "#FFFFFF", SMALL),
 		}
 	end,
+	-- 3.9: the buyer reputation pieces, one per Ranch Orders buyer (a = main colour, b = accent).
+	rep_scarecrow = function(a, b) -- Farmer Rosa: a scarecrow in her red shirt and straw hat
+		return {
+			P("block", { 0.3, 4, 0.3 }, { 0, 2, 0 }, "Wood", WOOD_DARK),
+			P("block", { 3, 0.25, 0.25 }, { 0, 3, 0 }, "Wood", WOOD_DARK),
+			P("block", { 1.3, 1.5, 0.7 }, { 0, 2.8, 0 }, "Fabric", a),
+			P("ball", { 1, 1, 1 }, { 0, 4, 0 }, "Fabric", "#F4DFA6"),
+			P("cyl", { 1.9, 0.15, 1.9 }, { 0, 4.45, 0 }, "Fabric", b),
+			P("cyl", { 0.9, 0.55, 0.9 }, { 0, 4.75, 0 }, "Fabric", b, SMALL),
+			P("block", { 0.5, 0.3, 0.3 }, { -1.5, 3, 0 }, "Grass", "#E3C565", SMALL),
+			P("block", { 0.5, 0.3, 0.3 }, { 1.5, 3, 0 }, "Grass", "#E3C565", SMALL),
+		}
+	end,
+	rep_stove = function(a, b) -- Chef Pip: a cast-iron stove with a pot on the boil
+		return {
+			P("block", { 1.8, 1.4, 1.6 }, { 0, 0.7, 0 }, "Metal", a),
+			P("block", { 1.9, 0.12, 1.7 }, { 0, 1.46, 0 }, "Metal", "#5A5A66"),
+			P("block", { 1.1, 0.6, 0.08 }, { 0, 0.6, -0.82 }, "Neon", b, GLOW),
+			P("cyl", { 0.3, 1.6, 0.3 }, { 0.55, 2.3, 0.45 }, "Metal", "#5A5A66"),
+			P("cyl", { 0.8, 0.55, 0.8 }, { -0.35, 1.8, 0 }, "Metal", "#B8B8C0"),
+			P("cyl", { 0.9, 0.08, 0.9 }, { -0.35, 2.1, 0 }, "Metal", "#8A8A94", SMALL),
+		}
+	end,
+	rep_bread_oven = function(a, b) -- Baker Milo: a clay dome oven with loaves on a shelf
+		return {
+			P("block", { 2.8, 0.8, 2.6 }, { 0, 0.4, 0 }, "Brick", "#9A5A3A"),
+			P("ball", { 2.6, 2, 2.4 }, { 0, 0.9, 0 }, "Slate", a),
+			P("block", { 0.9, 0.7, 0.2 }, { 0, 1.2, -1.15 }, "Neon", "#FF9A3A", GLOW),
+			P("cyl", { 0.35, 0.8, 0.35 }, { 0.6, 2.2, 0.3 }, "Brick", "#9A5A3A", SMALL),
+			P("block", { 1.4, 0.12, 0.5 }, { 0, 0.86, -1.4 }, "Wood", WOOD_DARK),
+			P("ball", { 0.55, 0.3, 0.35 }, { -0.35, 1.05, -1.4 }, "SmoothPlastic", b, SMALL),
+			P("ball", { 0.55, 0.3, 0.35 }, { 0.35, 1.05, -1.4 }, "SmoothPlastic", b, SMALL),
+		}
+	end,
+	rep_anchor = function(a, b) -- Captain Wren: a ship's anchor on a painted plinth
+		return {
+			P("block", { 2.6, 0.4, 1.4 }, { 0, 0.2, 0 }, "Wood", b),
+			P("block", { 0.35, 3, 0.35 }, { 0, 1.9, 0 }, "Metal", a),
+			P("block", { 1.8, 0.25, 0.25 }, { 0, 3.1, 0 }, "Metal", a),
+			P("cyl", { 0.7, 0.2, 0.7 }, { 0, 3.55, 0 }, "Metal", a, { rot = { 90, 0, 0 } }),
+			P("block", { 1.3, 0.3, 0.3 }, { -0.55, 0.75, 0 }, "Metal", a, { rot = { 0, 0, -30 } }),
+			P("block", { 1.3, 0.3, 0.3 }, { 0.55, 0.75, 0 }, "Metal", a, { rot = { 0, 0, 30 } }),
+			P("block", { 0.3, 0.45, 0.3 }, { -1.15, 1.15, 0 }, "Metal", a, SMALL),
+			P("block", { 0.3, 0.45, 0.3 }, { 1.15, 1.15, 0 }, "Metal", a, SMALL),
+		}
+	end,
+	rep_medicine_cabinet = function(a, b) -- Doctor Ada: a white cabinet with a red cross
+		return {
+			P("block", { 1.8, 2.6, 0.8 }, { 0, 1.3, 0 }, "SmoothPlastic", a),
+			P("block", { 1.6, 1.1, 0.06 }, { 0, 1.85, -0.42 }, "Glass", "#BFE9FF", { alpha = 0.4 }),
+			P("block", { 1.9, 0.15, 0.9 }, { 0, 2.66, 0 }, "SmoothPlastic", "#D8D8D0"),
+			P("block", { 0.5, 0.15, 0.06 }, { 0, 0.85, -0.43 }, "SmoothPlastic", b),
+			P("block", { 0.15, 0.5, 0.06 }, { 0, 0.85, -0.43 }, "SmoothPlastic", b),
+			P("block", { 0.25, 0.4, 0.25 }, { -0.4, 1.7, -0.1 }, "Glass", "#5DBB63", SMALL),
+			P("block", { 0.25, 0.3, 0.25 }, { 0.4, 1.65, -0.1 }, "Glass", "#4E9BF2", SMALL),
+		}
+	end,
+	rep_display_case = function(a, b) -- Collector Juno: a glass case with a treasure inside
+		return {
+			P("block", { 1.8, 1.2, 1.8 }, { 0, 0.6, 0 }, "Wood", a),
+			P("block", { 1.6, 1.4, 1.6 }, { 0, 1.9, 0 }, "Glass", b, { alpha = 0.6 }),
+			P("block", { 1.9, 0.15, 1.9 }, { 0, 2.67, 0 }, "Wood", a),
+			P("block", { 0.6, 0.15, 0.6 }, { 0, 1.27, 0 }, "Fabric", "#B06AE8"),
+			P("ball", { 0.55, 0.55, 0.55 }, { 0, 1.62, 0 }, "Foil", "#F5C630"),
+			P("block", { 1.82, 0.12, 0.3 }, { 0, 0.35, -0.8 }, "SmoothPlastic", "#FFFFFF", SMALL),
+		}
+	end,
+	rep_lookout_sign = function(a, b) -- Ranger Tam: a trail sign pointing to the lookout
+		return {
+			P("block", { 0.3, 3.4, 0.3 }, { 0, 1.7, 0 }, "Wood", a),
+			P("block", { 1.8, 0.55, 0.15 }, { 0.6, 2.9, 0 }, "WoodPlanks", b),
+			P("wedge", { 0.15, 0.55, 0.4 }, { 1.7, 2.9, 0 }, "WoodPlanks", b, { rot = { 0, 90, 0 } }),
+			P("block", { 1.5, 0.5, 0.15 }, { -0.5, 2.2, 0 }, "WoodPlanks", "#8A5A2B"),
+			P("cyl", { 0.9, 0.4, 0.9 }, { 0, 0.2, 0 }, "Slate", STONE),
+			P("ball", { 0.5, 0.5, 0.5 }, { 0, 3.5, 0 }, "LeafyGrass", LEAF, SMALL),
+		}
+	end,
+	rep_telescope = function(a, b) -- Professor Hale: a brass telescope on a tripod
+		return {
+			P("block", { 0.2, 2.6, 0.2 }, { -0.45, 1.2, 0.3 }, "Wood", WOOD_DARK, { rot = { -12, 0, 20 } }),
+			P("block", { 0.2, 2.6, 0.2 }, { 0.45, 1.2, 0.3 }, "Wood", WOOD_DARK, { rot = { -12, 0, -20 } }),
+			P("block", { 0.2, 2.6, 0.2 }, { 0, 1.2, -0.5 }, "Wood", WOOD_DARK, { rot = { 22, 0, 0 } }),
+			P("ball", { 0.45, 0.45, 0.45 }, { 0, 2.5, 0 }, "Metal", b),
+			P("cyl", { 0.55, 2.4, 0.55 }, { 0, 2.95, 0.2 }, "Foil", a, { rot = { 60, 0, 0 } }),
+			P("cyl", { 0.75, 0.3, 0.75 }, { 0, 3.55, 1.25 }, "Foil", a, { rot = { 60, 0, 0 } }),
+			P("cyl", { 0.35, 0.3, 0.35 }, { 0, 2.35, -0.85 }, "Metal", b, { rot = { 60, 0, 0 }, small = true }),
+		}
+	end,
 }
 
 -- The parts of one piece (a fresh table; callers may keep it).

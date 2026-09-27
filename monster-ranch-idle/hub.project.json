@@ -19,7 +19,7 @@
         "StreamingMinRadius": 150,
         "StreamingTargetRadius": 300,
         "StreamOutBehavior": "LowMemory",
-        "StreamingIntegrityMode": "PauseOutsideRadius"
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea"
       },
       "$attributes": { "PlaceMode": "hub" }
     },

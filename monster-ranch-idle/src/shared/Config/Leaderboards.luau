@@ -35,6 +35,16 @@ Leaderboards.Boards = {
 		unit = "likes",
 		color = "#FF6FA8",
 	},
+	-- Update 3.9: Expedition Bounties defeated this week (Expeditions:BountyCount).
+	{
+		id = "bounties",
+		name = "Bounty Hunter",
+		short = "Bounties",
+		title = "Bounty Hunter",
+		format = "count",
+		unit = "bounties",
+		color = "#C8553D",
+	},
 	-- Update 3.8: arena rating this arena season (Arena:SeasonRating). Shown in the Arena screen.
 	{ id = "arena", name = "Arena Season", short = "Arena", format = "count", color = "#FF7AC8", period = "season" },
 }

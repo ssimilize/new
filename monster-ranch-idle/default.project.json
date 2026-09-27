@@ -19,7 +19,7 @@
         "StreamingMinRadius": 200,
         "StreamingTargetRadius": 600,
         "StreamOutBehavior": "LowMemory",
-        "StreamingIntegrityMode": "PauseOutsideRadius"
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea"
       }
     },
     "Lighting": {
