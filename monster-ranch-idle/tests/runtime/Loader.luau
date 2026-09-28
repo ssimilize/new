@@ -16,6 +16,8 @@ local fs = require("@lune/fs")
 local luau = require("@lune/luau")
 local task = require("@lune/task")
 
+local StringRequire = require("./StringRequire")
+
 local Loader = {}
 
 local ROOT = "" -- set by Loader.init
@@ -192,7 +194,13 @@ local function makeEnv(scriptProxy)
 		game = game,
 		workspace = nil,
 		task = task,
-		require = Loader.require,
+		-- instance requires everywhere; string requires only inside the vendored Foundry packages
+		require = function(target)
+			if type(target) == "string" and StringRequire.allowed(sourcePathOf(scriptProxy), ROOT) then
+				return Loader.require(StringRequire.resolve(scriptProxy, target))
+			end
+			return Loader.require(target)
+		end,
 	}
 	for k, v in environmentExtras do
 		env[k] = v

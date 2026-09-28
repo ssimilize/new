@@ -26,6 +26,7 @@ local luau = require("@lune/luau")
 local roblox = require("@lune/roblox")
 
 local RobloxMock = require("./RobloxMock")
+local StringRequire = require("./StringRequire")
 
 local ClientHarness = {}
 ClientHarness.__index = ClientHarness
@@ -265,6 +266,10 @@ function ClientHarness.new(testKernel, player, options)
 			end)
 		end
 	end
+	local folded = adapters.log.folded[player] -- a long Advance folds early messages (TestKernel)
+	if folded then
+		deliver("state", folded.snapshot)
+	end
 	for _, message in adapters.log.states[player] or {} do
 		deliver("state", message)
 	end
@@ -306,10 +311,27 @@ function ClientHarness:require(moduleScript)
 	return result
 end
 
+-- Substitute(moduleScript, file): run `file` (a path under the repo root, read now) as that
+-- ModuleScript's source from the next require on. Compat specs run a verbatim old controller
+-- (tests/runtime/Old*.luau) in its place, so `script.Parent` resolves as it did. Before Boot.
+function ClientHarness:Substitute(moduleScript, file: string)
+	local path = ROOT .. "/" .. file
+	FILES[path] = FILES[path] or fs.readFile(path)
+	RobloxMock.records[moduleScript].extra.source = path
+	self._modules[path] = nil
+end
+
 function ClientHarness:_env(scriptInstance)
 	local env = table.clone(self.globals)
 	env.script = scriptInstance
 	env.require = function(target)
+		-- string requires only inside the vendored Foundry packages (see StringRequire)
+		if type(target) == "string" then
+			local rec = RobloxMock.records[scriptInstance]
+			if rec and StringRequire.allowed(rec.extra.source, ROOT) then
+				return self:require(StringRequire.resolve(scriptInstance, target))
+			end
+		end
 		return self:require(target)
 	end
 	return env

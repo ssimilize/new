@@ -4,7 +4,7 @@
 
 		CameraDirector:Play(shot) -> ()          queue a shot; one plays at a time
 		    shot.position   Vector3: the subject's base (feet) point
-		    shot.height     studs tall (framing, Logic/Cinematic.Frame)
+		    shot.height     studs tall (framing: Cinema's rig language, Logic/Cinematic.Frame without it)
 		    shot.run        fn(handle) run in the shot's own thread once the glide in has started;
 		                    the shot ends when it returns (default: hold `shot.hold` seconds)
 		    shot.onDone     fn(ran: boolean) always called once: ran = false when the shot could not
@@ -30,6 +30,14 @@
 	mounting a monster mid-shot cuts straight back. Reduced motion (Settings.lowGraphics,
 	Settings.reducedMotion (R2-A11Y), UI/Anim.enabled == false, GuiService.ReducedMotionEnabled)
 	cuts instead of gliding.
+
+	Foundry (wave 1g): the framing comes from the Cinema package through ctx.Foundry: the numbers
+	are Cinema.profile("monster-ranch").rig (fov, the 0.42 fill band, pitch, distances, lookUp,
+	glideIn / glideOut), the eye and look point are Cinema.Language's rig frame, and the glide's
+	curve is Cinema.Ease ("smoother"). The glide's timing, the chrome and the hand-back stay here
+	(NotAdopted). Without the package it warns once and frames with Config.Cinematics.Camera and
+	Logic/Cinematic, as before. tests/specs/CameraCompat.spec proves both paths equal the old
+	controller (tests/runtime/OldCameraDirector.luau) bit for bit, frame by frame.
 ]]
 
 local GuiService = game:GetService("GuiService")
@@ -48,16 +56,29 @@ local Anim = require(UI.Anim)
 local Focus = require(UI.Focus)
 
 local New = Create.New
-local CAM = Tuning.Camera
+local CAM = Tuning.Camera -- the fallback's numbers (no Cinema package)
 local RENDER_NAME = "CameraDirector"
 local BAR = 0.09 -- letterbox bar height, fraction of the screen
 
 local CameraDirector = {
 	Name = "CameraDirector",
 	Dependencies = {},
+	-- What stays this controller's own, and why (CameraCompat.spec checks the reasons).
+	NotAdopted = {
+		glide = "the glide's clock (os.clock, a render step, Heartbeat waits), skip, abort and the hand-back: the package solves poses and has no scheduler",
+		fieldOfView = "the director never sets FieldOfView, it keeps the player's and restores it; rig.fov only sizes the framing distance",
+		look = "Handle:Look aims at an explicit eye and look point (BattleStage), so there is no framing maths to move",
+		chrome = "letterbox bars, the tap-to-skip catcher, the HUD hiding, the whoosh and skip input are Ranch UI the package does not know",
+		nonFinite = "a NaN or infinite subject, height or camera point keeps Logic/Cinematic.Frame: the package swaps such input for defaults, the old maths does not",
+		photoMode = "Cinema.PhotoMode is not wired: Controllers/PhotoMode stays the Ranch's own, its ideas are proposals only",
+		rails = "Cinema.Rails and its moment director are not wired: Cinematics, Celebrate and BattleStage script their own shots",
+		focus = "Cinema.Focus depth of field is not wired: a shot draws no DepthOfFieldEffect today, so adding one would change the look",
+		recorder = "Cinema.Recorder is not wired: it is a capture tool, and the shots record nothing today",
+	},
 }
 
 local ctx
+local lensState: any = nil -- { lang, rig, ease } with the Cinema package, false without
 local queue = {}
 local working = false
 local saved = nil -- the player's camera while we hold it
@@ -104,7 +125,61 @@ local function mayContinue(stage: boolean?): boolean
 	return not photoActive() and (stage == true or ctx.Router:Current() == nil) and not riding()
 end
 
+-- The Cinema package's Ranch camera language, or nil (warned once) when it is not vendored: the
+-- built-in Config.Cinematics.Camera and Logic/Cinematic run instead.
+local function lens(): any
+	if lensState == nil then
+		local f = ctx and ctx.Foundry
+		local lib = f and f.packages and f.packages.Cinema
+		if lib then
+			local profile = lib.profile("monster-ranch")
+			lensState = { lang = lib.Language.new(profile), rig = profile.rig, ease = lib.Ease }
+		else
+			lensState = false
+			warn("[CameraDirector] the Foundry Cinema package is not vendored; the built-in Config.Cinematics.Camera framing runs")
+		end
+	end
+	return lensState or nil
+end
+
+-- The camera numbers (lookUp, glideIn, glideOut): the package's rig or Config.Cinematics.Camera.
+local function cam(): any
+	local L = lens()
+	return if L then L.rig else CAM
+end
+
+local function ease(a: number): number
+	local L = lens()
+	if L then
+		return L.ease.apply(L.rig.ease, a)
+	end
+	return Cinematic.Ease(a)
+end
+
+local function finite(n: any): boolean
+	return type(n) == "number" and n == n and n ~= math.huge and n ~= -math.huge
+end
+
 local function framing(position: Vector3, height: number, from: Vector3): CFrame
+	local L = lens()
+	if
+		L
+		and finite(height)
+		and finite(position.X)
+		and finite(position.Y)
+		and finite(position.Z)
+		and finite(from.X)
+		and finite(from.Y)
+		and finite(from.Z)
+	then
+		local pose = L.lang.frame({
+			position = { x = position.X, y = position.Y, z = position.Z },
+			height = height,
+			from = { x = from.X, y = from.Y, z = from.Z },
+		})
+		local eye, at = pose.position, pose.lookAt
+		return CFrame.lookAt(Vector3.new(eye.x, eye.y, eye.z), Vector3.new(at.x, at.y, at.z))
+	end
 	local ex, ey, ez, lx, ly, lz = Cinematic.Frame(CAM, position.X, position.Y, position.Z, height, from.X, from.Y, from.Z)
 	return CFrame.lookAt(Vector3.new(ex, ey, ez), Vector3.new(lx, ly, lz))
 end
@@ -238,7 +313,7 @@ local function step()
 		return
 	end
 	local a = if rig.glide <= 0 then 1 else (os.clock() - rig.t0) / rig.glide
-	local cf = rig.fromCF:Lerp(rig.toCF, Cinematic.Ease(a))
+	local cf = rig.fromCF:Lerp(rig.toCF, ease(a))
 	camera.CFrame = cf
 	camera.Focus = CFrame.new(rig.focus)
 end
@@ -333,14 +408,14 @@ function Handle:Frame(position: Vector3, height: number, seconds: number?)
 	local camera = workspace.CurrentCamera
 	local from = if camera then camera.CFrame.Position else position + Vector3.new(0, 10, 20)
 	local cf = framing(position, height, from)
-	glideTo(cf, position + Vector3.new(0, height * CAM.lookUp, 0), seconds or CAM.glideIn)
+	glideTo(cf, position + Vector3.new(0, height * cam().lookUp, 0), seconds or cam().glideIn)
 end
 
 function Handle:Look(eye: Vector3, at: Vector3, seconds: number?)
 	if self.state.aborted or not saved then
 		return
 	end
-	glideTo(CFrame.lookAt(eye, at), at, seconds or CAM.glideIn)
+	glideTo(CFrame.lookAt(eye, at), at, seconds or cam().glideIn)
 end
 
 function Handle:Aborted(): boolean
@@ -401,7 +476,7 @@ local function work()
 	if saved then
 		-- Glide home, then hand the camera back.
 		local keep = saved
-		glideTo(keep.CFrame, keep.Focus.Position, if cutHome then 0 else CAM.glideOut)
+		glideTo(keep.CFrame, keep.Focus.Position, if cutHome then 0 else cam().glideOut)
 		local deadline = os.clock() + (if rig then rig.glide else 0)
 		while saved == keep and os.clock() < deadline do
 			RunService.Heartbeat:Wait() -- a frame (task.wait() would not advance the clock in the Lune mock)

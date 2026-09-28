@@ -14,6 +14,13 @@
 	brightness, and only the `max` nearest sources within `radius` of the camera are enabled
 	(`maxLow` with lowGraphics). A source's holder part and light are made the first time it is
 	picked and reused after. Nothing casts shadows. Campfires flicker 10 times a second.
+
+	Foundry (wave 1b): the rules and maths come from the Lamplighter package through ctx.Foundry
+	(rules.Lamplighter["monster-ranch"]: the night curve, which sources are lit, caps per quality,
+	radius, brightness, flicker, colour, range, window angle). This controller keeps the Instances
+	and the schedule. Without the package it warns once and runs the same rules from
+	Config.Ambience.Lights and Logic/Ambience. tests/specs/AmbienceCompat.spec proves both paths
+	equal the old controller (tests/runtime/OldLamplight.luau) frame by frame.
 ]]
 
 local Lighting = game:GetService("Lighting")
@@ -33,6 +40,12 @@ local L = Cfg.Lights
 local Lamplight = {
 	Name = "Lamplight",
 	Dependencies = {},
+	-- What stays this controller's own, and why (AmbienceCompat.spec checks the reasons).
+	NotAdopted = {
+		schedule = "picks every Lights.update s and flickers every 0.1 s: the package solves one moment and has no scheduler",
+		instances = "holder parts and Light instances are made, reused and destroyed here: the package is pure data",
+		layer = "the Ambience_lights Lighting attribute (Config.Ambience.Layers) is a Ranch switch the package does not know",
+	},
 }
 
 local FLICKER_STEP = 0.1
@@ -47,8 +60,15 @@ type Source = {
 	light: Light?,
 	on: boolean,
 	seed: number,
+	Y: number,
+	id: string?, -- package path: the fixture id
+	base: number?, -- package path: kind brightness x night at the last pick (flicker scales it)
 }
 
+local ctx = nil
+local pkg: any = nil -- { lib, rules, adapter, flickers } with the Lamplighter package, false without
+local lamps: any = nil -- the package's solver over `sources` (rebuilt by collect)
+local hourNow = 14 -- Lighting.ClockTime at the pick, read by the solver's env.hour
 local connections = {}
 local sources: { Source } = {}
 local lit: { Source } = {}
@@ -61,6 +81,44 @@ local sincePick = math.huge
 local sinceFlicker = 0
 local sinceRefresh = 0
 local clock = 0
+
+-- The package, or nil (warned once) when it is not vendored: the built-in rules run instead.
+local function foundry(): any
+	if pkg == nil then
+		local f = ctx and ctx.Foundry
+		local lib = f and f.packages and f.packages.Lamplighter
+		local set = f and f.rules and f.rules.Lamplighter
+		local rules = set and set["monster-ranch"]
+		if lib and rules then
+			local flickers = {}
+			for kind, k in rules.kinds do
+				flickers[kind] = k.flicker ~= nil and k.flicker ~= "steady"
+			end
+			pkg = { lib = lib, rules = rules, adapter = f.adapter("Lamplight"), flickers = flickers }
+		else
+			pkg = false
+			warn("[Lamplight] the Foundry Lamplighter package is not vendored; the built-in Config.Ambience.Lights rules run")
+		end
+	end
+	return pkg or nil
+end
+
+-- A kind's look (colour hex, range, window angle), from the package's rules or Config.
+local function look(kind: string): (string?, number, number?)
+	local P = foundry()
+	if P then
+		local k = P.rules.kinds[kind]
+		if not k then
+			return nil, 0, nil
+		end
+		return k.colour, k.range, k.angle
+	end
+	local k = L.kinds[kind]
+	if not k then
+		return nil, 0, nil
+	end
+	return k.color, k.range, k.angle
+end
 
 local function layer(name: string): boolean
 	return Logic.Enabled(Cfg.Layers, name, Lighting:GetAttribute("Ambience_" .. name))
@@ -93,10 +151,10 @@ local function holderPart(name: string, size: Vector3, cf: CFrame): Part
 end
 
 local function pointLight(kind: string, parent: Instance): PointLight
-	local k = L.kinds[kind]
+	local color, range = look(kind)
 	local light = Instance.new("PointLight")
-	light.Color = Color3.fromHex(k.color)
-	light.Range = k.range
+	light.Color = Color3.fromHex(color :: string)
+	light.Range = range
 	light.Brightness = 0
 	light.Shadows = false
 	light.Enabled = false
@@ -105,10 +163,10 @@ local function pointLight(kind: string, parent: Instance): PointLight
 end
 
 local function add(kind: string, at: Vector3, make: () -> (BasePart, Light))
-	if not L.kinds[kind] then
+	if not look(kind) then
 		return
 	end
-	table.insert(sources, { kind = kind, X = at.X, Z = at.Z, make = make, on = false, seed = #sources * 1.7 })
+	table.insert(sources, { kind = kind, X = at.X, Y = at.Y, Z = at.Z, make = make, on = false, seed = #sources * 1.7 })
 end
 
 local function addDoor(door: Instance)
@@ -130,12 +188,12 @@ local function addWindow(body: Instance)
 	local cf = body.CFrame * CFrame.new(0, -size.Y * 0.1, -size.Z / 2 - 0.3)
 	add("window", cf.Position, function()
 		local p = holderPart("WindowLight", Vector3.new(size.X * 0.8, size.Y * 0.5, 0.2), cf)
-		local k = L.kinds.window
+		local color, range, angle = look("window")
 		local light = Instance.new("SurfaceLight")
 		light.Face = Enum.NormalId.Front
-		light.Angle = k.angle
-		light.Color = Color3.fromHex(k.color)
-		light.Range = k.range
+		light.Angle = angle :: number
+		light.Color = Color3.fromHex(color :: string)
+		light.Range = range
 		light.Brightness = 0
 		light.Shadows = false
 		light.Enabled = false
@@ -202,6 +260,21 @@ local function collect()
 		addAt("crystals", part, 0.1)
 	end
 	sceneryVersion = SceneryIndex.Version()
+	lamps = nil
+	local P = foundry()
+	if P and #sources > 0 then
+		-- ids sort in source order (squaredNearest hands them to the sort in id order)
+		local fixtures = table.create(#sources)
+		for i, s in sources do
+			s.id = string.format("s%05d", i)
+			fixtures[i] = { id = s.id, kind = s.kind, pos = { x = s.X, y = s.Y, z = s.Z }, seed = s.seed }
+		end
+		lamps = P.lib.new(P.adapter, fixtures, {
+			hour = function()
+				return hourNow
+			end,
+		}, P.rules)
+	end
 end
 
 local function brightness(s: Source): number
@@ -227,7 +300,49 @@ local function switch(s: Source, on: boolean)
 	end
 end
 
+local function finite(v: number): boolean
+	return v == v and v ~= math.huge and v ~= -math.huge
+end
+
+-- Package path: the solver picks the lit sources and their brightness (cap by the adapter's
+-- quality, nearest first within the radius); between picks the flicker scales `base`.
+local function pickPackage(P: any)
+	local want = {}
+	if lamps and layer("lights") then
+		local camera = workspace.CurrentCamera
+		if camera then
+			hourNow = tonumber(Lighting.ClockTime) or 14
+			local p = camera.CFrame.Position
+			-- The package refuses a non-finite camera. Logic.Nearest finds nothing at a non-finite
+			-- x or z (every comparison with NaN or inf is false), so no source is lit; the rules
+			-- are flat, so y never reaches a pick and a non-finite y goes in as 0.
+			if finite(p.X) and finite(p.Z) then
+				local pos = { x = p.X, y = if finite(p.Y) then p.Y else 0, z = p.Z }
+				for _, e in lamps:solve(clock, { pos = pos }).lights do
+					want[sources[tonumber(string.sub(e.id, 2)) :: number]] = e
+				end
+			end
+		end
+	end
+	table.clear(lit)
+	for _, s in sources do
+		local e = want[s]
+		switch(s, e ~= nil)
+		if s.on then
+			table.insert(lit, s)
+			s.base = P.rules.kinds[s.kind].brightness * e.level
+			local light = s.light :: Light
+			light.Brightness = e.brightness
+		end
+	end
+end
+
 local function pick()
+	local P = foundry()
+	if P then
+		pickPackage(P)
+		return
+	end
 	night = if layer("lights") then Logic.Night(tonumber(Lighting.ClockTime) or 14, L.on, L.off) else 0
 	local want = {}
 	if night > 0.001 then
@@ -251,6 +366,15 @@ local function pick()
 end
 
 local function flicker()
+	local P = foundry()
+	if P then
+		for _, s in lit do
+			if P.flickers[s.kind] and s.light and lamps then
+				s.light.Brightness = (s.base :: number) * lamps:flicker(s.id :: string, clock)
+			end
+		end
+		return
+	end
 	for _, s in lit do
 		if L.kinds[s.kind].flicker and s.light then
 			s.light.Brightness = brightness(s)
@@ -279,9 +403,12 @@ local function step(dt: number)
 	end
 end
 
-function Lamplight.Init(_context) end
+function Lamplight.Init(context)
+	ctx = context
+end
 
 function Lamplight.Start()
+	foundry()
 	SceneryIndex.Start()
 	lowGraphics = Quality.IsLow()
 	table.insert(

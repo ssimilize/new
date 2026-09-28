@@ -63,7 +63,7 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 	local precise = 0
 
 	local a = {}
-	a.log = { kicks = {}, events = {}, states = {}, analytics = {}, published = {}, ads = {}, streamAround = {} }
+	a.log = { kicks = {}, events = {}, states = {}, folded = {}, analytics = {}, published = {}, ads = {}, streamAround = {} }
 	jobCounter += 1
 	a.JobId = "test-job-" .. tostring(jobCounter)
 	a.PlaceId = 0
@@ -219,6 +219,17 @@ function MockAdapters.new(options: { startTime: number?, network: any?, placeMod
 			end
 		end,
 	}
+	-- Replaces the first `count` state messages sent to `player` with one snapshot of `tree`,
+	-- so a week-long Advance does not keep every message. TestKernel folds the messages its
+	-- client view has applied, passing that view; log.folded[player] = { count, snapshot }.
+	function a.foldStates(player, count: number, tree)
+		local list = a.log.states[player]
+		local folded = a.log.folded[player] or { count = 0 }
+		folded.count += count
+		folded.snapshot = { kind = "snapshot", tree = tree }
+		a.log.folded[player] = folded
+		a.log.states[player] = table.move(list, count + 1, #list, 1, {})
+	end
 
 	-- DataStore
 	a.store = {}

@@ -18,6 +18,7 @@
 	  ctx:Sound(key, opts?)        plays Config.Sounds[key] through client/Audio (no-op while its id is
 	                               empty); opts = { at?, pitch?, volume? } (see Audio.Play)
 	  ctx.Player                   LocalPlayer
+	  ctx.Foundry                  the vendored Foundry packages and their adapter (Kernel/ClientFoundry)
 ]]
 
 local Players = game:GetService("Players")
@@ -29,6 +30,8 @@ local Signal = require(Shared.Kernel.Signal)
 local Store = require(script.Parent.Store)
 local NetClient = require(script.Parent.NetClient)
 local Router = require(script.Parent.Router)
+local ClientFoundry = require(script.Parent.ClientFoundry)
+local Quality = require(script.Parent.Parent.Visuals.Quality)
 local Layers = require(script.Parent.Parent.UI.Layers)
 local Toasts = require(script.Parent.Parent.UI.Components.Toasts)
 local Audio = require(script.Parent.Parent.Audio)
@@ -45,6 +48,15 @@ function ClientKernel.new()
 	self.Net = NetClient.new(self.Store)
 	self.UI = Layers.create(self.Player)
 	self.Bus = self:_makeBus()
+	self.Foundry = ClientFoundry.new({
+		folder = Shared:FindFirstChild("Foundry"),
+		requireModule = require,
+		Bus = self.Bus,
+		serverTime = function()
+			return workspace:GetServerTimeNow()
+		end,
+		quality = Quality.Level,
+	})
 	self._controllers = {}
 	self._order = {}
 	self.Router = Router.new(self)
@@ -114,6 +126,7 @@ function ClientKernel:_context(entry)
 		UI = self.UI,
 		Bus = self.Bus,
 		Player = self.Player,
+		Foundry = self.Foundry,
 	}, {
 		__index = function(_, key)
 			local method = ClientKernel[key]

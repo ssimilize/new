@@ -1,0 +1,116 @@
+{
+  "foundry": {
+    "commit": "2f30042",
+    "syncedAt": "2026-09-27T23:41:45+00:00"
+  },
+  "game": "monster-ranch",
+  "packages": {
+    "Contract": {
+      "version": "0.1.0",
+      "files": {
+        "Contract.luau": "e53312ebd394b8b9afa1f774d1891ada0d68fe1f4ca721c251d32fff3534f69f"
+      }
+    },
+    "Almanac": {
+      "version": "0.1.0",
+      "files": {
+        "Almanac.luau": "190c74701936812c4ae61a4f6afafcdc7be518d9086c595060db40ace0845282",
+        "rules/monster-ranch.luau": "cd9ba1febfd375a8df4600f2e4c5ee9ea1d66bf93a86c6d17dbace3d1ad801cb"
+      }
+    },
+    "Lamplighter": {
+      "version": "0.1.0",
+      "files": {
+        "Flicker.luau": "cd13f4f535683b77287a57283dabdfaee75bbc137a8b120012fa8fc42d868abe",
+        "Kinds.luau": "b3c65d4723d86329c84af7a713df947cb73b17940710fc91da27466f37d2974e",
+        "Lamplighter.luau": "21275c1942f42728f595f9f8380dac9752c8e69dbf5e7c89dfaf9ac3516f823f",
+        "rules/monster-ranch.luau": "3d634f9cb433b64a710773346830586f335edb37bc613d78ce0243d3d78f2210",
+        "Windows.luau": "90882aaee378aa6813f740e85e05bf992f3790f9fe003b5a3f19a099d0c80036"
+      }
+    },
+    "Wildlife": {
+      "version": "0.1.0",
+      "files": {
+        "Flock.luau": "9e0b5c5dc4e31c3bbfd50253f4aac923d5524d2ff53bf97d6dd63ccdd9d48eba",
+        "Rules.luau": "1ab5b9a47085726c0636a85e5c2ab1427a8399f94b98600c459a1d874b09126a",
+        "Stray.luau": "c3bb8a7f4d08afb4ea1b52fc8f35cd5a7832231f8b3172c6fc4a8870ededb726",
+        "tables/monster-ranch.luau": "25174fbd9e5381ea2442a2879d34a5e5b128e74609b32bc4f68867cfc7c666d6",
+        "Wildlife.luau": "c271f84b6133c3b0694173a8160d9206899501c0f876594b9870cab8313c8bdd"
+      }
+    },
+    "Soundscape": {
+      "version": "0.1.0",
+      "files": {
+        "Soundscape.luau": "249c732eba4b43669c0742d0b3a47ed30ef8a48ed74b88d94ed4fb38408a5605"
+      }
+    },
+    "Score": {
+      "version": "0.1.0",
+      "files": {
+        "Score.luau": "b6e21337e36925b8cf81873e86490cd08d072f7f0860d9828e64da1bd7d9b966"
+      }
+    },
+    "SkyWeather": {
+      "version": "0.1.0",
+      "files": {
+        "Noise.luau": "a6a955793f1b1b6187c2e05d9c62a4ac347cd97af63151924aad7170c4fc6063",
+        "rules/monster-ranch.luau": "b4df713ac611d61b2d3cdb032e835b75b9dd90d1b6273de5f2c99e134199a325",
+        "Rules.luau": "908c70ce0954868cd3a8c99b1a72284569bfb0642826aa57da4f8de7af7b3fa7",
+        "SkyWeather.luau": "c4d7e7c56e7a557ca1b375c3a68bbcfcaea029d01ebfaae2bf764889e0e8c857"
+      }
+    },
+    "EffectGraph": {
+      "version": "0.1.0",
+      "files": {
+        "EffectGraph.luau": "b871f59b305b71e54267ab3a24f97fbc827c08f5b2f466583e72e1b4e5eb0a65",
+        "library/monster-ranch.luau": "a7800450602bdacdb2e9e8685abf54d0af5b99f517d9b20c2b16012eb428fe40"
+      }
+    },
+    "Cinema": {
+      "version": "0.1.0",
+      "files": {
+        "Cinema.luau": "120d16cb83571c38b01a449b8c9b9cb05485b62d26d6258b909509b73bb5b095",
+        "Ease.luau": "8ff18434fd8d89e17f3723cf6bb3e466484addf921591b7cfcc9e4a4ddb18a41",
+        "Focus.luau": "4bf92ef38b2ff0005335de89535803b9f8bcec2efeec23e17b1d86193fdd6f98",
+        "Language.luau": "41b0d41ff64dbcc84d3952c54add38ccf61d78f43a4ec3df86882095e47190be",
+        "PhotoMode.luau": "ef20bc16f8fb8483c1d804705d30f8ad1c91afe2f57d789ec664c96dd23ceb39",
+        "profiles/monster-ranch.luau": "e82cf163568401b39804740a9a88055a669887a9994b6e4bf829dcd77500d634",
+        "Rails.luau": "f164028240907b2c8e91ed44a363c8b7f9475c98bee640de7939e64c96f2b32e",
+        "Recorder.luau": "53ac92ced6c66dee9b1b832297e7e4684a9b76b906a938c05e2b13353a1e5a74",
+        "Vec.luau": "6c759a8dc49a9b1391ff88a7efffc4cebdc83c296832fb58bc9b93fcca57f6e9"
+      }
+    },
+    "Atelier": {
+      "version": "0.1.0",
+      "files": {
+        "Atelier.luau": "d846d2055e1a84041c6a1dea034bcbdae04954dd806036d7aff15fafe8bb5209",
+        "Bodies.luau": "4cbc1af142934ca5c762dc19279d75599d261fb3707af8c738e67f700f509ed9",
+        "Colour.luau": "7cdb894c0c56e813fa9e3b323207b99e393943bd80803cdbf04cf4c61524472f",
+        "Faces.luau": "d9c2485c8b8bb18479935ddb69b5ac7eef4b88c2e8572b5a3b534156a55f2009",
+        "looks/monster-ranch.luau": "0919abd0a235640676b2498fbd644b8263632e87731dae8936be0d95182be081",
+        "Wardrobe.luau": "760b6f4a1eb17484a7367504bc83d0475fa9f87dfa2402eaea1ca60a3a42ee29"
+      }
+    },
+    "Motion": {
+      "version": "0.1.0",
+      "files": {
+        "Base64.luau": "7bb929a38750c673033870aba10da5133c183df50dc2c70cde9baa1514ceb244",
+        "bindings/monster-ranch.luau": "312df0cc46b5865163986f8dce569f9c5548ff9ce1c758582dbe41bb2140d87c",
+        "Convert.luau": "b77107f498fda31d8e0402703fe7a00dc8e1de20113aab6e63b2dc35644a6d71",
+        "Ease.luau": "1466d944ebb29578d6275b3ca735926bf36197d71fb4ca2ca72659ac5e1a9b75",
+        "library/authored.luau": "0cac2d7cb6d12a3b6f5b04d931a5482891308cf0cb3b98a83a5d1c59a2dd363b",
+        "library/Library.luau": "837438da731146ca02690ccf63057553bd6621bade034b8925521089a8b8a859",
+        "library/reused.luau": "40710f3b92203f43f8d39e739841a723da0f462142341aaf14a5156cd59c0c45",
+        "Markers.luau": "b2c7185d47a2fc8300a6b23447812f629f0b88ae07eac145439ec9abe38c18ee",
+        "Math.luau": "df10030141869b0d739f0b8b71d931df33bedd3a0594ee81894c9921c109d791",
+        "Motion.luau": "54b09e8978389a2797b02489970895238b7c63d8f9dfb4aa6921365781b42286",
+        "Procedural.luau": "ab8837a93105507051091512219c79c0a945166e31991ff8317f30e228782c5b",
+        "Rig.luau": "8b5cbb3ae732c1e8bda0cab89a7afed9c3e07c30120da87a915923b578d28852",
+        "rules/monster-ranch.luau": "af527e0923146f20fdf224a8b5a06d6918fbc437b357a36092bba0cec3b1f95b"
+      }
+    }
+  },
+  "generated": {
+    "Game/Game.luau": "0c0ba2cae32f28912b674d1aac3720e4afa1eee12eb00ea218d7b370cfc7dac8"
+  }
+}

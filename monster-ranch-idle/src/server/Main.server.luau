@@ -2,8 +2,20 @@
 local Kernel = require(script.Parent.Kernel.Kernel)
 local Adapters = require(script.Parent.Kernel.Adapters)
 local Manifest = require(script.Parent.Manifest)
+local ServerFoundry = require(script.Parent.Kernel.ServerFoundry)
 
 local kernel = Kernel.new({ adapters = Adapters.Roblox() })
+
+-- The vendored Foundry packages (Shared.Foundry), handed to every system as ctx.Foundry.
+kernel.Foundry = ServerFoundry.new({
+	folder = game:GetService("ReplicatedStorage").Shared:FindFirstChild("Foundry"),
+	requireModule = require,
+	Bus = kernel.Bus,
+	serverTime = function()
+		return workspace:GetServerTimeNow()
+	end,
+	verbose = kernel.Verbose,
+})
 
 for _, name in Manifest.Systems do
 	local folder = script.Parent.Systems:FindFirstChild(name)

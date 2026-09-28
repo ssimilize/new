@@ -20,6 +20,10 @@ TestKernel.__index = TestKernel
 
 local nextUserId = 1000
 
+-- A player's state log is folded once this many applied messages pile up (see _syncClient).
+-- Short tests never reach it, so a client harness attaching late replays them message by message.
+TestKernel.FoldStatesAt = 256
+
 local function fakePlayer(userId: number?, name: string?)
 	if not userId then
 		nextUserId += 1
@@ -60,6 +64,16 @@ function TestKernel.new(options)
 	local Kernel = Loader.get("Server.Kernel.Kernel")
 	local adapters = MockAdapters.new({ startTime = options.startTime, network = options.network, placeMode = options.placeMode })
 	local kernel = Kernel.new({ adapters = adapters, verbose = options.verbose })
+	-- kernel.Foundry as Main.server builds it, on the mock clock (ctx.Foundry in every system)
+	kernel.Foundry = Loader.get("Server.Kernel.ServerFoundry").new({
+		folder = Loader.game:GetService("ReplicatedStorage").Shared:FindFirstChild("Foundry"),
+		requireModule = Loader.require,
+		Bus = kernel.Bus,
+		serverTime = function()
+			return adapters.Clock.Unix() -- what the client harness serves as GetServerTimeNow
+		end,
+		verbose = options.verbose,
+	})
 	for name, api in options.stubs or {} do
 		kernel:Stub(name, api)
 	end
@@ -134,6 +148,7 @@ end
 
 -- Moves time forward and runs every due timer (in ≤1 s steps so periodic jobs tick).
 function TestKernel:Advance(seconds: number)
+	local states = self.adapters.log.states
 	local remaining = seconds
 	while remaining > 0 do
 		local step = math.min(1, remaining)
@@ -142,6 +157,14 @@ function TestKernel:Advance(seconds: number)
 			self.adapters._step()
 		end
 		remaining -= step
+		-- Nothing else touches the client views mid-Advance, so syncing a long log early
+		-- applies the same messages in the same order, and lets it be folded.
+		for player in self._clients do
+			local messages = states[player]
+			if messages and #messages >= TestKernel.FoldStatesAt then
+				self:_syncClient(player)
+			end
+		end
 	end
 	for player in self._clients do
 		self:_syncClient(player)
@@ -165,27 +188,37 @@ function TestKernel:Session(player, systemName: string)
 	return record and record.session[systemName]
 end
 
--- Rebuilds the client's view from every state message the player received.
+-- Rebuilds the client's view from every state message the player received. Once the log is
+-- long, the applied messages are folded into one snapshot that shares the view's tables (as
+-- the logged snapshot already does), so a client harness attaching later still sees them.
 function TestKernel:_syncClient(player)
 	local client = self._clients[player]
 	if not client then
 		return
 	end
-	local messages = self.adapters.log.states[player] or {}
+	local log = self.adapters.log
+	local messages = log.states[player] or {}
+	local folded = log.folded[player]
+	local base = if folded then folded.count else 0 -- messages already folded away
 	client._applied = client._applied or 0
-	for i = client._applied + 1, #messages do
-		local message = messages[i]
+	for i = client._applied + 1, base + #messages do
+		local message = messages[i - base]
 		if message.kind == "snapshot" then
 			client.profile = message.tree.profile
 			client.session = message.tree.session
 			client.global = message.tree.global
+			client._snapshot = true
 		else
 			for _, patch in message.patches do
 				applyPath(client, patch[1], MockAdapters.deepCopy(patch[2]))
 			end
 		end
 	end
-	client._applied = #messages
+	client._applied = base + #messages
+	if #messages >= TestKernel.FoldStatesAt and client._snapshot then
+		local tree = { profile = client.profile, session = client.session, global = client.global }
+		self.adapters.foldStates(player, #messages, tree)
+	end
 end
 
 function TestKernel:Client(player)

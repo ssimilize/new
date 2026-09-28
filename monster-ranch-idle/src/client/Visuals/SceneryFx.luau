@@ -21,7 +21,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ConfigFolder = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")
-local Presets = require(ConfigFolder:WaitForChild("Vfx"))
+-- Config/Vfx, with the presets from the Foundry EffectGraph library (Visuals/VfxPresets)
+local Presets = require(script.Parent.VfxPresets).Table
 local spritesModule = ConfigFolder:FindFirstChild("VfxSprites")
 local Sprites = {}
 if spritesModule then
