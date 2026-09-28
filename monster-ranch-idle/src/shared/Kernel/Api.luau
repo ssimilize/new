@@ -452,11 +452,35 @@ Api.Actions = {
 		rate = 2,
 		returns = "{ success: boolean, why: string?, chart: string, progress: number, charted: boolean, left: number }",
 	},
+	-- Bug Catching Meadow (3.13) · see Config/Bugs and Logic/Bugs --------------------------
+	["Bugs.Start"] = {
+		schema = T.none,
+		rate = 2,
+		returns = "{ id: number, path: { delay, duration, twist, freq, bob, phase, total }, left: number, lure: number }",
+	},
+	["Bugs.Submit"] = {
+		schema = T.struct({ id = T.integer(1), t = T.number(0, Config.Bugs.MaxT) }),
+		rate = 2,
+		returns = "{ caught: boolean, bug: string?, rarity: number?, first: boolean, left: number }",
+	},
+	["Bugs.Lure"] = { schema = T.none, rate = 2, returns = "{ lure: number }" },
+	["Bugs.Sell"] = {
+		schema = T.struct({ bug = T.key(Config.Bugs.ById), amount = T.integer(1, 9999) }),
+		rate = 4,
+		returns = "{ coins: number }",
+	},
 	-- Trial Tower (3.12) · see Config/TrialTower and Logic/TrialTower ------------------------
 	["TrialTower.Fight"] = {
 		schema = T.none,
 		rate = 2,
 		returns = "{ win, floor, best, record, replay: BattleReplay, rewards: { Reward }, left, retries, spent: 'attempt' | 'retry' | nil }",
+	},
+
+	-- Treasure Maps (3.13) · see Config/TreasureMaps and Logic/TreasureMaps ----------------
+	["TreasureMaps.Dig"] = {
+		schema = T.struct({ map = T.integer(1) }),
+		rate = 2,
+		returns = "{ win, map, region, replay: BattleReplay, rewards: { Reward }, maps }",
 	},
 
 	-- Weekly goals (3.8) · see Config/Weekly and Logic/Weekly --------------------------
@@ -525,6 +549,37 @@ Api.Actions = {
 		rate = 4,
 		returns = "{ coins: number }",
 	},
+
+	-- Stray Monsters (3.13) · see Config/Strays and Logic/Strays ----------------------------------
+	["Strays.Start"] = {
+		schema = T.struct({ slot = T.integer(0) }),
+		rate = 2,
+		returns = "{ slot: number, line: string, rarity: number, favourite: string, hints: { string } }  -- uses the stray's one attempt",
+	},
+	["Strays.Submit"] = {
+		schema = T.struct({
+			slot = T.integer(0),
+			choices = T.array(T.enum({ "wait", table.unpack(Config.Food.Ids) }), Config.Strays.Rounds, Config.Strays.Rounds),
+		}),
+		rate = 2,
+		returns = "{ befriended: boolean, correct: number, answers: { string }, line: string, rarity: number, id: string?, gene: string? }",
+	},
+	-- Hot Springs & Spa (3.13) · see Config/Spa and Logic/Spa ----------------------------------
+	-- Soak: a free Teen/Adult from the barn soaks in an open, empty pool (busy tag "spa"); the bath
+	-- salt (honey through the Apiary + food) is paid now.
+	["Spa.Soak"] = {
+		schema = T.struct({ pool = T.integer(1, Config.Spa.MaxPools), id = id, soak = T.enum(Config.Spa.Ids) }),
+		rate = 2,
+		returns = "{ endsAt: number }",
+	},
+	-- Collect: a finished soak frees the monster and starts its buff (Config.Spa.BuffHours).
+	["Spa.Collect"] = {
+		schema = T.struct({ pool = T.integer(1, Config.Spa.MaxPools) }),
+		rate = 2,
+		returns = "{ soak: string, endsAt: number }",
+	},
+	-- Cancel: ends a soak early; the salt is lost.
+	["Spa.Cancel"] = { schema = T.struct({ pool = T.integer(1, Config.Spa.MaxPools) }), rate = 2, returns = "nil" },
 
 	-- Ranch Orders (3.8) · see Config/Orders and Logic/Orders --------------------------------
 	["Orders.Fill"] = {
@@ -866,8 +921,11 @@ Api.State = {
 		Fishing = "{ day, casts, bait, fish = { [fishId]: n }, log = { [fishId]: { n, best } }, buddy, week, weekBest, weekFish, total, best }  -- 3.10",
 		DigSite = "{ day, digs, shovels, n, open = false | { id, left, tiles = { { t, hint?, kind?, fossil?, piece?, id?, amount?, duplicate? } } }, pieces = { [fossilId]: { [pieceId]: true } }, total }  -- 3.11 (secret is private)",
 		Observatory = "{ night, used, n, charts = { [chartId]: observations }, seen }  -- 3.12 (secret is private)",
+		Strays = "{ tried, seen, day, adopted, met = { [lineId]: n }, friends = { [lineId]: n }, total }  -- 3.13: Stray Monsters (secret is private)",
+		Bugs = "{ day, swings, n, lure, jar = { [bugId]: n }, log = { [bugId]: n }, total }  -- 3.13 (secret is private)",
 		Exhibits = "{ filled = { [setId]: { [itemId]: true } }, paid = { [setId]: step } }  -- 3.12: Museum Exhibits",
 		TrialTower = "{ week, best, record, day, used, retries, paid = { [floor]: true }, fights, cleared }  -- 3.12, see Logic/TrialTower",
+		TreasureMaps = "{ pieces, maps = { { id, region, stage, seed } }, made, rolls, digs, opened }  -- 3.13, see Logic/TreasureMaps",
 		Weekly = "{ week, goals = { { id, progress } }, claimed = { bool, bool, bool } }  -- 3.8, see Logic/Weekly",
 		Kitchen = "{ slots = { { recipe, startedAt, readyAt } }, pantry = { [dishId]: n }, golden, seeds, harvests, boosts = { [monsterId]: { job = { { from, to } }, loot } }, cooked }  -- 3.10, see Logic/Kitchen",
 		Orders = "{ day, list = { { id, kind, stat?, grade?, twoStats?, genesMin?, food?, amount?, difficulty, seed, egg?, buyer, favourite?, filled } }, rerolls, rep = { [buyerId] = points }, gifts = { [buyerId] = level }, favDay }  -- see Logic/Orders",
@@ -903,6 +961,7 @@ Api.State = {
 		Merchant = "{ visit, bought = { [offerId]: n }, scrolls, rerolls, trades }  -- 3.11: Travelling Merchant (Logic/Merchant)",
 		Seasons = "{ last }  -- 3.11: the last Ranch Season this player saw (Logic/Seasons)",
 		Apiary = "{ hives = { { monster, at, stored = { [kind]: n } } }, store = { [kind]: n }, collects, made }  -- 3.12: Apiary & Honey (Logic/Apiary)",
+		Spa = "{ pools = { { monster, soak, at, endsAt } }, buffs = { [monsterId]: { soak, from, endsAt } }, soaks }  -- 3.13: Hot Springs & Spa (Logic/Spa)",
 		-- R2 Design Weeks: added to profile.Workshop (see Api.State.profile.Workshop above).
 		Workshop_DesignWeek = "profile.Workshop also has: designWeek = { week, entered: designId|false }, votesToday = { day, n }",
 	},
@@ -913,6 +972,8 @@ Api.State = {
 		Jobs = "{ slotCount }",
 		Kitchen = "{ slotCount, fish, fishing }  -- 3.10: fish = Fishing:FishCount (0 without Fishing); fishing = Fishing is plugged in",
 		Apiary = "{ hives, extra }  -- 3.12: open beehives; extra storage hours (Observatory perk hive_hours)",
+		Strays = "{ unlocked, nextAt, left, stray = false | { slot, line, rarity, arriveAt, leavesAt, tried } }  -- 3.13: the stray on the plot now (never its mood)",
+		Spa = "{ pools, apiary }  -- 3.13: open spa pools; the Apiary is plugged in (bath salts need honey)",
 		Merchant = "{ shovels }  -- 3.11: the Dig Site is plugged in and unlocked (the merchant's shovel offers)",
 		Monetization = "{ passes = { [passKey]: boolean }, paidRandomAllowed: boolean }",
 		Social = "{ friendBoost: number, friendsHere: number }",
@@ -1008,6 +1069,10 @@ Api.Topics = {
 	ExhibitDonated = "(player, { set: string, item: string })  -- 3.12: a Museum exhibit filled (donated or placed automatically)",
 	TowerFloorCleared = "(player, { floor: number, best: number })  -- 3.12: a Trial Tower floor won (best = this week's highest floor)",
 	StarCharted = "(player, { chart: string })  -- 3.12: an Observatory star chart finished",
+	StrayBefriended = "(player, { line: string, rarity: number })  -- 3.13: a Stray Monster befriended and adopted",
+	BugCaught = "(player, { bug: string, rarity: number })  -- 3.13: a bug caught in the Bug Catching Meadow",
+	TreasureOpened = "(player, { region: string })  -- 3.13: a Treasure Map's chest opened (its guardian beaten)",
+	SpaSoaked = "(player, { monsterId: string, soak: string })  -- 3.13: a Hot Springs soak finished and collected",
 	StarSighted = "(player, { chart: string })  -- 3.12: a successful Observatory sighting (the weekly goal stars_5)",
 	MerchantBought = "(player, { item: string, pay: string })  -- 3.11: a Travelling Merchant purchase (item = offer id, pay = coins|gems|amber|fish|dishes|honey)",
 	FishCaught = "(player, { fish: string, rarity: string, weight: number, seasonal: boolean })  -- 3.10: a catch at the Fishing Pond (weight in kg; seasonal: 3.11)",
@@ -1051,7 +1116,7 @@ Api.Topics = {
 	MasteryGained = "(player, { xp: number, line: string?, points: number? })",
 	GiftSent = "(player, { kind: string, to: number })",
 	InviteJoined = "(player, { inviter: number })  -- the invitee, on their first join",
-	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish'|'fossil' })  -- glow-up O (fish: 3.10, fossil: 3.11)",
+	CodexClaimed = "(player, { milestone: string, kind: 'element'|'egg'|'region'|'total'|'fish'|'fossil'|'bug' })  -- glow-up O (fish: 3.10, fossil: 3.11, bug: 3.13)",
 	BondRaised = "(player, { id: string, hearts: number, points: number, kind: string, heartUp: boolean })",
 	RanchLiked = "(player, { owner: number })  -- glow-up Y: Social.Like at a gate on this server (Visits pays and crowns)",
 	-- R2-ONBOARDING · republished by Quests.Signal for a tutorial chapter two step with no

@@ -60,7 +60,7 @@ local Caravans = require(script.Caravans)
 local Expeditions = {
 	Name = "Expeditions",
 	Dependencies = { "Currency", "Progression", "Rewards", "Monsters" },
-	OptionalDependencies = { "Monetization", "Weather" },
+	OptionalDependencies = { "Monetization", "Weather", "TreasureMaps" }, -- TreasureMaps: 3.13 map piece drops
 }
 
 local SLOT_COUNT = 4
@@ -494,7 +494,21 @@ local function claimSlots(player, indices: { number })
 		)
 		ctx.Analytics.Custom(player, "expedition_claim", duration, nil)
 	end
-	local granted = Rewards:Grant(player, Loot.Merge(lists), "expedition")
+	local items = Loot.Merge(lists)
+	-- 3.13 Treasure Maps: a map piece roll per claimed run (its own seeded stream).
+	local TreasureMaps = optional("TreasureMaps")
+	if TreasureMaps then
+		local pieces = 0
+		for _ = 1, #indices do
+			for _, item in TreasureMaps:Drop(player, "expedition") do
+				pieces += item.amount
+			end
+		end
+		if pieces > 0 then
+			table.insert(items, { kind = "map_piece", amount = pieces })
+		end
+	end
+	local granted = Rewards:Grant(player, items, "expedition")
 	payXP(player, total, "expedition")
 	return granted
 end
@@ -618,6 +632,11 @@ function Expeditions.Init(context)
 				ctx:Dirty(player, "bounty")
 				bountyName = bounty.name
 				local items = BountyLogic.Rewards(bounty, Expeditions:LootBonus(player, ids))
+				-- 3.13 Treasure Maps: a guaranteed map piece (once the feature is unlocked).
+				local TreasureMaps = optional("TreasureMaps")
+				for _, item in if TreasureMaps then TreasureMaps:Drop(player, "bounty") else {} do
+					table.insert(items, item)
+				end
 				for _, item in Rewards:Grant(player, items, Config.Bounties.Source, { silent = true }) do
 					table.insert(rewards, item)
 				end

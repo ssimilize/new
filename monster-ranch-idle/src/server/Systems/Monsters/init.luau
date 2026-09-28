@@ -29,6 +29,8 @@
 	  Monsters:AddMood(player, id, amount)
 	  Monsters:AddMeals(player, id, flavor, meals) -> number             -- 3.10 Kitchen dishes: growth meals
 	                                                                       (× mealMult traits); 0 if none needed
+	  Monsters:RegisterMealModifier(key, fn(player, id) -> number)       -- 3.13 Spa: × growth meals from
+	                                                                       feeding and AddMeals (1 = none)
 	  Monsters:AddVisibleTrait(player, id) -> traitId?                  -- Rebirth's 3rd trait slot
 	  Monsters:SetAccessory(player, id, slot, accessoryId?) -> previous? -- Accessories (1.5)
 	MonsterRemoved's detail carries the removed record's `acc` (it is stripped from the record)
@@ -100,6 +102,7 @@ local capacityProviders = {}
 local appearanceDecorators = {} -- [key] = fn(player, record, appearance)
 local moodFloorProviders = {}
 local moodDecayModifiers = {} -- [key] = fn(player, m) -> 0..1
+local mealModifiers = {} -- [key] = fn(player, id) -> multiplier (3.13 Spa warm soak)
 local growing = {} -- [player] = { [id] = true }
 
 local DEFAULT_CAPACITY = 60
@@ -175,6 +178,24 @@ local function decayShield(player, m): number
 		end
 	end
 	return math.clamp(best, 0, 1)
+end
+
+function Monsters:RegisterMealModifier(key: string, fn)
+	mealModifiers[key] = fn
+end
+
+-- The product of every meal modifier for this monster (exactly 1 when none applies).
+local function mealBoost(player, id: string): number
+	local mult = 1
+	for key, fn in mealModifiers do
+		local ok, value = pcall(fn, player, id)
+		if ok and type(value) == "number" and value == value and value > 0 then
+			mult *= value
+		elseif not ok then
+			warn(string.format("[Monsters] meal modifier '%s' failed: %s", key, tostring(value)))
+		end
+	end
+	return mult
 end
 
 function Monsters:RegisterCapacityProvider(fn)
@@ -416,7 +437,7 @@ function Monsters:AddMeals(player, id: string, flavor: string, meals: number): n
 	if not m or not needed or Formulas.MealsEaten(m) >= needed then
 		return 0
 	end
-	local added = meals * Config.Traits.Product(Formulas.ActiveTraits(m), "mealMult")
+	local added = meals * Config.Traits.Product(Formulas.ActiveTraits(m), "mealMult") * mealBoost(player, id)
 	m.meals = m.meals or {}
 	m.meals[flavor] = (m.meals[flavor] or 0) + added
 	Monsters:Changed(player, id, { "meals" })
@@ -504,6 +525,7 @@ function Monsters.Init(context)
 	table.clear(capacityProviders)
 	table.clear(moodFloorProviders)
 	table.clear(moodDecayModifiers)
+	table.clear(mealModifiers)
 	table.clear(growing)
 	Config = ctx.Config
 	Currency = ctx:GetSystem("Currency")
@@ -537,12 +559,12 @@ function Monsters.Init(context)
 		local needed = Formulas.MealsNeeded(m.stage)
 		if needed then
 			-- Never charge for meals beyond what growth needs (they would be wasted).
-			local mealMult = Config.Traits.Product(Formulas.ActiveTraits(m), "mealMult")
+			local mealMult = Config.Traits.Product(Formulas.ActiveTraits(m), "mealMult") * mealBoost(player, payload.id)
 			local remaining = math.max(0, needed - Formulas.MealsEaten(m))
 			amount = math.clamp(amount, 1, math.max(1, math.ceil(remaining / mealMult)))
 		end
 		Currency:Charge(player, { ["food." .. payload.flavor] = amount }, "feed")
-		local mealMult = Config.Traits.Product(Formulas.ActiveTraits(m), "mealMult")
+		local mealMult = Config.Traits.Product(Formulas.ActiveTraits(m), "mealMult") * mealBoost(player, payload.id)
 		if needed then
 			m.meals = m.meals or {}
 			m.meals[payload.flavor] = (m.meals[payload.flavor] or 0) + amount * mealMult

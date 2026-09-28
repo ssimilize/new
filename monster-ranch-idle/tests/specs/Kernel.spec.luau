@@ -103,5 +103,23 @@ return function(t)
 			k:Start()
 			expect(k:SystemState("Rogue")).toBe("failed")
 		end)
+
+		it("never replicates a section's Private keys, even when the whole section is dirtied", function()
+			-- DigSite.Start calls ctx:Dirty(player) with no key: the patch is the whole section. It
+			-- carried the private layout secret to the client until 3.13 (the Observatory too).
+			local Config = t.Shared("Config")
+			local h = TestKernel.new({ systems = { "Currency", "Progression", "Rewards", "DigSite" } })
+			local p = h:Join()
+			local P = h:System("Progression")
+			while P:GetLevel(p) < Config.Unlocks.Features.dig_site do
+				P:AddXP(p, Config.Unlocks.XPToNext(P:GetLevel(p)) - h:Section(p, "Progression").xp, "test")
+			end
+			h:Call(p, "DigSite.Start", {})
+			h:Advance(1)
+			expect(h:Section(p, "DigSite").secret ~= 0).toBe(true)
+			local seen = h:Client(p).profile.DigSite
+			expect(seen.open ~= false).toBe(true) -- the whole-section patch did arrive
+			expect(seen.secret).toBeNil()
+		end)
 	end)
 end

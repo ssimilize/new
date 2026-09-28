@@ -124,6 +124,13 @@ Unlocks.Features = {
 	exhibits = 18,
 	observatory = 19,
 	trial_tower = 26,
+	-- 3.13 · Wild things: Stray Monsters (Config/Strays), the Bug Catching Meadow (Config/Bugs),
+	-- Treasure Maps (Config/TreasureMaps) and the Hot Springs & Spa (Config/Spa)
+	strays = 10,
+	bug_meadow = 17,
+	treasure_maps = 23,
+	spa = 29,
+	spa_pool_3 = 45,
 }
 
 -- Player-facing names for the level-up popup.
@@ -198,6 +205,11 @@ Unlocks.Names = {
 	exhibits = "Museum Exhibits",
 	observatory = "Observatory",
 	trial_tower = "Trial Tower",
+	strays = "Stray Monsters",
+	bug_meadow = "Bug Catching Meadow",
+	treasure_maps = "Treasure Maps",
+	spa = "Hot Springs", -- no "&": the "{1} & {2}" template would split "Unlocked: …" at it
+	spa_pool_3 = "Spa pool 3",
 }
 
 -- Unlock keys reached exactly at `level` (for the level-up popup).

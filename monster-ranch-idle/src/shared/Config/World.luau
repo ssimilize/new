@@ -259,5 +259,9 @@ table.insert(World.Scenery.keepOut, World.MerchantCaravan)
 World.CuratorWing = { center = { 200, -214 }, size = { 40, 64 } }
 table.insert(World.CodexGrounds, World.CuratorWing)
 table.insert(World.Scenery.keepOut, World.CuratorWing)
+-- 3.13: the Bug Catching Meadow (client-built, Config/Bugs, Controllers/BugMeadow), a wildflower
+-- meadow west of the Market Square. Everything it builds stays inside `radius`; scenery keeps off it.
+World.BugMeadow = { center = { -120, 44 }, radius = 22 }
+table.insert(World.Scenery.keepOut, World.BugMeadow)
 
 return World

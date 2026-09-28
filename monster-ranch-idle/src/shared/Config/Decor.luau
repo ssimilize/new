@@ -386,6 +386,11 @@ add("autumn_leaves", "Leaf Pile", "fun", "haystack", { 3, 3 }, { coins = 20000 }
 add("autumn_maple", "Maple Tree", "plant", "tree", { 5, 5 }, { gems = 120 }, "#E8702A", "#6B4424", { season = "autumn" })
 add("winter_snowman", "Snow Buddy", "statue", "snowman", { 3, 3 }, { coins = 20000 }, "#FFFFFF", "#E5484D", { season = "winter" })
 add("winter_fir", "Frosted Fir", "plant", "pine", { 4, 4 }, { gems = 120 }, "#E8F6FF", "#6B4424", { season = "winter" })
+-- Update 3.13 · Treasure Maps: never sold, a chance in a map's chest (Config.TreasureMaps.Decor).
+local TREASURE = { reward = "treasure" }
+add("pirate_chest", "Pirate Chest", "fun", "pirate_chest", { 3, 2 }, nil, "#7A4A24", "#F4C43A", TREASURE)
+add("old_anchor", "Old Anchor", "statue", "old_anchor", { 2, 2 }, nil, "#5E6470", "#A0703D", TREASURE)
+add("treasure_globe", "Explorer's Globe", "statue", "treasure_globe", { 2, 2 }, nil, "#4FB6F2", "#A0703D", TREASURE)
 
 for _, d in Decor.List do
 	d.mesh = d.mesh or ""
@@ -420,6 +425,7 @@ Decor.Layout = {
 		{ 62, -47, 12, 7 }, -- 3.11: the Dig Site's sand pit and tool rack (Config.World.DigSite)
 		{ -50, -47, 8, 7 }, -- 3.12: the Observatory (Config.World.Observatory)
 		{ -8, -47, 12, 6 }, -- 3.12: the Apiary's three beehive stands (Config.Apiary.World)
+		{ -66, 23, 7, 8 }, -- 3.13: the Hot Springs deck, pools and roof (Config.Spa.World)
 	},
 	-- Legacy pen slots (pen-local fractions of the half extents) the migration puts old decor on.
 	legacySpots = { { -0.62, -0.55 }, { 0.62, -0.55 }, { 0, -0.62 } },

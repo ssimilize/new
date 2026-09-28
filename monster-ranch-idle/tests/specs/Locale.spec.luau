@@ -198,6 +198,18 @@ return function(t)
 			end
 		end)
 
+		it("translate every rarity name as the chips show it, upper-cased (3.13)", function()
+			-- Widgets upper-cases rarity names on chips; only "UNCOMMON" had an entry, so a Common stray
+			-- or bug on screen showed "COMMON" in English (CI's grouped client run).
+			for _, lang in LANGS do
+				for _, r in Config.Rarities.List do
+					local shown = string.upper(r.name)
+					local _, missing = Locale.Explain(lang, shown)
+					expect(#missing).toBe(0)
+				end
+			end
+		end)
+
 		it("never translate language names or monster names", function()
 			local kept = Harvest.keptNames(Config)
 			for _, language in Locale.Languages do
