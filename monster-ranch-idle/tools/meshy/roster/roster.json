@@ -270,7 +270,8 @@
       "id": "mossbun",
       "order": 7,
       "pools": [
-        "common"
+        "common",
+        "amber"
       ],
       "weight": 4.1
     },
@@ -299,7 +300,8 @@
       "id": "petalpaw",
       "order": 8,
       "pools": [
-        "common"
+        "common",
+        "amber"
       ],
       "weight": 2.9
     },
@@ -328,7 +330,8 @@
       "id": "acornling",
       "order": 9,
       "pools": [
-        "common"
+        "common",
+        "amber"
       ],
       "weight": 9
     },
@@ -458,7 +461,8 @@
       "id": "pebblet",
       "order": 13,
       "pools": [
-        "common"
+        "common",
+        "amber"
       ],
       "weight": 12
     },
@@ -487,7 +491,8 @@
       "id": "rumblet",
       "order": 14,
       "pools": [
-        "common"
+        "common",
+        "amber"
       ],
       "weight": 4.8
     },
@@ -516,7 +521,8 @@
       "id": "crystomp",
       "order": 15,
       "pools": [
-        "common"
+        "common",
+        "amber"
       ],
       "weight": 14
     },
@@ -552,7 +558,8 @@
       "id": "hushling",
       "order": 16,
       "pools": [
-        "common"
+        "common",
+        "amber"
       ],
       "weight": 1.1
     },
@@ -581,7 +588,8 @@
       "id": "wisplet",
       "order": 17,
       "pools": [
-        "common"
+        "common",
+        "amber"
       ],
       "weight": 0.5
     },
@@ -610,7 +618,8 @@
       "id": "gloomcap",
       "order": 18,
       "pools": [
-        "common"
+        "common",
+        "amber"
       ],
       "weight": 3
     },
@@ -2745,6 +2754,287 @@
         "pearl"
       ],
       "weight": 2.8
+    },
+    {
+      "added": "4.0",
+      "archetype": "fox",
+      "elements": [
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "finnip",
+          "name": "Finnip",
+          "stage": 1
+        },
+        {
+          "id": "ripplefin",
+          "name": "Ripplefin",
+          "stage": 2
+        },
+        {
+          "diet": "sour",
+          "id": "reefrunner",
+          "name": "Reefrunner",
+          "stage": 3
+        },
+        {
+          "diet": "sweet",
+          "id": "deepcurrent",
+          "name": "Deepcurrent",
+          "stage": 3
+        }
+      ],
+      "id": "finnip",
+      "order": 88,
+      "pools": [
+        "reef"
+      ],
+      "weight": 4.2
+    },
+    {
+      "added": "4.0",
+      "archetype": "moth",
+      "elements": [
+        "tide",
+        "light"
+      ],
+      "forms": [
+        {
+          "id": "glowray",
+          "name": "Glowray",
+          "stage": 1
+        },
+        {
+          "id": "lumimanta",
+          "name": "Lumimanta",
+          "stage": 2
+        },
+        {
+          "id": "auroramanta",
+          "name": "Aurora Manta",
+          "stage": 3
+        }
+      ],
+      "id": "glowray",
+      "order": 89,
+      "pools": [
+        "reef"
+      ],
+      "weight": 7.5
+    },
+    {
+      "added": "4.0",
+      "archetype": "golem",
+      "elements": [
+        "tide",
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "shellkin",
+          "name": "Shellkin",
+          "stage": 1
+        },
+        {
+          "id": "reefback",
+          "name": "Reefback",
+          "stage": 2
+        },
+        {
+          "id": "atolltitan",
+          "name": "Atoll Titan",
+          "stage": 3
+        }
+      ],
+      "id": "shellkin",
+      "order": 90,
+      "pools": [
+        "reef"
+      ],
+      "weight": 22
+    },
+    {
+      "added": "4.1",
+      "archetype": "bug",
+      "elements": [
+        "spark"
+      ],
+      "forms": [
+        {
+          "id": "cogling",
+          "name": "Cogling",
+          "stage": 1
+        },
+        {
+          "id": "gearwing",
+          "name": "Gearwing",
+          "stage": 2
+        },
+        {
+          "id": "dynamowasp",
+          "name": "Dynamowasp",
+          "stage": 3
+        }
+      ],
+      "id": "cogling",
+      "order": 91,
+      "pools": [
+        "clockwork"
+      ],
+      "weight": 1.6
+    },
+    {
+      "added": "4.1",
+      "archetype": "golem",
+      "elements": [
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "gritcog",
+          "name": "Gritcog",
+          "stage": 1
+        },
+        {
+          "id": "flywheel",
+          "name": "Flywheel",
+          "stage": 2
+        },
+        {
+          "id": "geartitan",
+          "name": "Geartitan",
+          "stage": 3
+        }
+      ],
+      "id": "gritcog",
+      "order": 92,
+      "pools": [
+        "clockwork"
+      ],
+      "weight": 340
+    },
+    {
+      "added": "4.1",
+      "archetype": "fox",
+      "elements": [
+        "spark",
+        "stone"
+      ],
+      "forms": [
+        {
+          "id": "brassling",
+          "name": "Brassling",
+          "stage": 1
+        },
+        {
+          "id": "clockfox",
+          "name": "Clockfox",
+          "stage": 2
+        },
+        {
+          "id": "brassrunner",
+          "name": "Brassrunner",
+          "stage": 3
+        }
+      ],
+      "id": "brassling",
+      "order": 93,
+      "pools": [
+        "clockwork"
+      ],
+      "weight": 26
+    },
+    {
+      "added": "4.2",
+      "archetype": "slug",
+      "elements": [
+        "tide"
+      ],
+      "forms": [
+        {
+          "id": "gulperling",
+          "name": "Gulperling",
+          "stage": 1
+        },
+        {
+          "id": "lurefang",
+          "name": "Lurefang",
+          "stage": 2
+        },
+        {
+          "id": "trenchmaw",
+          "name": "Trenchmaw",
+          "stage": 3
+        }
+      ],
+      "id": "gulperling",
+      "order": 94,
+      "pools": [
+        "abyss"
+      ],
+      "weight": 6.5
+    },
+    {
+      "added": "4.2",
+      "archetype": "sprite",
+      "elements": [
+        "void"
+      ],
+      "forms": [
+        {
+          "id": "wisplure",
+          "name": "Wisplure",
+          "stage": 1
+        },
+        {
+          "id": "gloomlure",
+          "name": "Gloomlure",
+          "stage": 2
+        },
+        {
+          "id": "voidlantern",
+          "name": "Voidlantern",
+          "stage": 3
+        }
+      ],
+      "id": "wisplure",
+      "order": 95,
+      "pools": [
+        "abyss"
+      ],
+      "weight": 0.6
+    },
+    {
+      "added": "4.2",
+      "archetype": "golem",
+      "elements": [
+        "tide",
+        "void"
+      ],
+      "forms": [
+        {
+          "id": "pressurefin",
+          "name": "Pressurefin",
+          "stage": 1
+        },
+        {
+          "id": "carapacefin",
+          "name": "Carapacefin",
+          "stage": 2
+        },
+        {
+          "id": "trenchcrown",
+          "name": "Trenchcrown",
+          "stage": 3
+        }
+      ],
+      "id": "pressurefin",
+      "order": 96,
+      "pools": [
+        "abyss"
+      ],
+      "weight": 32
     }
   ]
 }
