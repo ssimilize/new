@@ -110,6 +110,34 @@ return function(t)
 			expectClean(c)
 		end)
 
+		it("keeps one stray when rebuilds overlap while the model builds (Studio showed three)", function()
+			local h, p, c = boot()
+			expect(strayModel(c) ~= nil).toBe(true)
+			local MonsterModel = c:require(c.clientFolder.Visuals.MonsterModel)
+			local Anim = c:require(c.clientFolder.UI.Anim)
+			local original, wasEnabled = MonsterModel.Build, Anim.enabled
+			MonsterModel.Build = function(...)
+				c.world.task.wait(0.3) -- mesh loading yields in a real client
+				return original(...)
+			end
+			-- Two rebuilds in a row (the key includes Reduced motion), each started before the other ends.
+			Anim.enabled = false
+			h.kernel.State:Dirty(p, { "session", "Strays" })
+			c:Advance(0.1)
+			Anim.enabled = true
+			h.kernel.State:Dirty(p, { "session", "Strays" })
+			c:Advance(1.5)
+			MonsterModel.Build, Anim.enabled = original, wasEnabled
+			local strays = 0
+			for _, child in c.world.workspace:FindFirstChild("Strays"):GetChildren() do
+				if child.Name == "Stray" then
+					strays += 1
+				end
+			end
+			expect(strays).toBe(1)
+			expectClean(c)
+		end)
+
 		it("has no stray and shows the screen locked before Level 10", function()
 			local _, _, c = boot(9)
 			expect(strayModel(c)).toBeNil()

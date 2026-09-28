@@ -41,6 +41,8 @@ local model: Model? = nil
 local prompt: ProximityPrompt? = nil
 local connections = {}
 local builtKey = ""
+local buildSeq = 0 -- the newest build; MonsterModel.Build can yield, and an older build that
+-- finishes after a newer one started throws its model away (Studio showed three strays)
 local walk = nil -- { a: CFrame, b: CFrame, t, dir, pause, length, lift } while wandering
 
 local function ownPlot(): number?
@@ -85,6 +87,9 @@ local function clear()
 		model:Destroy()
 	end
 	model, prompt, walk = nil, nil, nil
+	if root then
+		root:ClearAllChildren()
+	end
 end
 
 local function bubble(m: Model)
@@ -113,6 +118,8 @@ local function bubble(m: Model)
 end
 
 local function build(index: number, s)
+	buildSeq += 1
+	local mine = buildSeq
 	clear()
 	local plotCf = plotFrame(index)
 	if not plotCf or not root then
@@ -120,6 +127,12 @@ local function build(index: number, s)
 	end
 	local look = Appearance.Preview(s.line, 3, nil, tonumber(s.rarity) or 1, 0)
 	local ok, m = pcall(MonsterModel.Build, look, { anchored = true })
+	if mine ~= buildSeq then
+		if ok and m then
+			m:Destroy()
+		end
+		return
+	end
 	if not ok or not m then
 		return
 	end
