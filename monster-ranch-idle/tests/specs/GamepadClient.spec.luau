@@ -284,6 +284,30 @@ return function(t)
 			expectClean(c)
 		end)
 
+		it("forgets a Tabs row once its root is destroyed", function()
+			local _, _, c = boot()
+			local Widgets = c:require(c.clientFolder.UI.Components.Widgets)
+			local holder = c:require(c.clientFolder.UI.Create).New("Frame", {})
+			local row = Widgets.Tabs({ Parent = holder, Tabs = { { id = "a", text = "A" }, { id = "b", text = "B" } } })
+			expect(Widgets.FindTabs(holder)).toBe(row)
+			row:Step(1)
+			expect(row.Selected).toBe("b")
+			row:Step(1)
+			expect(row.Selected).toBe("a")
+			local probe = setmetatable({ row = row }, { __mode = "v" })
+			row.Root:Destroy()
+			row = nil
+			-- Lune can't force a collection, so churn garbage until the GC sweeps the weak probe.
+			local churn = 0
+			while probe.row ~= nil and churn < 200 do
+				for _ = 1, 10000 do
+					local _ = { churn }
+				end
+				churn += 1
+			end
+			expect(probe.row).toBe(nil)
+		end)
+
 		it("scopes a dialog over a screen and hands the selection back when it closes", function()
 			local h, p, c = boot()
 			veteran(h, p)

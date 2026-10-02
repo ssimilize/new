@@ -295,6 +295,10 @@ function Widgets.Tabs(props)
 	end
 	refresh()
 	tabsByRoot[root] = api
+	-- api holds root, and Luau has no ephemerons, so the weak key alone never frees the entry.
+	root.Destroying:Connect(function()
+		tabsByRoot[root] = nil
+	end)
 	return api
 end
 
