@@ -61,6 +61,8 @@ lune run tests
 
 ## Where things stand
 
-- Merged on `main`: launch through 3.0 (Year Two), 3.0.1 (go-live, Frostfall returns), 3.1 (Club Wars + Lunar Lanterns) and 3.2 (Frostbite Glacier + Level 70: Ranch Level 70, raid 3, controller support, Spanish and Portuguese), with the 3D monsters, buildings, scenery and particle effects built alongside it (pull request #14). 3.2 must be published before Season 8 starts (Sat 4 Mar 2028).
-- Next on the roadmap: **3.3 · Spring Bloom + Design Weeks** (Sat 1 Apr 2028): themed Workshop weeks with community votes, player-designed pen themes, and Spring Bloom's return with a new egg-hunt layout.
+- Merged on `main`: launch through 3.0 (Year Two), 3.0.1 (go-live, Frostfall returns), 3.1 (Club Wars + Lunar Lanterns), 3.2 (Frostbite Glacier + Level 70), 3.3–3.5 (sixteen new monster lines, Light & Void hybrids and a fourth Pearl Egg line, 3D from the start), 3.6 (Genetics), 3.7 (Ranch Jobs + Luck), 3.8 (Reasons to come back), 3.9 (Family and fortune), 3.10 (Ranch life), 3.11 (Seasons & secrets), 3.12 (Honey & stars) and 3.13 (Wild things, pull request #38). Also merged: the Glow-up premium pass, low-poly meshes for all 271 monster forms (pull requests #33, #35, #37), and Foundry adoption waves 0–1 (pull request #39, vendored packages behind `ctx`, no visible change). `docs/UPDATES.md` has the per-update detail.
+- Not merged yet: `foundry-lore` (opt-in Foundry lore check with a tracked baseline of 70, plus a `Widgets.Tabs` weak-key leak fix) and `r2/reef-art` (Deep Reef babies Finnip, Glowray and Shellkin; their textures are blocked because burner uploads return 403).
+- Publish deadline from `GO_LIVE.md`: the places must be published before Ranch Pass Season 8 starts (Sat 4 Mar 2028, 15:00 UTC).
+- No next update is written down yet. Design Weeks, the old "next" item, shipped in the Workshop back in 3.0.
 - Manual go-live steps (publishing both places, live checks, moderators): `monster-ranch-idle/docs/GO_LIVE.md`.
