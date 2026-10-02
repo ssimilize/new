@@ -1,0 +1,433 @@
+{
+  "kind": "foundry-lore-baseline",
+  "version": 1,
+  "game": "monster-ranch",
+  "createdAt": "2026-10-02T03:35:21Z",
+  "counts": {
+    "accepted": 70,
+    "errors": 1,
+    "warnings": 69
+  },
+  "fingerprints": {
+    "billboard-zindex-global|src/client/Controllers/Care.luau|419eef26f953|0": {
+      "path": "src/client/Controllers/Care.luau",
+      "line": 73,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/Care.luau|419eef26f953|1": {
+      "path": "src/client/Controllers/Care.luau",
+      "line": 119,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/Cinematics.luau|419eef26f953|0": {
+      "path": "src/client/Controllers/Cinematics.luau",
+      "line": 189,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/CodexMuseum.luau|419eef26f953|0": {
+      "path": "src/client/Controllers/CodexMuseum.luau",
+      "line": 201,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/EditionPlates.luau|419eef26f953|0": {
+      "path": "src/client/Controllers/EditionPlates.luau",
+      "line": 43,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/FamePlaza.luau|b125187d2e1b|0": {
+      "path": "src/client/Controllers/FamePlaza.luau",
+      "line": 77,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/Nameplates.luau|6f56cdea1b53|0": {
+      "path": "src/client/Controllers/Nameplates.luau",
+      "line": 96,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/StampedeArena.luau|419eef26f953|0": {
+      "path": "src/client/Controllers/StampedeArena.luau",
+      "line": 331,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/TitanInvasion.luau|419eef26f953|0": {
+      "path": "src/client/Controllers/TitanInvasion.luau",
+      "line": 526,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/Tourists.luau|60401b28eb32|0": {
+      "path": "src/client/Controllers/Tourists.luau",
+      "line": 169,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/World.luau|419eef26f953|0": {
+      "path": "src/client/Controllers/World.luau",
+      "line": 252,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/World.luau|419eef26f953|1": {
+      "path": "src/client/Controllers/World.luau",
+      "line": 794,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/World.luau|419eef26f953|2": {
+      "path": "src/client/Controllers/World.luau",
+      "line": 947,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Controllers/World.luau|419eef26f953|3": {
+      "path": "src/client/Controllers/World.luau",
+      "line": 1077,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "cond-and-nil-or|src/client/UI/Components/Widgets.luau|0c256b302fd9|0": {
+      "path": "src/client/UI/Components/Widgets.luau",
+      "line": 379,
+      "rule": "cond-and-nil-or",
+      "severity": "error"
+    },
+    "billboard-zindex-global|src/client/Visuals/BattleArena.luau|c2d42e956f37|0": {
+      "path": "src/client/Visuals/BattleArena.luau",
+      "line": 530,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Visuals/BattleArena.luau|c2d42e956f37|1": {
+      "path": "src/client/Visuals/BattleArena.luau",
+      "line": 693,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Visuals/FightBolts.luau|419eef26f953|0": {
+      "path": "src/client/Visuals/FightBolts.luau",
+      "line": 99,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "aju-joint-prop-write|src/client/Visuals/MeshMonster.luau|08ad827a511b|0": {
+      "path": "src/client/Visuals/MeshMonster.luau",
+      "line": 586,
+      "rule": "aju-joint-prop-write",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Visuals/MoodBubbles.luau|419eef26f953|0": {
+      "path": "src/client/Visuals/MoodBubbles.luau",
+      "line": 42,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/client/Visuals/RanchShowcase.luau|419eef26f953|0": {
+      "path": "src/client/Visuals/RanchShowcase.luau",
+      "line": 61,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/server/Systems/World/Balcony.luau|c2d42e956f37|0": {
+      "path": "src/server/Systems/World/Balcony.luau",
+      "line": 42,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "billboard-zindex-global|src/server/Systems/World/Build.luau|c2d42e956f37|0": {
+      "path": "src/server/Systems/World/Build.luau",
+      "line": 217,
+      "rule": "billboard-zindex-global",
+      "severity": "warn"
+    },
+    "particle-daytime-lightemission|src/shared/Config/Vfx.luau|fb4fe3a61f9e|0": {
+      "path": "src/shared/Config/Vfx.luau",
+      "line": 922,
+      "rule": "particle-daytime-lightemission",
+      "severity": "warn"
+    },
+    "particle-daytime-lightemission|src/shared/Config/Vfx.luau|407c12b30864|0": {
+      "path": "src/shared/Config/Vfx.luau",
+      "line": 1078,
+      "rule": "particle-daytime-lightemission",
+      "severity": "warn"
+    },
+    "source-near-cap|src/shared/Locale/es.luau|da39a3ee5e6b|0": {
+      "path": "src/shared/Locale/es.luau",
+      "line": 2553,
+      "rule": "source-near-cap",
+      "severity": "warn"
+    },
+    "source-near-cap|src/shared/Locale/pt.luau|da39a3ee5e6b|0": {
+      "path": "src/shared/Locale/pt.luau",
+      "line": 2569,
+      "rule": "source-near-cap",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/asset_ids.py|e73548752174|0": {
+      "path": "tools/blender/asset_ids.py",
+      "line": 62,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/eggs.py|67563bc7e71e|0": {
+      "path": "tools/blender/eggs.py",
+      "line": 235,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/eggs.py|a298b41a392b|0": {
+      "path": "tools/blender/eggs.py",
+      "line": 1275,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/eggs_blender.py|0b5253748a75|0": {
+      "path": "tools/blender/eggs_blender.py",
+      "line": 345,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/export_roblox.py|239633b3545d|0": {
+      "path": "tools/blender/export_roblox.py",
+      "line": 140,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/export_static.py|31c5a5e6efba|0": {
+      "path": "tools/blender/export_static.py",
+      "line": 74,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/export_static.py|a8a86aa59a59|0": {
+      "path": "tools/blender/export_static.py",
+      "line": 184,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/export_static.py|d526e79d73e9|0": {
+      "path": "tools/blender/export_static.py",
+      "line": 248,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/export_static.py|a9e96fb64c19|0": {
+      "path": "tools/blender/export_static.py",
+      "line": 250,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/lowpoly_export.py|1d48dada2b3e|0": {
+      "path": "tools/blender/lowpoly_export.py",
+      "line": 127,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/riglib.py|4213f6603da3|0": {
+      "path": "tools/blender/riglib.py",
+      "line": 662,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/blender/riglib.py|bc664c3a18c6|0": {
+      "path": "tools/blender/riglib.py",
+      "line": 685,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/meshy/abtest/make_settings.py|0bba2b598f09|0": {
+      "path": "tools/meshy/abtest/make_settings.py",
+      "line": 29,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/meshy/abtest/make_settings.py|fa910d1b4d16|0": {
+      "path": "tools/meshy/abtest/make_settings.py",
+      "line": 44,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/meshy/meshy.py|731a74f8cd98|0": {
+      "path": "tools/meshy/meshy.py",
+      "line": 107,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/meshy/pilot/blazefang-concept.json|50801fbf54ad|0": {
+      "path": "tools/meshy/pilot/blazefang-concept.json",
+      "line": 3,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/meshy/pilot/blazefang-concept.json|50801fbf54ad|1": {
+      "path": "tools/meshy/pilot/blazefang-concept.json",
+      "line": 3,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/meshy/pilot/blazefang-concept.json|50801fbf54ad|2": {
+      "path": "tools/meshy/pilot/blazefang-concept.json",
+      "line": 3,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/meshy/pilot/cindlet-concept.json|bf0f89e3eeb0|0": {
+      "path": "tools/meshy/pilot/cindlet-concept.json",
+      "line": 3,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/meshy/pilot/cindlet-concept.json|bf0f89e3eeb0|1": {
+      "path": "tools/meshy/pilot/cindlet-concept.json",
+      "line": 3,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/meshy/pilot/kindlefox-concept.json|056421d14c1e|0": {
+      "path": "tools/meshy/pilot/kindlefox-concept.json",
+      "line": 3,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/meshy/pilot/kindlefox-concept.json|056421d14c1e|1": {
+      "path": "tools/meshy/pilot/kindlefox-concept.json",
+      "line": 3,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/meshy/pilot/kindlefox-concept.json|056421d14c1e|2": {
+      "path": "tools/meshy/pilot/kindlefox-concept.json",
+      "line": 3,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/meshy/pilot/make_concepts.py|fdaee19185ba|0": {
+      "path": "tools/meshy/pilot/make_concepts.py",
+      "line": 45,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/meshy/roster/batch.py|d3152d22ae2c|0": {
+      "path": "tools/meshy/roster/batch.py",
+      "line": 305,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/meshy/roster/batch.py|7b3099d9fd83|0": {
+      "path": "tools/meshy/roster/batch.py",
+      "line": 489,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/rbxgen/assemble.py|0715f60beb1e|0": {
+      "path": "tools/rbxgen/assemble.py",
+      "line": 171,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/rbxgen/batches/props_battle.json|55151b83412c|0": {
+      "path": "tools/rbxgen/batches/props_battle.json",
+      "line": 86,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/rbxgen/batches/proto_monsters_local.json|d15bf9d6fccd|0": {
+      "path": "tools/rbxgen/batches/proto_monsters_local.json",
+      "line": 145,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/rbxgen/batches/proto_monsters_local.json|6ce7bb449f0b|0": {
+      "path": "tools/rbxgen/batches/proto_monsters_local.json",
+      "line": 317,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/rbxgen/batches/proto_monsters_local.json|5ce35775e059|0": {
+      "path": "tools/rbxgen/batches/proto_monsters_local.json",
+      "line": 359,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/rbxgen/batches/scenery1.json|61762a6fb7e8|0": {
+      "path": "tools/rbxgen/batches/scenery1.json",
+      "line": 56,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "prompt-risky-words|tools/rbxgen/batches/trial.json|6b2405b3cc02|0": {
+      "path": "tools/rbxgen/batches/trial.json",
+      "line": 5,
+      "rule": "prompt-risky-words",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/rbxgen/make.py|1d6e64f7ac2e|0": {
+      "path": "tools/rbxgen/make.py",
+      "line": 78,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/vfx/codex_sprites.py|35ae9d8271ac|0": {
+      "path": "tools/vfx/codex_sprites.py",
+      "line": 175,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/vfx/codex_sprites.py|c29f435ef03c|0": {
+      "path": "tools/vfx/codex_sprites.py",
+      "line": 278,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/vfx/codex_sprites.py|9fa67c4ac723|0": {
+      "path": "tools/vfx/codex_sprites.py",
+      "line": 313,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/vfx/codex_sprites.py|c229bb573d3f|0": {
+      "path": "tools/vfx/codex_sprites.py",
+      "line": 314,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/vfx/gpt_cartoon.py|d2e390a1405c|0": {
+      "path": "tools/vfx/gpt_cartoon.py",
+      "line": 151,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/vfx/gpt_cartoon.py|3cdbee26759d|0": {
+      "path": "tools/vfx/gpt_cartoon.py",
+      "line": 190,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/vfx/gpt_sprites.py|2c04477486f4|0": {
+      "path": "tools/vfx/gpt_sprites.py",
+      "line": 353,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/vfx/gpt_sprites.py|3cdbee26759d|0": {
+      "path": "tools/vfx/gpt_sprites.py",
+      "line": 395,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    },
+    "write-text-without-newline|tools/vfx/studio_patch.py|99afa00b7ec8|0": {
+      "path": "tools/vfx/studio_patch.py",
+      "line": 49,
+      "rule": "write-text-without-newline",
+      "severity": "warn"
+    }
+  }
+}
