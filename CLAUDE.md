@@ -26,6 +26,8 @@ rojo build hub.project.json -o hub.rbxl
 lune run tests
 ```
 
+Opt-in, local only (not in CI): `tools/ci/lore.sh` runs the Foundry's lore lint against the tracked baseline `tools/lore_baseline.json`; it prints SKIPPED without a Foundry and fails on new findings.
+
 ## How the code fits together
 
 - `src/server/Kernel`: lifecycle, saves, validated networking, state replication, bus. Systems touch Roblox only through `ctx.Services` (`Kernel/Adapters.luau`; tests swap in `tests/runtime/MockAdapters.luau`).
