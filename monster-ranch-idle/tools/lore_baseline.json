@@ -2,10 +2,10 @@
   "kind": "foundry-lore-baseline",
   "version": 1,
   "game": "monster-ranch",
-  "createdAt": "2026-10-02T03:28:16Z",
+  "createdAt": "2026-10-02T03:35:21Z",
   "counts": {
-    "accepted": 71,
-    "errors": 2,
+    "accepted": 70,
+    "errors": 1,
     "warnings": 69
   },
   "fingerprints": {
@@ -93,15 +93,9 @@
       "rule": "billboard-zindex-global",
       "severity": "warn"
     },
-    "weak-key-backref|src/client/UI/Components/Widgets.luau|e6e0554a7398|0": {
-      "path": "src/client/UI/Components/Widgets.luau",
-      "line": 297,
-      "rule": "weak-key-backref",
-      "severity": "error"
-    },
     "cond-and-nil-or|src/client/UI/Components/Widgets.luau|0c256b302fd9|0": {
       "path": "src/client/UI/Components/Widgets.luau",
-      "line": 375,
+      "line": 379,
       "rule": "cond-and-nil-or",
       "severity": "error"
     },
