@@ -1,11 +1,13 @@
 """Makes the roster's 3D models with Meshy: concept image -> hole check -> image-to-3d.
 
   python tools/meshy/roster/batch.py plan  FORM[,FORM...]    what would be made, and its cost
-  python tools/meshy/roster/batch.py run   FORM[,FORM...] [--concepts] [--reserve N] [--model t2|71]
+  python tools/meshy/roster/batch.py run   FORM[,FORM...] [--concepts] [--reserve N] [--model t2|71] [--codex]
                                                          make them (waits; safe to re-run; --concepts
                                                          stops before the models; --reserve: credits
                                                          to keep, default 60; --model: Smart Topology
-                                                         (15, default) or meshy-7.1 (30))
+                                                         (15, default) or meshy-7.1 (30); --codex: draw
+                                                         the concepts with Codex (codex_concept.py, no
+                                                         credits) and pay Meshy only for the models)
   python tools/meshy/roster/batch.py reroll FORM [--from LATER]   a new concept for a form that failed;
                                                          --from redraws a baby from its teen's concept
   python tools/meshy/roster/batch.py sheet FORM[,FORM...]    contact sheet of the concepts
@@ -34,6 +36,7 @@ SurfaceAppearance), image_enhancement off (the concept already has the style).
 import json
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -55,6 +58,8 @@ CONCEPT_MODEL = "nano-banana-2"
 MODELS = {"t2": ("model-t2.json", 15), "71": ("model.json", 30)}
 MODEL = "t2"
 COST = {"concept": 6, "model": MODELS[MODEL][1]}
+CONCEPTS = "meshy"  # "codex": run --codex draws concepts with codex_concept.py instead
+CODEX_JOBS = 8
 HOVERING = {"sprite", "moth"}  # body plans drawn in the air, over a shadow of their own (matte)
 # Forms drawn with grey parts in the backdrop's own grey, which matte() cut out (tight_matte instead).
 GREY_PARTS = {"yetikit", "snowbrute", "avalancheyeti"}
@@ -112,6 +117,8 @@ def created(name: str) -> bool:
     if not path.exists():
         return False
     sub = json.loads(path.read_text(encoding="utf-8"))
+    if sub.get("state") == "CODEX":
+        return status(name) != "FAILED"
     code = int((sub.get("response") or {}).get("http_error") or 0)
     return not (sub.get("state") == "ERROR" and 400 <= code < 500)
 
@@ -319,7 +326,7 @@ def plan(forms: list[str]):
             steps.append(("concept", form, concept))
         if not created(f"{form}-model"):
             steps.append(("model", form, f"{form}-model"))
-    cost = sum(COST[kind] for kind, _, _ in steps)
+    cost = sum(COST[kind] for kind, _, _ in steps if not (kind == "concept" and CONCEPTS == "codex"))
     return elements, table, steps, cost
 
 
@@ -343,6 +350,41 @@ def create_concept(form: str, elements, table, name: str, source: str | None = N
     print(f"[concept] {name}: {reply.get('state')}", flush=True)
 
 
+def is_codex(name: str) -> bool:
+    path = ART / name / "submission.json"
+    return path.exists() and json.loads(path.read_text(encoding="utf-8")).get("state") == "CODEX"
+
+
+def style_ref(archetype: str, table) -> Path | None:
+    """A passing Meshy-made baby concept of the same body plan, so Codex concepts render like the rest
+    of the roster; any passing Meshy concept when the body plan has none."""
+    fallback = None
+    for form, entry in table.items():
+        name = concept_name(form)
+        image, check = ART / name / "image_0.png", ART / name / "check.json"
+        if form in PILOT or not image.exists() or not check.exists() or is_codex(name):
+            continue
+        if not json.loads(check.read_text(encoding="utf-8")).get("pass"):
+            continue
+        if entry["form"]["stage"] == 1 and entry["line"]["archetype"] == archetype:
+            return image
+        fallback = fallback or image
+    return fallback
+
+
+def create_concept_codex(form: str, elements, table, name: str) -> None:
+    import codex_concept
+
+    entry = table[form]
+    text = subjects.prompt(entry["form"], entry["line"], elements)
+    if entry["form"]["stage"] == 1:
+        ref, role = style_ref(entry["line"]["archetype"], table), "style"
+    else:
+        ref, role = ART / concept_name(entry["parent"]) / "image_0.png", "parent"
+    error = codex_concept.draw(ART / name, text, ref, role)
+    print(f"[concept] {name}: {'SUCCEEDED (codex)' if error is None else 'FAILED (codex) ' + error}", flush=True)
+
+
 def settle_concept(form: str) -> bool | None:
     """Waits for the form's concept and checks it. True = ready, False = failed, None = not created."""
     name = concept_name(form)
@@ -350,6 +392,9 @@ def settle_concept(form: str) -> bool | None:
         return True
     if not created(name):
         return None
+    if is_codex(name) and status(name) != "SUCCEEDED":
+        print(f"[concept] {name}: {status(name)} (codex)", flush=True)
+        return False
     if status(name) != "SUCCEEDED":
         meshy("poll", name, "--wait")
     if status(name) != "SUCCEEDED":
@@ -366,13 +411,33 @@ def settle_concept(form: str) -> bool | None:
 def run(forms: list[str], concepts_only: bool = False, reserve: int = RESERVE) -> None:
     elements, table, steps, cost = plan(forms)
     if concepts_only:
-        cost = sum(COST[kind] for kind, _, _ in steps if kind == "concept")
+        cost = sum(COST[kind] for kind, _, _ in steps if kind == "concept" and CONCEPTS != "codex")
     balance = meshy("balance")["balance"]
     print(f"[run] {len(steps)} tasks to create, {cost} credits; balance {balance}, reserve {reserve}", flush=True)
     if balance - cost < reserve:
         raise SystemExit("not enough credits: shorten the list")
     by_stage = sorted(forms, key=lambda f: table[f]["form"]["stage"])
     ready = {}
+    if CONCEPTS == "codex":
+        for stage in sorted({table[f]["form"]["stage"] for f in forms}):
+            todo = []
+            for form in (f for f in by_stage if table[f]["form"]["stage"] == stage):
+                parent = table[form]["parent"]
+                if parent and parent not in PILOT:
+                    ok = ready.get(parent)
+                    if ok is None:
+                        ok = ready[parent] = settle_concept(parent)
+                    if not ok:
+                        print(f"[skip] {form}: parent {parent} has no checked concept", flush=True)
+                        ready[form] = False
+                        continue
+                if form not in PILOT and not created(concept_name(form)):
+                    todo.append(form)
+            with ThreadPoolExecutor(CODEX_JOBS) as pool:
+                list(pool.map(lambda f: create_concept_codex(f, elements, table, concept_name(f)), todo))
+            for form in (f for f in by_stage if table[f]["form"]["stage"] == stage):
+                if form not in ready:
+                    ready[form] = settle_concept(form)
     # Concepts stage by stage: a later stage is drawn from its parent's checked concept.
     for form in by_stage:
         parent = table[form]["parent"]
@@ -384,6 +449,8 @@ def run(forms: list[str], concepts_only: bool = False, reserve: int = RESERVE) -
                 print(f"[skip] {form}: parent {parent} has no checked concept", flush=True)
                 ready[form] = False
                 continue
+        if form in ready:
+            continue
         if form not in PILOT and not created(concept_name(form)):
             create_concept(form, elements, table, concept_name(form))
         ready[form] = None
@@ -446,7 +513,9 @@ def main() -> None:
     if len(sys.argv) < 3:
         raise SystemExit(__doc__)
     command, forms = sys.argv[1], [f for f in sys.argv[2].split(",") if f]
-    global MODEL
+    global MODEL, CONCEPTS
+    if "--codex" in sys.argv:
+        CONCEPTS = "codex"
     if "--model" in sys.argv:
         MODEL = sys.argv[sys.argv.index("--model") + 1]
         if MODEL not in MODELS:
