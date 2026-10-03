@@ -777,6 +777,34 @@ SUBJECTS = {
     "larger crushing claws, a brighter line of glowing teal-violet spots.",
     "trenchcrown": "Trenchcrown: a towering deep-trench crab titan in thick black-purple armour plating, "
     "glowing teal-violet cracks of light across every joint and vent, immense crushing claws.",
+    # Deep Reef (glow-up DR, region 8): finnip (fox, tide). The adults branch on diet: sour Reefrunner,
+    # sweet Deepcurrent.
+    "finnip": "Finnip, a baby sea fox: a sleek round body, big fin-shaped ears, a small rounded dorsal fin "
+    "on its back, a wide fish-fin tail with a lighter wavy edge, tiny webbed paws, a few pale bubble-like "
+    "spots on its sides.",
+    "ripplefin": "Ripplefin: longer fin ears with rippled edges, a taller dorsal fin, a bigger flowing "
+    "fish-fin tail, wave-shaped stripes along its back.",
+    "reefrunner": "Reefrunner: a fast, athletic sea fox with swept-back fin ears, sharp ridged fins along "
+    "its spine and legs, a forked racing tail fin, bold zigzag current stripes.",
+    "deepcurrent": "Deepcurrent: a calm, graceful sea fox with long silky fins on its ears, legs and tail "
+    "flowing like ribbons, soft swirling current patterns on its body.",
+    # Deep Reef: glowray (moth, tide + light). A manta ray drawn on the moth body plan: its fins are the
+    # moth's two pairs of wings, so rig_moth.py flaps them.
+    "glowray": "Glowray, a baby glowing manta ray: a small round body, two pairs of wide rounded fin-wings "
+    "spread to the sides like a manta ray's, soft glowing golden spots along the wing edges, two short "
+    "antennae with little glowing bulb tips.",
+    "lumimanta": "Lumimanta: broader, longer fin-wings with rows of glowing golden spots, a faint glowing "
+    "stripe down its back, longer antennae with brighter glowing tips.",
+    "auroramanta": "Aurora Manta: huge sweeping fin-wings with bands of glowing aurora light along their "
+    "edges, a radiant glowing crest on its head, long elegant antennae with bright glowing orbs.",
+    # Deep Reef: shellkin (golem, tide + stone). Keep what grows on the shell low and attached.
+    "shellkin": "Shellkin, a baby shell golem: a chunky round body with a small spiral seashell on its "
+    "back, big stubby arms with a few smooth pebble-like barnacle bumps, a small head with a tiny "
+    "starfish on top.",
+    "reefback": "Reefback: a bigger shell on its back with small coral branches and pebbles growing low on "
+    "it, thicker barnacled arms, a sturdier body.",
+    "atolltitan": "Atoll Titan: a towering island-backed golem, a huge shell on its back carrying a tiny "
+    "coral reef with a small palm tree, massive rock-plated arms, a proud small head with a coral crown.",
 }
 
 
