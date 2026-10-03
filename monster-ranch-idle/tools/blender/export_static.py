@@ -92,7 +92,14 @@ def footprint(building: str) -> tuple[float, float]:
     else:
         found = re.search(r'id = "' + re.escape(building) + r'",[\s\S]*?size = \{ (\d+), \d+, (\d+) \}', text)
     if not found:
-        raise SystemExit(f"{building}: no size in Config/World.luau")
+        # A decor piece (tools/meshy/props): its { w, d } footprint in Config/Decor.luau, either a
+        # LEGACY_ART row or an add(...) call.
+        decor = (ROOT / "src" / "shared" / "Config" / "Decor.luau").read_text(encoding="utf-8")
+        found = re.search(r"^\t" + re.escape(building) + r" = \{ model = \"\w+\", size = \{ (\d+), (\d+) \}", decor, re.M) or re.search(
+            r'^add\("' + re.escape(building) + r'", "[^"]*", "\w+", "\w+", \{ (\d+), (\d+) \}', decor, re.M
+        )
+    if not found:
+        raise SystemExit(f"{building}: no size in Config/World.luau or Config/Decor.luau")
     return float(found.group(1)), float(found.group(2))
 
 

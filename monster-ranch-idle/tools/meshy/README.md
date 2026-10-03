@@ -63,6 +63,22 @@ python tools/meshy/roster/batch.py sheet scorchling,scorchmoth       # art/compa
 python tools/meshy/roster/batch.py run   scorchling,scorchmoth       # the models
 ```
 
+## Decor props
+
+`props/make.py` makes decor pieces the same way, as static models: the concepts are drawn by
+Codex (free, padded to a square so a wide bench keeps its ends), the models by Meshy with
+`props/model.json` (3,000 triangles), then `tools/blender/export_static.py <id> 0` takes each one
+into the game (its footprint comes from `Config/Decor.luau`) and `make.py ids` writes the
+published ids into `Config/PropMeshes.luau`. The plan holds at most 10 pending tasks
+(429 `NoMorePendingTasks`, no charge), so `make.py model` keeps 10 in flight and waits out the rest.
+A task is only visible to the key that made it: finish a batch before the key changes.
+
+```sh
+python tools/meshy/props/make.py concept all      # or a list of Config.Decor ids
+python tools/meshy/props/make.py sheet all        # art/compare/props.png
+python tools/meshy/props/make.py model oak_tree,barrel
+```
+
 ## Which settings, and why (A/B on Petalpaw, 2026-09-25)
 
 Compared on one concept, rendered in Blender and in Studio:
@@ -102,7 +118,7 @@ still takes `model.json` for a form t2 cannot build. What changed from the A/B a
 | text-to-image | 3 (`nano-banana`), 6 (`nano-banana-2`), 9 (`nano-banana-pro`, `gpt-image-2`) |
 | text-to-3d preview (mesh only) | 5 (`meshy-t2`) to 20 (`meshy-7.1`) |
 | text-to-3d refine (texture) | 10 (2K/4K), 15 (8K) |
-| image-to-3d | 5 (mesh only, `meshy-t2`) to 35 (8K textures, `meshy-7.1`) |
+| image-to-3d | 5 (mesh only, `meshy-t2`) to 35 (8K textures, `meshy-7.1`); `roster/model.json` was billed 15 or 30 with the same settings (ledger, Oct 2026): budget 30 |
 | retexture | 10 (2K/4K), 15 (8K) |
 | remesh / rigging | 5 each |
 | animations | 3 per action |

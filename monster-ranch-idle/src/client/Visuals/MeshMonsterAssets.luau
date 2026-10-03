@@ -215,6 +215,7 @@ return {
 	rainpuff = { mesh = "rbxassetid://79237179105854", texture = "rbxassetid://134978710157245", lowMesh = "rbxassetid://111859009306785" },
 	reefback = { mesh = "rbxassetid://137260940139239", texture = "rbxassetid://72644296124668", lowMesh = "rbxassetid://117599431944721" },
 	reefhop = { mesh = "rbxassetid://80214535800573", texture = "rbxassetid://82321298407527", lowMesh = "rbxassetid://77758850777629" },
+	reefrunner = { mesh = "rbxassetid://133013367660203", texture = "rbxassetid://82701698491381", lowMesh = "rbxassetid://135942241179212" },
 	riftrabbit = { mesh = "rbxassetid://71501735596313", texture = "rbxassetid://73592209180225", lowMesh = "rbxassetid://85568868235442" },
 	riftshade = { mesh = "rbxassetid://135118996583538", texture = "rbxassetid://132734315003721", lowMesh = "rbxassetid://82007777688906" },
 	riftshard = { mesh = "rbxassetid://78566807441355", texture = "rbxassetid://108774173712108", lowMesh = "rbxassetid://137287441590016" },
