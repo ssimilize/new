@@ -108,8 +108,10 @@ never prompts, plans or sends anything.
    - expedition: "Your expedition squad is back with loot!"
    - stampede: "A Stampede starts in 5 minutes. Join the herd!"
    - streak: "Your daily streak ends soon. Claim today's reward!"
+   - event: "A big event starts soon. Come back for it!" (sent before a titan invasion, a
+     seasonal event or a region opening)
    Copy each notification's **asset id** into `Config.Reminders.Templates` (`egg`, `expedition`,
-   `stampede`, `streak`). Leave one empty to turn that reminder off.
+   `stampede`, `streak`, `event`). Leave one empty to turn that reminder off.
 3. **Create an Open Cloud API key**: Creator Hub → Open Cloud → API Keys → *Create API key*,
    add the **user-notification** API system with **write** access for this experience (and
    allow the Roblox servers' IPs, e.g. `0.0.0.0/0`, since game servers call it).
@@ -151,7 +153,7 @@ pass, product, badge, reminder kind or the moderator group changes, regenerate i
 | Badges (3) | Codex milestones: 50 forms, 100 forms, Complete | `Config.Codex.BadgeIds.<milestone>` |
 | Group (1) | The game's Roblox group | `Config.Quests.GroupId` |
 | Reminders: secret (1) | Open Cloud API key (`user-notification`, write) stored as an experience secret | `Config.Reminders.SecretName` |
-| Reminders: templates (4) | Notification templates: egg, expedition, stampede, streak (Creator Hub → Engagement → Notifications) | `Config.Reminders.Templates.<kind>` |
+| Reminders: templates (5) | Notification templates: egg, expedition, stampede, streak, event (Creator Hub → Engagement → Notifications) | `Config.Reminders.Templates.<kind>` |
 | Moderation (optional) | A Roblox group for moderators (or list user ids directly in `Config.Workshop.Moderators`) | `Config.Workshop.ModeratorGroup.id` |
 
 Running the release gate: `RELEASE_CHECK=1 lune run tests LaunchCheck` fails the run if the

@@ -89,6 +89,12 @@ return {
 		"CuratorWing",
 		-- 3.12: the beehives on the own plot's north strip and their "Tend" prompt
 		"Apiary",
+		-- 3.13: the stray wandering on the own plot and its "Befriend" prompt
+		"Strays",
+		-- 3.13: the Hot Springs on the own plot's west strip and their "Soak" prompt
+		"Spa",
+		-- 3.13: the Bug Catching Meadow west of the Market Square and its "Catch bugs" signpost
+		"BugMeadow",
 		-- R2-CLOCKWORK: Clockwork Canyon's gear landmark and walk-in area (appended, see RULES)
 		"ClockworkCanyon",
 		-- R2-ABYSS: the Sunken Abyss's descent and walk-in area (appended, see RULES)
@@ -116,8 +122,12 @@ return {
 		"Merchant", -- 3.11 · Travelling Merchant (the caravan's prompt, the Events screen)
 		"Exhibits", -- 3.12 · Museum Exhibits (the Curator desk's prompt, the Codex screen)
 		"Apiary", -- 3.12 · Apiary & Honey (the beehives' "Tend" prompt, the Kitchen header)
+		"Spa", -- 3.13 · Hot Springs & Spa (the pools' "Soak" prompt)
+		"Bugs", -- 3.13 · Bug Catching Meadow (the meadow signpost's prompt)
 		"Dojo", -- 3.11 · Dojo (from Monster Detail)
 		"TrialTower", -- 3.12 · Trial Tower (the tower's prompt, the Expeditions header)
+		"TreasureMaps", -- 3.13 · Treasure Maps (the Expeditions header)
+		"Strays", -- 3.13 · Stray Monsters (the stray's "Befriend" prompt)
 		"Events", -- 3.8 · Events calendar
 		"Trade",
 		"Boss",

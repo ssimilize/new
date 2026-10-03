@@ -3,6 +3,125 @@
 Content and system changes shipped after launch, newest first. Each update lists what
 players get and where it lives in the code.
 
+## 3.13 · Wild things
+
+### Treasure Maps
+
+**For players**
+- From Ranch Level 23 map pieces turn up on adventures: 3% per claimed expedition, 2% per fish
+  caught, 5% per Dig Site find, and one for sure on every Expedition Bounty's first win. The reward
+  card shows the piece.
+- Four pieces join into a Treasure Map by themselves. A map marks an X in one of your open
+  expedition regions (a region with a cleared stage). Hold up to 3 maps; extra pieces wait (up to 12).
+- The "Maps" button in the Expeditions header opens the Treasure Maps screen: four quarter tiles
+  for the next map, then each held map as a parchment card with its region, the X, the guardian's
+  power and the chest's rewards.
+- "Dig" fights the map's guardian (that region's monsters at 1.3x the stage's recommended power,
+  fought as a boss) with your Expeditions squad; Dojo techniques apply. Win and the chest opens:
+  coins, gems, the region's egg and a 25% chance of a map-only decor piece (Pirate Chest, Old
+  Anchor, Explorer's Globe). Lose and the map stays; try again any time for free.
+- New weekly goal: open 2 treasure chests.
+
+**In the code**
+- `Config/TreasureMaps` (drop rates, caps, guardian and chest numbers), `Logic/TreasureMaps` (seeded
+  drops, the X roll, the guardian wave, the chest), `Systems/TreasureMaps` (action
+  `TreasureMaps.Dig`, API `AddPieces` / `Drop` / `Pieces` / `Maps`, publishes `TreasureOpened`),
+  screen `UI/Screens/TreasureMaps` (the Expeditions header's "Maps" button).
+- Drops: Expeditions (claims and the bounty payout), Fishing and DigSite call `TreasureMaps:Drop`
+  (an optional dependency) and grant the piece with their own rewards. Each roll is seeded from
+  ("treasure_drop", userId, source, n), never `ctx.Rng`, so existing seeded outcomes do not move.
+- Rewards kind `map_piece` (label and a drawn parchment icon), decor `pirate_chest`, `old_anchor`,
+  `treasure_globe` (Config/Decor + DecorArt, `reward = "treasure"`), weekly goal `treasure_2`.
+- Tests: `TreasureMaps.spec`, `TreasureMapsClient.spec`.
+
+### Stray Monsters
+
+**For players**
+- From Ranch Level 10, while you play, a stray monster wanders onto your ranch about every 45
+  minutes and paces the middle aisle near your gate for 20 minutes (a toast says "A stray
+  Blazefang is wandering near your gate!"). Only you see your stray. It is always an existing
+  monster of a line your eggs can hatch; at night strays tend to be rarer. Strays missed while
+  you are away are simply gone.
+- Its "Befriend" prompt opens the befriend game: Approach, then three rounds. Each round the
+  stray shows a hint ("It sniffs the air... something spicy?" or "It looks nervous... maybe just
+  wait quietly"); offer a treat of a food flavour you own (1 food each) or wait quietly. Two right
+  answers out of three befriend it; otherwise it runs off. One try per stray.
+- A befriended stray joins your ranch as an Adult of its line and rarity, with one stat gene
+  raised a grade. Up to 3 a day (UTC); not when your barn is full.
+- The Codex has a Stray Log tab: every line you met a stray of, how many you met and befriended.
+- New weekly goal: befriend 3 stray monsters.
+
+**In the code**
+- `Config/Strays` (45 min interval, 20 min stay, 3 rounds / 2 to win, 3 a day, day and night
+  rarity odds, 40% "wait" moods, element -> favourite flavour, hints, the aisle path),
+  `Logic/Strays` (slots with a per-player offset like Tourists, the seeded stray from
+  (userId, slot, private secret), the line pool from buyable unlocked eggs, hints, score, cost,
+  `GeneBonus`), `Systems/Strays` (`Strays.Start { slot }` uses the one attempt and returns the
+  hints; `Strays.Submit { slot, choices }` is one-shot, charges the treats, adopts through
+  `Monsters:Create` source `stray`, publishes `StrayBefriended`), `Controllers/Strays` (the
+  owner-only stray from `Visuals/MonsterModel` with a "?" bubble; standing still on Low
+  graphics or reduced motion), `UI/Screens/Strays`, `UI/Screens/Parts/StrayLog` (Codex tab),
+  weekly goal `strays_3`. Specs: `Strays.spec`, `StraysClient.spec`.
+- The gene bonus: one random stat's pair is raised to the next grade's points (the lower gene
+  first, each capped at 10); an S-grade stat gets +1 on its lower gene when it can.
+
+### Hot Springs & Spa
+
+**For players**
+- From Ranch Level 29 a steaming spa sits on the west strip of every ranch, beside the incubator
+  pad: a wooden deck with three round pools and a small roof. Pools 1 and 2 open at Level 29,
+  pool 3 at Level 45 (a locked pool wears a wooden cover). The "Soak" prompt at the sign opens
+  the Hot Springs screen.
+- A pool holds one Teen or Adult from the barn (busy while it soaks). Pick a soak, then the
+  monster. Each soak is paid with a bath salt made on the spot from honey (any kind, from the
+  Apiary) and food:
+  - Warm Soak, 30 minutes, 2 honey + 5 Fire Peppers: +20% growth from meals for 4 hours
+    (growing monsters only).
+  - Mineral Soak, 1 hour, 2 honey + 5 Hearty Roots: +15% Job Board output (miners, foragers,
+    scouts) and Apiary honey from that monster for 4 hours.
+  - Herbal Soak, 2 hours, 3 honey + 5 Sweet Berries: full Mood and 3 bond points when collected.
+- Soaks run on the server clock, online and offline. A finished soak waits in its pool until
+  the player collects it; the buff lasts 4 hours from the collect (a new soak replaces it).
+  "Stop soak" frees the monster early; the salt is lost. Without the Apiary no soak is offered.
+- The screen lists every pool, the salts with their costs and what the player has, and the
+  active buffs with their time left. Weekly goal: give 5 spa soaks.
+
+**In the code**
+- `Config/Spa`, `Logic/Spa`, `Systems/Spa` (Profile v1 `{ pools, buffs, soaks }`, session
+  `{ pools, apiary }`), actions `Spa.Soak`, `Spa.Collect`, `Spa.Cancel`; public
+  `Spa:Buff(player, monsterId) -> { soak, endsAt }?`; publishes `SpaSoaked` on collect.
+- Buffs reach their consumers through registries set up in `Spa.Start`:
+  `Monsters:RegisterMealModifier` (new, × meals in Feed and AddMeals, exactly 1 with no
+  modifier), `Jobs:RegisterOutputBoost` (existing) and `Apiary:RegisterRateBoost` (new;
+  `Logic/Apiary.Settle` takes optional boost windows). Herbal uses `Monsters:AddMood` and the
+  new `Bond:AddPoints(player, id, n, kind)`.
+- The pools are built on the client (`Controllers/Spa`, `Workspace.Spa`) at plot-local
+  (-66, 0, 23); keep-out `{ -66, 23, 7, 8 }` in `Config/Decor`; steam puffs are skipped on Low
+  graphics or with reduced motion. A soaking pool shows a ring of bubbles.
+- Specs: `Spa.spec`, `SpaClient.spec`; `LevelSeventy.spec` checks the spa's footprint.
+
+### Bug Catching Meadow
+
+- **Where:** a wildflower meadow west of the Market Square (`Config.World.BugMeadow`, centre (-120, 44), radius 22, a
+  scenery keep-out circle), built on the client from Parts by `Controllers/BugMeadow`: grass, flowers, tall grass tufts,
+  a few fluttering bugs (2 in low graphics, none with Reduced motion) and a signpost whose "Catch bugs" prompt opens the
+  Bugs screen. From Ranch Level 17 (`bug_meadow`).
+- **The net:** 12 free swings a UTC day. `Bugs.Start` rolls the bug on the server (seed = userId, day, swing n and a
+  private secret) and sends only its flight path; the bug crosses the field and the player taps Swing once while it is
+  inside the net. `Bugs.Submit { id, t }` replays the path (`Logic/Bugs.Hit`, 0.06 s grace either side of the window),
+  checks the server clock agrees and that the id is the open, one-shot swing. Rarer bugs fly faster and dart more, so
+  their window is narrower (about 0.5 s common, 0.2 s legendary).
+- **Bugs:** 20 in `Config/Bugs` (4 rarities): 13 always out, one per season (`Logic/Seasons.At`) and 3 night bugs (the
+  Weather night phase). Icons drawn in code (`Parts/BugIcon`).
+- **Honey lure:** "Use honey lure" spends 3 honey (`Apiary:SpendAnyHoney`, hidden without the Apiary); the next 5 swings
+  roll with better rarity weights.
+- **Uses:** sell bugs from the jar for coins (seconds of ranch income, 45 to 1000 by bug); the Codex's Bug Log tab
+  (counts, rarity, Season / Night badges, milestones at 5 / 10 / 20 kinds via `Codex.Claim`); the Museum's Insect Hall
+  (`Config/Exhibits` set `insects`, fills itself on a species' first catch without using the bug up, back-filled on
+  join from `Bugs:Caught`; the wing now seats 10 pedestals a row). Weekly goal `bugs_15`; publishes `BugCaught`.
+- Code: `Config/Bugs`, `Logic/Bugs`, `Systems/Bugs`, `Controllers/BugMeadow`, `Screens/Bugs`, `Parts/BugLog`,
+  `Parts/BugIcon`; specs `Bugs.spec`, `BugsClient.spec`.
+
 ## 3.12 · Honey & stars
 
 ### Observatory & Star Charts

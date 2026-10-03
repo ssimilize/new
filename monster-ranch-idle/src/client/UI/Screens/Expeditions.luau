@@ -269,6 +269,19 @@ return {
 				ctx.Router:Open("TrialTower")
 			end,
 		})
+		-- 3.13: Treasure Maps (map pieces, held maps and their guardians; Screens/TreasureMaps).
+		Button.new({
+			Name = "MapsButton",
+			Text = "Maps",
+			Color = Color3.fromHex("#A0703D"),
+			Size = UDim2.fromOffset(100, 44),
+			TextSize = Theme.TextSize.Body,
+			LayoutOrder = 4,
+			Parent = panel.HeaderRight,
+			OnClick = function()
+				ctx.Router:Open("TreasureMaps")
+			end,
+		})
 
 		local regionRow = New("Frame", {
 			Name = "Regions",

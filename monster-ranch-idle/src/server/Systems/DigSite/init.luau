@@ -34,6 +34,7 @@ local Logic = require(Shared.Logic.DigSite)
 local DigSite = {
 	Name = "DigSite",
 	Dependencies = { "Progression", "Rewards" },
+	OptionalDependencies = { "TreasureMaps" }, -- 3.13: map piece drops
 }
 
 DigSite.Profile = {
@@ -189,6 +190,11 @@ local function pay(player, s, find)
 	else
 		out.id = find.id
 		table.insert(items, { kind = "egg", id = find.id, amount = 1 })
+	end
+	-- 3.13 Treasure Maps: a map piece roll per find tile (its own seeded stream).
+	local TreasureMaps = ctx:GetSystem("TreasureMaps")
+	for _, item in if TreasureMaps then TreasureMaps:Drop(player, "dig") else {} do
+		table.insert(items, item)
 	end
 	local granted = if #items > 0 then Rewards:Grant(player, items, Cfg.Source) else {}
 	return out, granted

@@ -104,6 +104,10 @@ return {
 		"Exhibits",
 		-- 3.12 · Apiary & Honey
 		"Apiary",
+		-- 3.13 · Hot Springs & Spa (after Apiary, Bond and Jobs: registers with them in Start)
+		"Spa",
+		-- 3.13 · Bug Catching Meadow
+		"Bugs",
 		-- 3.11 · Ranch Seasons
 		"Seasons",
 		-- 3.12 · Observatory & Star Charts
@@ -112,6 +116,10 @@ return {
 		"Dojo",
 		-- 3.12 · Trial Tower
 		"TrialTower",
+		-- 3.13 · Treasure Maps
+		"TreasureMaps",
+		-- 3.13 · Stray Monsters
+		"Strays",
 		-- C1 · World geometry (Studio-tested)
 		"World",
 	},

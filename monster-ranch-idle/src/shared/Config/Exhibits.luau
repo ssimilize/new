@@ -12,6 +12,8 @@
 	                          + Merchant.Decor                  (never a placed one)
 	  honey     Honey Shelf   Config.Apiary.Kinds + RoyalJelly  donate one jar (Apiary:SpendHoney)
 	  stars     Star Atlas    Config.Observatory.Charts         filled by itself when a chart is charted
+	  insects   Insect Hall   Config.Bugs.List                  3.13: filled by itself when a bug is first caught
+	                                                            (the bug is not used up)
 
 	Rewards: each set pays at a third, two thirds and all of its items (ceil counts), claimed on the
 	screen (Exhibits.Claim, one step at a time): gems and stardust = set size × PerItem × the step's
@@ -55,6 +57,15 @@ Exhibits.Sets = {
 		color = "#6B5BD6",
 		titleItem = "title_exhibit_stars",
 	},
+	{
+		id = "insects",
+		name = "Insect Hall",
+		fill = "auto",
+		config = "Bugs",
+		hint = "Catch it in the Bug Catching Meadow",
+		color = "#7FB24A",
+		titleItem = "title_exhibit_insects",
+	},
 }
 
 -- Mastery cosmetics granted on completing a set (Config/Mastery appends them to its Rewards).
@@ -64,13 +75,14 @@ Exhibits.Items = {
 	{ id = "title_exhibit_relics", kind = "title", name = "Relic Keeper", desc = "Complete the Relic Room exhibit." },
 	{ id = "title_exhibit_honey", kind = "title", name = "Honey Curator", desc = "Complete the Honey Shelf exhibit." },
 	{ id = "title_exhibit_stars", kind = "title", name = "Star Curator", desc = "Complete the Star Atlas exhibit." },
+	{ id = "title_exhibit_insects", kind = "title", name = "Bug Curator", desc = "Complete the Insect Hall exhibit." },
 }
 
 -- The wing's pedestals (Logic/Exhibits.Layout): rows of `perRow` along x, `spacing` apart, a row
 -- per `rowGap` going south from the desk, `setGap` more between sets. LOD like the Codex Museum:
 -- every pedestal keeps its plate, the nearest `maxModels` filled ones build their Part display.
 Exhibits.Wing = {
-	perRow = 9,
+	perRow = 10, -- 3.13: 10 (was 9) so the Insect Hall fits the wing
 	spacing = 3.8,
 	rowGap = 4.4,
 	setGap = 2.4,

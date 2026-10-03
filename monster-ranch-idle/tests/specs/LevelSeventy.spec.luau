@@ -433,6 +433,9 @@ return function(t)
 			-- 3.12: the Apiary's beehive stands (built by the client, Controllers/Apiary).
 			local ap = Config.Apiary.World
 			table.insert(list, box("apiary", ap.offset[1], ap.offset[3], ap.size[1], ap.size[2]))
+			-- 3.13: the Hot Springs (built by the client, Controllers/Spa).
+			local sp = Config.Spa.World
+			table.insert(list, box("spa", sp.offset[1], sp.offset[3], sp.size[1], sp.size[2]))
 			-- The gate posts on the front edge (see World/Build.luau).
 			table.insert(list, box("gate", World.PlotSize[1] / 2 - 2, 0, 2, 18))
 			return list
